@@ -1,4 +1,15 @@
-<!doctype html><html lang="en"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>
+:root { color-scheme: light; box-sizing: border-box; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body { margin: 0; padding: 0; font: 14px -apple-system, BlinkMacSystemFont, sans-serif; background: #fff; color: #000; }
+img { max-width: 100%; }
+[hidden]:not([hidden=until-found i]) { display: none !important; }
+</style>
 <title>Scales</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -340,7 +351,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
 <script>
 (function () {
   "use strict";
-  // ---------- constants from the spec ----------
+  // ---------- tuning ----------
   var CAP = 4, DWELL_SEC = 8, NUDGE_AT = 3, MAX_WORDS = 15;
   var FALLBACK = {
     0: ["Worth testing. Watch for one moment today where this holds.",
@@ -373,22 +384,19 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   function days(iso) { return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)); }
   function dayKey(d) { d = d || new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 
-  // ---------- storage: private per-user db when available, else this device ----------
+  // ---------- storage (localStorage, this device only) ----------
   var thoughts = {}, activity = {}, prefs = { skin: "auto" };
-  var coll = null, actDoc = null, prefDoc = null;
   var LS = "scales.thoughts.v1", LSA = "scales.activity.v1", LSP = "scales.prefs.v1";
   function lsGet(k, d) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function newId() { return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function save(t) {
     thoughts[t.id] = t;
-    if (coll) coll.doc(t.id).set(t).catch(function (e) { toast(e && e.code === "quota_exceeded" ? "Storage full. Delete a shed thought to make room." : "Could not save. Check your connection."); });
-    else lsSet(LS, thoughts);
+    lsSet(LS, thoughts);
   }
   function remove(id) {
     delete thoughts[id];
-    if (coll) coll.doc(id).delete().catch(function () { toast("Could not delete. Try again."); });
-    else lsSet(LS, thoughts);
+    lsSet(LS, thoughts);
   }
   function logActivity(kind) {
     var k = dayKey();
@@ -397,9 +405,9 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     activity[k] = d;
     var cutoff = dayKey(new Date(Date.now() - 120 * 86400000));
     Object.keys(activity).forEach(function (x) { if (x < cutoff) delete activity[x]; });
-    if (actDoc) actDoc.set({ days: activity }).catch(function () {}); else lsSet(LSA, activity);
+    lsSet(LSA, activity);
   }
-  function savePrefs() { lsSet(LSP, prefs); if (prefDoc) prefDoc.set(prefs).catch(function () {}); }
+  function savePrefs() { lsSet(LSP, prefs); }
 
   // ---------- theme ----------
   $("skins").innerHTML = SKINS.map(function (s) {

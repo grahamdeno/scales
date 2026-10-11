@@ -1,5 +1,5 @@
 // Scales service worker: app shell offline, network-first so updates arrive on next open.
-const CACHE = "scales-v6";
+const CACHE = "scales-v7";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/favicon-32.png", "icons/favicon-64.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", e => {
