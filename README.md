@@ -19,6 +19,7 @@ Capture thoughts and inspect them until they become beliefs you live. Installabl
 
 - Thoughts are stored on the phone only (no account, no server).
 - Use Settings > Back up regularly and keep the file in iCloud Drive. Restore merges a backup in.
+- Settings > Import CSV / Export CSV uses the columns `text,title,author,creationDate,tags,collection,link,citation`. Export adds `scales_*` columns (status, skips, reflects, shed date, evidence) so a re-import keeps progress. Import skips thoughts already in the deck. CSV files are read on the phone and never uploaded; do not commit them to this repo.
 - Deleting the home screen icon deletes the data. Back up first.
 
 ## Updating
