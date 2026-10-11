@@ -1,10 +1,24 @@
-// Scales service worker: app shell offline, network-first so updates arrive on next open.
-const CACHE = "scales-v7";
+// Scales service worker.
+// Keeps a copy of the app shell so Scales opens with no connection.
+// Network first: when online, the latest files are fetched and the cache is refreshed,
+// so updates show up the next time the app opens.
+
+// Bump this name whenever cached files change so phones drop the old copy.
+const CACHE = "scales-v8";
+
+// Files needed to open the app offline.
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/favicon-32.png", "icons/favicon-64.png"];
+
+// Install: cache the shell and take over right away instead of waiting for old tabs to close.
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
+
+// Activate: delete caches from older versions.
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
+
+// Fetch: only handles GET requests for this site and Google Fonts.
+// Try the network, save a fresh copy, and fall back to the cache when offline.
 self.addEventListener("fetch", e => {
   const req = e.request;
   if (req.method !== "GET") return;

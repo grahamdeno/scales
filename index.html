@@ -227,7 +227,9 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
 </style>
 </head>
 <body>
+<!-- Soft color glow behind everything. Purely decorative. -->
 <div class="glow" aria-hidden="true"></div>
+<!-- Main screen. The header stays put; the deck and ledger views swap in place below it. -->
 <div class="app">
   <header class="top">
     <div class="brand" id="brand">Scales<span id="todayLbl"></span></div>
@@ -238,8 +240,10 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     </div>
   </header>
 
+<!-- Deck view. Empty here on purpose: renderDeck() builds the card, buttons and strip. -->
   <section class="view" id="v-deck" aria-label="Deck"></section>
 
+<!-- Ledger view: totals, the list of thoughts, and the 12 week activity grid. Filled by renderLedger(). -->
   <section class="view" id="v-ledger" aria-label="Ledger" hidden>
     <div class="hero glass">
       <div>
@@ -271,6 +275,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   </section>
 </div>
 
+<!-- Dimmed backdrop behind any open sheet. Tapping it closes the sheet. -->
 <div class="scrim" id="scrim" hidden></div>
 
 <!-- Capture sheet -->
@@ -346,13 +351,22 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   </div>
 </section>
 
+<!-- Short status messages (Saved, Shed, Imported...). Read out by screen readers. -->
 <div id="toastHost" aria-live="polite"></div>
 
 <script>
 (function () {
+  // Everything runs inside one function so nothing leaks into the global scope.
   "use strict";
   // ---------- tuning ----------
+  // CAP        highest weight a thought can reach (4x as likely as a fresh one)
+  // DWELL_SEC  seconds on a card before a reflect is allowed to undo a skip
+  // NUDGE_AT   reflects in a row before the app asks 'Have you lived this yet?'
+  // MAX_WORDS  longest encouraging line the app will show
   var CAP = 4, DWELL_SEC = 8, NUDGE_AT = 3, MAX_WORDS = 15;
+  // Built-in encouraging lines, grouped by how much a thought has been skipped
+  // (0 = never, 1 = once or twice, 3 = three or more). Used when there is no API key,
+  // no connection, or the model's answer fails the checks in valid().
   var FALLBACK = {
     0: ["Worth testing. Watch for one moment today where this holds.",
         "Good claim to carry. See where it shows up on its own.",
@@ -364,7 +378,10 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
         "Resistance usually points at something real. Stay with it a moment.",
         "This one pushes back. That makes it worth the look."]
   };
+  // Tone instruction sent to the model for each skip tier. Same tiers as FALLBACK.
   var TONE = { 0: "affirm the inquiry", 1: "gentle nudge", 3: "name the resistance without pressure" };
+  // Theme list for the Settings picker. sw = the three swatch colors shown on each button.
+  // The actual colors live in the CSS under :root[data-skin=...].
   var SKINS = [
     { id: "auto", name: "Auto", sw: ["#E9EDEC", "#24302D", "#2C78A0"] },
     { id: "moss", name: "Moss", sw: ["#111A14", "#BCCDA8", "#E8C55C"] },
@@ -373,23 +390,34 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     { id: "dusk", name: "Dusk", sw: ["#1A121D", "#E4C0DA", "#7FD6C5"] },
     { id: "return", name: "Return", sw: ["#131220", "#E8B860", "#F08A55"] }
   ];
+  // Small helpers used throughout.
   var $ = function (id) { return document.getElementById(id); };
+  // Maps a skip count to a FALLBACK/TONE tier.
   function tier(s) { return s >= 3 ? 3 : (s >= 1 ? 1 : 0); }
+  // How likely a thought is to be picked: 1 + 0.5 per skip, capped at CAP.
   function weight(t) { return Math.min(1 + 0.5 * t.skip_count, CAP); }
   function words(s) { return s.trim().split(/\s+/).filter(Boolean).length; }
+  // Escapes text before it goes into HTML so a thought can never inject markup.
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function fmtDate(iso) { try { var d = new Date(iso); var o = { month: "short", day: "numeric" }; if (d.getFullYear() !== new Date().getFullYear()) o.year = "numeric"; return d.toLocaleDateString("en-US", o); } catch (e) { return ""; } }
+  // Picks a smaller font for long or multi-line thoughts so they fit on the card.
   function sizeClass(x) { var n = (x || "").length, br = ((x || "").match(/\n/g) || []).length; return (n > 260 || br > 5) ? " long" : (n > 110 || br > 1) ? " mid" : ""; }
   function byline(t) { var p = [t.title, t.author].filter(Boolean); return p.length ? '<div class="by">' + esc(p.join(" · ")) + "</div>" : ""; }
   function days(iso) { return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)); }
+  // Local date as YYYY-MM-DD. Used as the key for the activity grid.
   function dayKey(d) { d = d || new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 
   // ---------- storage (localStorage, this device only) ----------
+  // thoughts: every thought by id, active and shed
+  // activity: per day counts { i: inspections, s: sheds }, kept for 120 days
+  // prefs:    theme choice
+  // All three are saved to localStorage under versioned keys.
   var thoughts = {}, activity = {}, prefs = { skin: "auto" };
   var LS = "scales.thoughts.v1", LSA = "scales.activity.v1", LSP = "scales.prefs.v1";
   function lsGet(k, d) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function newId() { return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  // Write one thought back and persist the whole set.
   function save(t) {
     thoughts[t.id] = t;
     lsSet(LS, thoughts);
@@ -398,6 +426,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     delete thoughts[id];
     lsSet(LS, thoughts);
   }
+  // Count today's action for the ledger grid and drop days older than 120.
   function logActivity(kind) {
     var k = dayKey();
     var d = activity[k] || { i: 0, s: 0 };
@@ -410,6 +439,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   function savePrefs() { lsSet(LSP, prefs); }
 
   // ---------- theme ----------
+  // Build the theme buttons, save the choice, and apply it by setting data-skin on <html>.
   $("skins").innerHTML = SKINS.map(function (s) {
     return '<button type="button" class="skin" data-skin="' + s.id + '" aria-pressed="false"><span class="sw">' +
       s.sw.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join("") + "</span>" + s.name + "</button>";
@@ -425,6 +455,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   }
 
   // ---------- sheets ----------
+  // Bottom sheets (capture, shed, settings). Only one is open at a time.
+  // show() can take an onClose callback, which the shed sheet uses to undo a cancelled shed.
   var openSheet = null, onSheetClose = null;
   function show(id, onClose) { if (openSheet) hide(); openSheet = $(id); onSheetClose = onClose || null; $("scrim").hidden = false; openSheet.hidden = false; }
   function hide() { if (openSheet) openSheet.hidden = true; openSheet = null; $("scrim").hidden = true; var f = onSheetClose; onSheetClose = null; if (f) f(); }
@@ -433,8 +465,17 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") hide(); });
 
   // ---------- deck state ----------
+  // history  last 20 thoughts shown, used for the repeat cooldown
+  // current  id of the thought on screen
+  // shownAt  when it appeared, for the dwell check
+  // lineFor  the line currently shown under each thought
+  // aiSeq    request counter so a slow answer for an old card is ignored
+  // sample   function that calls the model, or null when there is no key
   var history = [], current = null, shownAt = 0, lineFor = {}, aiSeq = 0, sample = null;
   var LSK = "scales.apikey.v1", MODEL = "claude-haiku-5-5";
+  // Returns a function that sends one prompt to the Anthropic Messages API and resolves
+  // to { text }. The special header allows a direct call from the browser; the key never
+  // leaves the phone except in this request. A 401/403 is flagged so the app can fall back.
   function makeSampler(key) {
     if (!key) return null;
     return function (prompt) {
@@ -452,13 +493,18 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       });
     };
   }
+  // Updates the dot and label in Settings to show whether model lines are on.
   function setAiStatus() {
     var on = !!sample;
     $("aiDot").style.background = on ? "var(--accent)" : "var(--muted)";
     $("aiText").textContent = on ? "AI lines: on (your key)" : "AI lines: built-in (no key)";
   }
   function all() { return Object.keys(thoughts).map(function (k) { return thoughts[k]; }); }
+  // Thoughts still in the deck (not shed).
   function activeList() { return all().filter(function (t) { return t.status === "active"; }); }
+  // Weighted random pick. Thoughts shown in the last few turns are left out first
+  // (1 turn for a small deck, 3 otherwise), then each remaining thought gets a share
+  // of the draw equal to its weight. Skipped thoughts come back more often.
   function pickNext() {
     var pool = activeList();
     if (!pool.length) return null;
@@ -471,6 +517,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     for (var i = 0; i < eligible.length; i++) { r -= weight(eligible[i]); if (r <= 0) return eligible[i]; }
     return eligible[eligible.length - 1];
   }
+  // Put a thought on screen, start the dwell timer, and ask for its line.
   function showThought(t) {
     current = t ? t.id : null;
     if (t) { history.push(t.id); if (history.length > 20) history.shift(); }
@@ -481,12 +528,15 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   function showNext() { showThought(pickNext()); }
 
   // ---------- AI line ----------
+  // A built-in line for this tier, avoiding the last few shown for this thought.
   function fallbackLine(t) {
     var arr = FALLBACK[tier(t.skip_count)], used = t.recent_lines || [];
     var opts = arr.filter(function (l) { return used.indexOf(l) < 0; });
     if (!opts.length) opts = arr;
     return opts[Math.floor(Math.random() * opts.length)];
   }
+  // The prompt for the model. Only the thought text, skip count and days in deck are sent.
+  // Recent lines are included so the model does not repeat itself.
   function buildPrompt(t) {
     var recent = (t.recent_lines || []).slice(-3);
     return "You write one short line shown beneath a personal thought in a reflection app.\n" +
@@ -500,8 +550,13 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       "Return only the line.\n\n" +
       "Thought: " + t.text + "\nTimes skipped: " + t.skip_count + "\nDays in deck: " + days(t.created_at);
   }
+  // Strip quotes and dashes from the model's answer and collapse spaces.
   function clean(s) { return (s || "").replace(/["“”]/g, "").replace(/\s*[—–]\s*/g, ". ").replace(/\s+/g, " ").trim(); }
+  // Accept the answer only if it is short enough and does not just echo the thought.
   function valid(s, t) { return s && words(s) <= MAX_WORDS && s.toLowerCase().indexOf(t.text.toLowerCase().slice(0, 40)) < 0; }
+  // Show a built-in line right away, then try the model (one retry if the answer is invalid).
+  // The model line replaces the built-in one only if the same card is still on screen.
+  // Accepted lines are saved to the thought so future prompts can avoid them.
   function requestLine(t) {
     var seq = ++aiSeq;
     lineFor[t.id] = { text: fallbackLine(t), ai: false };
@@ -523,6 +578,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       paintLine();
     }).catch(function (e) { if (e && e.code === "not_granted") { sample = null; setAiStatus(); $("aiText").textContent = "AI lines: key rejected, using built-in"; } });
   }
+  // Draw the current card's line. 'pending' dims it while a model line is on the way.
   function paintLine() {
     var el = $("aiLine"); if (!el || !current) return;
     var l = lineFor[current]; if (!l) return;
@@ -531,6 +587,10 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   }
 
   // ---------- actions ----------
+  // The three moves.
+  // skip:  raise skip count, reset the reflect streak
+  // keep:  count a reflect; lower skip count by 1 only if the card was read for DWELL_SEC
+  // shed:  open the shed sheet to record evidence before retiring the thought
   function act(kind) {
     var t = thoughts[current]; if (!t) return;
     var dwell = (Date.now() - shownAt) / 1000;
@@ -545,6 +605,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     }
     if (kind === "shed") openShed(t);
   }
+  // Animate the card off screen in the swipe direction, then show the next one.
   function flyOut(dir) {
     var c = $("card");
     if (!c) { showNext(); return; }
@@ -554,6 +615,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   }
 
   // ---------- shed sheet ----------
+  // Shed sheet. Confirming marks the thought shed with a date and the evidence line.
+  // Cancelling resets the reflect streak so the nudge banner does not reappear right away.
   var shedTarget = null, shedDone = false;
   function openShed(t) {
     shedTarget = t; shedDone = false;
@@ -576,10 +639,12 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   });
 
   // ---------- render: deck ----------
+  // Inline SVG icons used when building the deck.
   var ICON_SKIP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>';
   var ICON_SHED = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   var ICON_SPARK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></svg>';
 
+  // The 'Pushing back' strip: up to 6 most skipped thoughts (tap one to show it) plus the add button.
   function stripHtml() {
     var push = activeList().filter(function (t) { return t.skip_count > 0 && t.id !== current; })
       .sort(function (a, b) { return weight(b) - weight(a) || b.lifetime_skips - a.lifetime_skips; }).slice(0, 6);
@@ -590,6 +655,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       '<div class="strip" id="strip">' + chips + '<button type="button" class="chip add" id="addChip" aria-label="Capture a thought">+</button></div>';
   }
 
+  // Builds the deck view: the card, the optional 'Have you lived this yet?' banner,
+  // the three buttons and the strip. Shows an empty state when nothing is active.
   function renderDeck() {
     var v = $("v-deck");
     var t = thoughts[current];
@@ -632,12 +699,16 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     bindStrip();
     paintLine();
   }
+  // Wire up the strip chips and the add button after each render.
   function bindStrip() {
     var a = $("addChip"); if (a) a.onclick = openCapture;
     Array.prototype.forEach.call(document.querySelectorAll("[data-show]"), function (b) {
       b.onclick = function () { var t = thoughts[b.getAttribute("data-show")]; if (t) showThought(t); };
     });
   }
+  // Drag handling with pointer events (works for touch and mouse). The card follows the finger
+  // and the SKIP / SHED / KEEP stamps fade in. Past 90px it commits: left = skip,
+  // right = shed, up = keep. Anything shorter springs back.
   function bindSwipe() {
     var card = $("card"); if (!card) return;
     var sx = 0, sy = 0, dx = 0, dy = 0, down = false;
@@ -662,6 +733,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   }
 
   // ---------- render: ledger ----------
+  // Ledger. Totals and two rings (share shed, share resisting), the In deck / Shed list,
+  // and an 84 day grid (12 weeks). Delete needs a second tap within 3 seconds.
   var listMode = "deck";
   function renderLedger() {
     var items = all();
@@ -718,6 +791,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   $("segShed").onclick = function () { listMode = "shed"; renderLedger(); };
 
   // ---------- capture ----------
+  // Capture sheet. Optional origin pill, 280 character limit, and a new thought starts
+  // with zero counts. It goes straight into the deck.
   var origin = "", input = $("thoughtInput");
   function openCapture() { show("sheetCapture"); setTimeout(function () { input.focus(); }, 60); }
   input.addEventListener("input", function () {
@@ -745,6 +820,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   });
 
   // ---------- navigation ----------
+  // Switch between deck and ledger and swap the header buttons to match.
   function go(view) {
     $("v-deck").hidden = view !== "deck";
     $("v-ledger").hidden = view !== "ledger";
@@ -761,6 +837,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   $("toDeck").onclick = function () { go("deck"); };
   $("openSettings").onclick = function () { show("sheetSettings"); };
 
+  // Show a short message for 1.8 seconds.
   var toastTimer;
   function toast(msg) {
     var h = $("toastHost");
@@ -769,12 +846,15 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   }
 
   // ---------- boot ----------
+  // Startup: load saved data, apply the theme, show the first thought.
   $("todayLbl").textContent = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   thoughts = lsGet(LS, {}); activity = lsGet(LSA, {}); prefs = Object.assign({ skin: "auto" }, lsGet(LSP, {}));
   applySkin();
   showNext();
 
   // ---------- API key ----------
+  // API key handling. Stored only in this browser's localStorage. Saving a key switches
+  // model lines on immediately; removing it switches back to built-in lines.
   var savedKey = ""; try { savedKey = localStorage.getItem(LSK) || ""; } catch (e) {}
   sample = makeSampler(savedKey); setAiStatus();
   if (savedKey) { $("apiKey").value = savedKey; if (current) requestLine(thoughts[current]); }
@@ -790,6 +870,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   };
 
   // ---------- backup / restore ----------
+  // Back up: the whole deck, activity and theme as one JSON file. Uses the iOS share sheet
+  // when available (so it can go to iCloud Drive), otherwise a normal download.
   $("exportBtn").onclick = function () {
     var data = { app: "scales", version: 1, exported_at: new Date().toISOString(), thoughts: thoughts, activity: activity, prefs: prefs };
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -803,6 +885,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     }
   };
   $("importBtn").onclick = function () { $("importFile").click(); };
+  // Restore: merge a backup in. Existing thoughts are kept; only new ids are added.
+  // Activity days take the higher count from either side.
   $("importFile").onchange = function (e) {
     var f = e.target.files && e.target.files[0]; if (!f) return;
     f.text().then(function (txt) {
@@ -821,8 +905,11 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   };
 
   // ---------- CSV import / export (runs entirely on this device) ----------
+  // CSV in and out. The first 8 columns match common highlight/quote exports. The scales_*
+  // columns carry progress so a round trip through a spreadsheet keeps it.
   var CSV_COLS = ["text", "title", "author", "creationDate", "tags", "collection", "link", "citation"];
   var CSV_EXTRA = ["scales_status", "scales_skips", "scales_lifetime_skips", "scales_reflects", "scales_shed_at", "scales_evidence", "scales_origin"];
+  // Small CSV reader: handles quoted fields, doubled quotes and line breaks inside quotes.
   function parseCSV(src) {
     src = src.replace(/^﻿/, "");
     var rows = [], row = [], f = "", q = false, i = 0, c;
@@ -841,11 +928,14 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     if (f !== "" || row.length) { row.push(f); rows.push(row); }
     return rows;
   }
+  // Quote a value for CSV only when it needs it.
   function csvCell(v) {
     v = v == null ? "" : String(v);
     return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
   }
+  // Lowercased, single spaced text. Used to spot duplicates on import.
   function normText(x) { return String(x || "").replace(/\s+/g, " ").trim().toLowerCase(); }
+  // Read a date from the CSV. Plain YYYY-MM-DD is treated as local noon so it never shifts a day.
   function dateToIso(d) {
     d = String(d || "").trim(); if (!d) return new Date().toISOString();
     var m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -873,6 +963,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     shareOrDownload(new Blob([lines.join("\n") + "\n"], { type: "text/csv" }), "ScalesExport_" + dayKey() + "_" + hh + "-" + mm + ".csv", "Scales export");
   };
   $("csvImportBtn").onclick = function () { $("csvFile").click(); };
+  // Import rows that have text and are not already in the deck. Imported skip counts
+  // are capped at 6 so an old spreadsheet cannot flood the deck with one thought.
   $("csvFile").onchange = function (e) {
     var f = e.target.files && e.target.files[0]; if (!f) return;
     f.text().then(function (txt) {
@@ -908,6 +1000,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   };
 
   // ---------- offline ----------
+  // Register the service worker (sw.js) so the app opens offline.
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
   }

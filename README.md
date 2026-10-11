@@ -61,8 +61,10 @@ index.html              the whole app: markup, styles, script
 sw.js                   service worker: offline shell, network first
 manifest.webmanifest    home screen name, colors, icons
 icons/                  app icon, maskable icon, favicons, source SVG
-docs/                   screenshots for this README
+docs/                   architecture diagrams and screenshots
 ```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams of how the pieces fit, how a thought moves from capture to shed, and what happens each time a card is shown.
 
 No build step and no dependencies. The only outside requests are Google Fonts and, if a key is set, the Anthropic API.
 
@@ -84,7 +86,7 @@ Then open `http://localhost:8000`. The service worker needs `localhost` or HTTPS
 
 ## Updating the live app
 
-Push to `main`. GitHub Pages redeploys in about a minute. When cached files change, bump `CACHE` in `sw.js` (for example `scales-v8`) so phones drop the old copy.
+Push to `main`. GitHub Pages redeploys in about a minute. When cached files change, bump `CACHE` in `sw.js` (for example `scales-v9`) so phones drop the old copy.
 
 ## Roadmap
 
