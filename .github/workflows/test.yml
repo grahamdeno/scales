@@ -14,3 +14,24 @@ jobs:
         with:
           node-version: 20
       - run: node --test
+
+  # After tests pass on main, tag the commit with the version in core.js
+  # (for example v1.21.0) unless that version is already tagged.
+  tag:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag the release
+        run: |
+          v="v$(node -p "require('./core.js').VERSION")"
+          if git ls-remote --exit-code --tags origin "refs/tags/$v" > /dev/null; then
+            echo "$v is already tagged"
+          else
+            git tag "$v" "$GITHUB_SHA"
+            git push origin "$v"
+            echo "Tagged $v"
+          fi

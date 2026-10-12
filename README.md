@@ -122,13 +122,13 @@ Releases are numbered `MAJOR.MINOR.PATCH`:
 | Minor | New features and enhancements. Patch resets to 0. | 1.21.0 to 1.22.0 |
 | Patch | Defect fixes only | 1.21.0 to 1.21.1 |
 
-Every release, patches included, gets a new version number and a matching git tag (`v1.21.0`).
+Every release, patches included, gets a new version number. GitHub Actions adds the matching git tag (`v1.21.0`) automatically after the tests pass.
 
 ## Updating the live app
 
 1. Set `VERSION` (and `BUILT`) in `core.js` and the matching `CACHE` name in `sw.js` (`scales-v1.21.0`). The tests fail if they differ or if the version is not three numbers.
 2. Run `node --test`.
-3. Push to `main` and tag the release: `git tag v1.21.0 && git push origin v1.21.0`. GitHub Pages redeploys in about a minute.
+3. Push to `main`. GitHub Pages redeploys in about a minute, and once the tests pass, GitHub Actions tags the commit with the new version (`v1.21.0`).
 4. On the phone, close and reopen Scales, then check Settings > About for the new version number.
 
 ## Roadmap
