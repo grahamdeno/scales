@@ -261,3 +261,11 @@ test("the page cannot be scrolled into extra height (1.22.1 regression)", () => 
   assert.match(html, /history\.scrollRestoration = "manual"/);
   assert.match(html, /function hide\(\)[^\n]*resetScroll\(\)/);
 });
+
+test("the app fills the whole screen from the Home Screen (1.22.2 regression)", () => {
+  const html = read("index.html");
+  const last = (re) => { const m = html.match(re); return m[m.length - 1]; };
+  const body = last(/\nbody \{[^}]*\}/g), root = last(/\nhtml \{[^}]*\}/g);
+  assert.match(body, /position:fixed; inset:0/, "body must be pinned to all four edges");
+  assert.doesNotMatch(body + root, /\d+(dvh|svh|lvh|vh)/, "page height must not come from viewport units");
+});
