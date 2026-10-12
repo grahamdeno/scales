@@ -20,7 +20,11 @@ You write down a principle you want to live by ("the hard conversation is usuall
 | Still working on it | swipe up | Counts as an inspection. If you stayed on the card at least 8 seconds, the not today count drops by 1. |
 | Living it | swipe right | Opens a short form for where it showed up, then moves the principle to your record. |
 
-**Editing.** Tap Edit on the card, or Edit on any Ledger row, to change a principle's wording. Its counts, dates and weight are kept. A principle still in the deck gets a fresh AI line for the new wording; a lived one keeps its Living it date, evidence and last line. Principles can be up to 1,500 characters, long enough for a short poem.
+**Editing.** Tap Edit on the card, or Edit on any Ledger row, to change a principle's wording or its details: collection, title, author and where it came from. Its counts, dates and weight are kept. Changing the wording of a principle still in the deck gets it a fresh AI line; changing only details keeps the line it has. A lived principle keeps its Living it date, evidence and last line either way. Principles can be up to 1,500 characters, long enough for a short poem. The Capture sheet has the same details under More details, collapsed by default.
+
+**Card label.** The top of each card shows the collection (or "Principle" when there is none) and, on a second line, where the principle came from, when that is set.
+
+**Collections.** A collection groups principles, such as Poems or Stoic. Typing a collection that matches an existing one apart from capitalization saves it under the existing spelling, so collections don't split. Settings > Manage collections lists every collection with its count; tap one to rename it, merge it into another by renaming it to that name, or remove it. Only the collection changes; everything else on each principle is kept.
 
 **Weighting.** What you set aside comes back more often. A principle's chance of showing up is `1 + 0.5 x not today count`, capped at 4x. A short cooldown keeps the same principle from repeating back to back.
 

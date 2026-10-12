@@ -199,13 +199,41 @@ header.top { display:flex; align-items:center; justify-content:space-between; ga
 .sheet-ai p { margin:0; font-size:15px; line-height:1.45; font-style:italic; color:var(--muted); }
 .sheet-ai[hidden] { display:none; }
 /* Edit control on the card and the edit sheet. */
-.card-right { display:flex; align-items:center; gap:8px; }
+.card-right { display:flex; align-items:center; gap:8px; flex:none; }
 .edit-pill { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:color-mix(in srgb, var(--surface) 70%, transparent); color:var(--fg); font-family:var(--f-body); font-size:13px; font-weight:600; border-radius:999px; padding:5px 11px 5px 9px; touch-action:manipulation; }
 .edit-pill svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
 .kept { display:flex; gap:8px; flex-wrap:wrap; }
 .kept span { font-family:var(--f-mono); font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:4px 9px; }
 .sheet-err { margin:0; font-size:13px; color:var(--markText); }
 .sheet-err[hidden] { display:none; }
+/* Card label: collection on line 1, origin on line 2 (Story 6). */
+.card-top { align-items:flex-start; }
+.lab2 { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.lab2 .eyebrow, .lab2 .orig { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lab2 .orig { font-size:12px; color:var(--muted); font-style:italic; }
+/* Details fields, collection suggestions and the More details toggle. */
+.group[hidden] { display:none; }
+.chips { display:flex; gap:6px; flex-wrap:wrap; }
+.chips button { font-size:12.5px; border:1px solid var(--line); background:none; border-radius:999px; padding:4px 10px; color:var(--fg); }
+.chips button.on { border-color:var(--accent); color:var(--accent); }
+.hint { margin:0; font-size:12.5px; color:var(--muted); }
+.hint b { color:var(--accent); font-weight:600; }
+.hint[hidden] { display:none; }
+.details { border-top:1px solid var(--line); padding-top:14px; gap:14px; }
+.more { display:flex; justify-content:space-between; align-items:center; width:100%; background:none; border:1px solid var(--line); border-radius:14px; padding:12px 14px; color:var(--fg); font-size:15px; font-weight:600; }
+.more small { color:var(--muted); font-weight:500; font-size:13px; }
+/* Primary button pinned to the bottom of a tall sheet, on a solid strip so nothing shows beneath it. */
+.sheet-foot { position:sticky; bottom:calc(-22px - env(safe-area-inset-bottom, 0px)); margin:0 -18px calc(-22px - env(safe-area-inset-bottom, 0px)); padding:12px 18px calc(22px + env(safe-area-inset-bottom, 0px)); background:var(--surface); border-top:1px solid var(--line); z-index:2; }
+/* Manage collections (Story 7). */
+.coll-list { display:flex; flex-direction:column; }
+.coll-list button { display:flex; justify-content:space-between; align-items:center; gap:10px; background:none; border:0; border-bottom:1px solid var(--line); padding:13px 2px; color:var(--fg); font-size:15px; font-weight:600; text-align:left; }
+.coll-list button span { font-family:var(--f-mono); font-size:12px; font-weight:400; color:var(--muted); white-space:nowrap; }
+.coll-list button b { font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.notice { border:1px solid color-mix(in srgb, var(--mark) 50%, transparent); background:color-mix(in srgb, var(--mark) 12%, transparent); border-radius:14px; padding:12px 14px; font-size:14px; line-height:1.45; }
+.notice b { color:var(--markText); }
+.notice[hidden] { display:none; }
+.link-danger { background:none; border:0; color:var(--markText); font-weight:600; font-size:14px; padding:6px 0; justify-self:center; }
+.btn-row { display:flex; justify-content:space-between; align-items:center; }
 .none { font-size:13px; color:var(--muted); margin:0; }
 .cal { display:grid; grid-template-columns:repeat(14, minmax(0,1fr)); gap:4px; }
 .cal i { aspect-ratio:1; border-radius:3px; background:var(--empty); }
@@ -334,7 +362,16 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
         <button type="button" class="pill" data-o="Not sure" aria-pressed="false">Not sure</button>
       </div>
     </div>
-    <button class="btn" type="submit" id="addBtn" disabled>Add to the deck</button>
+    <div class="group">
+      <button type="button" class="more" id="capMore" aria-expanded="false" aria-controls="capDetails">More details <small id="capMoreHint">Collection, title, author ›</small></button>
+      <div class="group" id="capDetails" hidden style="gap:14px">
+    <div class="group"><label for="capCollection">Collection</label><input class="field" id="capCollection" maxlength="40" autocomplete="off" placeholder="Optional, e.g. Poems">
+      <div class="chips" id="capChips"></div><p class="hint" id="capHint" hidden></p></div>
+    <div class="group"><label for="capTitle">Title</label><input class="field" id="capTitle" maxlength="120" autocomplete="off" placeholder="Optional"></div>
+    <div class="group"><label for="capAuthor">Author</label><input class="field" id="capAuthor" maxlength="80" autocomplete="off" placeholder="Optional"></div>
+      </div>
+    </div>
+    <div class="sheet-foot"><button class="btn" type="submit" id="addBtn" disabled>Add to the deck</button></div>
   </form>
 </section>
 
@@ -370,6 +407,26 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   <button class="btn accent" type="button" id="evSave">Save</button>
 </section>
 
+<!-- Collections sheet: every collection with its count. Tap one to rename, merge or remove it. -->
+<section class="sheet glass" id="sheetCollections" hidden aria-label="Collections">
+  <div class="grabber"></div>
+  <h2>Collections <button type="button" id="collDone">Done</button></h2>
+  <p class="note">Tap a collection to rename it. Renaming to one that already exists merges them.</p>
+  <div class="coll-list" id="collList"></div>
+</section>
+
+<!-- Rename sheet: rename, merge into an existing collection, or remove. -->
+<section class="sheet glass" id="sheetRename" hidden aria-label="Rename collection">
+  <div class="grabber"></div>
+  <h2>Rename collection <button type="button" id="renameCancel">Cancel</button></h2>
+  <p class="note" id="renameMeta"></p>
+  <div class="group"><label for="renameInput">New name</label><input class="field" id="renameInput" maxlength="40" autocomplete="off"></div>
+  <div class="notice" id="renameNotice" role="status" hidden></div>
+  <button class="btn accent" type="button" id="renameSave" disabled>Rename</button>
+  <button type="button" class="link-danger" id="renameRemove">Remove this collection</button>
+  <p class="note" id="renameRemoveNote" style="margin-top:-8px"></p>
+</section>
+
 <!-- Edit sheet: change a principle's wording from the card or the Ledger. History is kept. -->
 <section class="sheet glass" id="sheetEdit" hidden aria-label="Edit principle">
   <div class="grabber"></div>
@@ -381,11 +438,26 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     <div class="counter" id="editCount">0 / 1500</div>
   </div>
   <p class="sheet-err" id="editErr" role="alert" hidden></p>
+  <div class="group details">
+    <span class="lbl" style="font-size:12px">Details</span>
+    <div class="group"><label for="editCollection">Collection</label><input class="field" id="editCollection" maxlength="40" autocomplete="off" placeholder="Optional, e.g. Poems">
+      <div class="chips" id="editChips"></div><p class="hint" id="editHint" hidden></p></div>
+    <div class="group"><label for="editTitle">Title</label><input class="field" id="editTitle" maxlength="120" autocomplete="off" placeholder="Optional"></div>
+    <div class="group"><label for="editAuthor">Author</label><input class="field" id="editAuthor" maxlength="80" autocomplete="off" placeholder="Optional"></div>
+    <div class="group"><span class="lbl" id="editOriginLabel">Where it came from</span>
+      <div class="pills" role="group" aria-labelledby="editOriginLabel" id="editOriginPills">
+        <button type="button" class="pill" data-o="Handed to me" aria-pressed="false">Handed to me</button>
+        <button type="button" class="pill" data-o="Chosen" aria-pressed="false">Chosen</button>
+        <button type="button" class="pill" data-o="Not sure" aria-pressed="false">Not sure</button>
+      </div>
+      <p class="hint">Tap the selected one again to clear it.</p>
+    </div>
+  </div>
   <div class="group">
     <span class="lbl">Kept on save</span>
     <div class="kept" id="editKept"></div>
   </div>
-  <button class="btn accent" type="button" id="editSave" disabled>Save changes</button>
+  <div class="sheet-foot"><button class="btn accent" type="button" id="editSave" disabled>Save changes</button></div>
 </section>
 
 <!-- Settings sheet -->
@@ -421,6 +493,11 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     <div class="row2"><button class="btn ghost" type="button" data-starter="stoic">Stoic</button><button class="btn ghost" type="button" data-starter="leadership">Leadership</button></div>
     <div class="row2"><button class="btn ghost" type="button" data-starter="athletic">Athletic mindset</button><button class="btn ghost" type="button" data-starter="overcoming">Self-overcoming</button></div>
     <p class="note">Adds a short set of principles to the deck. Delete any that are not yours from the Ledger.</p>
+  </div>
+  <div class="group">
+    <div class="sec">Collections</div>
+    <button class="btn ghost btn-row" type="button" id="openCollections"><span>Manage collections</span><span id="collCount">0 ›</span></button>
+    <p class="note">Tidy up names across every principle at once.</p>
   </div>
   <div class="group">
     <div class="sec">How it works</div>
@@ -496,6 +573,11 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // Picks a smaller font for long or multi-line thoughts so they fit on the card
   // alongside a consideration of up to MAX_WORDS, even on a small phone.
   function sizeClass(x) { var n = (x || "").length, br = ((x || "").match(/\n/g) || []).length; return (n > 200 || br > 5) ? " long" : (n > 70 || br > 1) ? " mid" : ""; }
+  // Card label: collection (or "Principle") on line 1, origin on line 2 when set.
+  function labelHtml(t) {
+    var l = C.label(t);
+    return '<div class="lab2"><span class="eyebrow">' + esc(l.line1) + "</span>" + (l.line2 ? '<span class="orig">' + esc(l.line2) + "</span>" : "") + "</div>";
+  }
   function byline(t) { var p = [t.title, t.author].filter(Boolean); return p.length ? '<div class="by">' + esc(p.join(" · ")) + "</div>" : ""; }
   function days(iso) { return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)); }
   // Local date as YYYY-MM-DD. Used as the key for the activity grid.
@@ -832,7 +914,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     v.innerHTML =
       '<article class="card glass" id="card" aria-label="Current principle">' +
         '<div class="stamp skip" id="stSkip">NOT TODAY</div><div class="stamp shed" id="stShed">LIVING IT</div><div class="stamp keep" id="stKeep">WORKING ON IT</div>' +
-        '<div class="card-top"><span class="eyebrow">' + esc(t.origin || t.collection || "Principle") + "</span>" +
+        '<div class="card-top">' + labelHtml(t) +
           '<span class="card-right">' + (t.skip_count > 0 ? '<span class="badge">Not today ' + t.skip_count + "×</span>" : "") +
           '<button type="button" class="edit-pill" id="bEdit" aria-label="Edit this principle">' + ICON_EDIT + "Edit</button></span></div>" +
         '<div class="thought' + sizeClass(t.text) + '">' + esc(t.text) + "</div>" +
@@ -911,6 +993,29 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     save(t); evTarget = null; hide(); renderLedger(); toast("Saved.");
   });
 
+  // ---------- collection field ----------
+  // Wires a collection input to its suggestion chips and hint. Chips list the most used
+  // collections; tapping one fills the field. The hint says when typed text will be saved
+  // under an existing collection's spelling. onChange runs after every change.
+  function collectionField(pre, onChange) {
+    var input = $(pre + "Collection"), chips = $(pre + "Chips"), hint = $(pre + "Hint");
+    function paint() {
+      var v = input.value.trim(), canon = C.canonCollection(all(), v);
+      chips.innerHTML = C.collections(all()).slice(0, 8).map(function (c) {
+        return '<button type="button" class="' + (canon && c.name === canon ? "on" : "") + '" data-c="' + esc(c.name) + '">' + esc(c.name) + "</button>";
+      }).join("");
+      var show = v && canon !== v && canon.toLowerCase() === v.replace(/\s+/g, " ").toLowerCase() && canon !== v.replace(/\s+/g, " ");
+      hint.hidden = !show;
+      if (show) hint.innerHTML = "Will save as <b>" + esc(canon) + "</b>, your existing collection.";
+    }
+    input.addEventListener("input", function () { paint(); if (onChange) onChange(); });
+    chips.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-c]"); if (!b) return;
+      input.value = b.getAttribute("data-c"); paint(); if (onChange) onChange();
+    });
+    return { paint: paint, input: input };
+  }
+
   // ---------- edit sheet ----------
   // Change a principle's wording. Validation and what is kept live in core.js
   // (checkEdit, applyEdit). A deck principle gets a fresh model line for the new
@@ -922,20 +1027,40 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     var lived = t.status === "shed";
     $("editNote").textContent = lived
       ? "The Living it date, where it showed up, and the last AI line stay."
-      : "Your counts, dates and weight stay. The AI line is rewritten for the new wording.";
+      : "Your counts, dates and weight stay. Changing the wording rewrites the AI line; changing details keeps it.";
     $("editKept").innerHTML = (lived
       ? ["Lived " + fmtDate(t.shed_at), t.evidence ? "Where it showed up" : "", lastLine(t) ? "Last AI line" : "", t.lifetime_skips + " not today"]
       : ["Not today " + t.skip_count, "Worked on " + t.reflect_count, "Since " + fmtDate(t.created_at), "Weight " + weight(t).toFixed(1)]
     ).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("");
     $("editInput").value = t.text;
+    $("editCollection").value = t.collection || "";
+    $("editTitle").value = t.title || "";
+    $("editAuthor").value = t.author || "";
+    editOrigin = t.origin || "";
+    paintEditOrigin();
+    editColl.paint();
     checkEditInput();
     show("sheetEdit");
     setTimeout(function () { var el = $("editInput"); el.focus(); el.setSelectionRange(el.value.length, el.value.length); }, 60);
   }
+  // Everything the sheet would save, as one edit for core.js.
+  var editOrigin = "";
+  function editValues() {
+    return { text: $("editInput").value, collection: $("editCollection").value, title: $("editTitle").value, author: $("editAuthor").value, origin: editOrigin };
+  }
+  function paintEditOrigin() {
+    Array.prototype.forEach.call(document.querySelectorAll("#editOriginPills .pill"), function (q) {
+      q.setAttribute("aria-pressed", String(q.getAttribute("data-o") === editOrigin));
+    });
+  }
+  // Tapping the selected origin again clears it.
+  Array.prototype.forEach.call(document.querySelectorAll("#editOriginPills .pill"), function (q) {
+    q.onclick = function () { var o = q.getAttribute("data-o"); editOrigin = editOrigin === o ? "" : o; paintEditOrigin(); checkEditInput(); };
+  });
   // Live validation: counter, Save state, and a message for a duplicate.
   function checkEditInput() {
     var v = $("editInput").value, err = $("editErr");
-    var r = editTarget ? C.checkEdit(all(), editTarget, v) : { reason: "empty" };
+    var r = editTarget ? C.checkEdit(all(), editTarget, editValues()) : { reason: "empty" };
     $("editCount").textContent = v.length + " / " + C.MAX_TEXT;
     $("editSave").disabled = !r.ok;
     if (r.reason === "duplicate") {
@@ -945,15 +1070,83 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     } else err.hidden = true;
     return r;
   }
-  $("editInput").addEventListener("input", checkEditInput);
+  var editColl = collectionField("edit", checkEditInput);
+  ["editInput", "editTitle", "editAuthor"].forEach(function (id) { $(id).addEventListener("input", checkEditInput); });
   $("editSave").addEventListener("click", function () {
     var t = editTarget; if (!t || !checkEditInput().ok) return;
-    C.applyEdit(t, $("editInput").value);
-    delete ready[t.id];
+    var before = t.text;
+    C.applyEdit(t, editValues(), all());
+    var reworded = t.text !== before;
+    if (reworded) delete ready[t.id];
     save(t); editTarget = null; hide(); toast("Saved. History kept.");
-    if (t.id === current) { renderDeck(); requestLine(t); }
+    // A new wording needs a new line; a detail-only edit keeps the line on screen.
+    if (t.id === current) { renderDeck(); if (reworded) requestLine(t); }
     if (!$("v-ledger").hidden) renderLedger();
   });
+
+  // ---------- manage collections ----------
+  // List every collection with its count; rename, merge or remove one across every
+  // principle. Only the collection field changes (core.js renameCollection and
+  // removeCollection); wording, counts, dates, status, evidence and AI lines stay.
+  function paintCollCount() { $("collCount").textContent = C.collections(all()).length + " \u203a"; }
+  function openCollections() {
+    var list = C.collections(all());
+    $("collList").innerHTML = list.length ? list.map(function (c) {
+      return '<button type="button" data-coll="' + esc(c.name) + '"><b>' + esc(c.name) + "</b><span>" + c.count + (c.count === 1 ? " principle" : " principles") + " \u203a</span></button>";
+    }).join("") : '<p class="none">No collections yet. Add one from a principle\'s Edit sheet or when capturing.</p>';
+    show("sheetCollections");
+  }
+  $("openCollections").onclick = openCollections;
+  $("collDone").onclick = function () { paintCollCount(); show("sheetSettings"); };
+  $("collList").addEventListener("click", function (e) { var b = e.target.closest("[data-coll]"); if (b) openRename(b.getAttribute("data-coll")); });
+
+  var renameFrom = null;
+  function openRename(name) {
+    var c = C.collections(all()).filter(function (x) { return x.name === name; })[0]; if (!c) return;
+    renameFrom = c.name;
+    $("renameMeta").textContent = c.name + " \u00b7 " + c.count + (c.count === 1 ? " principle" : " principles");
+    $("renameInput").value = c.name;
+    var rm = $("renameRemove"); rm.classList.remove("confirm"); rm.textContent = "Remove this collection";
+    $("renameRemoveNote").textContent = "Removing leaves the " + (c.count === 1 ? "principle" : c.count + " principles") + " in place with no collection.";
+    checkRenameInput();
+    show("sheetRename");
+    setTimeout(function () { var el = $("renameInput"); el.focus(); el.select(); }, 60);
+  }
+  function checkRenameInput() {
+    var r = C.checkRename(all(), renameFrom, $("renameInput").value), n = $("renameNotice"), b = $("renameSave");
+    b.disabled = !r.ok;
+    if (r.ok && r.merge) {
+      n.hidden = false;
+      n.innerHTML = "<b>" + esc(r.target) + " already exists</b> with " + (r.total - r.moving) + (r.total - r.moving === 1 ? " principle" : " principles") +
+        ". Saving moves " + (r.moving === 1 ? "this one" : "all " + r.moving) + " into " + esc(r.target) + ", for " + r.total + " in total. Their history is kept.";
+      b.textContent = "Merge into " + r.target;
+    } else { n.hidden = true; b.textContent = "Rename"; }
+    return r;
+  }
+  $("renameInput").addEventListener("input", checkRenameInput);
+  function afterCollectionChange(msg) {
+    lsSet(LS, thoughts); toast(msg); renderDeck();
+    if (!$("v-ledger").hidden) renderLedger();
+    openCollections();
+  }
+  $("renameSave").addEventListener("click", function () {
+    var r = checkRenameInput(); if (!r.ok) return;
+    var n = C.renameCollection(all(), renameFrom, $("renameInput").value);
+    afterCollectionChange(r.merge ? "Merged " + n + " into " + r.target + "." : "Renamed to " + r.target + ".");
+  });
+  // Remove needs a second tap within 3 seconds, like Delete in the Ledger.
+  $("renameRemove").addEventListener("click", function () {
+    var b = $("renameRemove");
+    if (!b.classList.contains("confirm")) {
+      var c = C.collections(all()).filter(function (x) { return x.name === renameFrom; })[0];
+      b.classList.add("confirm"); b.textContent = "Tap again to remove from " + (c ? c.count : 0) + (c && c.count === 1 ? " principle" : " principles");
+      setTimeout(function () { if (b.isConnected && b.classList.contains("confirm")) { b.classList.remove("confirm"); b.textContent = "Remove this collection"; } }, 3000);
+      return;
+    }
+    var name = renameFrom, n = C.removeCollection(all(), name);
+    afterCollectionChange("Removed " + name + " from " + n + (n === 1 ? " principle." : " principles."));
+  });
+  $("renameCancel").onclick = openCollections;
 
   // ---------- render: ledger ----------
   // Ledger. Totals and two rings (share shed, share resisting), the In deck / Shed list,
@@ -1027,7 +1220,16 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // Capture sheet. Optional origin pill, MAX_TEXT character limit, and a new principle starts
   // with zero counts. It goes straight into the deck.
   var origin = "", input = $("thoughtInput");
-  function openCapture() { show("sheetCapture"); setTimeout(function () { input.focus(); }, 60); }
+  // More details starts collapsed on every capture.
+  function setCapMore(open) {
+    $("capDetails").hidden = !open;
+    $("capMore").setAttribute("aria-expanded", String(open));
+    $("capMoreHint").textContent = open ? "Hide \u2304" : "Collection, title, author \u203a";
+    if (open) capColl.paint();
+  }
+  var capColl = collectionField("cap");
+  $("capMore").onclick = function () { setCapMore($("capDetails").hidden); };
+  function openCapture() { setCapMore(false); show("sheetCapture"); setTimeout(function () { input.focus(); }, 60); }
   input.addEventListener("input", function () {
     $("thoughtCount").textContent = input.value.length + " / " + C.MAX_TEXT;
     $("addBtn").disabled = !input.value.trim();
@@ -1043,9 +1245,12 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     e.preventDefault();
     var text = input.value.trim(); if (!text) return;
     var t = { id: newId(), text: text, origin: origin, created_at: new Date().toISOString(), status: "active",
-      skip_count: 0, lifetime_skips: 0, reflect_count: 0, consecutive_reflects: 0, recent_lines: [] };
+      skip_count: 0, lifetime_skips: 0, reflect_count: 0, consecutive_reflects: 0, recent_lines: [],
+      collection: C.canonCollection(all(), $("capCollection").value),
+      title: $("capTitle").value.trim().slice(0, C.LIMITS.title), author: $("capAuthor").value.trim().slice(0, C.LIMITS.author) };
     save(t);
     input.value = ""; input.dispatchEvent(new Event("input"));
+    $("capCollection").value = ""; $("capTitle").value = ""; $("capAuthor").value = ""; setCapMore(false);
     origin = ""; Array.prototype.forEach.call(document.querySelectorAll("#originPills .pill"), function (q) { q.setAttribute("aria-pressed", "false"); });
     hide(); toast("Added to the deck.");
     go("deck");
@@ -1131,7 +1336,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   }
   $("toLedger").onclick = function () { go("ledger"); };
   $("toDeck").onclick = function () { go("deck"); };
-  $("openSettings").onclick = function () { show("sheetSettings"); };
+  $("openSettings").onclick = function () { paintCollCount(); show("sheetSettings"); };
 
   // Show a short message for 1.8 seconds.
   var toastTimer;

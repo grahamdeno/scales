@@ -183,3 +183,73 @@ test("applyEdit keeps history and clears model lines only for deck principles", 
   assert.equal(lived.text, "New");
   assert.deepEqual([lived.status, lived.shed_at, lived.evidence, lived.recent_lines], ["shed", "2026-10-01T12:00:00.000Z", "Showed up.", ["last"]]);
 });
+
+// ---------- 1.22.0: details, labels, collections ----------
+const P = (id, extra = {}) => Object.assign({ id, text: "Principle " + id, status: "active", collection: "", title: "", author: "", origin: "",
+  skip_count: 1, lifetime_skips: 2, reflect_count: 3, created_at: "2026-09-01T12:00:00.000Z", recent_lines: ["line"] }, extra);
+
+test("collections are counted case-insensitively, most used first", () => {
+  const list = [P("a", { collection: "Poems" }), P("b", { collection: "poems" }), P("c", { collection: "Stoic" }),
+    P("d", { collection: " " }), P("e", { collection: "Everyday", status: "shed" }), P("f", { collection: "Everyday" }), P("g", { collection: "Everyday" })];
+  assert.deepEqual(C.collections(list), [{ name: "Everyday", count: 3 }, { name: "Poems", count: 2 }, { name: "Stoic", count: 1 }]);
+});
+
+test("a typed collection takes the spelling of an existing one", () => {
+  const list = [P("a", { collection: "Poems" })];
+  assert.equal(C.canonCollection(list, "  poems "), "Poems");
+  assert.equal(C.canonCollection(list, "New   one"), "New one");
+  assert.equal(C.canonCollection(list, "x".repeat(60)).length, C.LIMITS.collection);
+  assert.equal(C.canonCollection(list, "   "), "");
+});
+
+test("detail-only edits are allowed and keep AI lines; unchanged is blocked", () => {
+  const a = P("a", { collection: "Everyday" }), list = [a, P("b", { collection: "Poems" })];
+  assert.equal(C.checkEdit(list, a, {}).reason, "unchanged");
+  assert.equal(C.checkEdit(list, a, { collection: " everyday " }).reason, "unchanged");
+  const r = C.checkEdit(list, a, { collection: "poems", title: " Morning note ", origin: "Chosen" });
+  assert.ok(r.ok);
+  assert.deepEqual([r.values.collection, r.values.title, r.values.origin], ["Poems", "Morning note", "Chosen"]);
+  C.applyEdit(a, { collection: "poems", title: " Morning note ", origin: "Chosen" }, list);
+  assert.deepEqual([a.collection, a.title, a.origin, a.recent_lines, a.skip_count, a.reflect_count], ["Poems", "Morning note", "Chosen", ["line"], 1, 3]);
+});
+
+test("clearing a detail deletes it, and unknown origins are dropped", () => {
+  const a = P("a", { collection: "Poems", title: "T", author: "A", origin: "Chosen" });
+  C.applyEdit(a, { collection: "  ", title: "", author: " ", origin: "" }, [a]);
+  assert.deepEqual([a.collection, a.title, a.author, a.origin], ["", "", "", ""]);
+  assert.equal(C.editValues([a], a, { origin: "Made up" }).origin, "");
+});
+
+test("details are cut to their limits", () => {
+  const a = P("a");
+  const v = C.editValues([a], a, { title: "t".repeat(200), author: "a".repeat(200) });
+  assert.equal(v.title.length, C.LIMITS.title);
+  assert.equal(v.author.length, C.LIMITS.author);
+});
+
+test("card label shows collection over origin, with Principle as the fallback", () => {
+  assert.deepEqual(C.label(P("a", { collection: "Athletic mindset", origin: "Handed to me" })), { line1: "Athletic mindset", line2: "Handed to me" });
+  assert.deepEqual(C.label(P("a", { collection: "Poems" })), { line1: "Poems", line2: "" });
+  assert.deepEqual(C.label(P("a", { origin: "Not sure" })), { line1: "Principle", line2: "Not sure" });
+  assert.deepEqual(C.label(P("a")), { line1: "Principle", line2: "" });
+});
+
+test("rename moves a whole collection; merging keeps the target's spelling", () => {
+  const list = [P("a", { collection: "Stoicism" }), P("b", { collection: "stoicism", status: "shed", evidence: "e" }),
+    P("c", { collection: "Stoic" }), P("d", { collection: "Poems" })];
+  assert.equal(C.checkRename(list, "Stoicism", "").reason, "empty");
+  assert.equal(C.checkRename(list, "Stoicism", "Stoicism").reason, "unchanged");
+  assert.equal(C.checkRename(list, "Stoicism", "x".repeat(41)).reason, "too long");
+  assert.deepEqual(C.checkRename(list, "Stoicism", "STOIC"), { ok: true, merge: true, target: "Stoic", moving: 2, total: 3 });
+  assert.deepEqual(C.checkRename(list, "Poems", "Verse"), { ok: true, merge: false, target: "Verse", moving: 1, total: 1 });
+  const before = JSON.stringify(list.map(({ collection, ...rest }) => rest));
+  assert.equal(C.renameCollection(list, "Stoicism", "stoic"), 2);
+  assert.deepEqual(list.map((t) => t.collection), ["Stoic", "Stoic", "Stoic", "Poems"]);
+  assert.equal(JSON.stringify(list.map(({ collection, ...rest }) => rest)), before, "only collection changed");
+});
+
+test("remove clears a collection and leaves the principles", () => {
+  const list = [P("a", { collection: "Explore This" }), P("b", { collection: "explore this" }), P("c", { collection: "Poems" })];
+  assert.equal(C.removeCollection(list, "Explore This"), 2);
+  assert.deepEqual(list.map((t) => [t.id, t.collection]), [["a", ""], ["b", ""], ["c", "Poems"]]);
+});

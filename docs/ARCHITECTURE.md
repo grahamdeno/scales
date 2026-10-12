@@ -87,6 +87,7 @@ stateDiagram-v2
     LivingSheet --> Active: Not yet
     LivingSheet --> Lived: I live this now<br/>optional evidence line
     Active --> Active: Edit wording<br/>history kept, AI line rewritten
+    Active --> Active: Edit details<br/>history and AI line kept
     Lived --> Lived: Add or edit evidence in Ledger
     Lived --> Lived: Edit wording<br/>record kept
     Lived --> [*]: Delete in Ledger
@@ -127,7 +128,7 @@ sequenceDiagram
 
 | Key | Holds |
 |---|---|
-| `scales.thoughts.v1` | Every principle by id: text, origin, collection, dates, status, counts, recent lines, evidence |
+| `scales.thoughts.v1` | Every principle by id: text, collection, title, author, origin, dates, status, counts, recent lines, evidence |
 | `scales.activity.v1` | Per day counts of inspections and Living it, last 120 days |
 | `scales.prefs.v1` | Theme choice |
 | `scales.apikey.v1` | Anthropic API key, only if saved |
@@ -145,6 +146,7 @@ sequenceDiagram
 | Model output budget | 1024 tokens | The model may reason before answering, and reasoning counts against the budget |
 | Swipe threshold | 90 px | Short drags spring back |
 | Principle length | 1,500 characters | Capture and Edit share the limit; long enough for a short poem |
+| Collection, title, author | 40, 120, 80 characters | Enough for a name; collections match existing ones ignoring capitalization |
 
 ## Versioning and updates
 
