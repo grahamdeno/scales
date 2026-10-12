@@ -341,6 +341,18 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   <button class="btn accent" type="button" id="confirmShed">I live this now</button>
 </section>
 
+<!-- Evidence sheet: add or edit where a lived principle showed up, from the Living it record. -->
+<section class="sheet glass" id="sheetEvidence" hidden aria-label="Where it showed up">
+  <div class="grabber"></div>
+  <h2>Where it showed up <button type="button" data-close>Cancel</button></h2>
+  <div class="sheet-thought" id="evText"></div>
+  <div class="group">
+    <label for="evEdit">One line on when you lived it</label>
+    <textarea id="evEdit" rows="3" maxlength="280" placeholder="Stayed calm when the release slipped a week."></textarea>
+  </div>
+  <button class="btn accent" type="button" id="evSave">Save</button>
+</section>
+
 <!-- Settings sheet -->
 <section class="sheet glass" id="sheetSettings" hidden aria-label="Settings">
   <div class="grabber"></div>
@@ -387,22 +399,27 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     <div class="sec">Home Screen</div>
     <p class="note">In Safari, tap Share, then Add to Home Screen. Works offline once installed.</p>
   </div>
+  <div class="group">
+    <div class="sec">About</div>
+    <div class="status"><span class="dot" style="background:var(--muted)"></span><span id="versionText">Version</span></div>
+    <p class="note">After an update, close and reopen Scales. If this number has not changed, the phone is still running the previous version.</p>
+  </div>
 </section>
 
 <!-- Short status messages (Saved, Shed, Imported...). Read out by screen readers. -->
 <div id="toastHost" aria-live="polite"></div>
 
+<script src="core.js"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
   "use strict";
   // ---------- tuning ----------
-  // CAP        highest weight a thought can reach (4x as likely as a fresh one)
-  // DWELL_SEC  seconds on a card before a reflect is allowed to undo a skip
-  // NUDGE_AT   reflects in a row before the app asks 'Have you lived this yet?'
-  // MAX_WORDS  longest consideration the app will show. Long enough for one complete
-  //            thought, short enough to read at a glance on the card.
-  var CAP = 4, DWELL_SEC = 8, NUDGE_AT = 3, MAX_WORDS = 25;
+  // Selection, weighting and answer checks live in core.js so they can be tested.
+  // DWELL_SEC  seconds on a card before Still working on it can undo a Not today
+  // NUDGE_AT   Still working on it in a row before the app asks 'Have you lived this yet?'
+  var C = ScalesCore, CAP = C.CAP, MAX_WORDS = C.MAX_WORDS, DWELL_SEC = 8, NUDGE_AT = 3;
+  var tier = C.tier, weight = C.weight, words = C.words, clean = C.clean, fit = C.fit, vet = C.vet;
   // Built-in considerations, grouped by how much a thought has been skipped
   // (0 = never, 1 = once or twice, 3 = three or more). Used when there is no API key,
   // no connection, or the model's answer fails the checks in vet(). They cannot
@@ -438,11 +455,6 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   ];
   // Small helpers used throughout.
   var $ = function (id) { return document.getElementById(id); };
-  // Maps a skip count to a FALLBACK/ANGLE tier.
-  function tier(s) { return s >= 3 ? 3 : (s >= 1 ? 1 : 0); }
-  // How likely a thought is to be picked: 1 + 0.5 per skip, capped at CAP.
-  function weight(t) { return Math.min(1 + 0.5 * t.skip_count, CAP); }
-  function words(s) { return s.trim().split(/\s+/).filter(Boolean).length; }
   // Escapes text before it goes into HTML so a thought can never inject markup.
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function fmtDate(iso) { try { var d = new Date(iso); var o = { month: "short", day: "numeric" }; if (d.getFullYear() !== new Date().getFullYear()) o.year = "numeric"; return d.toLocaleDateString("en-US", o); } catch (e) { return ""; } }
@@ -557,21 +569,9 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   function all() { return Object.keys(thoughts).map(function (k) { return thoughts[k]; }); }
   // Thoughts still in the deck (not shed).
   function activeList() { return all().filter(function (t) { return t.status === "active"; }); }
-  // Weighted random pick. Thoughts shown in the last few turns are left out first
-  // (1 turn for a small deck, 3 otherwise), then each remaining thought gets a share
-  // of the draw equal to its weight. Skipped thoughts come back more often.
-  function pickNext() {
-    var pool = activeList();
-    if (!pool.length) return null;
-    var cd = pool.length <= 3 ? 1 : 3;
-    var recent = history.slice(-cd);
-    var eligible = pool.filter(function (t) { return recent.indexOf(t.id) < 0; });
-    if (!eligible.length) eligible = pool;
-    var sum = eligible.reduce(function (a, t) { return a + weight(t); }, 0);
-    var r = Math.random() * sum;
-    for (var i = 0; i < eligible.length; i++) { r -= weight(eligible[i]); if (r <= 0) return eligible[i]; }
-    return eligible[eligible.length - 1];
-  }
+  // Weighted random pick from the active deck with a short repeat cooldown (core.js).
+  function pickNext() { return C.pickFrom(activeList(), history); }
+
   // Put a thought on screen, start the dwell timer, and ask for its line.
   function showThought(t) {
     current = t ? t.id : null;
@@ -611,36 +611,6 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       "- Do not reuse the wording of these recent lines: " + (recent.length ? recent.join(" | ") : "none") + "\n" +
       "Return only the line.\n\n" +
       "Principle: " + t.text + "\nTimes set aside: " + t.skip_count + "\nDays in deck: " + days(t.created_at);
-  }
-  // Normalize the model's answer: first non-empty line only, no leading label,
-  // no quotes, dashes turned into sentence breaks, spaces collapsed.
-  function clean(s) {
-    var first = (s || "").split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean)[0] || "";
-    return first.replace(/^(line|answer|consideration|response)\s*:\s*/i, "")
-      .replace(/["“”]/g, "").replace(/\s*[—–]\s*/g, ". ").replace(/\s+/g, " ").trim();
-  }
-  // Bring an over-long answer within MAX_WORDS by keeping whole sentences from the start.
-  // Returns "" when no complete sentence fits.
-  function fit(s) {
-    if (words(s) <= MAX_WORDS) return s;
-    var parts = s.match(/[^.?]+[.?]+/g) || [], out = "";
-    for (var i = 0; i < parts.length; i++) {
-      var next = (out + " " + parts[i]).trim();
-      if (words(next) > MAX_WORDS) break;
-      out = next;
-    }
-    return out;
-  }
-  // Check an answer. Returns { line } when usable, or { reason } when not.
-  // The echo check only applies to longer thoughts: a short thought ("Discipline is freedom")
-  // is naturally named inside a good line, so containing it is not a sign of a lazy answer.
-  function vet(raw, t) {
-    var s = fit(clean(raw));
-    if (!s) return { reason: words(clean(raw)) ? "too long" : "empty" };
-    if (s.indexOf("!") >= 0) return { reason: "cheerful tone" };
-    var body = t.text.trim().toLowerCase(), low = s.toLowerCase();
-    if (low === body || (body.length >= 60 && low.indexOf(body.slice(0, 60)) >= 0)) return { reason: "echoed the thought" };
-    return { line: s };
   }
   // ready     model lines fetched ahead of time, by thought id, with the text they were written for
   // inflight  open model requests by thought id, so a card and its prefetch share one request
@@ -869,6 +839,23 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     card.addEventListener("pointerup", end); card.addEventListener("pointercancel", end);
   }
 
+  // ---------- evidence sheet ----------
+  // Add or edit the evidence line on a lived principle. An empty save clears it.
+  var evTarget = null;
+  function openEvidence(t) {
+    if (!t) return;
+    evTarget = t;
+    $("evText").textContent = t.text;
+    $("evEdit").value = t.evidence || "";
+    show("sheetEvidence");
+    setTimeout(function () { $("evEdit").focus(); }, 60);
+  }
+  $("evSave").addEventListener("click", function () {
+    var t = evTarget; if (!t) return;
+    t.evidence = $("evEdit").value.trim().slice(0, 280);
+    save(t); evTarget = null; hide(); renderLedger(); toast("Saved.");
+  });
+
   // ---------- render: ledger ----------
   // Ledger. Totals and two rings (share shed, share resisting), the In deck / Shed list,
   // and an 84 day grid (12 weeks). Delete needs a second tap within 3 seconds.
@@ -910,12 +897,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       }).join("") : '<p class="none">Nothing here yet. A principle moves here once you live it without prompting.</p>';
     }
     Array.prototype.forEach.call(L.querySelectorAll("[data-ev]"), function (b) {
-      b.onclick = function () {
-        var t = thoughts[b.getAttribute("data-ev")]; if (!t) return;
-        var v = window.prompt("Where did it show up?", t.evidence || "");
-        if (v === null) return;
-        t.evidence = v.trim().slice(0, 280); save(t); renderLedger();
-      };
+      b.onclick = function () { openEvidence(thoughts[b.getAttribute("data-ev")]); };
     });
     Array.prototype.forEach.call(L.querySelectorAll("[data-del]"), function (b) {
       b.onclick = function () {
@@ -1045,6 +1027,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   $("todayLbl").textContent = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   thoughts = lsGet(LS, {}); activity = lsGet(LSA, {}); prefs = Object.assign({ skin: "auto" }, lsGet(LSP, {}));
   applySkin();
+  $("versionText").textContent = "Version " + C.VERSION + " · built " + fmtDate(C.BUILT + "T12:00:00");
   showNext();
 
   // ---------- API key ----------

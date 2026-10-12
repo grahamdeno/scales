@@ -38,6 +38,16 @@ The name comes from scales falling from the eyes, and from Nietzsche's three met
 
 - Everything lives in the phone's browser storage. No account, no server, no analytics.
 - The API key, if used, stays on the phone and is sent only to `api.anthropic.com`.
+- Starter decks are written for this app and contain no personal data.
+
+### About the API key
+
+The key is stored in the browser's local storage and sent directly from the phone, using Anthropic's header for browser access. That is a reasonable trade for a personal app with no server, but it has limits worth knowing:
+
+- Anyone with the unlocked phone can read the key from Settings.
+- Any script that ran on this page could read it. The app loads no third-party scripts and escapes all user text before display, which keeps that risk low, but it is not zero.
+
+So use a key made only for Scales, and in the Anthropic Console give its workspace a low monthly spend limit (a few dollars covers heavy daily use with a small model). If the phone is lost, revoke the key in the Console. Removing it in Settings only clears it from this phone.
 - CSV and JSON files are ignored by git (`.gitignore`) so a personal export never ends up in this repo.
 
 ## Install on an iPhone
@@ -46,7 +56,7 @@ The name comes from scales falling from the eyes, and from Nietzsche's three met
 2. Share > Add to Home Screen.
 3. Open it from the home screen icon. It runs full screen and works offline.
 
-Optional: Settings (slider icon) > AI line > paste an Anthropic API key > Save key. Set a monthly spend limit in the Anthropic Console.
+Optional: Settings (slider icon) > AI line > paste an Anthropic API key > Save key. See [About the API key](#about-the-api-key) first.
 
 To check the key, tap **Test key** under AI line. It sends one tiny request and reports the result in plain terms: working, key not recognized, no credit on the account, rate or spend limit reached, or no connection.
 
@@ -63,20 +73,22 @@ Six themes: Auto (follows the phone's light or dark setting), Moss, Linen, Ink, 
 ## Project layout
 
 ```
-index.html              the whole app: markup, styles, script
+index.html              the app: markup, styles, UI script
+core.js                 pure logic: weighting, selection, answer checks, version
 sw.js                   service worker: offline shell, network first
 manifest.webmanifest    home screen name, colors, icons
 icons/                  app icon, maskable icon, favicons, source SVG
+tests/                  node:test suite for core.js and release wiring
 docs/                   architecture diagrams and screenshots
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams of how the pieces fit, how a principle moves from capture to Living it, and what happens each time a card is shown.
 
-No build step and no dependencies. The only outside requests are Google Fonts and, if a key is set, the Anthropic API.
+No build step and no runtime dependencies. The only outside requests are Google Fonts and, if a key is set, the Anthropic API.
 
 ## Design decisions
 
-- **One file.** Easy to read, easy to host on GitHub Pages, nothing to install.
+- **One page, one logic file.** The UI lives in `index.html`. The parts worth testing (weighting, selection, answer checks) live in `core.js`, which the page loads with a plain script tag and the tests load with `require()`. Still nothing to build or install.
 - **Network first service worker.** Updates show up the next time the app opens; the cache only covers being offline. API calls are never cached.
 - **Built-in questions as the floor.** The app is fully usable with no key and no connection. With a key, the next card's line is fetched while the current card is read, and a built-in line is shown only if the model cannot supply a valid one (25 words or fewer after trimming to whole sentences, no exclamation mark, not a restatement of a long principle).
 - **Not today cap at 4x.** Without a cap, one avoided principle would take over the deck.
@@ -90,9 +102,20 @@ python3 -m http.server 8000
 
 Then open `http://localhost:8000`. The service worker needs `localhost` or HTTPS.
 
+## Tests
+
+```sh
+node --test
+```
+
+Node 18 or later, no dependencies. Covers weighting, the selection cooldown, answer cleanup and checks, and the version and offline-cache wiring. GitHub Actions runs the same command on every push.
+
 ## Updating the live app
 
-Push to `main`. GitHub Pages redeploys in about a minute. When cached files change, bump `CACHE` in `sw.js` (for example `scales-v12`) so phones drop the old copy.
+1. Bump `VERSION` (and `BUILT`) in `core.js` and the matching `CACHE` name in `sw.js`. The tests fail if they differ.
+2. Run `node --test`.
+3. Push to `main`. GitHub Pages redeploys in about a minute.
+4. On the phone, close and reopen Scales, then check Settings > About for the new version number.
 
 ## Roadmap
 
