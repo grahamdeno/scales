@@ -152,6 +152,10 @@ sequenceDiagram
 
 `core.js` holds `VERSION` as `MAJOR.MINOR.PATCH` (major for breaking changes, minor for features and enhancements, patch for defect fixes only), shown in Settings under About. The service worker cache is named `scales-v` plus the same version, and tests fail if the two differ or the version is not three numbers. Change both on every release so installed phones drop the old cache, and so the number in Settings confirms which build is running. GitHub Actions tags each release in git as `v` plus the version once the tests pass. The service worker fetches same-origin files with `cache: "no-cache"`, so a new release is picked up on the next launch rather than after GitHub Pages' ten minute cache lifetime.
 
+## Page sizing on iPhone
+
+`html` is `height:100%; min-height:100lvh` and `body` is `height:100dvh; overflow:hidden`. This is the combination confirmed to fill the display from the Home Screen. Clipping `html` to the viewport (1.22.1) or pinning `body` with `position:fixed` (1.22.2) both left the app about one status bar short of the bottom in Home Screen mode, which a desktop browser emulating a phone does not reproduce. Page offsets left by the keyboard, and Safari's scroll memory, are handled in script instead (`resetScroll`). Settings > About shows a screen check (screen, window and visible heights, the app's top and bottom, dvh/svh/lvh, safe areas, scroll offset) so any change here can be checked against real phone numbers.
+
 ## Tests
 
 `node --test` runs `tests/core.test.js` with no dependencies. It covers weighting, the selection cooldown, answer cleanup and checks (including the short-principle case that once discarded every model line), and the version and offline-cache wiring. GitHub Actions runs the same command on every push to `main`.

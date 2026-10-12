@@ -25,7 +25,7 @@ img { max-width: 100%; }
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <style>
-/* Layout: one screen pinned to the display edges (no page scroll) built from frosted glass tiles over a blurred background glow.
+/* Layout: one fixed-height screen (100dvh, no page scroll) built from frosted glass tiles over a blurred background glow.
    Deck: header / thought card (flex: 1, takes the leftover height) / actions / "pushing back" strip.
    The ledger view swaps in place of the deck. Capture, shed and settings open as bottom sheets over a scrim.
    All colors are CSS custom properties so a theme is just a different set of values.
@@ -63,14 +63,14 @@ img { max-width: 100%; }
 :root[data-skin="dusk"]  { --bg:#1A121D; --surface:#2A1E2F; --fg:#F2E8F0; --muted:#A592A3; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08); --lived:#E4C0DA; --empty:rgba(255,255,255,.08); --accent:#7FD6C5; --mark:#F5A95C; --g1:#5A2650; --g2:#1F5150; --markText:#F5A95C; --onAccent:#1A121D; color-scheme:dark; }
 :root[data-skin="return"] { --bg:#131220; --surface:#24203A; --fg:#F3EAD8; --muted:#A49CB8; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08); --lived:#D9CFEA; --empty:rgba(255,255,255,.08); --accent:#F08A55; --mark:#E8B860; --g1:#3A2F66; --g2:#6A3A1E; --markText:#E8B860; --onAccent:#131220; color-scheme:dark; }
 
-/* Base. The page never scrolls; individual views and sheets scroll inside it. body is pinned to
-   all four edges (position:fixed; inset:0) rather than given a viewport height: from the Home Screen
-   that is the full display, under the status bar and down to the home indicator, and in Safari it is
-   the visible area between the toolbars. Viewport units are avoided here because iOS reports 100dvh
-   in Home Screen mode as the screen minus the status bar, which left a gap at the bottom. */
+/* Base. These two rules are the sizing confirmed full screen from the Home Screen (1.22.0); keep
+   them as they are. html must stay at least the large viewport and must not clip: when it was
+   clipped to 100dvh or 100% (1.22.1, 1.22.2), iOS Home Screen mode ended the app about one status
+   bar short of the bottom. body is locked to the dynamic viewport and never scrolls; views and
+   sheets scroll inside it. Page offsets left by the keyboard are reset in script (resetScroll). */
 * { box-sizing:border-box; }
-html { height:100%; overflow:hidden; background:var(--bg); }
-body { position:fixed; inset:0; margin:0; overflow:hidden; background:var(--bg); color:var(--fg); font-family:var(--f-body); font-size:15px; line-height:1.4; -webkit-tap-highlight-color:transparent; overscroll-behavior:none; -webkit-font-smoothing:antialiased; }
+html { height:100%; min-height:100lvh; background:var(--bg); }
+body { height:100%; height:100dvh; overflow:hidden; background:var(--bg); color:var(--fg); font-family:var(--f-body); font-size:15px; line-height:1.4; -webkit-tap-highlight-color:transparent; overscroll-behavior:none; -webkit-font-smoothing:antialiased; }
 button, input, textarea { font:inherit; color:inherit; }
 button { cursor:pointer; }
 :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
@@ -518,10 +518,15 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     <div class="sec">About</div>
     <div class="status"><span class="dot" style="background:var(--muted)"></span><span id="versionText">Version</span></div>
     <p class="note">After an update, close and reopen Scales. If this number has not changed, the phone is still running the previous version.</p>
+    <p class="note" id="screenCheck" style="font-family:var(--f-mono);font-size:11px;line-height:1.6"></p>
   </div>
 </section>
 
 <!-- Short status messages (Saved, Shed, Imported...). Read out by screen readers. -->
+<!-- Measuring element for the Settings screen check: viewport heights and safe areas. Never visible. -->
+<div id="vhProbe" aria-hidden="true" style="position:fixed;left:-9999px;top:0;width:1px;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)">
+  <i style="display:block;height:100dvh"></i><i style="display:block;height:100svh"></i><i style="display:block;height:100lvh"></i>
+</div>
 <div id="toastHost" aria-live="polite"></div>
 
 <script src="core.js"></script>
@@ -1357,7 +1362,21 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   }
   $("toLedger").onclick = function () { go("ledger"); };
   $("toDeck").onclick = function () { go("deck"); };
-  $("openSettings").onclick = function () { paintCollCount(); show("sheetSettings"); };
+  // Screen check: the measurements that decide whether the app fills the display. Shown under
+  // About so a layout change can be checked against real phone numbers, not an emulator.
+  function screenCheck() {
+    var pr = $("vhProbe"), ps = getComputedStyle(pr), i = pr.children, r = function (x) { return Math.round(x); };
+    var app = document.querySelector(".app").getBoundingClientRect();
+    var home = !!(navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches));
+    $("screenCheck").textContent = "Screen check \u00b7 " + (home ? "Home Screen" : "browser") +
+      " \u00b7 screen " + r(screen.height) + " \u00b7 window " + r(innerHeight) +
+      " \u00b7 visible " + r(window.visualViewport ? visualViewport.height : innerHeight) +
+      " \u00b7 app " + r(app.top) + "\u2013" + r(app.bottom) +
+      " \u00b7 dvh " + r(i[0].offsetHeight) + " svh " + r(i[1].offsetHeight) + " lvh " + r(i[2].offsetHeight) +
+      " \u00b7 safe " + r(parseFloat(ps.paddingTop)) + "/" + r(parseFloat(ps.paddingBottom)) +
+      " \u00b7 scroll " + r(window.scrollY);
+  }
+  $("openSettings").onclick = function () { paintCollCount(); screenCheck(); show("sheetSettings"); };
 
   // Show a short message for 1.8 seconds.
   var toastTimer;

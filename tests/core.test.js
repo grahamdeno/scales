@@ -254,18 +254,28 @@ test("remove clears a collection and leaves the principles", () => {
   assert.deepEqual(list.map((t) => [t.id, t.collection]), [["a", ""], ["b", ""], ["c", "Poems"]]);
 });
 
-test("the page cannot be scrolled into extra height (1.22.1 regression)", () => {
-  const html = read("index.html");
-  assert.doesNotMatch(html, /100lvh/, "html must not be sized to the large viewport");
-  assert.doesNotMatch(html, /scrollIntoView/, "scrollIntoView also scrolls the page");
-  assert.match(html, /history\.scrollRestoration = "manual"/);
-  assert.match(html, /function hide\(\)[^\n]*resetScroll\(\)/);
-});
-
-test("the app fills the whole screen from the Home Screen (1.22.2 regression)", () => {
+test("page sizing stays at the rules confirmed full screen on the Home Screen (1.22.3)", () => {
   const html = read("index.html");
   const last = (re) => { const m = html.match(re); return m[m.length - 1]; };
-  const body = last(/\nbody \{[^}]*\}/g), root = last(/\nhtml \{[^}]*\}/g);
-  assert.match(body, /position:fixed; inset:0/, "body must be pinned to all four edges");
-  assert.doesNotMatch(body + root, /\d+(dvh|svh|lvh|vh)/, "page height must not come from viewport units");
+  const root = last(/\nhtml \{[^}]*\}/g), body = last(/\nbody \{[^}]*\}/g);
+  // html: at least the large viewport, never clipped. Clipping it ended the app short (1.22.1, 1.22.2).
+  assert.match(root, /height:100%; min-height:100lvh;/);
+  assert.doesNotMatch(root, /overflow|dvh|position/);
+  // body: the dynamic viewport, not pinned with position:fixed (1.22.2).
+  assert.match(body, /height:100%; height:100dvh; overflow:hidden;/);
+  assert.doesNotMatch(body, /position:fixed|inset/);
+});
+
+test("page offsets from the keyboard and scroll memory are reset in script (1.22.1)", () => {
+  const html = read("index.html");
+  assert.doesNotMatch(html, /scrollIntoView/, "scrolling an element into view also scrolls the page");
+  assert.match(html, /history\.scrollRestoration = "manual"/);
+  assert.match(html, /function hide\(\)[^\n]*resetScroll\(\)/);
+  assert.match(html, /addEventListener\("focusout"/);
+});
+
+test("Settings shows a screen check for real-device layout numbers", () => {
+  const html = read("index.html");
+  assert.match(html, /id="screenCheck"/);
+  assert.match(html, /function screenCheck\(\)/);
 });
