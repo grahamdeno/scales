@@ -4,7 +4,7 @@
 // so updates show up the next time the app opens.
 
 // Bump this name whenever cached files change so phones drop the old copy.
-const CACHE = "scales-v13";
+const CACHE = "scales-v14";
 
 // Files needed to open the app offline.
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/favicon-32.png", "icons/favicon-64.png"];
@@ -27,8 +27,10 @@ self.addEventListener("fetch", e => {
   const sameOrigin = url.origin === self.location.origin;
   const isFont = /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
   if (!sameOrigin && !isFont) return;
+  // Same-origin files skip the browser's HTTP cache (GitHub Pages sends max-age=600),
+  // so a new version is picked up on the next launch instead of up to ten minutes later.
   e.respondWith(
-    fetch(req).then(res => {
+    fetch(req, sameOrigin ? { cache: "no-cache" } : undefined).then(res => {
       if (res && (res.ok || res.type === "opaque")) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
       return res;
     }).catch(() => caches.match(req).then(r => r || (req.mode === "navigate" ? caches.match("index.html") : undefined)))
