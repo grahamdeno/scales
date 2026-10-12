@@ -141,6 +141,7 @@ header.top { display:flex; align-items:center; justify-content:space-between; ga
 .r-shed svg { stroke:var(--onAccent); }
 .keep { flex:1; height:60px; border:0; border-radius:18px; background:var(--fg); color:var(--bg); font-size:16px; font-weight:600; }
 
+.stripnote { flex:none; font-size:12px; color:var(--muted); padding:0 2px; margin-top:-4px; }
 .striphead { flex:none; display:flex; justify-content:space-between; align-items:baseline; padding:0 2px; margin-top:2px; }
 .strip { flex:none; display:flex; gap:8px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; margin-inline:-14px; padding-inline:14px; }
 .strip::-webkit-scrollbar { display:none; }
@@ -268,13 +269,13 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   <section class="view" id="v-ledger" aria-label="Ledger" hidden>
     <div class="hero glass">
       <div>
-        <div class="eyebrow">Scales shed</div>
+        <div class="eyebrow">Living it</div>
         <div class="big" id="lShed">0</div>
         <div class="ymd" id="lLine">0 in deck · 0 pushing back</div>
         <div class="sub" id="lAvg"></div>
       </div>
       <div class="rings">
-        <div class="ring"><svg viewBox="0 0 44 44" aria-hidden="true"><circle class="tr" cx="22" cy="22" r="18"/><circle class="pr" id="ringShed" cx="22" cy="22" r="18" pathLength="100" stroke="var(--accent)" stroke-dasharray="0 100"/></svg><div><b id="pShed">0%</b><small>Shed</small></div></div>
+        <div class="ring"><svg viewBox="0 0 44 44" aria-hidden="true"><circle class="tr" cx="22" cy="22" r="18"/><circle class="pr" id="ringShed" cx="22" cy="22" r="18" pathLength="100" stroke="var(--accent)" stroke-dasharray="0 100"/></svg><div><b id="pShed">0%</b><small>Living</small></div></div>
         <div class="ring"><svg viewBox="0 0 44 44" aria-hidden="true"><circle class="tr" cx="22" cy="22" r="18"/><circle class="pr" id="ringRes" cx="22" cy="22" r="18" pathLength="100" stroke="var(--mark)" stroke-dasharray="0 100"/></svg><div><b id="pRes">0%</b><small>Resisting</small></div></div>
       </div>
     </div>
@@ -282,7 +283,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       <div class="tilehead">
         <div class="seg" role="group" aria-label="List">
           <button type="button" id="segDeck" aria-pressed="true">In deck</button>
-          <button type="button" id="segShed" aria-pressed="false">Shed</button>
+          <button type="button" id="segShed" aria-pressed="false">Living it</button>
         </div>
         <div class="legend" id="listLegend">weight 1.0–4.0</div>
       </div>
@@ -291,7 +292,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     <div class="tile glass">
       <div class="tilehead"><div class="sec">Last 12 weeks</div><div class="legend">1 row = 2 weeks</div></div>
       <div class="cal" id="cal" aria-label="Inspection days over the last 12 weeks"></div>
-      <div class="key"><span><i style="background:var(--lived)"></i>inspected</span><span><i style="background:var(--accent)"></i>shed</span><span><i style="background:var(--empty)"></i>no session</span></div>
+      <div class="key"><span><i style="background:var(--lived)"></i>inspected</span><span><i style="background:var(--accent)"></i>living it</span><span><i style="background:var(--empty)"></i>no session</span></div>
     </div>
   </section>
 </div>
@@ -300,13 +301,13 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
 <div class="scrim" id="scrim" hidden></div>
 
 <!-- Capture sheet -->
-<section class="sheet glass" id="sheetCapture" hidden aria-label="Capture a thought">
+<section class="sheet glass" id="sheetCapture" hidden aria-label="Capture a principle">
   <div class="grabber"></div>
-  <h2>New scale <button type="button" data-close>Cancel</button></h2>
+  <h2>New principle <button type="button" data-close>Cancel</button></h2>
   <form class="group" id="captureForm" autocomplete="off" style="gap:14px">
     <p class="note">Write it as a claim. It stays in the deck until you live it without prompting.</p>
     <div class="group">
-      <label for="thoughtInput">Thought</label>
+      <label for="thoughtInput">Principle</label>
       <textarea id="thoughtInput" class="big" maxlength="280" placeholder="Rest is part of the work, not a reward for it."></textarea>
       <div class="counter" id="thoughtCount">0 / 280</div>
     </div>
@@ -323,21 +324,21 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
 </section>
 
 <!-- Shed sheet -->
-<section class="sheet glass" id="sheetShed" hidden aria-label="Shed this scale">
+<section class="sheet glass" id="sheetShed" hidden aria-label="Living it">
   <div class="grabber"></div>
-  <h2>Shed this scale <button type="button" id="shedCancel">Not yet</button></h2>
+  <h2>Living it <button type="button" id="shedCancel">Not yet</button></h2>
   <div class="sheet-thought" id="shedText"></div>
-  <p class="note">Shed it only if you acted on it without prompting yourself.</p>
+  <p class="note">Mark it only if you acted on it without prompting yourself.</p>
   <div class="group">
     <label for="evidenceInput">Where did it show up?</label>
     <textarea id="evidenceInput" rows="3" maxlength="280" placeholder="One line on when you lived it."></textarea>
   </div>
   <div class="stats">
-    <div class="stat"><b id="sReflect">0</b><span>Reflects</span></div>
-    <div class="stat"><b id="sSkips" style="color:var(--markText)">0</b><span>Lifetime skips</span></div>
+    <div class="stat"><b id="sReflect">0</b><span>Worked on</span></div>
+    <div class="stat"><b id="sSkips" style="color:var(--markText)">0</b><span>Not today</span></div>
     <div class="stat"><b id="sDays">0</b><span>Days in deck</span></div>
   </div>
-  <button class="btn accent" type="button" id="confirmShed">Shed it. It is mine now.</button>
+  <button class="btn accent" type="button" id="confirmShed">I live this now</button>
 </section>
 
 <!-- Settings sheet -->
@@ -356,7 +357,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     <button class="btn ghost" type="button" id="testKey">Test key</button>
     <p class="note" id="testResult" hidden></p>
     <div class="status"><span class="dot" id="aiDot" style="background:var(--muted)"></span><span id="aiText">AI lines: built-in (no key)</span></div>
-    <p class="note">The key stays on this phone and is sent only to Anthropic. Only the thought text, skip count and days in deck are sent. Without a key, built-in lines are used.</p>
+    <p class="note">The key stays on this phone and is sent only to Anthropic. Only the principle text, its not today count and days in deck are sent. Without a key, built-in lines are used.</p>
   </div>
   <div class="group">
     <div class="sec">Storage</div>
@@ -366,7 +367,21 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     <p class="note">Back up saves a file you can keep in iCloud Drive. Restore merges a backup into this phone.</p>
     <div class="row2"><button class="btn ghost" type="button" id="csvExportBtn">Export CSV</button><button class="btn ghost" type="button" id="csvImportBtn">Import CSV</button></div>
     <input type="file" id="csvFile" accept=".csv,text/csv,text/plain" hidden>
-    <p class="note">CSV uses the text, title, author, creationDate, tags, collection, link, citation columns. Importing skips thoughts already in the deck. Files are read on this phone and never uploaded.</p>
+    <p class="note">CSV uses the text, title, author, creationDate, tags, collection, link, citation columns. Importing leaves out principles already in the deck. Files are read on this phone and never uploaded.</p>
+  </div>
+  <div class="group" id="starterGroup">
+    <div class="sec">Starter decks</div>
+    <div class="row2"><button class="btn ghost" type="button" data-starter="stoic">Stoic</button><button class="btn ghost" type="button" data-starter="leadership">Leadership</button></div>
+    <button class="btn ghost" type="button" data-starter="athletic">Athletic mindset</button>
+    <p class="note">Adds a short set of principles to the deck. Delete any that are not yours from the Ledger.</p>
+  </div>
+  <div class="group">
+    <div class="sec">How it works</div>
+    <p class="note">Not today raises a principle's weight, so what you set aside comes back more often, up to four times as often as a new one. Still working on it, after at least 8 seconds on the card, lowers that weight by one step. Living it retires the principle to your record.</p>
+  </div>
+  <div class="group">
+    <div class="sec">Origin</div>
+    <p class="note">The name comes from scales falling from the eyes, and from Nietzsche's three metamorphoses: the camel carries ideas, the lion tests them, the child acts from them without thinking. Scales is built for the lion stage.</p>
   </div>
   <div class="group">
     <div class="sec">Home Screen</div>
@@ -583,19 +598,19 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // Recent lines are included so the model does not repeat itself.
   function buildPrompt(t) {
     var recent = (t.recent_lines || []).slice(-3);
-    return "You write one line shown beneath a personal thought in a reflection app.\n" +
-      "The user is testing whether this thought is true for them, until they live it without prompting.\n" +
-      "Write a single considered observation or question that deepens their thinking about this specific thought.\n" +
-      "Work from the words of the thought itself: its assumptions, its tensions, its cost, what it implies if fully true.\n" +
+    return "You write one line shown beneath a personal principle in a reflection app.\n" +
+      "The user is testing whether this principle is true for them, until they live it without prompting.\n" +
+      "Write a single considered observation or question that deepens their thinking about this specific principle.\n" +
+      "Work from the words of the principle itself: its assumptions, its tensions, its cost, what it implies if fully true.\n" +
       "Rules:\n- " + MAX_WORDS + " words or fewer. Count them.\n" +
       "- Angle: " + ANGLE[tier(t.skip_count)] + "\n" +
-      "- No praise, encouragement, cheerleading, or reassurance. Never comment on the act of reflecting or skipping.\n" +
+      "- No praise, encouragement, cheerleading, or reassurance. Never comment on the act of reflecting or setting it aside.\n" +
       "- No cliches or motivational phrasing. Plain, precise, serious language, closer to a philosopher than a coach.\n" +
-      "- Do not instruct, judge, or moralize. Do not repeat the thought verbatim.\n" +
+      "- Do not instruct, judge, or moralize. Do not repeat the principle verbatim.\n" +
       "- No exclamation marks, quotation marks, emoji, em-dashes, lists, or medical language.\n" +
       "- Do not reuse the wording of these recent lines: " + (recent.length ? recent.join(" | ") : "none") + "\n" +
       "Return only the line.\n\n" +
-      "Thought: " + t.text + "\nTimes skipped: " + t.skip_count + "\nDays in deck: " + days(t.created_at);
+      "Principle: " + t.text + "\nTimes set aside: " + t.skip_count + "\nDays in deck: " + days(t.created_at);
   }
   // Normalize the model's answer: first non-empty line only, no leading label,
   // no quotes, dashes turned into sentence breaks, spaces collapsed.
@@ -754,7 +769,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   $("confirmShed").addEventListener("click", function () {
     var t = shedTarget; if (!t) return;
     t.status = "shed"; t.shed_at = new Date().toISOString(); t.evidence = $("evidenceInput").value.trim();
-    save(t); logActivity("shed"); shedDone = true; hide(); toast("Shed."); flyOut("right");
+    save(t); logActivity("shed"); shedDone = true; hide(); toast("Living it."); flyOut("right");
   });
 
   // ---------- render: deck ----------
@@ -768,10 +783,11 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     var push = activeList().filter(function (t) { return t.skip_count > 0 && t.id !== current; })
       .sort(function (a, b) { return weight(b) - weight(a) || b.lifetime_skips - a.lifetime_skips; }).slice(0, 6);
     var chips = push.length ? push.map(function (t) {
-      return '<button type="button" class="chip glass" data-show="' + t.id + '"><span class="n">' + t.skip_count + '<small>skips</small></span><span class="t">' + esc(t.text) + "</span></button>";
+      return '<button type="button" class="chip glass" data-show="' + t.id + '"><span class="n">' + t.skip_count + '<small>not today</small></span><span class="t">' + esc(t.text) + "</span></button>";
     }).join("") : '<div class="chip glass calm"><span class="t">Nothing is pushing back right now.</span></div>';
     return '<div class="striphead"><span class="sec">Pushing back</span><span class="legend">' + activeList().length + ' in deck</span></div>' +
-      '<div class="strip" id="strip">' + chips + '<button type="button" class="chip add" id="addChip" aria-label="Capture a thought">+</button></div>';
+      (push.length ? '<div class="stripnote">What you set aside comes back more often.</div>' : "") +
+      '<div class="strip" id="strip">' + chips + '<button type="button" class="chip add" id="addChip" aria-label="Capture a principle">+</button></div>';
   }
 
   // Builds the deck view: the card, the optional 'Have you lived this yet?' banner,
@@ -782,30 +798,32 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     if (!t) {
       var any = all().length;
       v.innerHTML = '<div class="empty glass"><div class="eyebrow">' + (any ? "Deck clear" : "Start here") + '</div><h1>' +
-        (any ? "Every scale is shed." : "No scales yet.") + '</h1><p>Capture a thought you want to test. It stays in the deck until you live it without prompting.</p>' +
-        '<button type="button" class="btn" style="width:auto;padding-inline:22px" id="emptyAdd">Capture a thought</button></div>' + stripHtml();
+        (any ? "You are living every principle." : "No principles yet.") + '</h1><p>Capture a principle you want to live by. It stays in the deck until you live it without prompting.</p>' +
+        '<button type="button" class="btn" style="width:auto;padding-inline:22px" id="emptyAdd">Capture a principle</button>' +
+        '<button type="button" class="btn ghost" style="width:auto;padding-inline:22px" id="emptyStarter">Load a starter deck</button></div>' + stripHtml();
       $("emptyAdd").onclick = openCapture;
+      $("emptyStarter").onclick = function () { show("sheetSettings"); var g = $("starterGroup"); if (g) g.scrollIntoView({ block: "start" }); };
       bindStrip();
       return;
     }
     var nudge = t.consecutive_reflects >= NUDGE_AT;
     v.innerHTML =
-      '<article class="card glass" id="card" aria-label="Current thought">' +
-        '<div class="stamp skip" id="stSkip">SKIP</div><div class="stamp shed" id="stShed">SHED</div><div class="stamp keep" id="stKeep">KEEP</div>' +
-        '<div class="card-top"><span class="eyebrow">' + esc(t.origin || t.collection || "Scale") + "</span>" +
-          (t.skip_count > 0 ? '<span class="badge">Skipped ' + t.skip_count + "×</span>" : "") + "</div>" +
+      '<article class="card glass" id="card" aria-label="Current principle">' +
+        '<div class="stamp skip" id="stSkip">NOT TODAY</div><div class="stamp shed" id="stShed">LIVING IT</div><div class="stamp keep" id="stKeep">WORKING ON IT</div>' +
+        '<div class="card-top"><span class="eyebrow">' + esc(t.origin || t.collection || "Principle") + "</span>" +
+          (t.skip_count > 0 ? '<span class="badge">Not today ' + t.skip_count + "×</span>" : "") + "</div>" +
         '<div class="thought' + sizeClass(t.text) + '">' + esc(t.text) + "</div>" +
         byline(t) +
         '<div class="rule"></div>' +
         '<div class="ai">' + ICON_SPARK + '<p id="aiLine"></p></div>' +
         '<div class="meta">captured ' + fmtDate(t.created_at) + " · inspected " + t.reflect_count + "× · weight " + weight(t).toFixed(1) + "</div>" +
       "</article>" +
-      (nudge ? '<div class="banner glass"><span>Have you lived this yet?</span><span class="btns"><button type="button" class="b-ghost" id="nudgeNo">Not yet</button><button type="button" class="b-accent" id="nudgeYes">Shed</button></span></div>' : "") +
-      '<div class="hints" aria-hidden="true"><span>← skip</span><span>↑ reflect</span><span>shed →</span></div>' +
+      (nudge ? '<div class="banner glass"><span>Have you lived this yet?</span><span class="btns"><button type="button" class="b-ghost" id="nudgeNo">Not yet</button><button type="button" class="b-accent" id="nudgeYes">Living it</button></span></div>' : "") +
+      '<div class="hints" aria-hidden="true"><span>← not today</span><span>↑ working on it</span><span>living it →</span></div>' +
       '<div class="actions">' +
-        '<button class="round glass r-skip" type="button" id="bSkip" aria-label="Skip">' + ICON_SKIP + "</button>" +
-        '<button class="keep" type="button" id="bKeep">Reflect, keep it</button>' +
-        '<button class="round r-shed" type="button" id="bShed" aria-label="Shed">' + ICON_SHED + "</button>" +
+        '<button class="round glass r-skip" type="button" id="bSkip" aria-label="Not today">' + ICON_SKIP + "</button>" +
+        '<button class="keep" type="button" id="bKeep">Still working on it</button>' +
+        '<button class="round r-shed" type="button" id="bShed" aria-label="Living it">' + ICON_SHED + "</button>" +
       "</div>" + stripHtml();
     $("bSkip").onclick = function () { act("skip"); };
     $("bKeep").onclick = function () { act("keep"); };
@@ -863,7 +881,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     $("lShed").textContent = shed.length;
     $("lLine").textContent = act_.length + " in deck · " + resisting + " pushing back";
     var avg = shed.length ? Math.round(shed.reduce(function (a, t) { return a + Math.max(1, (new Date(t.shed_at) - new Date(t.created_at)) / 86400000); }, 0) / shed.length) : 0;
-    $("lAvg").textContent = shed.length ? "avg " + avg + " days to shed" : "nothing shed yet";
+    $("lAvg").textContent = shed.length ? "avg " + avg + (avg === 1 ? " day" : " days") + " to live it" : "none lived yet";
     var pS = items.length ? Math.round(shed.length / items.length * 100) : 0;
     var pR = act_.length ? Math.round(resisting / act_.length * 100) : 0;
     $("pShed").textContent = pS + "%"; $("ringShed").setAttribute("stroke-dasharray", pS + " 100");
@@ -876,19 +894,29 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     if (listMode === "deck") {
       L.innerHTML = act_.length ? act_.map(function (t) {
         var pct = Math.max(3, (weight(t) - 1) / (CAP - 1) * 100);
-        var label = t.lifetime_skips > t.skip_count ? t.lifetime_skips + " skips · now " + t.skip_count : t.skip_count + " skips";
+        var label = t.lifetime_skips > t.skip_count ? t.lifetime_skips + " not today · now " + t.skip_count : t.skip_count + " not today";
         return '<div class="row"><div class="row-top"><div class="t">' + esc(t.text) + '</div><div class="n">' + label + "</div></div>" +
           '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
-          '<div class="row-foot"><span>since ' + fmtDate(t.created_at) + " · " + t.reflect_count + ' reflects</span><button type="button" data-del="' + t.id + '">Delete</button></div></div>';
+          '<div class="row-foot"><span>since ' + fmtDate(t.created_at) + " · worked on " + t.reflect_count + '×</span><button type="button" data-del="' + t.id + '">Delete</button></div></div>';
       }).join("") : '<p class="none">Nothing in the deck.</p>';
     } else {
-      L.innerHTML = shed.length ? shed.map(function (t) {
+      // The Living it record: each principle you now live, with where it showed up.
+      // Evidence can be added or edited later, since the proof often comes after the decision.
+      L.innerHTML = shed.length ? '<p class="none" style="margin-bottom:10px">What you live now, and where it showed up.</p>' + shed.map(function (t) {
         var span = Math.max(1, Math.round((new Date(t.shed_at) - new Date(t.created_at)) / 86400000));
         return '<div class="row"><div class="row-top"><div class="t">' + esc(t.text) + '</div><div class="n ok">' + fmtDate(t.shed_at) + "</div></div>" +
           (t.evidence ? '<div class="evidence">' + esc(t.evidence) + "</div>" : "") +
-          '<div class="row-foot"><span>' + t.lifetime_skips + " skips over " + span + ' days</span><button type="button" data-del="' + t.id + '">Delete</button></div></div>';
-      }).join("") : '<p class="none">Nothing shed yet. A thought leaves the deck once you live it without prompting.</p>';
+          '<div class="row-foot"><span>' + span + (span === 1 ? " day · " : " days · ") + t.lifetime_skips + ' not today</span><span><button type="button" data-ev="' + t.id + '">' + (t.evidence ? "Edit" : "Add where it showed up") + '</button> · <button type="button" data-del="' + t.id + '">Delete</button></span></div></div>';
+      }).join("") : '<p class="none">Nothing here yet. A principle moves here once you live it without prompting.</p>';
     }
+    Array.prototype.forEach.call(L.querySelectorAll("[data-ev]"), function (b) {
+      b.onclick = function () {
+        var t = thoughts[b.getAttribute("data-ev")]; if (!t) return;
+        var v = window.prompt("Where did it show up?", t.evidence || "");
+        if (v === null) return;
+        t.evidence = v.trim().slice(0, 280); save(t); renderLedger();
+      };
+    });
     Array.prototype.forEach.call(L.querySelectorAll("[data-del]"), function (b) {
       b.onclick = function () {
         if (b.classList.contains("confirm")) { var id = b.getAttribute("data-del"); if (current === id) current = null; remove(id); renderLedger(); toast("Deleted."); }
@@ -936,6 +964,54 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     hide(); toast("Added to the deck.");
     go("deck");
     if (!current) showNext(); else renderDeck();
+  });
+
+  // ---------- starter decks ----------
+  // Optional sets so a new deck is not empty. Written for this app. The deck name is
+  // stored as the collection, which shows as the card's eyebrow. Texts already in the
+  // deck (active or lived) are left out, so loading a set twice adds nothing.
+  var STARTERS = {
+    stoic: { name: "Stoic", items: [
+      "I control my choices and my effort. The rest I meet as it comes.",
+      "What disturbs me is my judgment of the event, not the event.",
+      "The obstacle in the path becomes part of the path.",
+      "I practice discomfort on purpose so it has less hold on me.",
+      "I want what actually happens, not only what I would prefer.",
+      "Character shows in what I do when no one is keeping score.",
+      "This day will not come again. I act as if that matters."] },
+    leadership: { name: "Leadership", items: [
+      "I say the hard thing early and kindly.",
+      "My team watches what I tolerate more than what I say.",
+      "I give credit in public and take responsibility in public.",
+      "Clarity is kindness. Vague direction costs my people time.",
+      "I ask before I tell.",
+      "I make the decisions that are mine to make, and I make them on time.",
+      "Trust is built in small promises kept."] },
+    athletic: { name: "Athletic mindset", items: [
+      "Rest is part of the work, not a reward for it.",
+      "I control effort and attitude. The scoreboard follows.",
+      "Next play. The last one is gone.",
+      "Pressure means I am somewhere that matters.",
+      "I train the boring parts as seriously as the exciting ones.",
+      "Nerves and readiness feel the same. I choose to call it readiness.",
+      "I compete against who I was yesterday."] }
+  };
+  Array.prototype.forEach.call(document.querySelectorAll("[data-starter]"), function (b) {
+    b.onclick = function () {
+      var set = STARTERS[b.getAttribute("data-starter")]; if (!set) return;
+      var have = {}; all().forEach(function (t) { have[t.text.trim().toLowerCase()] = 1; });
+      var added = 0, now = Date.now();
+      set.items.forEach(function (text, i) {
+        if (have[text.toLowerCase()]) return;
+        save({ id: newId(), text: text, origin: "", collection: set.name, created_at: new Date(now + i).toISOString(), status: "active",
+          skip_count: 0, lifetime_skips: 0, reflect_count: 0, consecutive_reflects: 0, recent_lines: [] });
+        added++;
+      });
+      toast(added ? "Added " + added + " from " + set.name : set.name + " is already in the deck");
+      if (!added) return;
+      hide(); go("deck");
+      if (!current) showNext(); else renderDeck();
+    };
   });
 
   // ---------- navigation ----------
@@ -1140,7 +1216,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
         thoughts[t.id] = t; added++;
       });
       lsSet(LS, thoughts);
-      toast(added ? "Imported " + added + (dup ? ", skipped " + dup + " already here" : "") : (dup ? "All " + dup + " are already here" : "No thoughts found"));
+      toast(added ? "Imported " + added + (dup ? ", skipped " + dup + " already here" : "") : (dup ? "All " + dup + " are already here" : "No principles found"));
       if (added) { hide(); if (!current || !thoughts[current]) showNext(); else renderDeck(); if (!$("v-ledger").hidden) renderLedger(); }
     }).catch(function () { toast("Could not read that CSV"); });
     e.target.value = "";
