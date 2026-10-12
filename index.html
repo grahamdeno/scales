@@ -565,7 +565,11 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     renderDeck();
     if (t) requestLine(t);
   }
-  function showNext() { showThought(pickNext()); }
+  // Show the thought queued by prefetchNext when it is still in the deck, otherwise pick fresh.
+  function showNext() {
+    var q = queued && thoughts[queued]; queued = null;
+    showThought(q && q.status === "active" && q.id !== current ? q : pickNext());
+  }
 
   // ---------- consideration line ----------
   // A built-in line for this tier, avoiding the last few shown for this thought.
@@ -623,18 +627,17 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     if (low === body || (body.length >= 60 && low.indexOf(body.slice(0, 60)) >= 0)) return { reason: "echoed the thought" };
     return { line: s };
   }
-  // With a key: show a quiet placeholder, ask the model (two retries if the answer
-  // fails vet), and fall back to a built-in line only if the model cannot supply one.
-  // Without a key: built-in line straight away.
-  // A late answer is applied only if the same card is still on screen.
-  // Accepted lines are saved to the thought so future prompts can avoid them.
-  function requestLine(t) {
-    var seq = ++aiSeq;
-    if (!sample) { lineFor[t.id] = { text: fallbackLine(t), ai: false }; paintLine(); return; }
-    lineFor[t.id] = { text: "Considering…", ai: false, pending: true };
-    paintLine();
-    var lastReason = "";
+  // ready     model lines fetched ahead of time, by thought id, with the text they were written for
+  // inflight  open model requests by thought id, so a card and its prefetch share one request
+  // queued    id of the thought picked to come next, whose line is being fetched now
+  var ready = {}, inflight = {}, queued = null;
+  // Ask the model for one thought's line (two retries if the answer fails vet).
+  // Resolves to { text, of } or null. Never rejects; failures are reported in Settings.
+  function fetchLine(t) {
+    if (inflight[t.id]) return inflight[t.id];
+    var lastReason = "", of = t.text;
     function attempt(n) {
+      if (!sample) return Promise.resolve(null);
       return sample(buildPrompt(t)).then(function (res) {
         var v = vet(res && res.text, t);
         if (v.line) return v.line;
@@ -642,26 +645,57 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
         return n < 2 ? attempt(n + 1) : null;
       });
     }
-    function useFallback() {
-      if (seq !== aiSeq || current !== t.id) return;
-      lineFor[t.id] = { text: fallbackLine(t), ai: false };
-      paintLine();
-    }
-    attempt(0).then(function (s) {
-      if (!s) { $("aiText").textContent = "AI lines: on, but the last answer was not usable (" + lastReason + "). Built-in line shown."; useFallback(); return; }
-      var live = thoughts[t.id];
-      if (live) { live.recent_lines = (live.recent_lines || []).concat([s]).slice(-3); save(live); }
+    var p = attempt(0).then(function (s) {
+      delete inflight[t.id];
+      if (!s) { $("aiText").textContent = "AI lines: on, but the last answer was not usable (" + lastReason + "). Built-in line shown."; return null; }
       setAiStatus();
-      if (seq !== aiSeq || current !== t.id) return;
-      lineFor[t.id] = { text: s, ai: true };
-      paintLine();
-    }).catch(function (e) {
+      return { text: s, of: of };
+    }, function (e) {
+      delete inflight[t.id];
       // Auth failures switch model lines off. Anything else (no credit, rate limit, network)
       // keeps the key but says so in Settings, so a silent fallback is never mistaken for success.
       if (e && e.code === "not_granted") { sample = null; setAiStatus(); $("aiText").textContent = "AI lines: key rejected, using built-in"; }
       else $("aiText").textContent = "AI lines: last request failed (" + ((e && e.message) || "network") + "). Built-in line shown.";
-      useFallback();
+      return null;
     });
+    inflight[t.id] = p;
+    return p;
+  }
+  // Put a model line on the current card and record it so future prompts avoid its wording.
+  function showModelLine(t, s) {
+    lineFor[t.id] = { text: s, ai: true };
+    var live = thoughts[t.id];
+    if (live) { live.recent_lines = (live.recent_lines || []).concat([s]).slice(-3); save(live); }
+    paintLine();
+  }
+  // Pick the next thought now and fetch its line while the current card is being read,
+  // so the next card opens with its line already in place.
+  function prefetchNext() {
+    if (!sample) return;
+    var n = pickNext();
+    queued = n ? n.id : null;
+    if (!n || n.id === current || ready[n.id]) return;
+    fetchLine(n).then(function (r) { if (r) ready[n.id] = r; });
+  }
+  // Without a key: built-in line straight away.
+  // With a key: use a prefetched line if one is ready for this exact text. Otherwise show
+  // a quiet placeholder until the model answers, and fall back to a built-in line only if
+  // it cannot supply one. An answer that arrives after the card has moved on is kept in
+  // ready for the next time that thought comes up.
+  function requestLine(t) {
+    var seq = ++aiSeq;
+    if (!sample) { lineFor[t.id] = { text: fallbackLine(t), ai: false }; paintLine(); return; }
+    var r = ready[t.id]; delete ready[t.id];
+    if (r && r.of === t.text) { showModelLine(t, r.text); prefetchNext(); return; }
+    lineFor[t.id] = { text: "Considering\u2026", ai: false, pending: true };
+    paintLine();
+    fetchLine(t).then(function (r) {
+      if (seq !== aiSeq || current !== t.id) { if (r) ready[t.id] = r; return; }
+      delete ready[t.id];
+      if (r) showModelLine(t, r.text);
+      else { lineFor[t.id] = { text: fallbackLine(t), ai: false }; paintLine(); }
+    });
+    prefetchNext();
   }
   // Draw the current card's line. 'pending' dims the placeholder while a model line is on the way.
   function paintLine() {
