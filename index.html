@@ -63,10 +63,12 @@ img { max-width: 100%; }
 :root[data-skin="dusk"]  { --bg:#1A121D; --surface:#2A1E2F; --fg:#F2E8F0; --muted:#A592A3; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08); --lived:#E4C0DA; --empty:rgba(255,255,255,.08); --accent:#7FD6C5; --mark:#F5A95C; --g1:#5A2650; --g2:#1F5150; --markText:#F5A95C; --onAccent:#1A121D; color-scheme:dark; }
 :root[data-skin="return"] { --bg:#131220; --surface:#24203A; --fg:#F3EAD8; --muted:#A49CB8; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08); --lived:#D9CFEA; --empty:rgba(255,255,255,.08); --accent:#F08A55; --mark:#E8B860; --g1:#3A2F66; --g2:#6A3A1E; --markText:#E8B860; --onAccent:#131220; color-scheme:dark; }
 
-/* Base. The body is locked to the dynamic viewport height and never scrolls; individual views scroll
-   inside it. This keeps the app feeling native when launched from the home screen. */
+/* Base. The page is locked to the visible screen height and never scrolls; individual views and
+   sheets scroll inside it. html is sized to the dynamic viewport rather than the large one, so in
+   Safari with its toolbars showing there is no extra height to scroll into. The html background
+   still paints the whole canvas, including behind the toolbars. */
 * { box-sizing:border-box; }
-html { height:100%; min-height:100lvh; background:var(--bg); }
+html { height:100%; height:100dvh; overflow:hidden; background:var(--bg); }
 body { height:100%; height:100dvh; overflow:hidden; background:var(--bg); color:var(--fg); font-family:var(--f-body); font-size:15px; line-height:1.4; -webkit-tap-highlight-color:transparent; overscroll-behavior:none; -webkit-font-smoothing:antialiased; }
 button, input, textarea { font:inherit; color:inherit; }
 button { cursor:pointer; }
@@ -635,7 +637,24 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // show() can take an onClose callback, which the shed sheet uses to undo a cancelled shed.
   var openSheet = null, onSheetClose = null;
   function show(id, onClose) { if (openSheet) hide(); openSheet = $(id); onSheetClose = onClose || null; $("scrim").hidden = false; openSheet.hidden = false; }
-  function hide() { if (openSheet) openSheet.hidden = true; openSheet = null; $("scrim").hidden = true; var f = onSheetClose; onSheetClose = null; if (f) f(); }
+  function hide() { if (openSheet) openSheet.hidden = true; openSheet = null; $("scrim").hidden = true; var f = onSheetClose; onSheetClose = null; if (f) f(); resetScroll(); }
+
+  // ---------- page position ----------
+  // The page itself should never be scrolled. iOS still scrolls it to keep a focused field
+  // above the keyboard and often leaves it there when the keyboard closes, and Safari
+  // restores that offset on reload. Put it back at the top whenever that can have happened.
+  function resetScroll() {
+    if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0; document.body.scrollTop = 0;
+  }
+  try { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; } catch (e) {}
+  window.addEventListener("pageshow", resetScroll);
+  window.addEventListener("load", resetScroll);
+  function isTyping(el) { return !!el && (el.tagName === "TEXTAREA" || (el.tagName === "INPUT" && el.type !== "file")); }
+  // Keyboard closing: focus leaves a text field (and does not move to another one).
+  document.addEventListener("focusout", function () { setTimeout(function () { if (!isTyping(document.activeElement)) resetScroll(); }, 80); });
+  // Keyboard closing without a blur, and toolbar changes: the visible area grows back.
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", function () { if (!isTyping(document.activeElement)) resetScroll(); });
   $("scrim").addEventListener("click", hide);
   Array.prototype.forEach.call(document.querySelectorAll("[data-close]"), function (b) { b.addEventListener("click", hide); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") hide(); });
@@ -906,7 +925,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
         '<button type="button" class="btn" style="width:auto;padding-inline:22px" id="emptyAdd">Capture a principle</button>' +
         '<button type="button" class="btn ghost" style="width:auto;padding-inline:22px" id="emptyStarter">Load a starter deck</button></div>' + stripHtml();
       $("emptyAdd").onclick = openCapture;
-      $("emptyStarter").onclick = function () { show("sheetSettings"); var g = $("starterGroup"); if (g) g.scrollIntoView({ block: "start" }); };
+      // Scroll only the Settings sheet to the starter decks; scrolling the element into view would also move the page.
+      $("emptyStarter").onclick = function () { show("sheetSettings"); var sh = $("sheetSettings"), g = $("starterGroup"); if (g) sh.scrollTop = Math.max(0, g.offsetTop - 12); };
       bindStrip();
       return;
     }
@@ -1351,6 +1371,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   $("todayLbl").textContent = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   thoughts = lsGet(LS, {}); activity = lsGet(LSA, {}); prefs = Object.assign({ skin: "auto" }, lsGet(LSP, {}));
   applySkin();
+  resetScroll();
   $("versionText").textContent = "Version " + C.VERSION + " · built " + fmtDate(C.BUILT + "T12:00:00");
   showNext();
 

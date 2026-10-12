@@ -253,3 +253,11 @@ test("remove clears a collection and leaves the principles", () => {
   assert.equal(C.removeCollection(list, "Explore This"), 2);
   assert.deepEqual(list.map((t) => [t.id, t.collection]), [["a", ""], ["b", ""], ["c", "Poems"]]);
 });
+
+test("the page cannot be scrolled into extra height (1.22.1 regression)", () => {
+  const html = read("index.html");
+  assert.doesNotMatch(html, /100lvh/, "html must not be sized to the large viewport");
+  assert.doesNotMatch(html, /scrollIntoView/, "scrollIntoView also scrolls the page");
+  assert.match(html, /history\.scrollRestoration = "manual"/);
+  assert.match(html, /function hide\(\)[^\n]*resetScroll\(\)/);
+});
