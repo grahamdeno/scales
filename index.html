@@ -508,13 +508,16 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // Returns a function that sends one prompt to the Anthropic Messages API and resolves
   // to { text }. The special header allows a direct call from the browser; the key never
   // leaves the phone except in this request. A 401/403 is flagged so the app can fall back.
+  // max_tokens covers the model's internal reasoning as well as the visible line.
+  // Haiku 5.5 may reason before answering, so a small budget can be spent entirely
+  // on reasoning and return no text. The prompt keeps the line itself short.
   function makeSampler(key) {
     if (!key) return null;
     return function (prompt) {
       return fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-        body: JSON.stringify({ model: MODEL, max_tokens: 120, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: MODEL, max_tokens: 1024, messages: [{ role: "user", content: prompt }] })
       }).then(function (r) {
         if (r.ok) return r.json();
         // Read Anthropic's error body so the real reason can be shown in Settings.
@@ -526,7 +529,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
         });
       }).then(function (j) {
         var txt = (j.content || []).filter(function (c) { return c.type === "text"; }).map(function (c) { return c.text; }).join(" ");
-        return { text: txt };
+        return { text: txt, stop: j.stop_reason };
       });
     };
   }
@@ -635,7 +638,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       return sample(buildPrompt(t)).then(function (res) {
         var v = vet(res && res.text, t);
         if (v.line) return v.line;
-        lastReason = v.reason;
+        lastReason = v.reason + (res && res.stop ? ", stop: " + res.stop : "");
         return n < 2 ? attempt(n + 1) : null;
       });
     }
