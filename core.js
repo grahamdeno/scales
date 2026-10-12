@@ -8,7 +8,7 @@ var ScalesCore = (function () {
   // Build number shown in Settings. Must match the service worker cache name
   // ("scales-v" + VERSION) so a phone that shows this number is running this code.
   // The tests fail if the two drift apart.
-  var VERSION = 18;
+  var VERSION = 19;
   var BUILT = "2026-10-12";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)

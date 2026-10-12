@@ -191,6 +191,13 @@ header.top { display:flex; align-items:center; justify-content:space-between; ga
 .row-foot button { background:none; border:0; color:var(--muted); font-family:var(--f-body); font-size:12px; padding:6px 0; }
 .row-foot button.confirm { color:var(--markText); font-weight:600; }
 .evidence { font-size:13px; font-style:italic; line-height:1.45; }
+/* Living it record: full principle, then its last model line, then the evidence. */
+.row-top .t.full { display:block; -webkit-line-clamp:unset; overflow:visible; }
+.row-ai { display:flex; gap:8px; align-items:flex-start; font-size:13px; font-style:italic; line-height:1.45; color:var(--muted); }
+.row-ai svg, .sheet-ai svg { width:14px; height:14px; flex:none; margin-top:3px; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; }
+.sheet-ai { display:flex; gap:10px; align-items:flex-start; }
+.sheet-ai p { margin:0; font-size:15px; line-height:1.45; font-style:italic; color:var(--muted); }
+.sheet-ai[hidden] { display:none; }
 .none { font-size:13px; color:var(--muted); margin:0; }
 .cal { display:grid; grid-template-columns:repeat(14, minmax(0,1fr)); gap:4px; }
 .cal i { aspect-ratio:1; border-radius:3px; background:var(--empty); }
@@ -328,6 +335,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   <div class="grabber"></div>
   <h2>Living it <button type="button" id="shedCancel">Not yet</button></h2>
   <div class="sheet-thought" id="shedText"></div>
+  <div class="sheet-ai" id="shedLine" hidden></div>
   <p class="note">Mark it only if you acted on it without prompting yourself.</p>
   <div class="group">
     <label for="evidenceInput">Where did it show up?</label>
@@ -346,6 +354,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   <div class="grabber"></div>
   <h2>Where it showed up <button type="button" data-close>Cancel</button></h2>
   <div class="sheet-thought" id="evText"></div>
+  <div class="sheet-ai" id="evLine" hidden></div>
   <div class="group">
     <label for="evEdit">One line on when you lived it</label>
     <textarea id="evEdit" rows="3" maxlength="280" placeholder="Stayed calm when the release slipped a week."></textarea>
@@ -720,6 +729,17 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     setTimeout(showNext, 230);
   }
 
+  // The most recent model line shown for a principle, or "" if none was ever shown.
+  // recent_lines only ever holds accepted model lines, never built-in ones, and stops
+  // changing once a principle is lived, so its last entry is the final line it received.
+  function lastLine(t) { var r = (t && t.recent_lines) || []; return r.length ? r[r.length - 1] : ""; }
+  // Fill a sheet's line slot with the principle's last model line, or hide it.
+  function showSheetLine(id, t) {
+    var el = $(id), l = lastLine(t);
+    el.hidden = !l;
+    el.innerHTML = l ? ICON_SPARK + "<p>" + esc(l) + "</p>" : "";
+  }
+
   // ---------- shed sheet ----------
   // Shed sheet. Confirming marks the thought shed with a date and the evidence line.
   // Cancelling resets the reflect streak so the nudge banner does not reappear right away.
@@ -727,6 +747,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   function openShed(t) {
     shedTarget = t; shedDone = false;
     $("shedText").textContent = t.text;
+    showSheetLine("shedLine", t);
     $("evidenceInput").value = "";
     $("sReflect").textContent = t.reflect_count;
     $("sSkips").textContent = t.lifetime_skips;
@@ -848,6 +869,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     if (!t) return;
     evTarget = t;
     $("evText").textContent = t.text;
+    showSheetLine("evLine", t);
     $("evEdit").value = t.evidence || "";
     show("sheetEvidence");
     setTimeout(function () { $("evEdit").focus(); }, 60);
@@ -893,7 +915,9 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       // Evidence can be added or edited later, since the proof often comes after the decision.
       L.innerHTML = shed.length ? '<p class="none" style="margin-bottom:10px">What you live now, and where it showed up.</p>' + shed.map(function (t) {
         var span = Math.max(1, Math.round((new Date(t.shed_at) - new Date(t.created_at)) / 86400000));
-        return '<div class="row"><div class="row-top"><div class="t">' + esc(t.text) + '</div><div class="n ok">' + fmtDate(t.shed_at) + "</div></div>" +
+        var l = lastLine(t);
+        return '<div class="row"><div class="row-top"><div class="t full">' + esc(t.text) + '</div><div class="n ok">' + fmtDate(t.shed_at) + "</div></div>" +
+          (l ? '<div class="row-ai">' + ICON_SPARK + "<span>" + esc(l) + "</span></div>" : "") +
           (t.evidence ? '<div class="evidence">' + esc(t.evidence) + "</div>" : "") +
           '<div class="row-foot"><span>' + span + (span === 1 ? " day · " : " days · ") + t.lifetime_skips + ' not today</span><span><button type="button" data-ev="' + t.id + '">' + (t.evidence ? "Edit" : "Add where it showed up") + '</button> · <button type="button" data-del="' + t.id + '">Delete</button></span></div></div>';
       }).join("") : '<p class="none">Nothing here yet. A principle moves here once you live it without prompting.</p>';
@@ -1116,7 +1140,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // CSV in and out. The first 8 columns match common highlight/quote exports. The scales_*
   // columns carry progress so a round trip through a spreadsheet keeps it.
   var CSV_COLS = ["text", "title", "author", "creationDate", "tags", "collection", "link", "citation"];
-  var CSV_EXTRA = ["scales_status", "scales_skips", "scales_lifetime_skips", "scales_reflects", "scales_shed_at", "scales_evidence", "scales_origin"];
+  var CSV_EXTRA = ["scales_status", "scales_skips", "scales_lifetime_skips", "scales_reflects", "scales_shed_at", "scales_evidence", "scales_origin", "scales_last_line"];
   // Small CSV reader: handles quoted fields, doubled quotes and line breaks inside quotes.
   function parseCSV(src) {
     src = src.replace(/^﻿/, "");
@@ -1165,7 +1189,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     var lines = [CSV_COLS.concat(CSV_EXTRA).join(",")];
     list.forEach(function (t) {
       lines.push([t.text, t.title, t.author, dayKey(new Date(t.created_at)), t.tags, t.collection, t.link, t.citation,
-        t.status, t.skip_count, t.lifetime_skips, t.reflect_count, t.shed_at, t.evidence, t.origin].map(csvCell).join(","));
+        t.status, t.skip_count, t.lifetime_skips, t.reflect_count, t.shed_at, t.evidence, t.origin, lastLine(t)].map(csvCell).join(","));
     });
     var stamp = new Date(), hh = String(stamp.getHours()).padStart(2, "0"), mm = String(stamp.getMinutes()).padStart(2, "0");
     shareOrDownload(new Blob([lines.join("\n") + "\n"], { type: "text/csv" }), "ScalesExport_" + dayKey() + "_" + hh + "-" + mm + ".csv", "Scales export");
@@ -1198,6 +1222,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
         if (t.lifetime_skips < t.skip_count) t.lifetime_skips = t.skip_count;
         if (t.skip_count > 6) t.skip_count = 6;
         if (status === "shed") { t.shed_at = g(r, "scales_shed_at") || new Date().toISOString(); t.evidence = g(r, "scales_evidence"); }
+        var ll = g(r, "scales_last_line").trim(); if (ll) t.recent_lines = [ll];
         thoughts[t.id] = t; added++;
       });
       lsSet(LS, thoughts);

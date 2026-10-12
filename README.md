@@ -26,7 +26,7 @@ You write down a principle you want to live by ("the hard conversation is usuall
 
 **Starter decks.** Stoic, Leadership and Athletic mindset sets, loaded from Settings or the empty deck, so a new deck has something in it.
 
-**The ledger.** How many principles you live, share of the deck lived and resisting, average days to live one, each principle's history, and a 12 week activity grid. The Living it list is the record: each principle with where it showed up, editable later.
+**The ledger.** How many principles you live, share of the deck lived and resisting, average days to live one, each principle's history, and a 12 week activity grid. The Living it list is the record: each principle in full, the last model line it received, and where it showed up, editable later. The Living it and evidence sheets show that last line too, so it is in view while you write.
 
 **The line under each principle.** A short line, 25 words or fewer, drawn from the words of the principle itself and written in the spirit of Jung and Nietzsche: avoidance is treated as the shadow protecting comfort, fear or self-image, and the line speaks for the person you are becoming rather than your comfort today. It holds the standard. No praise, no pep talk, and no grace for the gap between the principle and your conduct. It presses harder the more a principle has been set aside: fresh ones are asked what they demand, set-aside ones what was chosen instead, and the most avoided are confronted with what the avoidance protects. Lines that slip into a gentle, permission-giving tone are rejected and asked for again. Built-in questions are used by default. If you add your own Anthropic API key in Settings, a new consideration is written for each showing by a small, fast model. Only the principle text, its not today count and days in the deck are sent.
 
@@ -63,7 +63,7 @@ To check the key, tap **Test key** under AI line. It sends one tiny request and 
 ## Your data
 
 - **Back up / Restore** (Settings): a JSON file of the whole deck. Keep it in iCloud Drive. Restore merges, it does not overwrite.
-- **Import / Export CSV** (Settings): columns `text,title,author,creationDate,tags,collection,link,citation`, which matches common highlight and quote exports. Export adds `scales_*` columns (status, skips, reflects, shed date, evidence) so a re-import keeps progress. Import leaves out principles already in the deck. Internal field names (`shed`, `skips`) are unchanged so older exports still import.
+- **Import / Export CSV** (Settings): columns `text,title,author,creationDate,tags,collection,link,citation`, which matches common highlight and quote exports. Export adds `scales_*` columns (status, skips, reflects, shed date, evidence, last model line) so a re-import keeps progress. Import leaves out principles already in the deck. Internal field names (`shed`, `skips`) are unchanged so older exports still import.
 - Deleting the home screen icon deletes the data. Back up first.
 
 ## Themes
