@@ -198,6 +198,14 @@ header.top { display:flex; align-items:center; justify-content:space-between; ga
 .sheet-ai { display:flex; gap:10px; align-items:flex-start; }
 .sheet-ai p { margin:0; font-size:15px; line-height:1.45; font-style:italic; color:var(--muted); }
 .sheet-ai[hidden] { display:none; }
+/* Edit control on the card and the edit sheet. */
+.card-right { display:flex; align-items:center; gap:8px; }
+.edit-pill { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:color-mix(in srgb, var(--surface) 70%, transparent); color:var(--fg); font-family:var(--f-body); font-size:13px; font-weight:600; border-radius:999px; padding:5px 11px 5px 9px; touch-action:manipulation; }
+.edit-pill svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+.kept { display:flex; gap:8px; flex-wrap:wrap; }
+.kept span { font-family:var(--f-mono); font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:4px 9px; }
+.sheet-err { margin:0; font-size:13px; color:var(--markText); }
+.sheet-err[hidden] { display:none; }
 .none { font-size:13px; color:var(--muted); margin:0; }
 .cal { display:grid; grid-template-columns:repeat(14, minmax(0,1fr)); gap:4px; }
 .cal i { aspect-ratio:1; border-radius:3px; background:var(--empty); }
@@ -315,8 +323,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     <p class="note">Write it as a claim. It stays in the deck until you live it without prompting.</p>
     <div class="group">
       <label for="thoughtInput">Principle</label>
-      <textarea id="thoughtInput" class="big" maxlength="280" placeholder="Rest is part of the work, not a reward for it."></textarea>
-      <div class="counter" id="thoughtCount">0 / 280</div>
+      <textarea id="thoughtInput" class="big" maxlength="1500" placeholder="Rest is part of the work, not a reward for it."></textarea>
+      <div class="counter" id="thoughtCount">0 / 1500</div>
     </div>
     <div class="group">
       <span class="lbl" id="originLabel">Where it came from (optional)</span>
@@ -360,6 +368,24 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     <textarea id="evEdit" rows="3" maxlength="280" placeholder="Stayed calm when the release slipped a week."></textarea>
   </div>
   <button class="btn accent" type="button" id="evSave">Save</button>
+</section>
+
+<!-- Edit sheet: change a principle's wording from the card or the Ledger. History is kept. -->
+<section class="sheet glass" id="sheetEdit" hidden aria-label="Edit principle">
+  <div class="grabber"></div>
+  <h2>Edit principle <button type="button" data-close>Cancel</button></h2>
+  <p class="note" id="editNote"></p>
+  <div class="group">
+    <label for="editInput">Principle</label>
+    <textarea id="editInput" class="big" maxlength="1500"></textarea>
+    <div class="counter" id="editCount">0 / 1500</div>
+  </div>
+  <p class="sheet-err" id="editErr" role="alert" hidden></p>
+  <div class="group">
+    <span class="lbl">Kept on save</span>
+    <div class="kept" id="editKept"></div>
+  </div>
+  <button class="btn accent" type="button" id="editSave" disabled>Save changes</button>
 </section>
 
 <!-- Settings sheet -->
@@ -630,7 +656,9 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // Ask the model for one thought's line (two retries if the answer fails vet).
   // Resolves to { text, of } or null. Never rejects; failures are reported in Settings.
   function fetchLine(t) {
-    if (inflight[t.id]) return inflight[t.id];
+    // Keyed by id and wording, so a request made before an edit is never reused after it.
+    var key = t.id + "\n" + t.text;
+    if (inflight[key]) return inflight[key];
     var lastReason = "", of = t.text;
     function attempt(n) {
       if (!sample) return Promise.resolve(null);
@@ -642,19 +670,19 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       });
     }
     var p = attempt(0).then(function (s) {
-      delete inflight[t.id];
+      delete inflight[key];
       if (!s) { $("aiText").textContent = "AI lines: on, but the last answer was not usable (" + lastReason + "). Built-in line shown."; return null; }
       setAiStatus();
       return { text: s, of: of };
     }, function (e) {
-      delete inflight[t.id];
+      delete inflight[key];
       // Auth failures switch model lines off. Anything else (no credit, rate limit, network)
       // keeps the key but says so in Settings, so a silent fallback is never mistaken for success.
       if (e && e.code === "not_granted") { sample = null; setAiStatus(); $("aiText").textContent = "AI lines: key rejected, using built-in"; }
       else $("aiText").textContent = "AI lines: last request failed (" + ((e && e.message) || "network") + "). Built-in line shown.";
       return null;
     });
-    inflight[t.id] = p;
+    inflight[key] = p;
     return p;
   }
   // Put a model line on the current card and record it so future prompts avoid its wording.
@@ -769,6 +797,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // Inline SVG icons used when building the deck.
   var ICON_SKIP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>';
   var ICON_SHED = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var ICON_EDIT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
   var ICON_SPARK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></svg>';
 
   // The 'Pushing back' strip: up to 6 most skipped thoughts (tap one to show it) plus the add button.
@@ -804,7 +833,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       '<article class="card glass" id="card" aria-label="Current principle">' +
         '<div class="stamp skip" id="stSkip">NOT TODAY</div><div class="stamp shed" id="stShed">LIVING IT</div><div class="stamp keep" id="stKeep">WORKING ON IT</div>' +
         '<div class="card-top"><span class="eyebrow">' + esc(t.origin || t.collection || "Principle") + "</span>" +
-          (t.skip_count > 0 ? '<span class="badge">Not today ' + t.skip_count + "×</span>" : "") + "</div>" +
+          '<span class="card-right">' + (t.skip_count > 0 ? '<span class="badge">Not today ' + t.skip_count + "×</span>" : "") +
+          '<button type="button" class="edit-pill" id="bEdit" aria-label="Edit this principle">' + ICON_EDIT + "Edit</button></span></div>" +
         '<div class="thought' + sizeClass(t.text) + '">' + esc(t.text) + "</div>" +
         byline(t) +
         '<div class="rule"></div>' +
@@ -821,6 +851,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     $("bSkip").onclick = function () { act("skip"); };
     $("bKeep").onclick = function () { act("keep"); };
     $("bShed").onclick = function () { act("shed"); };
+    $("bEdit").onclick = function () { openEdit(t); };
     if (nudge) {
       $("nudgeYes").onclick = function () { act("shed"); };
       $("nudgeNo").onclick = function () { t.consecutive_reflects = 0; save(t); renderDeck(); paintLine(); };
@@ -844,7 +875,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     var sx = 0, sy = 0, dx = 0, dy = 0, down = false;
     var st = { skip: $("stSkip"), shed: $("stShed"), keep: $("stKeep") };
     function resetStamps() { st.skip.style.opacity = st.shed.style.opacity = st.keep.style.opacity = 0; }
-    card.addEventListener("pointerdown", function (e) { if (e.button > 0) return; down = true; sx = e.clientX; sy = e.clientY; dx = dy = 0; card.classList.add("dragging"); try { card.setPointerCapture(e.pointerId); } catch (_) {} });
+    card.addEventListener("pointerdown", function (e) { if (e.button > 0 || e.target.closest(".edit-pill")) return; down = true; sx = e.clientX; sy = e.clientY; dx = dy = 0; card.classList.add("dragging"); try { card.setPointerCapture(e.pointerId); } catch (_) {} });
     card.addEventListener("pointermove", function (e) {
       if (!down) return; dx = e.clientX - sx; dy = e.clientY - sy;
       card.style.transform = "translate(" + dx + "px," + Math.min(dy, 40) + "px) rotate(" + (dx / 18) + "deg)";
@@ -880,6 +911,50 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     save(t); evTarget = null; hide(); renderLedger(); toast("Saved.");
   });
 
+  // ---------- edit sheet ----------
+  // Change a principle's wording. Validation and what is kept live in core.js
+  // (checkEdit, applyEdit). A deck principle gets a fresh model line for the new
+  // wording; a lived one keeps its record.
+  var editTarget = null;
+  function openEdit(t) {
+    if (!t) return;
+    editTarget = t;
+    var lived = t.status === "shed";
+    $("editNote").textContent = lived
+      ? "The Living it date, where it showed up, and the last AI line stay."
+      : "Your counts, dates and weight stay. The AI line is rewritten for the new wording.";
+    $("editKept").innerHTML = (lived
+      ? ["Lived " + fmtDate(t.shed_at), t.evidence ? "Where it showed up" : "", lastLine(t) ? "Last AI line" : "", t.lifetime_skips + " not today"]
+      : ["Not today " + t.skip_count, "Worked on " + t.reflect_count, "Since " + fmtDate(t.created_at), "Weight " + weight(t).toFixed(1)]
+    ).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("");
+    $("editInput").value = t.text;
+    checkEditInput();
+    show("sheetEdit");
+    setTimeout(function () { var el = $("editInput"); el.focus(); el.setSelectionRange(el.value.length, el.value.length); }, 60);
+  }
+  // Live validation: counter, Save state, and a message for a duplicate.
+  function checkEditInput() {
+    var v = $("editInput").value, err = $("editErr");
+    var r = editTarget ? C.checkEdit(all(), editTarget, v) : { reason: "empty" };
+    $("editCount").textContent = v.length + " / " + C.MAX_TEXT;
+    $("editSave").disabled = !r.ok;
+    if (r.reason === "duplicate") {
+      var other = r.conflict.text.trim();
+      err.textContent = "Already in your " + (r.conflict.status === "shed" ? "Living it record" : "deck") + ": " + (other.length > 80 ? other.slice(0, 80) + "…" : other);
+      err.hidden = false;
+    } else err.hidden = true;
+    return r;
+  }
+  $("editInput").addEventListener("input", checkEditInput);
+  $("editSave").addEventListener("click", function () {
+    var t = editTarget; if (!t || !checkEditInput().ok) return;
+    C.applyEdit(t, $("editInput").value);
+    delete ready[t.id];
+    save(t); editTarget = null; hide(); toast("Saved. History kept.");
+    if (t.id === current) { renderDeck(); requestLine(t); }
+    if (!$("v-ledger").hidden) renderLedger();
+  });
+
   // ---------- render: ledger ----------
   // Ledger. Totals and two rings (share shed, share resisting), the In deck / Shed list,
   // and an 84 day grid (12 weeks). Delete needs a second tap within 3 seconds.
@@ -908,7 +983,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
         var label = t.lifetime_skips > t.skip_count ? t.lifetime_skips + " not today · now " + t.skip_count : t.skip_count + " not today";
         return '<div class="row"><div class="row-top"><div class="t">' + esc(t.text) + '</div><div class="n">' + label + "</div></div>" +
           '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
-          '<div class="row-foot"><span>since ' + fmtDate(t.created_at) + " · worked on " + t.reflect_count + '×</span><button type="button" data-del="' + t.id + '">Delete</button></div></div>';
+          '<div class="row-foot"><span>since ' + fmtDate(t.created_at) + " · worked on " + t.reflect_count + '×</span><span><button type="button" data-edit="' + t.id + '">Edit</button> · <button type="button" data-del="' + t.id + '">Delete</button></span></div></div>';
       }).join("") : '<p class="none">Nothing in the deck.</p>';
     } else {
       // The Living it record: each principle you now live, with where it showed up.
@@ -919,9 +994,12 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
         return '<div class="row"><div class="row-top"><div class="t full">' + esc(t.text) + '</div><div class="n ok">' + fmtDate(t.shed_at) + "</div></div>" +
           (l ? '<div class="row-ai">' + ICON_SPARK + "<span>" + esc(l) + "</span></div>" : "") +
           (t.evidence ? '<div class="evidence">' + esc(t.evidence) + "</div>" : "") +
-          '<div class="row-foot"><span>' + span + (span === 1 ? " day · " : " days · ") + t.lifetime_skips + ' not today</span><span><button type="button" data-ev="' + t.id + '">' + (t.evidence ? "Edit" : "Add where it showed up") + '</button> · <button type="button" data-del="' + t.id + '">Delete</button></span></div></div>';
+          '<div class="row-foot"><span>' + span + (span === 1 ? " day · " : " days · ") + t.lifetime_skips + ' not today</span><span><button type="button" data-edit="' + t.id + '">Edit</button> · <button type="button" data-ev="' + t.id + '">' + (t.evidence ? "Edit evidence" : "Add evidence") + '</button> · <button type="button" data-del="' + t.id + '">Delete</button></span></div></div>';
       }).join("") : '<p class="none">Nothing here yet. A principle moves here once you live it without prompting.</p>';
     }
+    Array.prototype.forEach.call(L.querySelectorAll("[data-edit]"), function (b) {
+      b.onclick = function () { openEdit(thoughts[b.getAttribute("data-edit")]); };
+    });
     Array.prototype.forEach.call(L.querySelectorAll("[data-ev]"), function (b) {
       b.onclick = function () { openEvidence(thoughts[b.getAttribute("data-ev")]); };
     });
@@ -946,12 +1024,12 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   $("segShed").onclick = function () { listMode = "shed"; renderLedger(); };
 
   // ---------- capture ----------
-  // Capture sheet. Optional origin pill, 280 character limit, and a new thought starts
+  // Capture sheet. Optional origin pill, MAX_TEXT character limit, and a new principle starts
   // with zero counts. It goes straight into the deck.
   var origin = "", input = $("thoughtInput");
   function openCapture() { show("sheetCapture"); setTimeout(function () { input.focus(); }, 60); }
   input.addEventListener("input", function () {
-    $("thoughtCount").textContent = input.value.length + " / 280";
+    $("thoughtCount").textContent = input.value.length + " / " + C.MAX_TEXT;
     $("addBtn").disabled = !input.value.trim();
   });
   Array.prototype.forEach.call(document.querySelectorAll("#originPills .pill"), function (p) {
@@ -1181,7 +1259,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
   }
   // Lowercased, single spaced text. Used to spot duplicates on import.
-  function normText(x) { return String(x || "").replace(/\s+/g, " ").trim().toLowerCase(); }
+  var normText = C.normText;
   // Read a date from the CSV. Plain YYYY-MM-DD is treated as local noon so it never shifts a day.
   function dateToIso(d) {
     d = String(d || "").trim(); if (!d) return new Date().toISOString();

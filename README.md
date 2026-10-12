@@ -20,6 +20,8 @@ You write down a principle you want to live by ("the hard conversation is usuall
 | Still working on it | swipe up | Counts as an inspection. If you stayed on the card at least 8 seconds, the not today count drops by 1. |
 | Living it | swipe right | Opens a short form for where it showed up, then moves the principle to your record. |
 
+**Editing.** Tap Edit on the card, or Edit on any Ledger row, to change a principle's wording. Its counts, dates and weight are kept. A principle still in the deck gets a fresh AI line for the new wording; a lived one keeps its Living it date, evidence and last line. Principles can be up to 1,500 characters, long enough for a short poem.
+
 **Weighting.** What you set aside comes back more often. A principle's chance of showing up is `1 + 0.5 x not today count`, capped at 4x. A short cooldown keeps the same principle from repeating back to back.
 
 **Pushing back.** The strip under the buttons shows the principles you set aside most, so resistance is visible instead of hidden.
@@ -110,11 +112,23 @@ node --test
 
 Node 18 or later, no dependencies. Covers weighting, the selection cooldown, answer cleanup and checks, and the version and offline-cache wiring. GitHub Actions runs the same command on every push.
 
+## Versioning
+
+Releases are numbered `MAJOR.MINOR.PATCH`:
+
+| Part | When it changes | Example |
+|---|---|---|
+| Major | Breaking changes, such as a stored-data change that needs migration | 1.21.0 to 2.0.0 |
+| Minor | New features and enhancements. Patch resets to 0. | 1.21.0 to 1.22.0 |
+| Patch | Defect fixes only | 1.21.0 to 1.21.1 |
+
+Every release, patches included, gets a new version number and a matching git tag (`v1.21.0`).
+
 ## Updating the live app
 
-1. Bump `VERSION` (and `BUILT`) in `core.js` and the matching `CACHE` name in `sw.js`. The tests fail if they differ.
+1. Set `VERSION` (and `BUILT`) in `core.js` and the matching `CACHE` name in `sw.js` (`scales-v1.21.0`). The tests fail if they differ or if the version is not three numbers.
 2. Run `node --test`.
-3. Push to `main`. GitHub Pages redeploys in about a minute.
+3. Push to `main` and tag the release: `git tag v1.21.0 && git push origin v1.21.0`. GitHub Pages redeploys in about a minute.
 4. On the phone, close and reopen Scales, then check Settings > About for the new version number.
 
 ## Roadmap

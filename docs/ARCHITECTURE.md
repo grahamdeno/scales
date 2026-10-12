@@ -86,7 +86,9 @@ stateDiagram-v2
     Nudge --> LivingSheet: Living it
     LivingSheet --> Active: Not yet
     LivingSheet --> Lived: I live this now<br/>optional evidence line
+    Active --> Active: Edit wording<br/>history kept, AI line rewritten
     Lived --> Lived: Add or edit evidence in Ledger
+    Lived --> Lived: Edit wording<br/>record kept
     Lived --> [*]: Delete in Ledger
     Active --> [*]: Delete in Ledger
 ```
@@ -142,10 +144,11 @@ sequenceDiagram
 | Line length | 25 words | Room for one complete consideration, still readable at a glance |
 | Model output budget | 1024 tokens | The model may reason before answering, and reasoning counts against the budget |
 | Swipe threshold | 90 px | Short drags spring back |
+| Principle length | 1,500 characters | Capture and Edit share the limit; long enough for a short poem |
 
 ## Versioning and updates
 
-`core.js` holds `VERSION`, shown in Settings under About. The service worker cache is named `scales-v` plus the same number, and a test fails if the two differ. Bump both on every release so installed phones drop the old cache, and so the number in Settings confirms which build is running. The service worker fetches same-origin files with `cache: "no-cache"`, so a new release is picked up on the next launch rather than after GitHub Pages' ten minute cache lifetime.
+`core.js` holds `VERSION` as `MAJOR.MINOR.PATCH` (major for breaking changes, minor for features and enhancements, patch for defect fixes only), shown in Settings under About. The service worker cache is named `scales-v` plus the same version, and tests fail if the two differ or the version is not three numbers. Change both on every release so installed phones drop the old cache, and so the number in Settings confirms which build is running. Each release is tagged in git as `v` plus the version. The service worker fetches same-origin files with `cache: "no-cache"`, so a new release is picked up on the next launch rather than after GitHub Pages' ten minute cache lifetime.
 
 ## Tests
 

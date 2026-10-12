@@ -5,16 +5,21 @@
 var ScalesCore = (function () {
   "use strict";
 
-  // Build number shown in Settings. Must match the service worker cache name
-  // ("scales-v" + VERSION) so a phone that shows this number is running this code.
-  // The tests fail if the two drift apart.
-  var VERSION = 20;
+  // Release number shown in Settings, as MAJOR.MINOR.PATCH:
+  //   MAJOR  breaking changes, such as a stored-data change that needs migration
+  //   MINOR  new features and enhancements (PATCH resets to 0)
+  //   PATCH  defect fixes only
+  // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
+  // shows this number is running this code. The tests fail if the two drift apart.
+  var VERSION = "1.21.0";
   var BUILT = "2026-10-12";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
   // MAX_WORDS  longest consideration the app will show. Long enough for one complete
   //            thought, short enough to read at a glance on the card.
-  var CAP = 4, MAX_WORDS = 25;
+  // MAX_TEXT   longest principle that can be captured or edited. Covers long imported
+  //            entries such as short poems; the card shrinks its type for long text.
+  var CAP = 4, MAX_WORDS = 25, MAX_TEXT = 1500;
 
   // Maps a not today (skip) count to a prompt and built-in line tier: 0, 1 or 3.
   function tier(s) { return s >= 3 ? 3 : (s >= 1 ? 1 : 0); }
@@ -80,8 +85,36 @@ var ScalesCore = (function () {
     return { line: s };
   }
 
-  return { VERSION: VERSION, BUILT: BUILT, CAP: CAP, MAX_WORDS: MAX_WORDS,
-    tier: tier, weight: weight, words: words, pickFrom: pickFrom, clean: clean, fit: fit, vet: vet };
+  // Principle texts are compared ignoring case, surrounding spaces and runs of spaces.
+  function normText(s) { return String(s || "").trim().replace(/\s+/g, " ").toLowerCase(); }
+
+  // Check a proposed new wording for principle t against every principle in list.
+  // Returns { ok: true } or { reason, conflict } where conflict is the other principle.
+  function checkEdit(list, t, text) {
+    var s = String(text || "").trim();
+    if (!s) return { reason: "empty" };
+    if (s === t.text.trim()) return { reason: "unchanged" };
+    if (s.length > MAX_TEXT) return { reason: "too long" };
+    var key = normText(s);
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id !== t.id && normText(list[i].text) === key) return { reason: "duplicate", conflict: list[i] };
+    }
+    return { ok: true };
+  }
+
+  // Apply a checked new wording. Counts, dates, weight, status and evidence are kept.
+  // A principle still in the deck drops its saved model lines so the next line is written
+  // for the new wording. A lived principle keeps them: its last line is part of the record.
+  function applyEdit(t, text) {
+    t.text = String(text).trim();
+    if (t.status === "active") t.recent_lines = [];
+    t.edited_at = new Date().toISOString();
+    return t;
+  }
+
+  return { VERSION: VERSION, BUILT: BUILT, CAP: CAP, MAX_WORDS: MAX_WORDS, MAX_TEXT: MAX_TEXT,
+    tier: tier, weight: weight, words: words, pickFrom: pickFrom, clean: clean, fit: fit, vet: vet,
+    normText: normText, checkEdit: checkEdit, applyEdit: applyEdit };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = ScalesCore;

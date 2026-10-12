@@ -17,10 +17,15 @@ function lcg(seed) {
 }
 const item = (id, skip_count = 0, text = "Principle " + id) => ({ id, skip_count, text });
 
+test("version is MAJOR.MINOR.PATCH", () => {
+  assert.equal(typeof C.VERSION, "string");
+  assert.match(C.VERSION, /^\d+\.\d+\.\d+$/);
+});
+
 test("version matches the service worker cache name", () => {
-  const m = read("sw.js").match(/const CACHE = "scales-v(\d+)"/);
+  const m = read("sw.js").match(/const CACHE = "scales-v([^"]+)"/);
   assert.ok(m, "CACHE constant not found in sw.js");
-  assert.equal(Number(m[1]), C.VERSION);
+  assert.equal(m[1], C.VERSION);
 });
 
 test("core.js is loaded by the page and cached for offline use", () => {
@@ -137,4 +142,44 @@ test("starter decks hold unique principles and every author line is attributed",
       assert.doesNotMatch(text, /—/, "em dash in: " + text);
     }
   }
+});
+
+test("capture and edit share the principle length limit", () => {
+  const html = read("index.html");
+  for (const id of ["thoughtInput", "editInput"]) {
+    const m = html.match(new RegExp('id="' + id + '"[^>]*maxlength="(\\d+)"'));
+    assert.ok(m, id + " has no maxlength");
+    assert.equal(Number(m[1]), C.MAX_TEXT, id);
+  }
+  assert.equal(C.MAX_TEXT, 1500);
+});
+
+test("checkEdit blocks empty, unchanged, overlong and duplicate wording", () => {
+  const a = { id: "a", text: "I ask before I tell." };
+  const b = { id: "b", text: "Stop saying things that make you weak." };
+  const list = [a, b];
+  assert.equal(C.checkEdit(list, a, "   ").reason, "empty");
+  assert.equal(C.checkEdit(list, a, " I ask before I tell. ").reason, "unchanged");
+  assert.equal(C.checkEdit(list, a, "x".repeat(C.MAX_TEXT + 1)).reason, "too long");
+  const d = C.checkEdit(list, a, "  stop SAYING things   that make you weak.");
+  assert.equal(d.reason, "duplicate");
+  assert.equal(d.conflict, b);
+  assert.ok(C.checkEdit(list, a, "I ask before I tell, every time.").ok);
+  assert.ok(C.checkEdit(list, a, "y".repeat(C.MAX_TEXT)).ok);
+});
+
+test("applyEdit keeps history and clears model lines only for deck principles", () => {
+  const active = { id: "a", text: "Old", status: "active", skip_count: 2, lifetime_skips: 3, reflect_count: 6,
+    created_at: "2026-09-20T12:00:00.000Z", recent_lines: ["one", "two"] };
+  C.applyEdit(active, "  New wording ");
+  assert.equal(active.text, "New wording");
+  assert.deepEqual([active.skip_count, active.lifetime_skips, active.reflect_count, active.created_at, active.status],
+    [2, 3, 6, "2026-09-20T12:00:00.000Z", "active"]);
+  assert.deepEqual(active.recent_lines, []);
+  assert.ok(active.edited_at);
+
+  const lived = { id: "b", text: "Old", status: "shed", shed_at: "2026-10-01T12:00:00.000Z", evidence: "Showed up.", recent_lines: ["last"] };
+  C.applyEdit(lived, "New");
+  assert.equal(lived.text, "New");
+  assert.deepEqual([lived.status, lived.shed_at, lived.evidence, lived.recent_lines], ["shed", "2026-10-01T12:00:00.000Z", "Showed up.", ["last"]]);
 });
