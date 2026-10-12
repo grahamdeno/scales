@@ -28,7 +28,7 @@ flowchart TB
         subgraph logic["Script inside index.html"]
             direction LR
             engine["Deck engine<br/>weight, pickNext, act"]
-            line["Encouraging line<br/>fallbackLine, buildPrompt,<br/>requestLine, valid"]
+            line["Consideration line<br/>fallbackLine, buildPrompt,<br/>requestLine, valid"]
             store["Storage<br/>save, remove, logActivity"]
             io["Back up / Restore<br/>CSV import / export"]
         end
@@ -86,7 +86,7 @@ stateDiagram-v2
 sequenceDiagram
     actor U as User
     participant D as Deck engine
-    participant L as Encouraging line
+    participant L as Consideration line
     participant S as localStorage
     participant A as Anthropic API
 
@@ -96,7 +96,7 @@ sequenceDiagram
     alt API key saved
         L->>A: prompt with thought text, skip count, days in deck
         A-->>L: short line
-        L->>L: clean() and valid() (15 words max, no echo)
+        L->>L: clean() and valid() (25 words max, no exclamation, no echo)
         L-->>U: replace built-in line if same card still showing
         L->>S: remember line to avoid repeats
     end
@@ -122,5 +122,5 @@ sequenceDiagram
 | Weight cap | 4x | One thought cannot take over the deck |
 | Dwell check | 8 seconds | A quick swipe up does not erase a skip |
 | Nudge | 3 reflects in a row | Prompts the shed question |
-| Line length | 15 words | Short enough to read at a glance |
+| Line length | 25 words | Room for one complete consideration, still readable at a glance |
 | Swipe threshold | 90 px | Short drags spring back |

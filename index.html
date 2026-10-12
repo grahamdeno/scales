@@ -117,7 +117,7 @@ header.top { display:flex; align-items:center; justify-content:space-between; ga
 .rule { height:1px; background:var(--line); margin:16px 0 14px; flex:none; }
 .ai { display:flex; gap:10px; align-items:flex-start; min-height:44px; flex:none; }
 .ai svg { width:16px; height:16px; flex:none; margin-top:3px; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; }
-.ai p { margin:0; font-size:15.5px; line-height:1.45; font-style:italic; transition:opacity .3s; }
+.ai p { margin:0; font-size:15px; line-height:1.45; font-style:italic; transition:opacity .3s; }
 .ai p.pending { opacity:.55; }
 .meta { font-family:var(--f-mono); font-size:11.5px; color:var(--muted); margin-top:12px; flex:none; font-variant-numeric:tabular-nums; }
 .stamp { position:absolute; top:22px; font-family:var(--f-display); font-weight:800; font-size:22px; letter-spacing:.06em; padding:4px 12px; border-radius:10px; border:3px solid; opacity:0; pointer-events:none; }
@@ -383,24 +383,32 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // CAP        highest weight a thought can reach (4x as likely as a fresh one)
   // DWELL_SEC  seconds on a card before a reflect is allowed to undo a skip
   // NUDGE_AT   reflects in a row before the app asks 'Have you lived this yet?'
-  // MAX_WORDS  longest encouraging line the app will show
-  var CAP = 4, DWELL_SEC = 8, NUDGE_AT = 3, MAX_WORDS = 15;
-  // Built-in encouraging lines, grouped by how much a thought has been skipped
+  // MAX_WORDS  longest consideration the app will show. Long enough for one complete
+  //            thought, short enough to read at a glance on the card.
+  var CAP = 4, DWELL_SEC = 8, NUDGE_AT = 3, MAX_WORDS = 25;
+  // Built-in considerations, grouped by how much a thought has been skipped
   // (0 = never, 1 = once or twice, 3 = three or more). Used when there is no API key,
-  // no connection, or the model's answer fails the checks in valid().
+  // no connection, or the model's answer fails the checks in valid(). They cannot
+  // see the thought's text, so each one is a question that applies to any claim.
   var FALLBACK = {
-    0: ["Worth testing. Watch for one moment today where this holds.",
-        "Good claim to carry. See where it shows up on its own.",
-        "Hold it lightly today and notice what proves it out."],
-    1: ["Skipping is fine. Something here still wants your attention.",
-        "You came back to it. That counts as inspection too.",
-        "No rush. Read it once more and let it sit."],
-    3: ["You keep coming back to this. That persistence is the inspection working.",
-        "Resistance usually points at something real. Stay with it a moment.",
-        "This one pushes back. That makes it worth the look."]
+    0: ["What would have to be true about you for this to already be true?",
+        "If you lived this completely, what would you have to give up?",
+        "Whose voice first said this, and is it yours now?"],
+    1: ["Which part of this would you rather not be true?",
+        "What does this claim ask of you that you have not yet given?",
+        "Where in the last week did your actions argue against this?"],
+    3: ["What is this resistance protecting?",
+        "If this is false, what are you free to keep doing? If true, what must end?",
+        "What do you lose by believing this, and is that loss the reason you look away?"]
   };
-  // Tone instruction sent to the model for each skip tier. Same tiers as FALLBACK.
-  var TONE = { 0: "affirm the inquiry", 1: "gentle nudge", 3: "name the resistance without pressure" };
+  // The angle the model takes for each skip tier. Same tiers as FALLBACK.
+  // Fresh thoughts get their assumptions examined; skipped ones get their cost
+  // and the reason for avoiding them examined.
+  var ANGLE = {
+    0: "examine an assumption hidden inside the claim, or what follows if it is fully true",
+    1: "consider where the claim breaks down, or what it costs to hold",
+    3: "name, without accusation, what avoiding this claim might be protecting"
+  };
   // Theme list for the Settings picker. sw = the three swatch colors shown on each button.
   // The actual colors live in the CSS under :root[data-skin=...].
   var SKINS = [
@@ -413,7 +421,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   ];
   // Small helpers used throughout.
   var $ = function (id) { return document.getElementById(id); };
-  // Maps a skip count to a FALLBACK/TONE tier.
+  // Maps a skip count to a FALLBACK/ANGLE tier.
   function tier(s) { return s >= 3 ? 3 : (s >= 1 ? 1 : 0); }
   // How likely a thought is to be picked: 1 + 0.5 per skip, capped at CAP.
   function weight(t) { return Math.min(1 + 0.5 * t.skip_count, CAP); }
@@ -421,8 +429,9 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // Escapes text before it goes into HTML so a thought can never inject markup.
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function fmtDate(iso) { try { var d = new Date(iso); var o = { month: "short", day: "numeric" }; if (d.getFullYear() !== new Date().getFullYear()) o.year = "numeric"; return d.toLocaleDateString("en-US", o); } catch (e) { return ""; } }
-  // Picks a smaller font for long or multi-line thoughts so they fit on the card.
-  function sizeClass(x) { var n = (x || "").length, br = ((x || "").match(/\n/g) || []).length; return (n > 260 || br > 5) ? " long" : (n > 110 || br > 1) ? " mid" : ""; }
+  // Picks a smaller font for long or multi-line thoughts so they fit on the card
+  // alongside a consideration of up to MAX_WORDS, even on a small phone.
+  function sizeClass(x) { var n = (x || "").length, br = ((x || "").match(/\n/g) || []).length; return (n > 200 || br > 5) ? " long" : (n > 70 || br > 1) ? " mid" : ""; }
   function byline(t) { var p = [t.title, t.author].filter(Boolean); return p.length ? '<div class="by">' + esc(p.join(" · ")) + "</div>" : ""; }
   function days(iso) { return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)); }
   // Local date as YYYY-MM-DD. Used as the key for the activity grid.
@@ -503,7 +512,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       return fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-        body: JSON.stringify({ model: MODEL, max_tokens: 60, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: MODEL, max_tokens: 90, messages: [{ role: "user", content: prompt }] })
       }).then(function (r) {
         if (r.status === 401 || r.status === 403) { var e = new Error("auth"); e.code = "not_granted"; throw e; }
         if (!r.ok) throw new Error("http " + r.status);
@@ -548,7 +557,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   }
   function showNext() { showThought(pickNext()); }
 
-  // ---------- AI line ----------
+  // ---------- consideration line ----------
   // A built-in line for this tier, avoiding the last few shown for this thought.
   function fallbackLine(t) {
     var arr = FALLBACK[tier(t.skip_count)], used = t.recent_lines || [];
@@ -560,21 +569,25 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // Recent lines are included so the model does not repeat itself.
   function buildPrompt(t) {
     var recent = (t.recent_lines || []).slice(-3);
-    return "You write one short line shown beneath a personal thought in a reflection app.\n" +
-      "The user is testing whether this thought is true for them.\n" +
-      "Rules:\n- 15 words or fewer. Count them.\n" +
-      "- Encourage the user about this specific thought. No generic motivation.\n" +
-      "- Do not instruct, judge, or mention guilt. Do not repeat the thought verbatim.\n" +
-      "- No quotation marks, emoji, em-dashes, lists, or medical language.\n" +
-      "- Tone: " + TONE[tier(t.skip_count)] + "\n" +
+    return "You write one line shown beneath a personal thought in a reflection app.\n" +
+      "The user is testing whether this thought is true for them, until they live it without prompting.\n" +
+      "Write a single considered observation or question that deepens their thinking about this specific thought.\n" +
+      "Work from the words of the thought itself: its assumptions, its tensions, its cost, what it implies if fully true.\n" +
+      "Rules:\n- " + MAX_WORDS + " words or fewer. Count them.\n" +
+      "- Angle: " + ANGLE[tier(t.skip_count)] + "\n" +
+      "- No praise, encouragement, cheerleading, or reassurance. Never comment on the act of reflecting or skipping.\n" +
+      "- No cliches or motivational phrasing. Plain, precise, serious language, closer to a philosopher than a coach.\n" +
+      "- Do not instruct, judge, or moralize. Do not repeat the thought verbatim.\n" +
+      "- No exclamation marks, quotation marks, emoji, em-dashes, lists, or medical language.\n" +
       "- Do not reuse the wording of these recent lines: " + (recent.length ? recent.join(" | ") : "none") + "\n" +
       "Return only the line.\n\n" +
       "Thought: " + t.text + "\nTimes skipped: " + t.skip_count + "\nDays in deck: " + days(t.created_at);
   }
   // Strip quotes and dashes from the model's answer and collapse spaces.
   function clean(s) { return (s || "").replace(/["“”]/g, "").replace(/\s*[—–]\s*/g, ". ").replace(/\s+/g, " ").trim(); }
-  // Accept the answer only if it is short enough and does not just echo the thought.
-  function valid(s, t) { return s && words(s) <= MAX_WORDS && s.toLowerCase().indexOf(t.text.toLowerCase().slice(0, 40)) < 0; }
+  // Accept the answer only if it is short enough, does not just echo the thought,
+  // and has no exclamation mark (a reliable sign the model slipped into a cheerful tone).
+  function valid(s, t) { return s && words(s) <= MAX_WORDS && s.indexOf("!") < 0 && s.toLowerCase().indexOf(t.text.toLowerCase().slice(0, 40)) < 0; }
   // Show a built-in line right away, then try the model (one retry if the answer is invalid).
   // The model line replaces the built-in one only if the same card is still on screen.
   // Accepted lines are saved to the thought so future prompts can avoid them.

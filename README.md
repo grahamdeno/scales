@@ -28,7 +28,7 @@ The name comes from scales falling from the eyes, and from Nietzsche's three met
 
 **The ledger.** Shed count, share of the deck shed and resisting, average days to shed, each thought's history, and a 12 week activity grid.
 
-**The line under each thought.** A short encouraging line, 15 words or fewer, matched to how often the thought has been skipped. Built-in lines are used by default. If you add your own Anthropic API key in Settings, the line is written fresh each time by a small, fast model. Only the thought text, skip count and days in the deck are sent.
+**The line under each thought.** A short consideration, 25 words or fewer, drawn from the words of the thought itself: an assumption it rests on, where it might break down, what it costs to hold, or what it implies if fully true. No praise and no pep talk. The angle shifts with how often the thought has been skipped: fresh thoughts get their assumptions examined, avoided ones get asked what the avoidance protects. Built-in questions are used by default. If you add your own Anthropic API key in Settings, a new consideration is written for each showing by a small, fast model. Only the thought text, skip count and days in the deck are sent.
 
 ## Privacy
 
@@ -72,7 +72,7 @@ No build step and no dependencies. The only outside requests are Google Fonts an
 
 - **One file.** Easy to read, easy to host on GitHub Pages, nothing to install.
 - **Network first service worker.** Updates show up the next time the app opens; the cache only covers being offline. API calls are never cached.
-- **Built-in lines first.** The app is fully usable with no key and no connection. The model line replaces the built-in one only if it comes back valid (15 words or fewer, does not just repeat the thought).
+- **Built-in questions first.** The app is fully usable with no key and no connection. The model line replaces the built-in one only if it comes back valid (25 words or fewer, no exclamation mark, does not just repeat the thought).
 - **Skip cap at 4x.** Without a cap, one avoided thought would take over the deck.
 - **Dwell check on reflect.** A quick swipe up should not erase a skip. Eight seconds on the card is the bar.
 
@@ -86,7 +86,7 @@ Then open `http://localhost:8000`. The service worker needs `localhost` or HTTPS
 
 ## Updating the live app
 
-Push to `main`. GitHub Pages redeploys in about a minute. When cached files change, bump `CACHE` in `sw.js` (for example `scales-v10`) so phones drop the old copy.
+Push to `main`. GitHub Pages redeploys in about a minute. When cached files change, bump `CACHE` in `sw.js` (for example `scales-v11`) so phones drop the old copy.
 
 ## Roadmap
 
