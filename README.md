@@ -86,7 +86,7 @@ Then open `http://localhost:8000`. The service worker needs `localhost` or HTTPS
 
 ## Updating the live app
 
-Push to `main`. GitHub Pages redeploys in about a minute. When cached files change, bump `CACHE` in `sw.js` (for example `scales-v9`) so phones drop the old copy.
+Push to `main`. GitHub Pages redeploys in about a minute. When cached files change, bump `CACHE` in `sw.js` (for example `scales-v10`) so phones drop the old copy.
 
 ## Roadmap
 

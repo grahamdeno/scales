@@ -25,9 +25,13 @@ img { max-width: 100%; }
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <style>
-/* Layout: one fixed-height screen of frosted glass tiles over a blurred background glow.
-   Deck: header / thought card (flex) / actions / "pushing back" strip. Ledger swaps in place. Capture, shed, settings are bottom sheets.
-   Color roles: accent = shed, mark = skip / resistance, lived = inspected. */
+/* Layout: one fixed-height screen (100dvh, no page scroll) built from frosted glass tiles over a blurred background glow.
+   Deck: header / thought card (flex: 1, takes the leftover height) / actions / "pushing back" strip.
+   The ledger view swaps in place of the deck. Capture, shed and settings open as bottom sheets over a scrim.
+   All colors are CSS custom properties so a theme is just a different set of values.
+   Color roles: accent = shed, mark = skip / resistance, lived = inspected, g1/g2 = background glow. */
+
+/* Default light theme. */
 :root {
   --bg:#E9EDEC; --surface:#FFFFFF; --fg:#17201E; --muted:#5F6B67; --rim:rgba(255,255,255,.75); --line:rgba(23,32,30,.10);
   --lived:#24302D; --empty:rgba(23,32,30,.12); --accent:#2C78A0; --mark:#C2642A; --g1:#9CD3E6; --g2:#E8C9A6;
@@ -36,6 +40,8 @@ img { max-width: 100%; }
   --f-body:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
+/* Dark values follow the system setting unless a light theme is forced. The same values are repeated
+   under [data-theme="dark"] so dark can also be forced regardless of the system. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg:#0C1110; --surface:#1A2120; --fg:#E8EEEB; --muted:#8E9A96; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08);
@@ -48,13 +54,17 @@ img { max-width: 100%; }
   --lived:#CFD9D5; --empty:rgba(255,255,255,.09); --accent:#6CC0E4; --mark:#F0A062; --g1:#1E5468; --g2:#5A3A22;
   --markText:#F0A062; --onAccent:#0C1110; color-scheme:dark;
 }
-/* Named themes, placed last so they win over the system theme. */
+/* Named themes, set by data-skin on <html>. Each one overrides every color token and sets color-scheme
+   so form controls match. Placed after the defaults so equal specificity resolves in their favor
+   and a chosen theme wins over the system light/dark setting. */
 :root[data-skin="moss"]  { --bg:#111A14; --surface:#1E2A22; --fg:#E6ECDF; --muted:#94A291; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08); --lived:#BCCDA8; --empty:rgba(255,255,255,.08); --accent:#E8C55C; --mark:#E68B5E; --g1:#2F5A35; --g2:#6A5A1E; --markText:#E68B5E; --onAccent:#111A14; color-scheme:dark; }
 :root[data-skin="linen"] { --bg:#EFE8DD; --surface:#FFFBF5; --fg:#2A251F; --muted:#786D61; --rim:rgba(255,255,255,.8); --line:rgba(42,37,31,.10); --lived:#3B342C; --empty:rgba(42,37,31,.12); --accent:#2F6B57; --mark:#B0482F; --g1:#E9C9A0; --g2:#B9D2C2; --markText:#9E3E28; --onAccent:#FFFFFF; color-scheme:light; }
 :root[data-skin="ink"]   { --bg:#0A0F1E; --surface:#161E36; --fg:#E5EAF6; --muted:#8893AF; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08); --lived:#B3C3EC; --empty:rgba(255,255,255,.08); --accent:#F3BC5E; --mark:#FF808C; --g1:#25317A; --g2:#5B2A5E; --markText:#FF808C; --onAccent:#0A0F1E; color-scheme:dark; }
 :root[data-skin="dusk"]  { --bg:#1A121D; --surface:#2A1E2F; --fg:#F2E8F0; --muted:#A592A3; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08); --lived:#E4C0DA; --empty:rgba(255,255,255,.08); --accent:#7FD6C5; --mark:#F5A95C; --g1:#5A2650; --g2:#1F5150; --markText:#F5A95C; --onAccent:#1A121D; color-scheme:dark; }
 :root[data-skin="return"] { --bg:#131220; --surface:#24203A; --fg:#F3EAD8; --muted:#A49CB8; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08); --lived:#D9CFEA; --empty:rgba(255,255,255,.08); --accent:#F08A55; --mark:#E8B860; --g1:#3A2F66; --g2:#6A3A1E; --markText:#E8B860; --onAccent:#131220; color-scheme:dark; }
 
+/* Base. The body is locked to the dynamic viewport height and never scrolls; individual views scroll
+   inside it. This keeps the app feeling native when launched from the home screen. */
 * { box-sizing:border-box; }
 html { height:100%; min-height:100lvh; background:var(--bg); }
 body { height:100%; height:100dvh; overflow:hidden; background:var(--bg); color:var(--fg); font-family:var(--f-body); font-size:15px; line-height:1.4; -webkit-tap-highlight-color:transparent; overscroll-behavior:none; -webkit-font-smoothing:antialiased; }
@@ -62,16 +72,22 @@ button, input, textarea { font:inherit; color:inherit; }
 button { cursor:pointer; }
 :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 
+/* Background glow: two radial gradients from the theme's g1/g2 colors, heavily blurred and oversized so the
+   edges never show. A slow drift animation runs only when the user has not asked for reduced motion. */
 .glow { position:fixed; top:-20vh; left:-20vw; width:140vw; height:140vh; height:140lvh; z-index:0; pointer-events:none;
   background:radial-gradient(40% 35% at 18% 12%, var(--g1), transparent 70%), radial-gradient(45% 40% at 92% 78%, var(--g2), transparent 70%);
   filter:blur(30px); opacity:.9; }
 @media (prefers-reduced-motion: no-preference) { .glow { animation:drift 24s ease-in-out infinite alternate; } }
 @keyframes drift { to { transform:translate3d(4%,-3%,0) scale(1.05); } }
 
+/* Frosted glass surface used by tiles, buttons and sheets: a semi-transparent surface color mixed with
+   color-mix(), backdrop blur, a thin light rim and a soft drop shadow. */
 .glass { position:relative; background:color-mix(in srgb, var(--surface) 58%, transparent);
   -webkit-backdrop-filter:blur(22px) saturate(170%); backdrop-filter:blur(22px) saturate(170%);
   border:1px solid var(--rim); border-radius:26px; box-shadow:0 1px 0 var(--rim) inset, 0 10px 30px -18px rgba(0,0,0,.35); }
 
+/* App shell: centered column capped at 520px, padded by the iOS safe-area insets so content clears
+   the notch and home indicator in standalone mode. */
 .app { position:relative; z-index:1; height:100%; max-width:520px; margin:0 auto; padding-inline:14px; padding-top:calc(8px + env(safe-area-inset-top, 0px)); padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; gap:10px; }
 header.top { display:flex; align-items:center; justify-content:space-between; gap:10px; flex:none; }
 .brand { font-family:var(--f-display); font-weight:800; font-size:19px; letter-spacing:-0.02em; }
@@ -87,7 +103,9 @@ header.top { display:flex; align-items:center; justify-content:space-between; ga
 .eyebrow, .sec { font-size:10.5px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); font-weight:600; }
 .mono { font-family:var(--f-mono); }
 
-/* Deck card */
+/* Deck card. touch-action:none hands all touch movement to the swipe handler instead of the browser.
+   The transform transition animates the card back or off screen; it is turned off while dragging
+   so the card tracks the finger with no lag. */
 .card { flex:1 1 auto; min-height:0; padding:20px 20px 18px; display:flex; flex-direction:column; touch-action:none; user-select:none; -webkit-user-select:none; transition:transform .25s ease, opacity .25s ease; will-change:transform; }
 .card.dragging { transition:none; }
 .card-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
@@ -138,7 +156,8 @@ header.top { display:flex; align-items:center; justify-content:space-between; ga
 .empty h1 { margin:0; font-family:var(--f-display); font-weight:800; font-size:34px; line-height:1.02; letter-spacing:-0.035em; text-wrap:balance; }
 .empty p { margin:0; color:var(--muted); max-width:32ch; }
 
-/* Ledger */
+/* Ledger. The only view that scrolls. The scrollbar is hidden and the negative margin lets content
+   scroll edge to edge while the padding keeps it aligned with the rest of the app. */
 #v-ledger { overflow-y:auto; margin-inline:-14px; padding-inline:14px; padding-bottom:6px; scrollbar-width:none; }
 #v-ledger::-webkit-scrollbar { display:none; }
 .hero { flex:none; padding:14px 16px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 14px; align-items:center; }
@@ -180,7 +199,9 @@ header.top { display:flex; align-items:center; justify-content:space-between; ga
 .key { display:flex; gap:12px; font-family:var(--f-mono); font-size:11px; color:var(--muted); flex-wrap:wrap; }
 .key i { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:4px; }
 
-/* Sheets */
+/* Sheets. Fixed to the bottom, capped at 90% of the height and scrollable inside. A more opaque
+   surface than other glass so text stays readable over the content behind. Slide-up and fade
+   animations are skipped when reduced motion is on. */
 .scrim { position:fixed; inset:0; z-index:20; background:rgba(0,0,0,.35); }
 .sheet { position:fixed; left:0; right:0; bottom:0; z-index:21; max-width:520px; margin:0 auto; max-height:90%; overflow-y:auto;
   border-radius:28px 28px 0 0; padding:10px 18px calc(22px + env(safe-area-inset-bottom, 0px)); display:grid; gap:14px;
