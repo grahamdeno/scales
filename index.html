@@ -393,7 +393,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   <div class="group" id="starterGroup">
     <div class="sec">Starter decks</div>
     <div class="row2"><button class="btn ghost" type="button" data-starter="stoic">Stoic</button><button class="btn ghost" type="button" data-starter="leadership">Leadership</button></div>
-    <button class="btn ghost" type="button" data-starter="athletic">Athletic mindset</button>
+    <div class="row2"><button class="btn ghost" type="button" data-starter="athletic">Athletic mindset</button><button class="btn ghost" type="button" data-starter="overcoming">Self-overcoming</button></div>
     <p class="note">Adds a short set of principles to the deck. Delete any that are not yours from the Ledger.</p>
   </div>
   <div class="group">
@@ -975,8 +975,10 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   });
 
   // ---------- starter decks ----------
-  // Optional sets so a new deck is not empty. Written for this app. The deck name is
-  // stored as the collection, which shows as the card's eyebrow. Texts already in the
+  // Optional sets so a new deck is not empty. Original to this app, except entries
+  // given as { text, author }, which are public-domain lines and keep their author for
+  // the card's byline. The deck name is stored as the collection, which shows as the
+  // card's eyebrow. Texts already in the
   // deck (active or lived) are left out, so loading a set twice adds nothing.
   var STARTERS = {
     stoic: { name: "Stoic", items: [
@@ -986,7 +988,10 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       "I practice discomfort on purpose so it has less hold on me.",
       "I want what actually happens, not only what I would prefer.",
       "Character shows in what I do when no one is keeping score.",
-      "This day will not come again. I act as if that matters."] },
+      "This day will not come again. I act as if that matters.",
+      "Be present, need little.",
+      { text: "If you meet temptation, use self-control; if you meet pain, use fortitude; if you meet revulsion, use patience.", author: "Epictetus" },
+      { text: "It is the part of a wise man to resist pleasures, but of a foolish man to be a slave to them.", author: "Epictetus" }] },
     leadership: { name: "Leadership", items: [
       "I say the hard thing early and kindly.",
       "My team watches what I tolerate more than what I say.",
@@ -994,7 +999,9 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       "Clarity is kindness. Vague direction costs my people time.",
       "I ask before I tell.",
       "I make the decisions that are mine to make, and I make them on time.",
-      "Trust is built in small promises kept."] },
+      "Trust is built in small promises kept.",
+      "I speak only what I have thought about.",
+      "Why am I talking? To help, or to make someone look wrong?"] },
     athletic: { name: "Athletic mindset", items: [
       "Rest is part of the work, not a reward for it.",
       "I control effort and attitude. The scoreboard follows.",
@@ -1002,16 +1009,24 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       "Pressure means I am somewhere that matters.",
       "I train the boring parts as seriously as the exciting ones.",
       "Nerves and readiness feel the same. I choose to call it readiness.",
-      "I compete against who I was yesterday."] }
+      "I compete against who I was yesterday."] },
+    overcoming: { name: "Self-overcoming", items: [
+      { text: "He who cannot obey himself will be commanded.", author: "Friedrich Nietzsche" },
+      "Discipline is choosing what my future self needs over what I want now.",
+      "By making today a little less impulsively pleasurable, I make tomorrow a little more secure.",
+      "Stop saying things that make you weak.",
+      "Character is built in the small, unwatched moments, where the shortcut would be easier and nobody would know.",
+      "Temper yourself and give grace to others."] }
   };
   Array.prototype.forEach.call(document.querySelectorAll("[data-starter]"), function (b) {
     b.onclick = function () {
       var set = STARTERS[b.getAttribute("data-starter")]; if (!set) return;
       var have = {}; all().forEach(function (t) { have[t.text.trim().toLowerCase()] = 1; });
       var added = 0, now = Date.now();
-      set.items.forEach(function (text, i) {
+      set.items.forEach(function (it, i) {
+        var text = typeof it === "string" ? it : it.text, author = typeof it === "string" ? "" : (it.author || "");
         if (have[text.toLowerCase()]) return;
-        save({ id: newId(), text: text, origin: "", collection: set.name, created_at: new Date(now + i).toISOString(), status: "active",
+        save({ id: newId(), text: text, author: author, origin: "", collection: set.name, created_at: new Date(now + i).toISOString(), status: "active",
           skip_count: 0, lifetime_skips: 0, reflect_count: 0, consecutive_reflects: 0, recent_lines: [] });
         added++;
       });

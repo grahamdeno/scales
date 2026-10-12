@@ -120,3 +120,21 @@ test("built-in lines fit the length limit and contain no grace phrases", () => {
     assert.ok(v.line, l + " rejected: " + v.reason);
   }
 });
+
+test("starter decks hold unique principles and every author line is attributed", () => {
+  const html = read("index.html");
+  const block = html.slice(html.indexOf("var STARTERS = {"), html.indexOf("\n  };", html.indexOf("var STARTERS = {")) + 5);
+  const STARTERS = new Function("return " + block.replace(/^var STARTERS = /, "").replace(/;\s*$/, ""))();
+  assert.deepEqual(Object.keys(STARTERS), ["stoic", "leadership", "athletic", "overcoming"]);
+  const seen = new Set();
+  for (const k of Object.keys(STARTERS)) {
+    assert.match(html, new RegExp('data-starter="' + k + '"'), "no button for " + k);
+    for (const it of STARTERS[k].items) {
+      const text = typeof it === "string" ? it : it.text;
+      if (typeof it !== "string") assert.ok(it.author, text + " has no author");
+      assert.ok(!seen.has(text.toLowerCase()), "duplicate: " + text);
+      seen.add(text.toLowerCase());
+      assert.doesNotMatch(text, /—/, "em dash in: " + text);
+    }
+  }
+});
