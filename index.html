@@ -353,6 +353,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     <div class="sec">AI line</div>
     <input class="field" id="apiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Anthropic API key (sk-ant-...)">
     <div class="row2"><button class="btn ghost" type="button" id="saveKey">Save key</button><button class="btn ghost" type="button" id="clearKey">Remove</button></div>
+    <button class="btn ghost" type="button" id="testKey">Test key</button>
+    <p class="note" id="testResult" hidden></p>
     <div class="status"><span class="dot" id="aiDot" style="background:var(--muted)"></span><span id="aiText">AI lines: built-in (no key)</span></div>
     <p class="note">The key stays on this phone and is sent only to Anthropic. Only the thought text, skip count and days in deck are sent. Without a key, built-in lines are used.</p>
   </div>
@@ -514,9 +516,14 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
         headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({ model: MODEL, max_tokens: 90, messages: [{ role: "user", content: prompt }] })
       }).then(function (r) {
-        if (r.status === 401 || r.status === 403) { var e = new Error("auth"); e.code = "not_granted"; throw e; }
-        if (!r.ok) throw new Error("http " + r.status);
-        return r.json();
+        if (r.ok) return r.json();
+        // Read Anthropic's error body so the real reason can be shown in Settings.
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          var e = new Error((j && j.error && j.error.message) || ("HTTP " + r.status));
+          e.status = r.status;
+          if (r.status === 401 || r.status === 403) e.code = "not_granted";
+          throw e;
+        });
       }).then(function (j) {
         var txt = (j.content || []).filter(function (c) { return c.type === "text"; }).map(function (c) { return c.text; }).join(" ");
         return { text: txt };
@@ -610,7 +617,12 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       live.recent_lines = (live.recent_lines || []).concat([s]).slice(-3); save(live);
       setAiStatus();
       paintLine();
-    }).catch(function (e) { if (e && e.code === "not_granted") { sample = null; setAiStatus(); $("aiText").textContent = "AI lines: key rejected, using built-in"; } });
+    }).catch(function (e) {
+      // Auth failures switch model lines off. Anything else (no credit, rate limit, network)
+      // keeps the key but says so in Settings, so a silent fallback is never mistaken for success.
+      if (e && e.code === "not_granted") { sample = null; setAiStatus(); $("aiText").textContent = "AI lines: key rejected, using built-in"; }
+      else $("aiText").textContent = "AI lines: last request failed, using built-in. Tap Test key.";
+    });
   }
   // Draw the current card's line. 'pending' dims it while a model line is on the way.
   function paintLine() {
@@ -901,6 +913,34 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   $("clearKey").onclick = function () {
     try { localStorage.removeItem(LSK); } catch (e) {}
     $("apiKey").value = ""; sample = null; setAiStatus(); toast("Key removed");
+  };
+  // Test key: one tiny request with the key in the field (or the saved key), then a plain
+  // explanation of the result. Maps Anthropic's status codes to the usual fixes.
+  function explainError(e) {
+    var m = (e && e.message) || "", st = e && e.status;
+    if (!st) return "Could not reach Anthropic. Check the connection, and turn off any content blocker or VPN filtering for this site.";
+    if (st === 401) return "Key not recognized. Copy it again from the Anthropic Console (it starts with sk-ant-).";
+    if (st === 403) return "Key is valid but not allowed to do this. Check the key's workspace permissions in the Console.";
+    if (st === 400 && /credit|balance|billing/i.test(m)) return "The account has no credit. Add credit under Billing in the Console.";
+    if (st === 404) return "Model not found (" + MODEL + "). The model name may need updating.";
+    if (st === 429) return "Rate or spend limit reached. Check Limits in the Console, or wait a minute.";
+    if (st >= 500) return "Anthropic is busy or down. Try again in a few minutes.";
+    return "Request failed (HTTP " + st + ").";
+  }
+  $("testKey").onclick = function () {
+    var k = $("apiKey").value.trim(); try { k = k || localStorage.getItem(LSK) || ""; } catch (e) {}
+    var out = $("testResult"); out.hidden = false;
+    if (!k) { out.textContent = "No key entered."; return; }
+    if (k.indexOf("sk-ant-") !== 0) { out.textContent = "That does not look like an Anthropic key. It should start with sk-ant-."; return; }
+    out.textContent = "Testing...";
+    var t0 = Date.now();
+    makeSampler(k)("Reply with the single word: working").then(function (res) {
+      out.textContent = "Key works. " + MODEL + " replied \u201c" + (res.text || "").trim() + "\u201d in " + (Date.now() - t0) + " ms.";
+      if (!sample) { sample = makeSampler(k); }
+      setAiStatus();
+    }).catch(function (e) {
+      out.textContent = explainError(e) + (e && e.status && e.message ? " Details: " + e.message : "");
+    });
   };
 
   // ---------- backup / restore ----------

@@ -44,6 +44,8 @@ The name comes from scales falling from the eyes, and from Nietzsche's three met
 
 Optional: Settings (slider icon) > AI line > paste an Anthropic API key > Save key. Set a monthly spend limit in the Anthropic Console.
 
+To check the key, tap **Test key** under AI line. It sends one tiny request and reports the result in plain terms: working, key not recognized, no credit on the account, rate or spend limit reached, or no connection.
+
 ## Your data
 
 - **Back up / Restore** (Settings): a JSON file of the whole deck. Keep it in iCloud Drive. Restore merges, it does not overwrite.
@@ -86,7 +88,7 @@ Then open `http://localhost:8000`. The service worker needs `localhost` or HTTPS
 
 ## Updating the live app
 
-Push to `main`. GitHub Pages redeploys in about a minute. When cached files change, bump `CACHE` in `sw.js` (for example `scales-v11`) so phones drop the old copy.
+Push to `main`. GitHub Pages redeploys in about a minute. When cached files change, bump `CACHE` in `sw.js` (for example `scales-v12`) so phones drop the old copy.
 
 ## Roadmap
 
