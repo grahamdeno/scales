@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.22.3";
+  var VERSION = "1.23.0";
   var BUILT = "2026-10-12";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -195,11 +195,52 @@ var ScalesCore = (function () {
     return n;
   }
 
+  // Fields every starter principle carries, as a worked example of each.
+  var STARTER_FIELDS = ["text", "title", "author", "origin", "tags", "link", "citation"];
+
+  // Merge one starter deck into list. Returns { add, updated }: add is the new principles
+  // to save (without ids), updated is how many existing ones changed. Rules:
+  //   - A starter line already in the deck is never added twice.
+  //   - An older wording listed in an item's "replaces" is updated in place to the new
+  //     wording, keeping counts, dates and status; a principle still in the deck drops its
+  //     saved AI lines, as with any change of wording.
+  //   - On a principle that matches a starter line, empty fields are filled from the deck;
+  //     values the user set are never overwritten. The collection is filled the same way.
+  function loadStarter(list, deckName, items, base) {
+    var byText = {}; list.forEach(function (t) { byText[normText(t.text)] = t; });
+    var add = [], updated = 0;
+    items.forEach(function (it, i) {
+      var t = byText[normText(it.text)];
+      if (!t) (it.replaces || []).some(function (old) { t = byText[normText(old)]; return !!t; });
+      if (t) {
+        var changed = false;
+        if (normText(t.text) !== normText(it.text)) {
+          t.text = it.text; changed = true;
+          if (t.status === "active") t.recent_lines = [];
+        }
+        var fill = { collection: deckName };
+        STARTER_FIELDS.forEach(function (k) { if (k !== "text") fill[k] = it[k]; });
+        Object.keys(fill).forEach(function (k) {
+          if (fill[k] && !String(t[k] || "").trim()) { t[k] = fill[k]; changed = true; }
+        });
+        if (changed) updated++;
+        return;
+      }
+      var n = { text: it.text, collection: deckName, created_at: new Date(base + i).toISOString(), status: "active",
+        skip_count: 0, lifetime_skips: 0, reflect_count: 0, consecutive_reflects: 0, recent_lines: [] };
+      STARTER_FIELDS.forEach(function (k) { if (k !== "text") n[k] = it[k] || ""; });
+      add.push(n);
+      byText[normText(it.text)] = n;
+    });
+    return { add: add, updated: updated };
+  }
+
   return { VERSION: VERSION, BUILT: BUILT, CAP: CAP, MAX_WORDS: MAX_WORDS, MAX_TEXT: MAX_TEXT,
     tier: tier, weight: weight, words: words, pickFrom: pickFrom, clean: clean, fit: fit, vet: vet,
     LIMITS: LIMITS, ORIGINS: ORIGINS, normText: normText, collections: collections, canonCollection: canonCollection,
     editValues: editValues, checkEdit: checkEdit, applyEdit: applyEdit, label: label,
-    checkRename: checkRename, renameCollection: renameCollection, removeCollection: removeCollection };
+    checkRename: checkRename, renameCollection: renameCollection, removeCollection: removeCollection,
+    STARTER_FIELDS: STARTER_FIELDS, loadStarter: loadStarter };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = ScalesCore;

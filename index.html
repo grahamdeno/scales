@@ -1284,63 +1284,78 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   });
 
   // ---------- starter decks ----------
-  // Optional sets so a new deck is not empty. Original to this app, except entries
-  // given as { text, author }, which are public-domain lines and keep their author for
-  // the card's byline. The deck name is stored as the collection, which shows as the
-  // card's eyebrow. Texts already in the
-  // deck (active or lived) are left out, so loading a set twice adds nothing.
+  // Optional sets so a new deck is not empty, with every field filled as a worked example.
+  // Original lines are credited to Scales and cite their deck. Public-domain lines use the
+  // exact wording of a named public-domain translation, cite the work and section, and link
+  // to a verified chapter-level edition. Loading and merging rules live in core.js
+  // (loadStarter): nothing is duplicated, empty fields on principles already in the deck are
+  // filled without overwriting the user's values, and lines listed in "replaces" update an
+  // older wording in place.
+  var README = "https://github.com/grahamdeno/scales#readme";
+  function O(text, title, origin, tags) { return { text: text, title: title, origin: origin, tags: tags, author: "Scales", link: README }; }
+  // A deck: its name, and its items with original lines citing the deck they come from.
+  function D(name, items) {
+    items.forEach(function (it) { if (!it.citation) it.citation = "Scales starter deck: " + name; });
+    return { name: name, items: items };
+  }
   var STARTERS = {
-    stoic: { name: "Stoic", items: [
-      "I control my choices and my effort. The rest I meet as it comes.",
-      "What disturbs me is my judgment of the event, not the event.",
-      "The obstacle in the path becomes part of the path.",
-      "I practice discomfort on purpose so it has less hold on me.",
-      "I want what actually happens, not only what I would prefer.",
-      "Character shows in what I do when no one is keeping score.",
-      "This day will not come again. I act as if that matters.",
-      "Be present, need little.",
-      { text: "If you meet temptation, use self-control; if you meet pain, use fortitude; if you meet revulsion, use patience.", author: "Epictetus" },
-      { text: "It is the part of a wise man to resist pleasures, but of a foolish man to be a slave to them.", author: "Epictetus" }] },
-    leadership: { name: "Leadership", items: [
-      "I say the hard thing early and kindly.",
-      "My team watches what I tolerate more than what I say.",
-      "I give credit in public and take responsibility in public.",
-      "Clarity is kindness. Vague direction costs my people time.",
-      "I ask before I tell.",
-      "I make the decisions that are mine to make, and I make them on time.",
-      "Trust is built in small promises kept.",
-      "I speak only what I have thought about.",
-      "Why am I talking? To help, or to make someone look wrong?"] },
-    athletic: { name: "Athletic mindset", items: [
-      "Rest is part of the work, not a reward for it.",
-      "I control effort and attitude. The scoreboard follows.",
-      "Next play. The last one is gone.",
-      "Pressure means I am somewhere that matters.",
-      "I train the boring parts as seriously as the exciting ones.",
-      "Nerves and readiness feel the same. I choose to call it readiness.",
-      "I compete against who I was yesterday."] },
-    overcoming: { name: "Self-overcoming", items: [
-      { text: "He who cannot obey himself will be commanded.", author: "Friedrich Nietzsche" },
-      "Discipline is choosing what my future self needs over what I want now.",
-      "By making today a little less impulsively pleasurable, I make tomorrow a little more secure.",
-      "Stop saying things that make you weak.",
-      "Character is built in the small, unwatched moments, where the shortcut would be easier and nobody would know.",
-      "Temper yourself and give grace to others."] }
+    stoic: D("Stoic", [
+      O("I control my choices and my effort. The rest I meet as it comes.", "What is mine", "Chosen", "control, effort"),
+      O("What disturbs me is my judgment of the event, not the event.", "Judgment", "Handed to me", "judgment, perception"),
+      O("The obstacle in the path becomes part of the path.", "The obstacle", "Handed to me", "adversity, resilience"),
+      O("I practice discomfort on purpose so it has less hold on me.", "Voluntary discomfort", "Chosen", "discomfort, training"),
+      O("I want what actually happens, not only what I would prefer.", "Want what happens", "Not sure", "acceptance, fate"),
+      O("Character shows in what I do when no one is keeping score.", "Unscored", "Chosen", "character, integrity"),
+      O("This day will not come again. I act as if that matters.", "This day", "Handed to me", "time, mortality"),
+      O("Be present, need little.", "Need little", "Chosen", "presence, simplicity"),
+      { text: "With every accident, ask yourself what abilities you have for making a proper use of it. If you see an attractive person, you will find that self-restraint is the ability you have against your desire. If you are in pain, you will find fortitude. If you hear unpleasant language, you will find patience.",
+        title: "Every accident", author: "Epictetus", origin: "Handed to me", tags: "self-restraint, fortitude, patience",
+        citation: "Enchiridion, section 10, translated by Elizabeth Carter", link: "https://classics.mit.edu/Epictetus/epicench.html",
+        replaces: ["If you meet temptation, use self-control; if you meet pain, use fortitude; if you meet revulsion, use patience."] },
+      { text: "It is the part of a wise man to resist pleasures, but of a foolish man to be a slave to them.",
+        title: "Wise and foolish", author: "Epictetus", origin: "Not sure", tags: "pleasure, self-control",
+        citation: "Fragments, CXI, translated by George Long", link: "https://standardebooks.org/ebooks/epictetus/short-works/george-long/text/fragments" }] ),
+    leadership: D("Leadership", [
+      O("I say the hard thing early and kindly.", "Early and kindly", "Chosen", "candor, feedback"),
+      O("My team watches what I tolerate more than what I say.", "What I tolerate", "Handed to me", "standards, example"),
+      O("I give credit in public and take responsibility in public.", "Credit and blame", "Handed to me", "accountability, credit"),
+      O("Clarity is kindness. Vague direction costs my people time.", "Clarity", "Chosen", "clarity, communication"),
+      O("I ask before I tell.", "Ask first", "Chosen", "listening, questions"),
+      O("I make the decisions that are mine to make, and I make them on time.", "On time", "Not sure", "decisions, ownership"),
+      O("Trust is built in small promises kept.", "Small promises", "Handed to me", "trust, reliability"),
+      O("I speak only what I have thought about.", "Thought first", "Chosen", "speech, judgment"),
+      O("Why am I talking? To help, or to make someone look wrong?", "Why am I talking", "Not sure", "speech, ego")] ),
+    athletic: D("Athletic mindset", [
+      O("Rest is part of the work, not a reward for it.", "Rest is work", "Handed to me", "recovery, training"),
+      O("I control effort and attitude. The scoreboard follows.", "Effort and attitude", "Chosen", "effort, control"),
+      O("Next play. The last one is gone.", "Next play", "Handed to me", "focus, reset"),
+      O("Pressure means I am somewhere that matters.", "Pressure", "Not sure", "pressure, meaning"),
+      O("I train the boring parts as seriously as the exciting ones.", "The boring parts", "Chosen", "fundamentals, discipline"),
+      O("Nerves and readiness feel the same. I choose to call it readiness.", "Readiness", "Chosen", "nerves, reframing"),
+      O("I compete against who I was yesterday.", "Yesterday", "Handed to me", "growth, comparison")] ),
+    overcoming: D("Self-overcoming", [
+      { text: "Whatever cannot obey itself, is commanded. Such is the nature of living things.",
+        title: "Self-surpassing", author: "Friedrich Nietzsche", origin: "Handed to me", tags: "obedience, self-command",
+        citation: "Thus Spake Zarathustra, XXXIV Self-Surpassing, translated by Thomas Common",
+        link: "https://standardebooks.org/ebooks/friedrich-nietzsche/thus-spake-zarathustra/thomas-common/text/chapter-34",
+        replaces: ["He who cannot obey himself will be commanded."] },
+      O("Discipline is choosing what my future self needs over what I want now.", "Future self", "Chosen", "discipline, future self"),
+      O("By making today a little less impulsively pleasurable, I make tomorrow a little more secure.", "Less impulse today", "Chosen", "impulse, tomorrow"),
+      O("Stop saying things that make you weak.", "Strong words", "Not sure", "speech, strength"),
+      O("Character is built in the small, unwatched moments, where the shortcut would be easier and nobody would know.", "Unwatched moments", "Chosen", "character, integrity"),
+      O("Temper yourself and give grace to others.", "Temper and grace", "Handed to me", "restraint, grace")])
   };
   Array.prototype.forEach.call(document.querySelectorAll("[data-starter]"), function (b) {
     b.onclick = function () {
-      var set = STARTERS[b.getAttribute("data-starter")]; if (!set) return;
-      var have = {}; all().forEach(function (t) { have[t.text.trim().toLowerCase()] = 1; });
-      var added = 0, now = Date.now();
-      set.items.forEach(function (it, i) {
-        var text = typeof it === "string" ? it : it.text, author = typeof it === "string" ? "" : (it.author || "");
-        if (have[text.toLowerCase()]) return;
-        save({ id: newId(), text: text, author: author, origin: "", collection: set.name, created_at: new Date(now + i).toISOString(), status: "active",
-          skip_count: 0, lifetime_skips: 0, reflect_count: 0, consecutive_reflects: 0, recent_lines: [] });
-        added++;
-      });
-      toast(added ? "Added " + added + " from " + set.name : set.name + " is already in the deck");
-      if (!added) return;
+      var key = b.getAttribute("data-starter"), set = STARTERS[key]; if (!set) return;
+      var r = C.loadStarter(all(), set.name, set.items, Date.now());
+      r.add.forEach(function (t) { t.id = newId(); save(t); });
+      if (r.updated) lsSet(LS, thoughts);
+      var parts = [];
+      if (r.add.length) parts.push("Added " + r.add.length);
+      if (r.updated) parts.push("updated " + r.updated);
+      toast(parts.length ? parts.join(", ") + " from " + set.name : set.name + " is already in the deck");
+      if (!parts.length) return;
       hide(); go("deck");
       if (!current) showNext(); else renderDeck();
     };

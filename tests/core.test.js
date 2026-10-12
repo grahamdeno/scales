@@ -126,22 +126,72 @@ test("built-in lines fit the length limit and contain no grace phrases", () => {
   }
 });
 
-test("starter decks hold unique principles and every author line is attributed", () => {
+// Evaluate the STARTERS data from index.html, with its O() helper and README constant.
+function starters() {
   const html = read("index.html");
-  const block = html.slice(html.indexOf("var STARTERS = {"), html.indexOf("\n  };", html.indexOf("var STARTERS = {")) + 5);
-  const STARTERS = new Function("return " + block.replace(/^var STARTERS = /, "").replace(/;\s*$/, ""))();
-  assert.deepEqual(Object.keys(STARTERS), ["stoic", "leadership", "athletic", "overcoming"]);
+  const from = html.indexOf("  var README = ");
+  const to = html.indexOf("\n  };", html.indexOf("var STARTERS = {", from)) + 5;
+  return new Function(html.slice(from, to) + "\nreturn STARTERS;")();
+}
+
+test("starter decks hold unique principles, each with a button", () => {
+  const html = read("index.html"), S = starters();
+  assert.deepEqual(Object.keys(S), ["stoic", "leadership", "athletic", "overcoming"]);
   const seen = new Set();
-  for (const k of Object.keys(STARTERS)) {
+  for (const k of Object.keys(S)) {
     assert.match(html, new RegExp('data-starter="' + k + '"'), "no button for " + k);
-    for (const it of STARTERS[k].items) {
-      const text = typeof it === "string" ? it : it.text;
-      if (typeof it !== "string") assert.ok(it.author, text + " has no author");
-      assert.ok(!seen.has(text.toLowerCase()), "duplicate: " + text);
-      seen.add(text.toLowerCase());
-      assert.doesNotMatch(text, /—/, "em dash in: " + text);
+    for (const it of S[k].items) {
+      assert.ok(!seen.has(it.text.toLowerCase()), "duplicate: " + it.text);
+      seen.add(it.text.toLowerCase());
+      assert.doesNotMatch(it.text, /\u2014/, "em dash in: " + it.text);
     }
   }
+});
+
+test("every starter principle fills every field (Story 8)", () => {
+  const S = starters();
+  for (const k of Object.keys(S)) for (const it of S[k].items) {
+    for (const f of C.STARTER_FIELDS) assert.ok(String(it[f] || "").trim(), k + ": '" + it.text.slice(0, 30) + "' has no " + f);
+    assert.ok(C.ORIGINS.includes(it.origin), "unknown origin " + it.origin);
+    assert.ok(it.title.length <= C.LIMITS.title && it.author.length <= C.LIMITS.author);
+    assert.ok(it.tags.split(",").length >= 2, "needs two or more tags: " + it.text);
+    assert.match(it.link, /^https:\/\//);
+  }
+  // Each deck mixes origins so the two-line label shows in examples.
+  for (const k of Object.keys(S)) assert.ok(new Set(S[k].items.map((i) => i.origin)).size >= 2, k + " uses one origin");
+});
+
+test("original lines credit Scales; public-domain lines cite a named translation", () => {
+  const S = starters();
+  for (const k of Object.keys(S)) for (const it of S[k].items) {
+    if (it.author === "Scales") assert.match(it.link, /grahamdeno\/scales/);
+    else assert.match(it.citation, /translated by /, it.author + " needs a translation in its citation");
+  }
+  const all = Object.values(S).flatMap((d) => d.items.map((i) => i.text));
+  assert.ok(all.includes("Whatever cannot obey itself, is commanded. Such is the nature of living things."));
+  assert.ok(!all.includes("He who cannot obey himself will be commanded."), "paraphrase must be gone");
+});
+
+test("loadStarter adds once, fills empty fields, keeps user values, replaces old wording", () => {
+  const S = starters(), deck = S.overcoming;
+  const first = C.loadStarter([], deck.name, deck.items, 0);
+  assert.equal(first.add.length, deck.items.length);
+  assert.equal(C.loadStarter(first.add, deck.name, deck.items, 0).add.length, 0, "reload adds nothing");
+
+  const old = { id: "x", text: "He who cannot obey himself will be commanded.", author: "Friedrich Nietzsche", collection: "Self-overcoming",
+    status: "active", skip_count: 3, reflect_count: 5, created_at: "2026-10-01T00:00:00.000Z", recent_lines: ["old line"] };
+  const mine = { id: "y", text: "Stop saying things that make you weak.", title: "My title", origin: "", collection: "Self-overcoming",
+    status: "shed", evidence: "kept", recent_lines: ["final"] };
+  const r = C.loadStarter([old, mine], deck.name, deck.items, 0);
+  assert.equal(r.add.length, deck.items.length - 2);
+  assert.equal(r.updated, 2);
+  assert.equal(old.text, "Whatever cannot obey itself, is commanded. Such is the nature of living things.");
+  assert.deepEqual([old.skip_count, old.reflect_count, old.created_at, old.recent_lines], [3, 5, "2026-10-01T00:00:00.000Z", []]);
+  assert.match(old.citation, /Thomas Common/);
+  assert.equal(old.author, "Friedrich Nietzsche");
+  assert.equal(mine.title, "My title", "user value kept");
+  assert.equal(mine.origin, "Not sure", "empty field filled");
+  assert.deepEqual([mine.status, mine.evidence, mine.recent_lines], ["shed", "kept", ["final"]]);
 });
 
 test("capture and edit share the principle length limit", () => {
