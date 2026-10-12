@@ -425,23 +425,23 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // no connection, or the model's answer fails the checks in vet(). They cannot
   // see the thought's text, so each one is a question that applies to any claim.
   var FALLBACK = {
-    0: ["What would have to be true about you for this to already be true?",
-        "If you lived this completely, what would you have to give up?",
-        "Whose voice first said this, and is it yours now?"],
-    1: ["Which part of this would you rather not be true?",
-        "What does this claim ask of you that you have not yet given?",
-        "Where in the last week did your actions argue against this?"],
-    3: ["What is this resistance protecting?",
-        "If this is false, what are you free to keep doing? If true, what must end?",
-        "What do you lose by believing this, and is that loss the reason you look away?"]
+    0: ["Who would you have to stop being to live this fully?",
+        "The person who already lives this: what are they doing today that you are not?",
+        "What does this demand of you that comfort keeps withholding?"],
+    1: ["What did you choose instead of this, and who will pay for it later?",
+        "Which comfort did you protect the last time you set this aside?",
+        "Your future self inherits today's choice. What are you handing them?"],
+    3: ["What is this avoidance protecting: your comfort, your fear, or your image of yourself?",
+        "You keep setting this aside. What part of you profits from that?",
+        "How long will you keep negotiating with something you already know is true?"]
   };
   // The angle the model takes for each skip tier. Same tiers as FALLBACK.
-  // Fresh thoughts get their assumptions examined; skipped ones get their cost
-  // and the reason for avoiding them examined.
+  // The line serves the person the user is becoming, not their comfort today, and
+  // presses harder the more a principle has been set aside.
   var ANGLE = {
-    0: "examine an assumption hidden inside the claim, or what follows if it is fully true",
-    1: "consider where the claim breaks down, or what it costs to hold",
-    3: "name, without accusation, what avoiding this claim might be protecting"
+    0: "name what this principle demands that has not yet been given, or the smaller self that must be overcome to live it",
+    1: "name what was chosen instead of this principle, and what that choice costs the person the user is becoming",
+    3: "confront the avoidance directly: name the shadow it protects (comfort, fear, pride, a flattering self-image) and what the future self pays for it"
   };
   // Theme list for the Settings picker. sw = the three swatch colors shown on each button.
   // The actual colors live in the CSS under :root[data-skin=...].
@@ -598,15 +598,17 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // Recent lines are included so the model does not repeat itself.
   function buildPrompt(t) {
     var recent = (t.recent_lines || []).slice(-3);
-    return "You write one line shown beneath a personal principle in a reflection app.\n" +
-      "The user is testing whether this principle is true for them, until they live it without prompting.\n" +
-      "Write a single considered observation or question that deepens their thinking about this specific principle.\n" +
-      "Work from the words of the principle itself: its assumptions, its tensions, its cost, what it implies if fully true.\n" +
+    return "You write one line shown beneath a principle the user has chosen to live by, in an app for self-overcoming.\n" +
+      "Speak as a Jungian analyst and a Nietzschean teacher would. You serve the person the user is becoming, not their comfort today.\n" +
+      "Resistance is the shadow speaking: avoidance usually protects comfort, fear, pride, or a flattering self-image. Name it.\n" +
+      "Hold the standard. The user wants discipline, not grace: never excuse, soften, or give permission for the gap between this principle and their conduct.\n" +
+      "Work from the words of the principle itself, and make the cost of not living it fall where it belongs, on their future self.\n" +
       "Rules:\n- " + MAX_WORDS + " words or fewer. Count them.\n" +
       "- Angle: " + ANGLE[tier(t.skip_count)] + "\n" +
-      "- No praise, encouragement, cheerleading, or reassurance. Never comment on the act of reflecting or setting it aside.\n" +
-      "- No cliches or motivational phrasing. Plain, precise, serious language, closer to a philosopher than a coach.\n" +
-      "- Do not instruct, judge, or moralize. Do not repeat the principle verbatim.\n" +
+      "- A single sharp question or statement. Confront without contempt: no insults, no attacks on their worth.\n" +
+      "- No praise, reassurance, self-compassion language, rest or gentleness talk, or permission to wait.\n" +
+      "- No cliches or motivational slogans. Plain, precise, serious language, closer to a philosopher than a coach.\n" +
+      "- Do not lecture or explain the philosophy, and do not name Jung or Nietzsche. Do not repeat the principle verbatim.\n" +
       "- No exclamation marks, quotation marks, emoji, em-dashes, lists, or medical language.\n" +
       "- Do not reuse the wording of these recent lines: " + (recent.length ? recent.join(" | ") : "none") + "\n" +
       "Return only the line.\n\n" +

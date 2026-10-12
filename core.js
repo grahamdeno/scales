@@ -8,8 +8,8 @@ var ScalesCore = (function () {
   // Build number shown in Settings. Must match the service worker cache name
   // ("scales-v" + VERSION) so a phone that shows this number is running this code.
   // The tests fail if the two drift apart.
-  var VERSION = 17;
-  var BUILT = "2026-10-11";
+  var VERSION = 18;
+  var BUILT = "2026-10-12";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
   // MAX_WORDS  longest consideration the app will show. Long enough for one complete
@@ -62,6 +62,10 @@ var ScalesCore = (function () {
     return out;
   }
 
+  // Phrases that grant grace instead of holding the standard. The prompt forbids
+  // them; this catches the model drifting back to a gentle tone anyway.
+  var SOFT = /\b(be (gentle|kind|easy) (with|on|to) yourself|give yourself (grace|permission|a break|time)|self[- ]compassion|it'?s (ok|okay|alright|fine)\b|no shame|you deserve (rest|a break)|that'?s (ok|okay)|allow yourself|it is (ok|okay|fine))/i;
+
   // Check a model answer. Returns { line } when usable, or { reason } when not.
   // The echo check only applies to longer principles: a short one ("Discipline is
   // freedom") is naturally named inside a good line, so containing it is not a sign
@@ -70,6 +74,7 @@ var ScalesCore = (function () {
     var s = fit(clean(raw));
     if (!s) return { reason: words(clean(raw)) ? "too long" : "empty" };
     if (s.indexOf("!") >= 0) return { reason: "cheerful tone" };
+    if (SOFT.test(s)) return { reason: "softened" };
     var body = t.text.trim().toLowerCase(), low = s.toLowerCase();
     if (low === body || (body.length >= 60 && low.indexOf(body.slice(0, 60)) >= 0)) return { reason: "echoed the thought" };
     return { line: s };

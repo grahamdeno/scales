@@ -99,3 +99,24 @@ test("vet rejects empty, overlong, cheerful and echoing answers", () => {
   assert.equal(C.vet("You are doing great!", long).reason, "cheerful tone");
   assert.equal(C.vet(long.text, long).reason, "echoed the thought");
 });
+
+test("vet rejects lines that grant grace instead of holding the standard", () => {
+  const t = { text: "I train when I said I would." };
+  for (const s of ["Be gentle with yourself today.", "Give yourself grace on the hard days.",
+                   "It's okay to rest when you need to.", "Self-compassion is part of discipline.",
+                   "Allow yourself one more day."]) {
+    assert.equal(C.vet(s, t).reason, "softened", s);
+  }
+  assert.ok(C.vet("What comfort did you buy by skipping it, and what will it cost the man you mean to become?", t).line);
+});
+
+test("built-in lines fit the length limit and contain no grace phrases", () => {
+  const html = read("index.html");
+  const block = html.slice(html.indexOf("var FALLBACK = {"), html.indexOf("};", html.indexOf("var FALLBACK = {")));
+  const lines = [...block.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(lines.length, 9);
+  for (const l of lines) {
+    const v = C.vet(l, { text: "x" });
+    assert.ok(v.line, l + " rejected: " + v.reason);
+  }
+});
