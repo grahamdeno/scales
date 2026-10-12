@@ -390,7 +390,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   var CAP = 4, DWELL_SEC = 8, NUDGE_AT = 3, MAX_WORDS = 25;
   // Built-in considerations, grouped by how much a thought has been skipped
   // (0 = never, 1 = once or twice, 3 = three or more). Used when there is no API key,
-  // no connection, or the model's answer fails the checks in valid(). They cannot
+  // no connection, or the model's answer fails the checks in vet(). They cannot
   // see the thought's text, so each one is a question that applies to any claim.
   var FALLBACK = {
     0: ["What would have to be true about you for this to already be true?",
@@ -514,7 +514,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       return fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-        body: JSON.stringify({ model: MODEL, max_tokens: 90, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ model: MODEL, max_tokens: 120, messages: [{ role: "user", content: prompt }] })
       }).then(function (r) {
         if (r.ok) return r.json();
         // Read Anthropic's error body so the real reason can be shown in Settings.
@@ -590,46 +590,82 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       "Return only the line.\n\n" +
       "Thought: " + t.text + "\nTimes skipped: " + t.skip_count + "\nDays in deck: " + days(t.created_at);
   }
-  // Strip quotes and dashes from the model's answer and collapse spaces.
-  function clean(s) { return (s || "").replace(/["“”]/g, "").replace(/\s*[—–]\s*/g, ". ").replace(/\s+/g, " ").trim(); }
-  // Accept the answer only if it is short enough, does not just echo the thought,
-  // and has no exclamation mark (a reliable sign the model slipped into a cheerful tone).
-  function valid(s, t) { return s && words(s) <= MAX_WORDS && s.indexOf("!") < 0 && s.toLowerCase().indexOf(t.text.toLowerCase().slice(0, 40)) < 0; }
-  // Show a built-in line right away, then try the model (one retry if the answer is invalid).
-  // The model line replaces the built-in one only if the same card is still on screen.
+  // Normalize the model's answer: first non-empty line only, no leading label,
+  // no quotes, dashes turned into sentence breaks, spaces collapsed.
+  function clean(s) {
+    var first = (s || "").split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean)[0] || "";
+    return first.replace(/^(line|answer|consideration|response)\s*:\s*/i, "")
+      .replace(/["“”]/g, "").replace(/\s*[—–]\s*/g, ". ").replace(/\s+/g, " ").trim();
+  }
+  // Bring an over-long answer within MAX_WORDS by keeping whole sentences from the start.
+  // Returns "" when no complete sentence fits.
+  function fit(s) {
+    if (words(s) <= MAX_WORDS) return s;
+    var parts = s.match(/[^.?]+[.?]+/g) || [], out = "";
+    for (var i = 0; i < parts.length; i++) {
+      var next = (out + " " + parts[i]).trim();
+      if (words(next) > MAX_WORDS) break;
+      out = next;
+    }
+    return out;
+  }
+  // Check an answer. Returns { line } when usable, or { reason } when not.
+  // The echo check only applies to longer thoughts: a short thought ("Discipline is freedom")
+  // is naturally named inside a good line, so containing it is not a sign of a lazy answer.
+  function vet(raw, t) {
+    var s = fit(clean(raw));
+    if (!s) return { reason: words(clean(raw)) ? "too long" : "empty" };
+    if (s.indexOf("!") >= 0) return { reason: "cheerful tone" };
+    var body = t.text.trim().toLowerCase(), low = s.toLowerCase();
+    if (low === body || (body.length >= 60 && low.indexOf(body.slice(0, 60)) >= 0)) return { reason: "echoed the thought" };
+    return { line: s };
+  }
+  // With a key: show a quiet placeholder, ask the model (two retries if the answer
+  // fails vet), and fall back to a built-in line only if the model cannot supply one.
+  // Without a key: built-in line straight away.
+  // A late answer is applied only if the same card is still on screen.
   // Accepted lines are saved to the thought so future prompts can avoid them.
   function requestLine(t) {
     var seq = ++aiSeq;
-    lineFor[t.id] = { text: fallbackLine(t), ai: false };
+    if (!sample) { lineFor[t.id] = { text: fallbackLine(t), ai: false }; paintLine(); return; }
+    lineFor[t.id] = { text: "Considering…", ai: false, pending: true };
     paintLine();
-    if (!sample) return;
+    var lastReason = "";
     function attempt(n) {
       return sample(buildPrompt(t)).then(function (res) {
-        var s = clean(res && res.text);
-        if (valid(s, t)) return s;
-        return n < 1 ? attempt(n + 1) : null;
+        var v = vet(res && res.text, t);
+        if (v.line) return v.line;
+        lastReason = v.reason;
+        return n < 2 ? attempt(n + 1) : null;
       });
     }
+    function useFallback() {
+      if (seq !== aiSeq || current !== t.id) return;
+      lineFor[t.id] = { text: fallbackLine(t), ai: false };
+      paintLine();
+    }
     attempt(0).then(function (s) {
-      if (!s || seq !== aiSeq || current !== t.id) return;
-      lineFor[t.id] = { text: s, ai: true };
-      var live = thoughts[t.id]; if (!live) return;
-      live.recent_lines = (live.recent_lines || []).concat([s]).slice(-3); save(live);
+      if (!s) { $("aiText").textContent = "AI lines: on, but the last answer was not usable (" + lastReason + "). Built-in line shown."; useFallback(); return; }
+      var live = thoughts[t.id];
+      if (live) { live.recent_lines = (live.recent_lines || []).concat([s]).slice(-3); save(live); }
       setAiStatus();
+      if (seq !== aiSeq || current !== t.id) return;
+      lineFor[t.id] = { text: s, ai: true };
       paintLine();
     }).catch(function (e) {
       // Auth failures switch model lines off. Anything else (no credit, rate limit, network)
       // keeps the key but says so in Settings, so a silent fallback is never mistaken for success.
       if (e && e.code === "not_granted") { sample = null; setAiStatus(); $("aiText").textContent = "AI lines: key rejected, using built-in"; }
-      else $("aiText").textContent = "AI lines: last request failed, using built-in. Tap Test key.";
+      else $("aiText").textContent = "AI lines: last request failed (" + ((e && e.message) || "network") + "). Built-in line shown.";
+      useFallback();
     });
   }
-  // Draw the current card's line. 'pending' dims it while a model line is on the way.
+  // Draw the current card's line. 'pending' dims the placeholder while a model line is on the way.
   function paintLine() {
     var el = $("aiLine"); if (!el || !current) return;
     var l = lineFor[current]; if (!l) return;
     el.textContent = l.text;
-    el.classList.toggle("pending", !l.ai && !!sample);
+    el.classList.toggle("pending", !!l.pending);
   }
 
   // ---------- actions ----------
