@@ -11,8 +11,8 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.23.0";
-  var BUILT = "2026-10-12";
+  var VERSION = "1.24.0";
+  var BUILT = "2026-10-13";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
   // MAX_WORDS  longest consideration the app will show. Long enough for one complete
@@ -235,12 +235,73 @@ var ScalesCore = (function () {
     return { add: add, updated: updated };
   }
 
+  // ---------- days, rest and the front of the stack ----------
+  // DAY_START_HOUR  a Scales day runs from 4:00 AM to 4:00 AM local time, so a late-night
+  //                 session still belongs to the day it started in.
+  // REST_DAYS       how long Not today sets a principle aside. One constant so a longer
+  //                 break can be tried later.
+  var DAY_START_HOUR = 4, REST_DAYS = 1;
+
+  // The Scales day for a moment, as local YYYY-MM-DD. Shifting the clock back by the start
+  // hour with calendar arithmetic keeps daylight saving changes on the right day.
+  function dayOf(d) {
+    var x = new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours() - DAY_START_HOUR, d.getMinutes(), d.getSeconds());
+    return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0");
+  }
+  // A day key n days later.
+  function addDays(key, n) {
+    var p = key.split("-"), x = new Date(+p[0], +p[1] - 1, +p[2] + n, 12);
+    return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0");
+  }
+  // Resting: set aside with Not today and not yet back. rest_until is the first day it may return.
+  function isResting(t, today) { return !!t.rest_until && today < t.rest_until; }
+
+  // Not today: count it, rest it, and give it one turn at the front once it returns.
+  function applySkip(t, today) {
+    t.skip_count = (t.skip_count || 0) + 1;
+    t.lifetime_skips = (t.lifetime_skips || 0) + 1;
+    t.consecutive_reflects = 0;
+    t.rest_until = addDays(today, REST_DAYS);
+    t.lead_due = true;
+    return t;
+  }
+
+  // Principles waiting for their turn at the front: set aside since they last led, and no
+  // longer resting. Most avoided first; ties go to the one waiting longest since last shown.
+  function frontQueue(list, today, excludeId) {
+    return list.filter(function (t) { return t.lead_due && !isResting(t, today) && t.id !== excludeId; })
+      .sort(function (a, b) {
+        return (b.skip_count || 0) - (a.skip_count || 0) || String(a.last_shown_at || "").localeCompare(String(b.last_shown_at || ""));
+      });
+  }
+
+  // Choose the next card. Returns { card, lead, resting } where lead says it is taking its
+  // turn at the front and resting counts principles set aside today. card is null when the
+  // deck is empty, or when everything is resting and showAnyway is off.
+  function nextCard(list, history, today, showAnyway, rand) {
+    var current = history.length ? history[history.length - 1] : null;
+    var front = frontQueue(list, today, current);
+    var resting = list.filter(function (t) { return isResting(t, today); }).length;
+    if (front.length) return { card: front[0], lead: true, resting: resting };
+    var pool = showAnyway ? list : list.filter(function (t) { return !isResting(t, today); });
+    return { card: pickFrom(pool, history, rand), lead: false, resting: resting };
+  }
+
+  // Record that t is on screen. A turn at the front is used up when it is shown.
+  function markShown(t, now, lead) {
+    t.last_shown_at = now.toISOString();
+    if (lead || t.lead_due && !isResting(t, dayOf(now))) { t.lead_due = false; t.led_on = dayOf(now); }
+    return t;
+  }
+
   return { VERSION: VERSION, BUILT: BUILT, CAP: CAP, MAX_WORDS: MAX_WORDS, MAX_TEXT: MAX_TEXT,
     tier: tier, weight: weight, words: words, pickFrom: pickFrom, clean: clean, fit: fit, vet: vet,
     LIMITS: LIMITS, ORIGINS: ORIGINS, normText: normText, collections: collections, canonCollection: canonCollection,
     editValues: editValues, checkEdit: checkEdit, applyEdit: applyEdit, label: label,
     checkRename: checkRename, renameCollection: renameCollection, removeCollection: removeCollection,
-    STARTER_FIELDS: STARTER_FIELDS, loadStarter: loadStarter };
+    STARTER_FIELDS: STARTER_FIELDS, loadStarter: loadStarter,
+    DAY_START_HOUR: DAY_START_HOUR, REST_DAYS: REST_DAYS, dayOf: dayOf, addDays: addDays, isResting: isResting,
+    applySkip: applySkip, frontQueue: frontQueue, nextCard: nextCard, markShown: markShown };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = ScalesCore;

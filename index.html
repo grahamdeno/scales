@@ -237,6 +237,7 @@ header.top { display:flex; align-items:center; justify-content:space-between; ga
 .notice[hidden] { display:none; }
 .link-danger { background:none; border:0; color:var(--markText); font-weight:600; font-size:14px; padding:6px 0; justify-self:center; }
 .btn-row { display:flex; justify-content:space-between; align-items:center; }
+.meta .first { color:var(--accent); font-weight:600; }
 .none { font-size:13px; color:var(--muted); margin:0; }
 .cal { display:grid; grid-template-columns:repeat(14, minmax(0,1fr)); gap:4px; }
 .cal i { aspect-ratio:1; border-radius:3px; background:var(--empty); }
@@ -504,7 +505,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   </div>
   <div class="group">
     <div class="sec">How it works</div>
-    <p class="note">Not today raises a principle's weight, so what you set aside comes back more often, up to four times as often as a new one. Still working on it, after at least 8 seconds on the card, lowers that weight by one step. Living it retires the principle to your record.</p>
+    <p class="note">Not today sets a principle aside until 4:00 AM and raises its weight, up to four times as likely as a new one. The next morning it comes up first, once, most avoided first; then it rejoins the deck. Still working on it, after at least 8 seconds on the card, lowers that weight by one step. Living it retires the principle to your record.</p>
   </div>
   <div class="group">
     <div class="sec">Origin</div>
@@ -653,7 +654,11 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0; document.body.scrollTop = 0;
   }
-  try { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; } catch (e) {}
+  // window.history: the app keeps its own "history" of shown cards, which hides the browser one here.
+  try { if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual"; } catch (e) {}
+  // A new Scales day may have started while the app was in the background; if the deck was
+  // showing Nothing left today, look again.
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && !current && activeList().length) showNext(); });
   window.addEventListener("pageshow", resetScroll);
   window.addEventListener("load", resetScroll);
   function isTyping(el) { return !!el && (el.tagName === "TEXTAREA" || (el.tagName === "INPUT" && el.type !== "file")); }
@@ -711,13 +716,25 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   function all() { return Object.keys(thoughts).map(function (k) { return thoughts[k]; }); }
   // Thoughts still in the deck (not shed).
   function activeList() { return all().filter(function (t) { return t.status === "active"; }); }
-  // Weighted random pick from the active deck with a short repeat cooldown (core.js).
-  function pickNext() { return C.pickFrom(activeList(), history); }
+  // The next card (core.js nextCard): principles waiting for their turn at the front come
+  // first, then a weighted draw that leaves out anything resting after Not today. Show anyway,
+  // from the Nothing left today screen, lets resting principles back in until the day ends.
+  function today() { return C.dayOf(new Date()); }
+  function showAnyway() { return prefs.anyway_day === today(); }
+  var currentLead = null;
+  function pickNext() { return C.nextCard(activeList(), history, today(), showAnyway()).card; }
 
   // Put a thought on screen, start the dwell timer, and ask for its line.
   function showThought(t) {
     current = t ? t.id : null;
-    if (t) { history.push(t.id); if (history.length > 20) history.shift(); }
+    currentLead = null;
+    if (t) {
+      history.push(t.id); if (history.length > 20) history.shift();
+      // A card taking its turn at the front is marked first today; the turn is used up now.
+      var lead = !!t.lead_due && !C.isResting(t, today());
+      C.markShown(t, new Date(), lead); save(t);
+      if (lead) currentLead = t.id;
+    }
     shownAt = Date.now();
     renderDeck();
     if (t) requestLine(t);
@@ -845,7 +862,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
     var t = thoughts[current]; if (!t) return;
     var dwell = (Date.now() - shownAt) / 1000;
     if (kind === "skip") {
-      t.skip_count++; t.lifetime_skips++; t.consecutive_reflects = 0;
+      // Not today: counted, rested until the next day, and owed one turn at the front.
+      C.applySkip(t, today());
       save(t); logActivity("skip"); flyOut("left"); return;
     }
     if (kind === "keep") {
@@ -924,6 +942,18 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   function renderDeck() {
     var v = $("v-deck");
     var t = thoughts[current];
+    if (!t && activeList().length) {
+      // Everything in the deck is resting after Not today.
+      var n = activeList().filter(function (x) { return C.isResting(x, today()); }).length;
+      v.innerHTML = '<div class="empty glass"><div class="eyebrow">Done for today</div><h1>Nothing left today.</h1><p>' +
+        n + (n === 1 ? " principle is" : " principles are") + " resting until " + C.DAY_START_HOUR + ":00 AM. Not today sets a principle aside for the day; tomorrow the most avoided come up first.</p>" +
+        '<button type="button" class="btn" style="width:auto;padding-inline:22px" id="showAnyway">Show anyway</button>' +
+        '<button type="button" class="btn ghost" style="width:auto;padding-inline:22px" id="emptyAdd">Capture a principle</button></div>' + stripHtml();
+      $("showAnyway").onclick = function () { prefs.anyway_day = today(); savePrefs(); showNext(); };
+      $("emptyAdd").onclick = openCapture;
+      bindStrip();
+      return;
+    }
     if (!t) {
       var any = all().length;
       v.innerHTML = '<div class="empty glass"><div class="eyebrow">' + (any ? "Deck clear" : "Start here") + '</div><h1>' +
@@ -947,7 +977,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
         byline(t) +
         '<div class="rule"></div>' +
         '<div class="ai">' + ICON_SPARK + '<p id="aiLine"></p></div>' +
-        '<div class="meta">captured ' + fmtDate(t.created_at) + " · inspected " + t.reflect_count + "× · weight " + weight(t).toFixed(1) + "</div>" +
+        '<div class="meta">' + (currentLead === t.id ? '<b class="first">first today</b> \u00b7 ' : "") + "captured " + fmtDate(t.created_at) + " · inspected " + t.reflect_count + "× · weight " + weight(t).toFixed(1) + "</div>" +
       "</article>" +
       (nudge ? '<div class="banner glass"><span>Have you lived this yet?</span><span class="btns"><button type="button" class="b-ghost" id="nudgeNo">Not yet</button><button type="button" class="b-accent" id="nudgeYes">Living it</button></span></div>' : "") +
       '<div class="hints" aria-hidden="true"><span>← not today</span><span>↑ working on it</span><span>living it →</span></div>' +

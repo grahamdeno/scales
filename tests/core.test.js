@@ -319,7 +319,7 @@ test("page sizing stays at the rules confirmed full screen on the Home Screen (1
 test("page offsets from the keyboard and scroll memory are reset in script (1.22.1)", () => {
   const html = read("index.html");
   assert.doesNotMatch(html, /scrollIntoView/, "scrolling an element into view also scrolls the page");
-  assert.match(html, /history\.scrollRestoration = "manual"/);
+  assert.match(html, /window\.history\.scrollRestoration = "manual"/, "must use window.history; the app's own history array hides it");
   assert.match(html, /function hide\(\)[^\n]*resetScroll\(\)/);
   assert.match(html, /addEventListener\("focusout"/);
 });
@@ -328,4 +328,81 @@ test("Settings shows a screen check for real-device layout numbers", () => {
   const html = read("index.html");
   assert.match(html, /id="screenCheck"/);
   assert.match(html, /function screenCheck\(\)/);
+});
+
+// ---------- 1.24.0: rest for the day, front of the stack ----------
+const at = (y, m, d, h = 12, min = 0) => new Date(y, m - 1, d, h, min);
+const card = (id, extra = {}) => Object.assign({ id, text: "P " + id, status: "active", skip_count: 0, lifetime_skips: 0 }, extra);
+
+test("a Scales day runs from 4:00 AM to 4:00 AM", () => {
+  assert.equal(C.dayOf(at(2026, 10, 13, 3, 59)), "2026-10-12");
+  assert.equal(C.dayOf(at(2026, 10, 13, 4, 0)), "2026-10-13");
+  assert.equal(C.dayOf(at(2026, 10, 13, 23, 59)), "2026-10-13");
+  assert.equal(C.addDays("2026-10-31", 1), "2026-11-01");
+  assert.equal(C.addDays("2026-12-31", 1), "2027-01-01");
+});
+
+test("the 4:00 AM boundary holds across daylight saving", () => {
+  process.env.TZ = "America/New_York";
+  // Nov 1, 2026: clocks fall back at 2:00 AM. Mar 8, 2026: clocks spring forward at 2:00 AM.
+  assert.equal(C.dayOf(new Date(2026, 10, 1, 3, 59)), "2026-10-31");
+  assert.equal(C.dayOf(new Date(2026, 10, 1, 4, 0)), "2026-11-01");
+  assert.equal(C.dayOf(new Date(2026, 2, 8, 3, 59)), "2026-03-07");
+  assert.equal(C.dayOf(new Date(2026, 2, 8, 4, 0)), "2026-03-08");
+});
+
+test("Not today rests a principle until the next Scales day and owes it one turn at the front", () => {
+  const t = card("a");
+  C.applySkip(t, "2026-10-13");
+  assert.deepEqual([t.skip_count, t.lifetime_skips, t.rest_until, t.lead_due], [1, 1, "2026-10-14", true]);
+  assert.equal(C.isResting(t, "2026-10-13"), true);
+  assert.equal(C.isResting(t, "2026-10-14"), false);
+  assert.equal(C.REST_DAYS, 1);
+});
+
+test("resting principles are never drawn, unless Show anyway is on", () => {
+  const list = [card("a", { rest_until: "2026-10-14" }), card("b")];
+  for (let i = 0; i < 50; i++) assert.equal(C.nextCard(list, [], "2026-10-13", false).card.id, "b");
+  const all = [card("a", { rest_until: "2026-10-14" }), card("b", { rest_until: "2026-10-14" })];
+  const r = C.nextCard(all, [], "2026-10-13", false);
+  assert.deepEqual([r.card, r.resting], [null, 2], "everything resting: nothing left today");
+  assert.ok(C.nextCard(all, [], "2026-10-13", true).card, "show anyway draws from resting");
+});
+
+test("the front of the stack: most avoided first, then longest waiting, once each", () => {
+  const today = "2026-10-14";
+  const list = [
+    card("fresh"),
+    card("two-old", { skip_count: 2, lead_due: true, rest_until: today, last_shown_at: "2026-10-01T10:00:00.000Z" }),
+    card("two-new", { skip_count: 2, lead_due: true, rest_until: today, last_shown_at: "2026-10-12T10:00:00.000Z" }),
+    card("three", { skip_count: 3, lead_due: true, rest_until: today }),
+    card("resting", { skip_count: 5, lead_due: true, rest_until: "2026-10-15" }),
+    card("counted-not-owed", { skip_count: 4 })
+  ];
+  assert.deepEqual(C.frontQueue(list, today).map((t) => t.id), ["three", "two-old", "two-new"]);
+  const seen = [], hist = [], now = at(2026, 10, 14, 7);
+  for (let i = 0; i < 3; i++) {
+    const r = C.nextCard(list, hist, today, false, () => 0.5);
+    assert.equal(r.lead, true); seen.push(r.card.id); hist.push(r.card.id); C.markShown(r.card, now, r.lead);
+  }
+  assert.deepEqual(seen, ["three", "two-old", "two-new"]);
+  const after = C.nextCard(list, hist, today, false, () => 0.5);
+  assert.equal(after.lead, false, "each leads once; then the weighted draw resumes");
+  assert.notEqual(after.card.id, "resting");
+});
+
+test("skipping a card at the front rests it and owes it tomorrow's turn", () => {
+  const t = card("a", { skip_count: 1, lead_due: true, rest_until: "2026-10-14" });
+  C.markShown(t, at(2026, 10, 14, 7), true);
+  assert.deepEqual([t.lead_due, t.led_on], [false, "2026-10-14"]);
+  C.applySkip(t, "2026-10-14");
+  assert.deepEqual([t.skip_count, t.rest_until, t.lead_due], [2, "2026-10-15", true]);
+  assert.equal(C.frontQueue([t], "2026-10-14").length, 0);
+  assert.equal(C.frontQueue([t], "2026-10-15").length, 1);
+});
+
+test("principles saved before 1.24.0 neither rest nor lead", () => {
+  const old = card("a", { skip_count: 3 });
+  assert.equal(C.isResting(old, "2026-10-13"), false);
+  assert.equal(C.frontQueue([old], "2026-10-13").length, 0);
 });

@@ -78,7 +78,8 @@ flowchart TB
 ```mermaid
 stateDiagram-v2
     [*] --> Active: Capture sheet or starter deck<br/>all counts start at 0
-    Active --> Active: Not today<br/>count +1, weight up
+    Active --> Resting: Not today<br/>count +1, weight up, owed a turn at the front
+    Resting --> Active: 4:00 AM next day<br/>leads once, most avoided first
     Active --> Active: Still working on it<br/>inspections +1, count -1 after 8s on card
     Active --> Nudge: 3 in a row
     Nudge --> Active: Not yet<br/>streak reset
@@ -139,6 +140,9 @@ sequenceDiagram
 |---|---|---|
 | Weight | 1 + 0.5 per Not today | Avoided principles come back more often |
 | Weight cap | 4x | One principle cannot take over the deck |
+| Day boundary | 4:00 AM local | A late-night session counts as the day it started in |
+| Rest after Not today | 1 day (`REST_DAYS`) | Set aside for the day, met first the next morning; one constant so a longer break can be tried |
+| Front of the stack | once per Not today | Most avoided first, then longest waiting since last shown |
 | Cooldown | last 3 shown (last 1 in a deck of 3 or fewer) | No back to back repeats |
 | Dwell check | 8 seconds | A quick swipe up does not erase a Not today |
 | Nudge | 3 Still working on it in a row | Prompts the Living it question |
