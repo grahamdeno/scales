@@ -505,7 +505,7 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   </div>
   <div class="group">
     <div class="sec">How it works</div>
-    <p class="note">Not today sets a principle aside until 4:00 AM and raises its weight, up to four times as likely as a new one. The next morning it comes up first, once, most avoided first; then it rejoins the deck. Still working on it, after at least 8 seconds on the card, lowers that weight by one step. Living it retires the principle to your record.</p>
+    <p class="note">Not today sets a principle aside for four days and raises its weight, up to four times as likely as a new one. When it returns, at 4:00 AM, it comes up first, once, most avoided first; then it rejoins the deck. Still working on it, after at least 8 seconds on the card, lowers that weight by one step. Living it retires the principle to your record.</p>
   </div>
   <div class="group">
     <div class="sec">Origin</div>
@@ -720,6 +720,12 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
   // first, then a weighted draw that leaves out anything resting after Not today. Show anyway,
   // from the Nothing left today screen, lets resting principles back in until the day ends.
   function today() { return C.dayOf(new Date()); }
+  // When a resting principle returns, in words: "Saturday at 4:00 AM".
+  function returnText(day) {
+    if (!day) return "soon";
+    var p = day.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]);
+    return d.toLocaleDateString("en-US", { weekday: "long" }) + " at " + C.DAY_START_HOUR + ":00 AM";
+  }
   function showAnyway() { return prefs.anyway_day === today(); }
   var currentLead = null;
   function pickNext() { return C.nextCard(activeList(), history, today(), showAnyway()).card; }
@@ -946,7 +952,8 @@ textarea.big { font-family:var(--f-display); font-weight:800; font-size:22px; li
       // Everything in the deck is resting after Not today.
       var n = activeList().filter(function (x) { return C.isResting(x, today()); }).length;
       v.innerHTML = '<div class="empty glass"><div class="eyebrow">Done for today</div><h1>Nothing left today.</h1><p>' +
-        n + (n === 1 ? " principle is" : " principles are") + " resting until " + C.DAY_START_HOUR + ":00 AM. Not today sets a principle aside for the day; tomorrow the most avoided come up first.</p>" +
+        n + (n === 1 ? " principle is" : " principles are") + " resting. The next returns " + returnText(C.nextReturn(activeList(), today())) +
+        ". Not today sets a principle aside for " + C.REST_DAYS + " days; when it returns, the most avoided come up first.</p>" +
         '<button type="button" class="btn" style="width:auto;padding-inline:22px" id="showAnyway">Show anyway</button>' +
         '<button type="button" class="btn ghost" style="width:auto;padding-inline:22px" id="emptyAdd">Capture a principle</button></div>' + stripHtml();
       $("showAnyway").onclick = function () { prefs.anyway_day = today(); savePrefs(); showNext(); };

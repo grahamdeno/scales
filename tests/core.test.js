@@ -354,10 +354,12 @@ test("the 4:00 AM boundary holds across daylight saving", () => {
 test("Not today rests a principle until the next Scales day and owes it one turn at the front", () => {
   const t = card("a");
   C.applySkip(t, "2026-10-13");
-  assert.deepEqual([t.skip_count, t.lifetime_skips, t.rest_until, t.lead_due], [1, 1, "2026-10-14", true]);
-  assert.equal(C.isResting(t, "2026-10-13"), true);
-  assert.equal(C.isResting(t, "2026-10-14"), false);
-  assert.equal(C.REST_DAYS, 1);
+  assert.deepEqual([t.skip_count, t.lifetime_skips, t.rest_until, t.lead_due], [1, 1, "2026-10-17", true]);
+  assert.equal(C.REST_DAYS, 4);
+  for (const d of ["2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16"]) assert.equal(C.isResting(t, d), true, d);
+  assert.equal(C.isResting(t, "2026-10-17"), false);
+  assert.equal(C.frontQueue([t], "2026-10-16").length, 0, "no turn while resting");
+  assert.equal(C.frontQueue([t], "2026-10-17").length, 1, "takes its turn the day it returns");
 });
 
 test("resting principles are never drawn, unless Show anyway is on", () => {
@@ -396,13 +398,20 @@ test("skipping a card at the front rests it and owes it tomorrow's turn", () => 
   C.markShown(t, at(2026, 10, 14, 7), true);
   assert.deepEqual([t.lead_due, t.led_on], [false, "2026-10-14"]);
   C.applySkip(t, "2026-10-14");
-  assert.deepEqual([t.skip_count, t.rest_until, t.lead_due], [2, "2026-10-15", true]);
-  assert.equal(C.frontQueue([t], "2026-10-14").length, 0);
-  assert.equal(C.frontQueue([t], "2026-10-15").length, 1);
+  assert.deepEqual([t.skip_count, t.rest_until, t.lead_due], [2, "2026-10-18", true]);
+  assert.equal(C.frontQueue([t], "2026-10-17").length, 0);
+  assert.equal(C.frontQueue([t], "2026-10-18").length, 1);
 });
 
 test("principles saved before 1.24.0 neither rest nor lead", () => {
   const old = card("a", { skip_count: 3 });
   assert.equal(C.isResting(old, "2026-10-13"), false);
   assert.equal(C.frontQueue([old], "2026-10-13").length, 0);
+});
+
+test("Nothing left today names the earliest return; existing rests keep their day (1.25.0)", () => {
+  const list = [card("a", { rest_until: "2026-10-17" }), card("b", { rest_until: "2026-10-14" }), card("c")];
+  assert.equal(C.nextReturn(list, "2026-10-13"), "2026-10-14", "a rest set under 1.24.0 is kept");
+  assert.equal(C.nextReturn([card("x")], "2026-10-13"), "");
+  assert.doesNotMatch(read("index.html"), /resting until " \+ C\.DAY_START_HOUR/, "copy must not promise 4:00 AM tonight");
 });

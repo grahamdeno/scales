@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.24.0";
+  var VERSION = "1.25.0";
   var BUILT = "2026-10-13";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -238,9 +238,9 @@ var ScalesCore = (function () {
   // ---------- days, rest and the front of the stack ----------
   // DAY_START_HOUR  a Scales day runs from 4:00 AM to 4:00 AM local time, so a late-night
   //                 session still belongs to the day it started in.
-  // REST_DAYS       how long Not today sets a principle aside. One constant so a longer
-  //                 break can be tried later.
-  var DAY_START_HOUR = 4, REST_DAYS = 1;
+  // REST_DAYS       how long Not today sets a principle aside. Four days, so a reflex skip
+  //                 each morning cannot turn into a daily habit (1.25.0; was one day in 1.24.0).
+  var DAY_START_HOUR = 4, REST_DAYS = 4;
 
   // The Scales day for a moment, as local YYYY-MM-DD. Shifting the clock back by the start
   // hour with calendar arithmetic keeps daylight saving changes on the right day.
@@ -287,6 +287,12 @@ var ScalesCore = (function () {
     return { card: pickFrom(pool, history, rand), lead: false, resting: resting };
   }
 
+  // The earliest day a resting principle returns, or "" when none is resting.
+  function nextReturn(list, today) {
+    return list.filter(function (t) { return isResting(t, today); })
+      .map(function (t) { return t.rest_until; }).sort()[0] || "";
+  }
+
   // Record that t is on screen. A turn at the front is used up when it is shown.
   function markShown(t, now, lead) {
     t.last_shown_at = now.toISOString();
@@ -301,7 +307,7 @@ var ScalesCore = (function () {
     checkRename: checkRename, renameCollection: renameCollection, removeCollection: removeCollection,
     STARTER_FIELDS: STARTER_FIELDS, loadStarter: loadStarter,
     DAY_START_HOUR: DAY_START_HOUR, REST_DAYS: REST_DAYS, dayOf: dayOf, addDays: addDays, isResting: isResting,
-    applySkip: applySkip, frontQueue: frontQueue, nextCard: nextCard, markShown: markShown };
+    applySkip: applySkip, nextReturn: nextReturn, frontQueue: frontQueue, nextCard: nextCard, markShown: markShown };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = ScalesCore;
