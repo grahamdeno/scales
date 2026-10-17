@@ -11,106 +11,84 @@ img { max-width: 100%; }
 [hidden]:not([hidden=until-found i]) { display: none !important; }
 </style>
 <title>Scales</title>
-<link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/geist-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Scales">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#131220">
+<meta name="theme-color" content="#F3F0EA" id="themeColor">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <style>
-/* Layout: one fixed-height screen (100dvh, no page scroll) built from frosted glass tiles over a blurred background glow.
-   Deck: header / thought card (flex: 1, takes all the leftover height) / actions, with a floating add button.
-   The ledger view swaps in place of the deck. Capture, shed and settings open as bottom sheets: native
-   <dialog> elements shown with showModal(), dimmed by ::backdrop.
-   All colors are CSS custom properties so a theme is just a different set of values.
-   Color roles: accent = shed, mark = skip / resistance, lived = inspected, g1/g2 = background glow.
-   Layout (1.28.0): a light top (date, today's count, Settings) over a dark panel that rises from the bottom
-   with rounded top corners and holds the view. The panel and the tab bar re-map the color tokens to the
-   theme's panel palette (.pscope, below), so every component inside them just uses --bg, --surface, --fg.
-   Outcome colors (1.27.0): --c-live / --c-work / --c-skip are the green, amber and rose used for the swipe
-   glow, the stamps and the Ledger bars. Each is a fixed hue mixed with the theme's accent so it belongs to the
-   theme; light and dark schemes get their own base so the glow reads on either. */
+/* Layout (1.29.0): the Edition system, applied to Scales.
+   One quiet ground per theme, warm ink, one accent. Instrument Serif carries the principle and the headings;
+   Geist is for reading and labels; Geist Mono for the small uppercase labels. All three are self-hosted (fonts/).
+   The principle is not a card: its words sit on the page, low on the screen where the thumb is, and the whole
+   area is what you swipe. There is no tab bar and no button row. One corner button opens a ring of everything
+   else (the three moves, Capture, Edit, the Ledger, Settings): tap it, or hold and slide to a control. It dims
+   after a few idle seconds so the page is all reading space.
+   The Ledger is a front page: a serif masthead, sections with serif heads, and rows divided by hairlines.
+   Capture, shed and settings are bottom sheets: native <dialog> elements shown with showModal(), dimmed by ::backdrop.
+   Glass is used only where Edition uses it: the corner button and the ring.
+   Color roles: accent = Living it and links, mark = Not today / resistance, lived = inspected.
+   Outcome colors: --c-live / --c-work / --c-skip are the green, amber and rose of the swipe wash, the stamps and
+   the Ledger bars. Each is a fixed hue mixed with the theme's accent so it belongs to the theme. */
 
-/* Default light theme. */
+/* Auto, light. */
 :root {
-  --bg:#ECEAE6; --surface:#FFFFFF; --fg:#17201E; --muted:#5F6B67; --rim:rgba(255,255,255,.75); --line:rgba(23,32,30,.10);
-  --lived:#24302D; --empty:rgba(23,32,30,.12); --accent:#2C78A0; --mark:#C2642A; --g1:#9CD3E6; --g2:#E8C9A6;
-  --markText:#9A4B1B; --onAccent:#FFFFFF;
-  /* One face (1.28.0): Inter, a variable font with an optical size axis, self-hosted (fonts/) so every word
-     keeps its type offline. Large sizes pick up Inter's tighter display cut on their own; --f-num is the same
-     face used with tabular figures for counts and dates. */
-  --f-display:"Inter",-apple-system,"Segoe UI",system-ui,sans-serif;
-  --f-body:"Inter",-apple-system,"Segoe UI",system-ui,sans-serif;
-  --f-num:"Inter",-apple-system,"Segoe UI",system-ui,sans-serif;
-  /* Corner radii (1.28.0): one scale, used everywhere. Chips and small tags stay fully round. */
-  --r-xs:4px; --r-sm:10px; --r-btn:12px; --r-ctl:14px; --r-tile:16px; --r-card:18px; --r-sheet:20px; --r-bar:20px; --r-panel:24px; --r-pill:999px;
-  /* Type scale: five steps for everything that is not the principle itself. Text inputs stay at 16px,
-     the smallest size iOS does not zoom into on focus. */
-  --t-xs:11px; --t-sm:13px; --t-md:15px; --t-lg:22px;
-  --t-xl:clamp(30px, min(9.4vw, 5vh), 42px);
+  --bg:#F3F0EA; --surface:#FBF9F5; --fg:#1B1A18; --muted:#5E5953; --lived:#3A3632;
+  --accent:#9C5226; --onAccent:#FFFFFF; --mark:#B4442F; --markText:#A33D29;
+  --f-display:"Instrument Serif","Iowan Old Style",Georgia,serif;
+  --f-body:"Geist",-apple-system,"SF Pro Text",system-ui,sans-serif;
+  --f-num:"Geist",-apple-system,"SF Pro Text",system-ui,sans-serif;
+  --f-mono:"Geist Mono",ui-monospace,Menlo,monospace;
+  /* Corner radii: one scale, as in Edition. Pills for chips, buttons and the toast; soft rectangles for rows and fields. */
+  --r-xs:3px; --r-sm:8px; --r-field:12px; --r-tile:14px; --r-panel:20px; --r-sheet:22px; --r-pill:999px;
+  /* Type: four text steps and four display steps. Text inputs stay at 16px, the smallest size iOS does not zoom into. */
+  --t-xs:11px; --t-sm:13px; --t-md:15px; --t-lg:17px;
+  --d-sm:24px; --d-md:28px; --d-lg:clamp(28px, 8.6vw, 34px); --d-xl:clamp(36px, 11.8vw, 46px); --d-xxl:52px;
   --ease-spring:cubic-bezier(.34,1.56,.64,1); --ease-out:cubic-bezier(.2,.8,.2,1);
+  --gutter:20px;
+  color-scheme:light;
 }
-/* Scheme-level tokens: outcome base hues, shadow depth and the floating tab bar. Light first, then dark for the
-   system setting, forced dark and the four dark themes, then Linen back to light. */
-:root { --live-base:#178A4E; --work-base:#B07206; --skip-base:#CC3D5A; --shadow:rgba(24,28,36,.34); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --live-base:#4BD98C; --work-base:#F4B740; --skip-base:#FF7A8E; --shadow:rgba(0,0,0,.72); } }
-:root[data-theme="dark"], :root[data-skin="moss"], :root[data-skin="ink"], :root[data-skin="dusk"], :root[data-skin="return"] {
-  --live-base:#4BD98C; --work-base:#F4B740; --skip-base:#FF7A8E; --shadow:rgba(0,0,0,.72); }
-:root[data-skin="linen"] { --live-base:#178A4E; --work-base:#B07206; --skip-base:#CC3D5A; --shadow:rgba(60,44,28,.30); }
-/* Top and panel palettes (1.28.0). --top-* paint the light area at the top; --p-* are the panel's colors.
-   Light themes get a warm light top over a deep panel of their own (teal for Auto, espresso for Linen).
-   Dark themes keep their colors in the panel and get a lighter top tinted by their glow color. */
-:root { --top-bg:#E4E1DB; --top-fg:#191E1D; --top-muted:#575D5A; --top-glass:rgba(255,255,255,.46); --top-rim:rgba(255,255,255,.7);
-  --p-bg:#17302E; --p-surface:#21403D; --p-fg:#EEF4F2; --p-muted:#A2B9B5; --p-rim:rgba(255,255,255,.10); --p-line:rgba(255,255,255,.10);
-  --p-lived:#CFE2DE; --p-empty:rgba(255,255,255,.09); --p-accent:#86D1CB; --p-mark:#F2A56B; --p-markText:#F7B686; --p-onAccent:#0E201F; --p-shadow:rgba(0,0,0,.55); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --top-bg:color-mix(in oklab, var(--surface) 64%, var(--g1)); --top-fg:var(--fg); --top-muted:color-mix(in oklab, var(--fg) 40%, var(--muted)); --top-glass:rgba(255,255,255,.07); --top-rim:rgba(255,255,255,.12);
-  --p-bg:var(--bg); --p-surface:var(--surface); --p-fg:var(--fg); --p-muted:var(--muted); --p-rim:var(--rim); --p-line:var(--line); --p-lived:var(--lived); --p-empty:var(--empty);
-  --p-accent:var(--accent); --p-mark:var(--mark); --p-markText:var(--markText); --p-onAccent:var(--onAccent); --p-shadow:rgba(0,0,0,.6); } }
-:root[data-theme="dark"], :root[data-skin="moss"], :root[data-skin="ink"], :root[data-skin="dusk"], :root[data-skin="return"] {
-  --top-bg:color-mix(in oklab, var(--surface) 64%, var(--g1)); --top-fg:var(--fg); --top-muted:color-mix(in oklab, var(--fg) 40%, var(--muted)); --top-glass:rgba(255,255,255,.07); --top-rim:rgba(255,255,255,.12);
-  --p-bg:var(--bg); --p-surface:var(--surface); --p-fg:var(--fg); --p-muted:var(--muted); --p-rim:var(--rim); --p-line:var(--line); --p-lived:var(--lived); --p-empty:var(--empty);
-  --p-accent:var(--accent); --p-mark:var(--mark); --p-markText:var(--markText); --p-onAccent:var(--onAccent); --p-shadow:rgba(0,0,0,.6); }
-:root[data-skin="linen"] { --top-bg:#EDE6DA; --top-fg:#2A251F; --top-muted:#6B6054; --top-glass:rgba(255,255,255,.5); --top-rim:rgba(255,255,255,.75);
-  --p-bg:#2A2420; --p-surface:#3A322C; --p-fg:#F7F0E6; --p-muted:#BEB09F; --p-rim:rgba(255,255,255,.10); --p-line:rgba(255,255,255,.10);
-  --p-lived:#E8DCCB; --p-empty:rgba(255,255,255,.09); --p-accent:#9AD3BB; --p-mark:#F2A27F; --p-markText:#F2A27F; --p-onAccent:#1E1A16; --p-shadow:rgba(0,0,0,.55); }
-/* Resolved on the root, where each theme sets its accent. */
-:root { --c-live:color-mix(in oklab, var(--live-base) 80%, var(--accent)); --c-work:color-mix(in oklab, var(--work-base) 82%, var(--accent)); --c-skip:color-mix(in oklab, var(--skip-base) 82%, var(--accent)); }
-/* Panel scope: the panel, the tab bar and the toast take the panel palette. The outcome colors are derived
-   again here from the panel accent, with the bright bases, because the panel is always dark. */
-.pscope { --bg:var(--p-bg); --surface:var(--p-surface); --fg:var(--p-fg); --muted:var(--p-muted); --rim:var(--p-rim); --line:var(--p-line);
-  --lived:var(--p-lived); --empty:var(--p-empty); --accent:var(--p-accent); --mark:var(--p-mark); --markText:var(--p-markText); --onAccent:var(--p-onAccent); --shadow:var(--p-shadow);
-  --live-base:#4BD98C; --work-base:#F4B740; --skip-base:#FF7A8E;
-  --c-live:color-mix(in oklab, var(--live-base) 80%, var(--accent)); --c-work:color-mix(in oklab, var(--work-base) 82%, var(--accent)); --c-skip:color-mix(in oklab, var(--skip-base) 82%, var(--accent));
-  color:var(--fg); color-scheme:dark; }
-@font-face { font-family:"Inter"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/inter-latin.woff2") format("woff2");
-  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-/* Dark values follow the system setting unless a light theme is forced. The same values are repeated
-   under [data-theme="dark"] so dark can also be forced regardless of the system. */
+/* Dark values follow the system setting unless a light theme is forced; the same values under [data-theme="dark"]
+   force dark regardless of the system. Auto dark is Edition's own ground: near-black, warm off-white, copper. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg:#0C1110; --surface:#1A2120; --fg:#E8EEEB; --muted:#8E9A96; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08);
-    --lived:#CFD9D5; --empty:rgba(255,255,255,.09); --accent:#6CC0E4; --mark:#F0A062; --g1:#1E5468; --g2:#5A3A22;
-    --markText:#F0A062; --onAccent:#0C1110; color-scheme:dark;
-  }
+  :root:not([data-theme="light"]) { --bg:#0E0F11; --surface:#15161A; --fg:#ECE8E3; --muted:#A9A39C; --lived:#CFC9C1;
+    --accent:#D9955F; --onAccent:#14110E; --mark:#F08A7A; --markText:#F08A7A; color-scheme:dark; }
 }
-:root[data-theme="dark"] {
-  --bg:#0C1110; --surface:#1A2120; --fg:#E8EEEB; --muted:#8E9A96; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08);
-  --lived:#CFD9D5; --empty:rgba(255,255,255,.09); --accent:#6CC0E4; --mark:#F0A062; --g1:#1E5468; --g2:#5A3A22;
-  --markText:#F0A062; --onAccent:#0C1110; color-scheme:dark;
-}
-/* Named themes, set by data-skin on <html>. Each one overrides every color token and sets color-scheme
-   so form controls match. Placed after the defaults so equal specificity resolves in their favor
-   and a chosen theme wins over the system light/dark setting. */
-:root[data-skin="moss"]  { --bg:#111A14; --surface:#1E2A22; --fg:#E6ECDF; --muted:#94A291; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08); --lived:#BCCDA8; --empty:rgba(255,255,255,.08); --accent:#E8C55C; --mark:#E68B5E; --g1:#2F5A35; --g2:#6A5A1E; --markText:#E68B5E; --onAccent:#111A14; color-scheme:dark; }
-:root[data-skin="linen"] { --bg:#EFE8DD; --surface:#FFFBF5; --fg:#2A251F; --muted:#786D61; --rim:rgba(255,255,255,.8); --line:rgba(42,37,31,.10); --lived:#3B342C; --empty:rgba(42,37,31,.12); --accent:#2F6B57; --mark:#B0482F; --g1:#E9C9A0; --g2:#B9D2C2; --markText:#9E3E28; --onAccent:#FFFFFF; color-scheme:light; }
-:root[data-skin="ink"]   { --bg:#0A0F1E; --surface:#161E36; --fg:#E5EAF6; --muted:#8893AF; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08); --lived:#B3C3EC; --empty:rgba(255,255,255,.08); --accent:#F3BC5E; --mark:#FF808C; --g1:#25317A; --g2:#5B2A5E; --markText:#FF808C; --onAccent:#0A0F1E; color-scheme:dark; }
-:root[data-skin="dusk"]  { --bg:#1A121D; --surface:#2A1E2F; --fg:#F2E8F0; --muted:#A592A3; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08); --lived:#E4C0DA; --empty:rgba(255,255,255,.08); --accent:#7FD6C5; --mark:#F5A95C; --g1:#5A2650; --g2:#1F5150; --markText:#F5A95C; --onAccent:#1A121D; color-scheme:dark; }
-:root[data-skin="return"] { --bg:#131220; --surface:#24203A; --fg:#F3EAD8; --muted:#A49CB8; --rim:rgba(255,255,255,.10); --line:rgba(255,255,255,.08); --lived:#D9CFEA; --empty:rgba(255,255,255,.08); --accent:#F08A55; --mark:#E8B860; --g1:#3A2F66; --g2:#6A3A1E; --markText:#E8B860; --onAccent:#131220; color-scheme:dark; }
+:root[data-theme="dark"] { --bg:#0E0F11; --surface:#15161A; --fg:#ECE8E3; --muted:#A9A39C; --lived:#CFC9C1;
+  --accent:#D9955F; --onAccent:#14110E; --mark:#F08A7A; --markText:#F08A7A; color-scheme:dark; }
+/* Named themes, set by data-skin on <html>. Placed after the defaults so a chosen theme wins over the system setting. */
+:root[data-skin="moss"]  { --bg:#111A14; --surface:#18231C; --fg:#E6ECDF; --muted:#9AA897; --lived:#BCCDA8; --accent:#E8C55C; --onAccent:#111A14; --mark:#E68B5E; --markText:#EC9A70; color-scheme:dark; }
+:root[data-skin="linen"] { --bg:#EFE8DD; --surface:#F8F3EA; --fg:#2A251F; --muted:#6A5F53; --lived:#3B342C; --accent:#2F6B57; --onAccent:#FFFFFF; --mark:#B0482F; --markText:#9E3E28; color-scheme:light; }
+:root[data-skin="ink"]   { --bg:#0A0F1E; --surface:#111A31; --fg:#E5EAF6; --muted:#939DB8; --lived:#B3C3EC; --accent:#F3BC5E; --onAccent:#0A0F1E; --mark:#FF808C; --markText:#FF8C97; color-scheme:dark; }
+:root[data-skin="dusk"]  { --bg:#1A121D; --surface:#221829; --fg:#F2E8F0; --muted:#AD9BAB; --lived:#E4C0DA; --accent:#7FD6C5; --onAccent:#1A121D; --mark:#F5A95C; --markText:#F5A95C; color-scheme:dark; }
+:root[data-skin="return"] { --bg:#131220; --surface:#1C1A2E; --fg:#F3EAD8; --muted:#A9A1BD; --lived:#D9CFEA; --accent:#F08A55; --onAccent:#131220; --mark:#E8B860; --markText:#E8B860; color-scheme:dark; }
+/* Edition's quiet layers, worked out from each theme's ink so every theme gets the same structure:
+   --panel (a faint raised surface), --line and --line-2 (hairlines), --empty (tracks and empty cells). */
+:root { --panel:color-mix(in srgb, var(--fg) 5%, transparent); --panel-2:color-mix(in srgb, var(--fg) 9%, transparent);
+  --line:color-mix(in srgb, var(--fg) 10%, transparent); --line-2:color-mix(in srgb, var(--fg) 16%, transparent);
+  --empty:color-mix(in srgb, var(--fg) 9%, transparent); }
+/* Outcome base hues: deep on light grounds, bright on dark ones. */
+:root { --live-base:#0C7139; --work-base:#875400; --skip-base:#B02D4A; --shadow:rgba(24,22,20,.22); --scrim:rgba(20,18,16,.32); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --live-base:#4BD98C; --work-base:#F4B740; --skip-base:#FF7A8E; --shadow:rgba(0,0,0,.5); --scrim:rgba(0,0,0,.5); } }
+:root[data-theme="dark"], :root[data-skin="moss"], :root[data-skin="ink"], :root[data-skin="dusk"], :root[data-skin="return"] {
+  --live-base:#4BD98C; --work-base:#F4B740; --skip-base:#FF7A8E; --shadow:rgba(0,0,0,.5); --scrim:rgba(0,0,0,.5); }
+:root[data-skin="linen"] { --live-base:#0C7139; --work-base:#875400; --skip-base:#B02D4A; --shadow:rgba(60,44,28,.22); --scrim:rgba(30,24,18,.32); }
+:root { --c-live:color-mix(in oklab, var(--live-base) 80%, var(--accent)); --c-work:color-mix(in oklab, var(--work-base) 82%, var(--accent)); --c-skip:color-mix(in oklab, var(--skip-base) 82%, var(--accent)); }
+
+@font-face { font-family:"Instrument Serif"; font-style:normal; font-weight:400; font-display:swap; src:url("fonts/instrument-serif-latin.woff2") format("woff2");
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family:"Geist"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/geist-latin.woff2") format("woff2");
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family:"Geist Mono"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/geist-mono-latin.woff2") format("woff2");
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 
 /* Base. These two rules are the sizing confirmed full screen from the Home Screen (1.22.0); keep
    them as they are. html must stay at least the large viewport and must not clip: when it was
@@ -118,433 +96,379 @@ img { max-width: 100%; }
    bar short of the bottom. body is locked to the dynamic viewport and never scrolls; views and
    sheets scroll inside it. Page offsets left by the keyboard are reset in script (resetScroll). */
 * { box-sizing:border-box; }
-html { height:100%; min-height:100lvh; background:var(--p-bg); }
-body { height:100%; height:100dvh; overflow:hidden; background:var(--top-bg); color:var(--fg); font-family:var(--f-body); font-size:var(--t-md); line-height:1.4; -webkit-tap-highlight-color:transparent; overscroll-behavior:none; -webkit-font-smoothing:antialiased; font-optical-sizing:auto; }
+html { height:100%; min-height:100lvh; background:var(--bg); }
+body { height:100%; height:100dvh; overflow:hidden; background:var(--bg); color:var(--fg); font-family:var(--f-body); font-size:var(--t-md); line-height:1.5; -webkit-tap-highlight-color:transparent; overscroll-behavior:none; -webkit-font-smoothing:antialiased; }
 button, input, textarea { font:inherit; color:inherit; }
 button { cursor:pointer; }
 :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+/* The small uppercase label, Edition's kicker: mono, tracked, quiet. */
+.label, .eyebrow, .sec-k { font-family:var(--f-mono); font-size:var(--t-xs); font-weight:500; line-height:1.3; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+.kicker { font-family:var(--f-mono); font-size:var(--t-xs); font-weight:500; line-height:1.3; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); }
 
-/* Background glow: two radial gradients from the theme's g1/g2 colors, heavily blurred and oversized so the
-   edges never show. A slow drift animation runs only when the user has not asked for reduced motion. */
-.glow { position:fixed; inset:-30vmax; z-index:0; pointer-events:none;
-  background:
-    radial-gradient(closest-side at 26% 22%, color-mix(in srgb, var(--g1) 92%, transparent), transparent),
-    radial-gradient(closest-side at 78% 76%, color-mix(in srgb, var(--g2) 88%, transparent), transparent),
-    radial-gradient(closest-side at 72% 30%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 80%);
-  opacity:.5; transform:translateZ(0); }
-/* No blur filter: the gradients are soft on their own, and only transform animates, so the drift stays on the
-   compositor. Very slow, and static with reduced motion. */
-@media (prefers-reduced-motion: no-preference) { .glow { animation:drift 60s ease-in-out infinite alternate; } }
-@keyframes drift { 50% { transform:translate3d(3%,-2%,0) rotate(6deg) scale(1.04); } 100% { transform:translate3d(-2%,2%,0) rotate(-4deg) scale(1.06); } }
+/* Frosted glass, used sparingly: only the corner button and the ring. Without backdrop blur it becomes a solid surface. */
+.glass { background:color-mix(in srgb, var(--surface) 82%, transparent); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) { .glass { background:var(--surface); } }
 
-/* Frosted glass surface used by tiles, buttons and sheets: a semi-transparent surface color mixed with
-   color-mix(), backdrop blur, a thin light rim and a soft drop shadow. */
-.glass { position:relative; background:color-mix(in srgb, var(--surface) 58%, transparent);
-  -webkit-backdrop-filter:blur(24px) saturate(180%); backdrop-filter:blur(24px) saturate(180%);
-  border:1px solid var(--rim); border-radius:var(--r-tile); box-shadow:0 1px 0 var(--rim) inset, 0 10px 30px -18px rgba(0,0,0,.35); }
-/* Without backdrop blur, glass becomes a nearly solid surface so text over it stays readable. */
-@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
-  .glass { background:color-mix(in srgb, var(--surface) 94%, transparent); }
-  .tabbar { background:color-mix(in srgb, var(--surface) 96%, #000); }
-}
+/* App shell: one centered column capped at 560px, Edition's 20px gutters, padded by the safe-area insets. */
+.app { position:relative; z-index:1; height:100%; max-width:560px; margin:0 auto; padding:calc(14px + env(safe-area-inset-top, 0px)) var(--gutter) 0; display:flex; flex-direction:column; overflow-x:clip; }
+/* overflow-x:clip keeps a principle swiped off the side from widening the page; vertical overflow is left alone. */
+/* Top line: today's date and count, in the mono label, as on Edition's feed. On the Ledger the date becomes the way back. */
+header.top { flex:none; display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:44px; view-transition-name:topbar; }
+header.top .label { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#todayStat { font-variant-numeric:tabular-nums; flex:none; }
+#todayStat b { font-weight:500; color:var(--fg); }
+.toplink { display:inline-flex; align-items:center; gap:4px; min-height:44px; min-width:44px; margin-left:-2px; padding:0 2px; border:0; background:none; color:var(--accent); }
+.toplink[hidden] { display:none; }
 
-/* App shell: centered column capped at 520px, padded by the iOS safe-area insets so content clears
-   the notch and home indicator in standalone mode. */
-/* --tab-bottom: the tab bar floats just above the home indicator. --tab-space is what it covers, plus a gap. */
-:root { --tab-h:64px; --tab-bottom:max(12px, calc(env(safe-area-inset-bottom, 0px) - 6px)); --tab-space:calc(var(--tab-bottom) + var(--tab-h) + 12px); }
-.app { position:relative; z-index:1; height:100%; max-width:520px; margin:0 auto; padding-inline:14px; padding-top:calc(8px + env(safe-area-inset-top, 0px)); display:flex; flex-direction:column; overflow-x:clip; }
-/* overflow-x:clip keeps a card dragged or flown off the side from widening the page (which on a phone shifts
-   the fixed tab bar); unlike hidden, it leaves vertical overflow and the glow above and below alone. */
-/* Top (1.28.0): the light area above the panel. The app mark and the date on the left; today's count and
-   Settings, both frosted, on the right. */
-header.top { display:flex; align-items:center; justify-content:space-between; gap:10px; flex:none; padding:8px 2px 20px; color:var(--top-fg); view-transition-name:topbar; }
-.who { display:flex; align-items:center; gap:10px; min-width:0; }
-.mark { width:40px; height:40px; border-radius:50%; flex:none; box-shadow:0 0 0 2px color-mix(in srgb, var(--top-bg) 80%, #fff), 0 6px 14px -6px rgba(0,0,0,.45); }
-.hello { display:flex; flex-direction:column; min-width:0; line-height:1.2; }
-.brand { font-family:var(--f-display); font-weight:650; font-size:var(--t-md); letter-spacing:-0.01em; }
-.hello .date { color:var(--top-muted); font-size:var(--t-sm); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.hbtns { display:flex; gap:8px; align-items:center; }
-.iconbtn { width:44px; height:44px; border-radius:50%; display:grid; place-items:center; padding:0; }
-header.top .glass { background:var(--top-glass); border:1px solid var(--top-rim); color:var(--top-fg); box-shadow:0 1px 0 var(--top-rim) inset, 0 6px 16px -10px rgba(0,0,0,.35); }
-.stat-pill { height:36px; display:inline-flex; align-items:center; gap:7px; padding:0 13px 0 11px; border-radius:var(--r-pill); font-size:var(--t-sm); font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums; }
-.stat-pill i { width:8px; height:8px; border-radius:50%; background:var(--c-live); box-shadow:0 0 8px color-mix(in srgb, var(--c-live) 70%, transparent); }
-.stat-pill span { color:var(--top-muted); font-weight:500; }
-/* The dark panel rising from below. It runs to the bottom edge, under the tab bar. */
-.panel { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; margin-inline:-14px; padding:18px 14px var(--tab-space);
-  border-radius:var(--r-panel) var(--r-panel) 0 0; position:relative;
-  background:radial-gradient(120% 55% at 100% 0%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 62%), var(--bg);
-  box-shadow:0 1px 0 var(--rim) inset, 0 -18px 40px -24px rgba(0,0,0,.45); }
-.phead { flex:none; display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding-inline:2px; }
-.ptitle { margin:0; font-family:var(--f-display); font-weight:700; font-size:26px; line-height:1.15; letter-spacing:-0.025em; }
-.phead .pmeta { font-size:var(--t-sm); color:var(--muted); font-weight:500; font-variant-numeric:tabular-nums; }
-.iconbtn svg { width:19px; height:19px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-.pillbtn { height:44px; padding:0 14px; border-radius:var(--r-pill); display:flex; align-items:center; gap:6px; font-size:var(--t-sm); font-weight:600; }
-.pillbtn svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
-
-.view { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:12px; }
+.main { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+.view { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
 .view[hidden] { display:none !important; }
-.eyebrow, .sec { font-size:var(--t-xs); text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); font-weight:600; }
-.mono { font-family:var(--f-num); }
+.mono { font-family:var(--f-mono); }
 
-/* Deck card. touch-action:none hands all touch movement to the swipe handler instead of the browser.
-   The transform transition animates the card back or off screen; it is turned off while dragging
-   so the card tracks the finger with no lag. */
-/* The card is the hero: a modest radius (1.28.0), a layered shadow (contact, near and a deep soft drop), a faint top sheen,
-   and a pivot below the card so a sideways drag tilts it like a held card. During a drag, --ga (0 to 1) and
-   data-glow (live, work, skip) drive the colored glow drawn by ::after. */
-.card { flex:1 1 auto; min-height:0; padding:22px 22px 20px; display:flex; flex-direction:column; touch-action:none; user-select:none; -webkit-user-select:none;
-  border-radius:var(--r-card); transform-origin:50% 120%; --gc:var(--c-live); --ga:0;
-  background:linear-gradient(180deg, color-mix(in srgb, #fff 6%, transparent), transparent 42%), color-mix(in srgb, var(--surface) 88%, transparent);
-  box-shadow:0 1px 0 var(--rim) inset, 0 1px 2px rgba(0,0,0,.12), 0 14px 28px -14px rgba(0,0,0,.4), 0 30px 60px -26px var(--shadow);
-  transition:transform .25s ease, opacity .25s ease; will-change:transform; }
-.card::after { content:""; position:absolute; inset:-1px; border-radius:inherit; pointer-events:none; opacity:var(--ga);
-  box-shadow:0 0 0 2px var(--gc) inset, 0 0 46px 4px color-mix(in srgb, var(--gc) 70%, transparent), 0 0 120px 10px color-mix(in srgb, var(--gc) 32%, transparent); }
-.card[data-glow="work"] { --gc:var(--c-work); }
-.card[data-glow="skip"] { --gc:var(--c-skip); }
-/* Released before the threshold: the card springs home with a little overshoot, and the glow fades. */
+/* The principle. No card: the words sit on the page, low on the screen, and the whole area is what you swipe.
+   touch-action:none hands touch movement to the swipe handler. The transform transition carries the words back
+   or off the screen; it is off while dragging so they track the finger. The bottom padding keeps them clear of
+   the corner button. During a drag, --ga (0 to 1) and data-glow (live, work, skip) drive a soft wash of the
+   outcome color from the side you are heading toward, and the tilt is a gentle lean, not a held card. */
+.card { position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:flex-end; gap:14px;
+  padding:18px 0 calc(max(18px, env(safe-area-inset-bottom, 0px)) + 84px); touch-action:none; user-select:none; -webkit-user-select:none;
+  transform-origin:50% 100%; --ga:0; transition:transform .25s ease, opacity .25s ease; will-change:transform; }
+/* The wash lives on the page, not on the moving words: a soft light of the outcome color rising from the edge
+   you are swiping toward (right for Living it, left for Not today, the top for Still working on it). */
+.wash { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:var(--ga); --ga:0; --gc:var(--c-live); --gx:100%; --gy:60%;
+  background:radial-gradient(80% 60% at var(--gx) var(--gy), color-mix(in srgb, var(--gc) 30%, transparent), transparent); }
+.wash[data-glow="work"] { --gc:var(--c-work); --gx:50%; --gy:0%; }
+.wash[data-glow="skip"] { --gc:var(--c-skip); --gx:0%; }
+.wash.fade { transition:opacity .3s ease; }
+/* Released before the threshold: the words spring home with a little overshoot, and the wash fades. */
 .card.spring { transition:transform .55s var(--ease-spring), opacity .25s ease; }
-.card.spring::after { transition:opacity .3s ease; }
 .card.dragging { transition:none; }
-/* The next card rises into place from slightly below and behind. */
+/* The next principle fades up into place. */
 @media (prefers-reduced-motion: no-preference) { .card.enter { animation:rise .42s var(--ease-out) both; } }
-@keyframes rise { from { transform:translateY(26px) scale(.955); opacity:0; } }
-.card-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-.badge { font-family:var(--f-num); font-size:var(--t-sm); font-weight:600; font-variant-numeric:tabular-nums; color:var(--markText); background:color-mix(in srgb, var(--mark) 15%, transparent); border-radius:var(--r-pill); padding:4px 10px; white-space:nowrap; }
-/* The principle: Inter semibold with tight tracking (its display optical size kicks in on its own), centered in the space the card has (the inner span's auto
-   margins center it but never clip the top when it overflows and scrolls). Long text keeps the body face. */
-.thought { font-family:var(--f-display); font-weight:620; font-size:var(--t-xl); line-height:1.1; letter-spacing:-0.03em;
-  margin-top:14px; flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; text-wrap:pretty; overflow-wrap:anywhere; white-space:pre-line; }
-.thought > span { margin-block:auto; }
-.thought.mid { font-size:clamp(23px, min(6.8vw, 3.8vh), 30px); line-height:1.16; letter-spacing:-0.022em; }
-.thought.long { font-family:var(--f-body); font-weight:500; font-size:var(--t-md); line-height:1.5; letter-spacing:0; }
-.by { flex:none; margin-top:10px; font-family:var(--f-num); font-size:var(--t-sm); color:var(--muted); overflow-wrap:anywhere; }
-.rule { height:1px; background:var(--line); margin:16px 0 14px; flex:none; }
-.ai { display:flex; gap:10px; align-items:flex-start; min-height:44px; flex:none; }
-.ai svg { width:16px; height:16px; flex:none; margin-top:3px; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; }
-.ai p { margin:0; font-size:var(--t-md); line-height:1.45; color:color-mix(in srgb, var(--fg) 86%, var(--muted)); transition:opacity .3s; }
+@keyframes rise { from { transform:translateY(18px); opacity:0; } }
+.card-top { position:relative; display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex:none; }
+.lab2 { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; min-width:0; }
+.lab2 .kicker { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lab2 .orig { font-size:var(--t-sm); color:var(--muted); white-space:nowrap; }
+.badge { font-family:var(--f-mono); font-size:var(--t-xs); font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:var(--markText); white-space:nowrap; font-variant-numeric:tabular-nums; }
+/* The words: Instrument Serif, set large and balanced. The inner span's auto margin keeps short ones low without
+   clipping the top of long ones, which scroll. Long principles step down to a reading size of the same face. */
+.thought { font-family:var(--f-display); font-weight:400; font-size:var(--d-xl); line-height:1.02; letter-spacing:-0.005em;
+  flex:0 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; text-wrap:balance; overflow-wrap:anywhere; white-space:pre-line; }
+.thought > span { margin-top:auto; }
+.thought.mid { font-size:var(--d-lg); line-height:1.1; }
+.thought.long { font-family:var(--f-display); font-size:var(--d-sm); line-height:1.25; text-wrap:pretty; }
+.by { flex:none; margin-top:-6px; font-size:var(--t-md); color:var(--accent); overflow-wrap:anywhere; }
+/* The AI line: Edition's aside, a short rule on the left in the accent and the line in quieter ink. */
+.ai { flex:none; display:flex; flex-direction:column; gap:2px; padding-left:12px; border-left:2px solid color-mix(in srgb, var(--accent) 60%, transparent); min-height:44px; justify-content:center; }
+.ai .label { color:var(--muted); }
+.ai p { margin:0; font-size:var(--t-md); line-height:1.45; color:color-mix(in srgb, var(--fg) 82%, var(--muted)); transition:opacity .3s; }
 .ai p.pending { opacity:.55; }
-.meta { font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); margin-top:12px; flex:none; font-variant-numeric:tabular-nums; }
+.meta { flex:none; font-size:var(--t-sm); color:var(--muted); font-variant-numeric:tabular-nums; }
+.meta .first { color:var(--accent); font-weight:500; }
 
-.stamp { position:absolute; top:22px; font-family:var(--f-body); font-weight:800; z-index:2; background:color-mix(in srgb, var(--surface) 70%, transparent); font-size:var(--t-lg); letter-spacing:.06em; padding:4px 12px; border-radius:var(--r-sm); border:3px solid; opacity:0; pointer-events:none; }
-.stamp.skip { right:22px; color:var(--c-skip); transform:rotate(8deg); }
-.stamp.shed { left:22px; color:var(--c-live); transform:rotate(-8deg); }
-.stamp.keep { left:50%; top:auto; bottom:80px; transform:translateX(-50%); color:var(--c-work); }
+/* Stamps, as on Edition's reader: a small outlined label that fades in with the drag. */
+.stamp { position:absolute; bottom:calc(100% + 16px); z-index:2; padding:5px 12px; border-radius:var(--r-sm); border:1.5px solid currentColor; background:color-mix(in srgb, var(--bg) 80%, transparent);
+  font-family:var(--f-mono); font-size:var(--t-sm); font-weight:600; letter-spacing:.08em; opacity:0; pointer-events:none; }
+.stamp.skip { right:0; color:var(--c-skip); }
+.stamp.shed { left:0; color:var(--c-live); }
+.stamp.keep { left:50%; transform:translateX(-50%); color:var(--c-work); }
 
-.banner { flex:none; display:flex; gap:10px; align-items:center; justify-content:space-between; padding:8px 8px 8px 14px; border-radius:var(--r-tile); font-size:var(--t-sm); font-weight:500; }
-.banner .btns { display:flex; gap:6px; }
-.banner button { border:0; border-radius:var(--r-sm); padding:8px 12px; font-weight:600; font-size:var(--t-sm); white-space:nowrap; }
-.b-ghost { background:var(--empty); color:var(--fg); }
+/* Have you lived this yet? Edition's banner: a dot, the question, and two small pills. */
+.banner { flex:none; display:flex; align-items:center; gap:10px; min-height:48px; padding:6px 6px 6px 14px; border-radius:var(--r-tile); background:var(--panel); border:1px solid var(--line); font-size:var(--t-sm); }
+.banner .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); flex:none; }
+.banner .t { flex:1; }
+.banner .btns { display:flex; gap:4px; }
+.banner button { min-height:44px; padding:0 14px; border-radius:var(--r-pill); border:0; font-size:var(--t-sm); font-weight:600; white-space:nowrap; }
+.b-ghost { background:transparent; color:var(--fg); }
 .b-accent { background:var(--accent); color:var(--onAccent); }
 
-.hints { flex:none; display:flex; justify-content:space-between; padding:0 8px; font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); }
-.hints span { display:inline-flex; align-items:center; gap:4px; }
-.hints svg { width:11px; height:11px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
-.actions { flex:none; display:flex; gap:10px; align-items:center; }
-.round { width:60px; height:60px; flex:none; border-radius:var(--r-ctl); display:grid; place-items:center; padding:0; }
-.round svg { width:22px; height:22px; fill:none; stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; }
-.r-skip { border:1.5px solid color-mix(in srgb, var(--mark) 80%, transparent); background:color-mix(in srgb, var(--mark) 8%, transparent); box-shadow:none; }
-.r-skip svg { stroke:var(--mark); }
-.r-shed { background:var(--accent); border:0; box-shadow:0 12px 28px -12px color-mix(in srgb, var(--accent) 80%, transparent); }
-.r-shed svg { stroke:var(--onAccent); }
-.keep { flex:1; height:60px; border:0; border-radius:var(--r-ctl); background:var(--fg); color:var(--bg); box-shadow:0 12px 26px -14px var(--shadow); font-size:var(--t-md); font-weight:650; letter-spacing:-0.005em; }
+/* Empty states: Edition's empty front page, words first. */
+.empty { flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-start; gap:12px; padding:18px 0 calc(max(18px, env(safe-area-inset-bottom, 0px)) + 84px); }
+.empty h1 { margin:0; font-family:var(--f-display); font-weight:400; font-size:var(--d-xl); line-height:1.02; text-wrap:balance; }
+.empty p { margin:0; color:var(--muted); max-width:34ch; }
+.empty .acts { display:flex; flex-wrap:wrap; gap:8px; padding-top:4px; }
 
-.empty { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; gap:12px; padding:24px; }
-.empty { border-radius:var(--r-card); }
-.empty h1 { margin:0; font-family:var(--f-display); font-weight:650; font-size:34px; line-height:1.1; letter-spacing:-0.03em; text-wrap:balance; }
-.empty p { margin:0; color:var(--muted); max-width:32ch; }
+/* Collection chips: Edition's outlined pills; the selected one fills with the accent. One row that scrolls sideways,
+   drawn only when the deck has collections. Each pill is 36px with an invisible band taking it to 44px. */
+.chips-row { position:relative; z-index:2; flex:none; display:flex; gap:8px; overflow-x:auto; margin:4px calc(-1 * var(--gutter)) 0; padding:6px var(--gutter); scrollbar-width:none; scroll-padding-inline:var(--gutter); }
+.chips-row::-webkit-scrollbar { display:none; }
+.chip { position:relative; flex:none; height:36px; min-width:44px; padding:0 14px; border-radius:var(--r-pill); border:1px solid var(--line-2); background:transparent; color:var(--fg); font-size:var(--t-sm); white-space:nowrap; touch-action:manipulation; }
+.chip::after { content:""; position:absolute; inset:-5px 0; }
+.chip small { font-size:var(--t-xs); color:var(--muted); margin-left:6px; font-variant-numeric:tabular-nums; }
+.chip[aria-pressed="true"] { background:var(--accent); border-color:var(--accent); color:var(--onAccent); font-weight:600; }
+.chip[aria-pressed="true"] small { color:inherit; opacity:.85; }
 
-/* Ledger. The only view that scrolls. The scrollbar is hidden and the negative margin lets content
-   scroll edge to edge while the padding keeps it aligned with the rest of the app. */
-/* It runs on under the floating tab bar, so the list scrolls behind the frosted glass. */
-#v-ledger { overflow-y:auto; margin-inline:-14px; padding-inline:14px; gap:12px; margin-bottom:calc(-1 * var(--tab-space)); padding-bottom:calc(var(--tab-space) + 8px); scrollbar-width:none; }
+/* ================= Ledger: a front page ================= */
+#v-ledger { overflow-y:auto; overscroll-behavior:contain; margin-inline:calc(-1 * var(--gutter)); padding:6px var(--gutter) calc(max(18px, env(safe-area-inset-bottom, 0px)) + 96px); gap:22px; scrollbar-width:none; }
 #v-ledger::-webkit-scrollbar { display:none; }
-.hero { flex:none; padding:14px 16px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 14px; align-items:center; }
-.big { font-family:var(--f-display); font-weight:650; font-size:76px; line-height:.95; letter-spacing:-0.055em; font-variant-numeric:tabular-nums; margin-top:4px; }
-.ymd { font-family:var(--f-num); font-size:var(--t-sm); font-weight:600; margin-top:8px; font-variant-numeric:tabular-nums; }
-.sub { font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); margin-top:2px; }
-/* Glowing bars: Living it, Still working and Not today as shares of every principle. Each fill glows in its
-   outcome color; the percentages under them are plain text in the foreground color. */
-.mix { display:grid; grid-template-columns:repeat(3, 58px); gap:2px; align-items:end; }
-.mix > div { display:grid; justify-items:center; gap:6px; }
-.mix .tr { position:relative; width:18px; height:92px; border-radius:var(--r-xs); background:var(--empty); box-shadow:inset 0 1px 2px rgba(0,0,0,.10); }
-.mix .tr i { position:absolute; inset:auto 0 0 0; height:var(--p, 0%); min-height:18px; border-radius:var(--r-xs); background:linear-gradient(180deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c));
-  box-shadow:0 0 18px 1px color-mix(in srgb, var(--c) 60%, transparent), 0 6px 16px -4px var(--c); }
-.mix .tr i.zero { opacity:.35; box-shadow:none; }
-@media (prefers-reduced-motion: no-preference) { .mix .tr i { transition:height .6s var(--ease-out); } }
-.mix b { font-family:var(--f-num); font-weight:600; font-size:var(--t-sm); font-variant-numeric:tabular-nums; }
-.mix small { font-size:var(--t-xs); color:var(--muted); font-weight:600; margin-top:-4px; white-space:nowrap; }
-.tile, .hero { border-radius:var(--r-tile); background:color-mix(in srgb, var(--surface) 76%, transparent); }
-.tile { flex:none; padding:12px 14px; display:flex; flex-direction:column; gap:10px; }
-.tilehead { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-.seg { display:inline-flex; background:var(--empty); border-radius:var(--r-btn); padding:3px; gap:2px; }
-.seg button { border:0; background:transparent; min-height:44px; padding:0 14px; border-radius:var(--r-sm); font-size:var(--t-sm); font-weight:600; color:var(--muted); }
-.seg button[aria-pressed="true"] { background:var(--fg); color:var(--bg); box-shadow:0 1px 4px rgba(0,0,0,.2); }
-.legend { font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); white-space:nowrap; }
-.row { display:flex; flex-direction:column; gap:6px; padding-block:2px; }
-.row + .row { border-top:1px solid var(--line); padding-top:10px; }
+#v-ledger > * { flex-shrink:0; }
+.masthead { padding-bottom:16px; border-bottom:1px solid var(--line-2); }
+.ptitle { margin:0; font-family:var(--f-display); font-weight:400; font-size:var(--d-xxl); line-height:.95; letter-spacing:-0.01em; }
+.masthead p { margin:8px 0 0; font-size:var(--t-sm); color:var(--muted); font-variant-numeric:tabular-nums; }
+.masthead p b { color:var(--fg); font-weight:500; }
+.sec { display:flex; flex-direction:column; gap:12px; }
+.sec-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.sec h2 { margin:0; font-family:var(--f-display); font-weight:400; font-size:var(--d-md); line-height:1.05; }
+/* Where you stand: three of Edition's progress bars, one per outcome. */
+.mix { display:flex; flex-direction:column; gap:10px; }
+.prog { display:grid; grid-template-columns:84px minmax(0,1fr) 40px; align-items:center; gap:12px; font-size:var(--t-sm); }
+.prog span { color:var(--muted); }
+.prog .tr { height:6px; border-radius:var(--r-xs); background:var(--empty); overflow:hidden; }
+.prog .tr i { display:block; height:100%; width:var(--p, 0%); border-radius:var(--r-xs); background:var(--c); }
+.prog b { font-weight:500; text-align:right; font-variant-numeric:tabular-nums; }
+@media (prefers-reduced-motion: no-preference) { .prog .tr i { transition:width .6s var(--ease-out); } }
+.seg { display:flex; gap:8px; }
+.seg button { height:36px; min-width:44px; padding:0 14px; border-radius:var(--r-pill); border:1px solid var(--line-2); background:transparent; color:var(--fg); font-size:var(--t-sm); position:relative; }
+.seg button::after { content:""; position:absolute; inset:-4px 0; }
+.seg button[aria-pressed="true"] { background:var(--accent); border-color:var(--accent); color:var(--onAccent); font-weight:600; }
+.legend { font-size:var(--t-xs); color:var(--muted); white-space:nowrap; }
+.none { font-size:var(--t-sm); color:var(--muted); margin:0; }
+#ledgerList > .none { padding-bottom:4px; }
+.row { display:flex; flex-direction:column; gap:8px; padding:13px 0 4px; border-top:1px solid var(--line-2); }
 .row-top { display:flex; justify-content:space-between; gap:12px; align-items:baseline; }
-.row-top .t { font-size:var(--t-md); font-weight:500; line-height:1.3; min-width:0; overflow-wrap:anywhere; white-space:pre-line; display:-webkit-box; -webkit-line-clamp:6; -webkit-box-orient:vertical; overflow:hidden; }
-.row-top .n { font-family:var(--f-num); font-size:var(--t-sm); color:var(--markText); flex:none; font-variant-numeric:tabular-nums; text-align:right; }
+.row-top .t { font-size:var(--t-md); line-height:1.4; min-width:0; overflow-wrap:anywhere; white-space:pre-line; display:-webkit-box; -webkit-line-clamp:6; -webkit-box-orient:vertical; overflow:hidden; }
+.row-top .t.full { display:block; -webkit-line-clamp:unset; overflow:visible; font-family:var(--f-display); font-size:var(--d-sm); line-height:1.2; }
+.row-top .n { font-size:var(--t-xs); color:var(--markText); flex:none; font-variant-numeric:tabular-nums; text-align:right; font-family:var(--f-mono); letter-spacing:.04em; }
 .row-top .n.ok { color:var(--accent); }
-.bar { height:6px; border-radius:3px; background:var(--empty); }
-.bar i { display:block; height:6px; border-radius:3px; background:var(--c-skip); box-shadow:0 0 10px color-mix(in srgb, var(--c-skip) 55%, transparent); }
-.row-foot { display:flex; justify-content:space-between; align-items:center; gap:8px; font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); }
-/* Row actions: 44px tall hit areas; the negative margin keeps the row about as compact as before. */
-.row-foot button { background:none; border:0; color:var(--muted); font-family:var(--f-body); font-size:var(--t-sm); min-height:44px; min-width:44px; padding:0 6px; margin-block:-8px; }
+.bar { height:4px; border-radius:var(--r-xs); background:var(--empty); }
+.bar i { display:block; height:4px; border-radius:var(--r-xs); background:var(--c-skip); }
+.row-foot { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:var(--t-xs); color:var(--muted); }
+/* Row actions: plain text, 44px tall hit areas; the negative margin keeps the row compact. */
+.row-foot button { background:none; border:0; color:var(--muted); font-size:var(--t-sm); min-height:44px; min-width:44px; padding:0 6px; margin-block:-6px; }
 .row-foot button:last-child { margin-right:-6px; }
 .row-foot > span:last-child { display:flex; align-items:center; flex:none; white-space:nowrap; }
 .row-foot > span:first-child { min-width:0; }
-.evidence { font-size:var(--t-sm); line-height:1.45; color:color-mix(in srgb, var(--fg) 86%, var(--muted)); }
-/* Living it record: full principle, then its last model line, then the evidence. */
-.row-top .t.full { display:block; -webkit-line-clamp:unset; overflow:visible; }
-.row-ai { display:flex; gap:8px; align-items:flex-start; font-size:var(--t-sm); line-height:1.45; color:var(--muted); }
-.row-ai svg, .sheet-ai svg { width:14px; height:14px; flex:none; margin-top:3px; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; }
-.sheet-ai { display:flex; gap:10px; align-items:flex-start; }
-.sheet-ai p { margin:0; font-size:var(--t-md); line-height:1.45; color:var(--muted); }
-.sheet-ai[hidden] { display:none; }
-/* Edit control on the card and the edit sheet. */
-.card-right { display:flex; align-items:center; gap:8px; flex:none; }
-.edit-pill { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:color-mix(in srgb, var(--surface) 70%, transparent); color:var(--fg); font-family:var(--f-body); font-size:var(--t-sm); font-weight:600; border-radius:var(--r-pill); padding:5px 11px 5px 9px; touch-action:manipulation; position:relative; }
-/* The pill stays small on the card; an invisible ring extends its hit area to 44px. */
-.edit-pill::after { content:""; position:absolute; inset:-9px -4px; }
-.edit-pill svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
-.kept { display:flex; gap:8px; flex-wrap:wrap; }
-.kept span { font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); border:1px solid var(--line); border-radius:var(--r-pill); padding:4px 9px; }
-.sheet-err { margin:0; font-size:var(--t-sm); color:var(--markText); }
-.sheet-err[hidden] { display:none; }
-/* Card label: collection on line 1, origin on line 2 (Story 6). */
-.card-top { align-items:flex-start; }
-.lab2 { display:flex; flex-direction:column; gap:3px; min-width:0; }
-.lab2 .eyebrow, .lab2 .orig { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.lab2 .orig { font-size:var(--t-sm); color:var(--muted); }
-/* Details fields, collection suggestions and the More details toggle. */
-.group[hidden] { display:none; }
-.chips { display:flex; gap:6px; flex-wrap:wrap; }
-.chips button { font-size:var(--t-sm); border:1px solid var(--line); background:none; border-radius:var(--r-pill); padding:4px 10px; color:var(--fg); }
-.chips button.on { border-color:var(--accent); color:var(--accent); }
-.hint { margin:0; font-size:var(--t-sm); color:var(--muted); }
-.hint b { color:var(--accent); font-weight:600; }
-.hint[hidden] { display:none; }
-.details { border-top:1px solid var(--line); padding-top:14px; gap:14px; }
-.more { display:flex; justify-content:space-between; align-items:center; width:100%; background:none; border:1px solid var(--line); border-radius:var(--r-btn); padding:12px 14px; color:var(--fg); font-size:var(--t-md); font-weight:600; }
-.more small { color:var(--muted); font-weight:500; font-size:var(--t-sm); }
-/* Primary button pinned to the bottom of a tall sheet, on a solid strip so nothing shows beneath it. */
-.sheet-foot { position:sticky; bottom:calc(-22px - env(safe-area-inset-bottom, 0px)); margin:0 -18px calc(-22px - env(safe-area-inset-bottom, 0px)); padding:12px 18px calc(22px + env(safe-area-inset-bottom, 0px)); background:color-mix(in srgb, var(--surface) 92%, transparent); -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px); border-top:1px solid var(--line); z-index:2; }
-/* Manage collections (Story 7). */
-.coll-list { display:flex; flex-direction:column; }
-.coll-list button { display:flex; justify-content:space-between; align-items:center; gap:10px; background:none; border:0; border-bottom:1px solid var(--line); padding:13px 2px; color:var(--fg); font-size:var(--t-md); font-weight:600; text-align:left; }
-.coll-list button span { font-family:var(--f-num); font-size:var(--t-sm); font-weight:400; color:var(--muted); white-space:nowrap; }
-.coll-list button b { font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.notice { border:1px solid color-mix(in srgb, var(--mark) 50%, transparent); background:color-mix(in srgb, var(--mark) 12%, transparent); border-radius:var(--r-btn); padding:12px 14px; font-size:var(--t-md); line-height:1.45; }
-.notice b { color:var(--markText); }
-.notice[hidden] { display:none; }
-.link-danger { background:none; border:0; color:var(--markText); font-weight:600; font-size:var(--t-md); padding:6px 0; justify-self:center; }
-.btn-row { display:flex; justify-content:space-between; align-items:center; }
-.meta .first { color:var(--accent); font-weight:600; }
-.none { font-size:var(--t-sm); color:var(--muted); margin:0; }
+.evidence { font-size:var(--t-sm); line-height:1.45; color:color-mix(in srgb, var(--fg) 86%, var(--muted)); padding-left:12px; border-left:2px solid color-mix(in srgb, var(--c-live) 60%, transparent); }
+.row-ai { font-size:var(--t-sm); line-height:1.45; color:var(--muted); }
 .cal { display:grid; grid-template-columns:repeat(14, minmax(0,1fr)); gap:4px; }
 .cal i { aspect-ratio:1; border-radius:var(--r-xs); background:var(--empty); }
 .cal i.on { background:var(--lived); }
-.cal i.sh { background:var(--c-live); box-shadow:0 0 8px color-mix(in srgb, var(--c-live) 60%, transparent); }
+.cal i.sh { background:var(--c-live); }
 .cal i.today { outline:2px solid var(--accent); outline-offset:1px; }
-.key { display:flex; gap:12px; font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); flex-wrap:wrap; }
-.key i { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:4px; }
+.key { display:flex; gap:14px; font-size:var(--t-xs); color:var(--muted); flex-wrap:wrap; }
+.key i { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:5px; }
 
-/* Sheets. Fixed to the bottom, capped at 90% of the height and scrollable inside. A more opaque
-   surface than other glass so text stays readable over the content behind. Slide-up and fade
-   animations are skipped when reduced motion is on. */
-/* The UA styles for <dialog> (centered, inset:0, its own border and padding) are reset here. */
-.sheet { position:fixed; inset:auto 0 0 0; width:100%; max-width:520px; margin:0 auto; max-height:90%; overflow-y:auto; overscroll-behavior:contain;
-  border-radius:var(--r-sheet) var(--r-sheet) 0 0; border-bottom:0; padding:10px 18px calc(22px + env(safe-area-inset-bottom, 0px)); gap:14px; color:var(--fg);
-  background:color-mix(in srgb, var(--surface) 86%, transparent); -webkit-backdrop-filter:blur(30px) saturate(180%); backdrop-filter:blur(30px) saturate(180%);
-  box-shadow:0 1px 0 var(--rim) inset, 0 -20px 60px -20px var(--shadow); }
+/* ================= Sheets ================= */
+/* Edition's sheet: a solid surface a step up from the ground, 22px top corners, a grabber, and a serif head.
+   Fixed to the bottom, capped at 90% of the height and scrollable inside. The UA styles for <dialog> are reset. */
+.sheet { position:fixed; inset:auto 0 0 0; width:100%; max-width:560px; margin:0 auto; max-height:90%; overflow-y:auto; overscroll-behavior:contain;
+  border:0; border-top:1px solid var(--line); border-radius:var(--r-sheet) var(--r-sheet) 0 0; padding:10px var(--gutter) calc(22px + env(safe-area-inset-bottom, 0px)); gap:14px;
+  color:var(--fg); background:var(--surface); box-shadow:0 -20px 60px -24px var(--shadow); }
 .sheet[open] { display:grid; }
-.sheet::backdrop { background:rgba(0,0,0,.38); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+.sheet::backdrop { background:var(--scrim); }
 .sheet.dragging { transition:none; }
-.sheet.settle { transition:transform .22s cubic-bezier(.2,.8,.2,1); }
-@media (prefers-reduced-motion: no-preference) { .sheet[open] { animation:up .28s cubic-bezier(.2,.8,.2,1); } .sheet[open]::backdrop { animation:fade .2s; } }
+.sheet.settle { transition:transform .22s var(--ease-out); }
+@media (prefers-reduced-motion: no-preference) { .sheet[open] { animation:up .28s var(--ease-out); } .sheet[open]::backdrop { animation:fade .2s; } }
 @media (prefers-reduced-motion: reduce) { .sheet.settle { transition:none; } }
 @keyframes up { from { transform:translateY(100%); } }
 @keyframes fade { from { opacity:0; } }
 /* Drag handle: the grabber and the title row. touch-action:none hands the drag to script. */
-.grabber { width:38px; height:5px; border-radius:3px; background:var(--line); margin:0 auto 2px; position:relative; }
+.grabber { width:36px; height:5px; border-radius:var(--r-xs); background:var(--line-2); margin:0 auto 2px; position:relative; }
 .grabber::after { content:""; position:absolute; inset:-14px -60px -10px; }
 .grabber, .sheet h2 { touch-action:none; }
-.sheet h2 { margin:0; font-family:var(--f-display); font-weight:700; font-size:var(--t-lg); letter-spacing:-0.022em; display:flex; justify-content:space-between; align-items:center; gap:10px; }
-.sheet h2 button { font-family:var(--f-body); font-size:var(--t-md); font-weight:600; border:0; background:none; color:var(--accent); min-height:44px; min-width:44px; padding:0 8px; margin:-6px -8px -6px 0; touch-action:manipulation; }
-.sheet-thought { font-family:var(--f-display); font-weight:620; font-size:26px; line-height:1.14; letter-spacing:-0.028em; overflow-wrap:anywhere; white-space:pre-line; max-height:30vh; overflow-y:auto; }
+.sheet h2 { margin:0; font-family:var(--f-display); font-weight:400; font-size:var(--d-md); line-height:1.05; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.sheet h2 button { font-family:var(--f-body); font-size:var(--t-md); font-weight:500; border:0; background:none; color:var(--muted); min-height:44px; min-width:44px; padding:0 8px; margin:-6px -8px -6px 0; touch-action:manipulation; }
+.sheet-thought { font-family:var(--f-display); font-size:var(--d-sm); line-height:1.2; overflow-wrap:anywhere; white-space:pre-line; max-height:30vh; overflow-y:auto; }
+.sheet-ai { padding-left:12px; border-left:2px solid color-mix(in srgb, var(--accent) 60%, transparent); }
+.sheet-ai p { margin:0; font-size:var(--t-md); line-height:1.45; color:var(--muted); }
+.sheet-ai[hidden] { display:none; }
+.sheet-err { margin:0; font-size:var(--t-sm); color:var(--markText); }
+.sheet-err[hidden] { display:none; }
 .group { display:grid; gap:8px; }
-label, .lbl { font-size:var(--t-xs); font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
-textarea { width:100%; min-width:0; background:var(--empty); border:1px solid transparent; border-radius:var(--r-btn); padding:11px 12px; font-size:16px; color:var(--fg); font-family:var(--f-body); resize:none; }
-input.field { width:100%; min-width:0; background:var(--empty); border:1px solid transparent; border-radius:var(--r-btn); padding:11px 12px; font-size:16px; color:var(--fg); font-family:var(--f-body); }
-input.field:focus { border-color:var(--accent); outline:none; }
-.row2 { display:flex; gap:8px; }
-.row2 .btn { padding:12px 14px; font-size:var(--t-md); }
-textarea:focus { border-color:var(--accent); outline:none; }
-textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-lg); line-height:1.25; letter-spacing:-0.02em; min-height:140px; }
-.counter { font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); text-align:right; }
-.pills { display:flex; gap:8px; flex-wrap:wrap; }
-.pill { height:38px; padding:0 14px; border-radius:var(--r-pill); background:var(--empty); border:1px solid transparent; font-size:var(--t-sm); font-weight:500; }
-.pill[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); background:transparent; }
-.btn { border:0; border-radius:var(--r-btn); padding:14px 16px; font-weight:600; font-size:var(--t-md); background:var(--fg); color:var(--bg); width:100%; }
+.group[hidden] { display:none; }
+label, .lbl { font-size:var(--t-sm); color:var(--muted); }
+.sheet .sec-k { padding-top:4px; }
+textarea, input.field { width:100%; min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:var(--r-field); padding:11px 12px; font-size:16px; line-height:1.45; color:var(--fg); font-family:var(--f-body); resize:none; outline:none; }
+textarea:focus, input.field:focus { border-color:var(--accent); }
+textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:1.2; min-height:140px; }
+.counter { font-size:var(--t-xs); color:var(--muted); text-align:right; font-variant-numeric:tabular-nums; }
+.pills, .chips { display:flex; gap:8px; flex-wrap:wrap; }
+.pill, .chips button { height:36px; padding:0 14px; border-radius:var(--r-pill); background:transparent; border:1px solid var(--line-2); font-size:var(--t-sm); color:var(--fg); position:relative; }
+.pill::after, .chips button::after { content:""; position:absolute; inset:-4px 0; }
+.pill[aria-pressed="true"], .chips button.on { background:var(--accent); border-color:var(--accent); color:var(--onAccent); font-weight:600; }
+.hint { margin:0; font-size:var(--t-sm); color:var(--muted); }
+.hint b { color:var(--accent); font-weight:600; }
+.hint[hidden] { display:none; }
+.details { border-top:1px solid var(--line-2); padding-top:14px; gap:14px; }
+.more { display:flex; justify-content:space-between; align-items:center; width:100%; min-height:48px; background:var(--panel); border:1px solid var(--line); border-radius:var(--r-tile); padding:0 14px; color:var(--fg); font-size:var(--t-md); }
+.more small { color:var(--muted); font-size:var(--t-sm); }
+/* Edition's buttons: pills. The primary fills with the accent; the rest sit on a faint panel. */
+.btn { display:flex; align-items:center; justify-content:center; gap:8px; min-height:46px; border:0; border-radius:var(--r-pill); padding:0 18px; font-weight:600; font-size:var(--t-md); background:var(--accent); color:var(--onAccent); width:100%; }
 .btn:disabled { opacity:.4; cursor:default; }
 .btn.accent { background:var(--accent); color:var(--onAccent); }
-.btn.ghost { background:var(--empty); color:var(--fg); }
+.btn.ghost { background:var(--panel-2); color:var(--fg); font-weight:500; }
+.btn.line { background:transparent; color:var(--fg); border:1px solid var(--line-2); font-weight:500; }
+.empty .btn { width:auto; }
+.row2 { display:flex; gap:8px; }
+.btn-row { justify-content:space-between; }
+/* Primary button pinned to the bottom of a tall sheet, on a solid strip so nothing shows beneath it. */
+.sheet-foot { position:sticky; bottom:calc(-22px - env(safe-area-inset-bottom, 0px)); margin:0 calc(-1 * var(--gutter)) calc(-22px - env(safe-area-inset-bottom, 0px)); padding:12px var(--gutter) calc(22px + env(safe-area-inset-bottom, 0px)); background:var(--surface); border-top:1px solid var(--line); z-index:2; }
+.kept { display:flex; gap:8px; flex-wrap:wrap; }
+.kept span { font-size:var(--t-xs); color:var(--muted); border:1px solid var(--line-2); border-radius:var(--r-pill); padding:4px 10px; }
+/* Manage collections. */
+.coll-list { display:flex; flex-direction:column; }
+.coll-list button { display:flex; justify-content:space-between; align-items:center; gap:10px; background:none; border:0; border-top:1px solid var(--line-2); min-height:48px; padding:12px 0; color:var(--fg); font-size:var(--t-md); text-align:left; }
+.coll-list button span { font-size:var(--t-sm); color:var(--muted); white-space:nowrap; }
+.coll-list button b { font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.notice { border:1px solid color-mix(in srgb, var(--mark) 50%, transparent); background:color-mix(in srgb, var(--mark) 10%, transparent); border-radius:var(--r-tile); padding:12px 14px; font-size:var(--t-md); line-height:1.45; }
+.notice b { color:var(--markText); }
+.notice[hidden] { display:none; }
+.link-danger { background:none; border:0; color:var(--markText); font-weight:600; font-size:var(--t-md); min-height:44px; padding:0; justify-self:center; }
 .stats { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
-.stat { background:var(--empty); border-radius:var(--r-btn); padding:10px 12px; }
-.stat b { display:block; font-family:var(--f-num); font-size:var(--t-md); font-weight:500; font-variant-numeric:tabular-nums; }
-.stat span { font-size:var(--t-xs); text-transform:uppercase; letter-spacing:.08em; font-weight:600; color:var(--muted); }
+.stat { background:var(--panel); border:1px solid var(--line); border-radius:var(--r-field); padding:10px 12px; }
+.stat b { display:block; font-family:var(--f-display); font-size:var(--d-sm); font-weight:400; line-height:1.1; font-variant-numeric:tabular-nums; }
+.stat span { font-family:var(--f-mono); font-size:var(--t-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
 .note { font-size:var(--t-sm); color:var(--muted); margin:0; line-height:1.45; }
 .skins { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
-.skin { border:1px solid var(--line); background:transparent; border-radius:var(--r-btn); padding:8px 2px; display:grid; gap:6px; justify-items:center; font-size:var(--t-xs); font-weight:500; }
-.skin[aria-pressed="true"] { border-color:var(--fg); box-shadow:inset 0 0 0 1px var(--fg); }
-.sw { width:28px; height:28px; border-radius:50%; overflow:hidden; display:grid; grid-template-columns:1fr 1fr; }
+.skin { min-height:64px; border:1px solid var(--line); background:var(--panel); border-radius:var(--r-field); padding:8px 2px; display:grid; gap:6px; justify-items:center; font-size:var(--t-sm); }
+.skin[aria-pressed="true"] { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.sw { width:28px; height:28px; border-radius:50%; overflow:hidden; display:grid; grid-template-columns:1fr 1fr; box-shadow:0 0 0 1px var(--line); }
 .sw i:first-child { grid-row:span 2; }
-.status { display:flex; align-items:center; gap:8px; font-family:var(--f-num); font-size:var(--t-sm); color:var(--muted); }
+.status { display:flex; align-items:center; gap:8px; font-size:var(--t-sm); color:var(--muted); }
 .status .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); }
+.version { font-family:var(--f-mono); font-size:var(--t-xs); color:var(--muted); line-height:1.6; }
 
-/* Toast. #toastPop is a manual popover so it sits in the top layer, above an open sheet. It floats just
-   above the action row, which sits above the tab bar. Screen readers hear the message from the #toastHost live region instead. */
-#toastPop { position:fixed; inset:auto 0 calc(var(--tab-space) + 72px) 0; margin:0 auto; width:max-content; max-width:calc(100vw - 28px);
+/* Toast: Edition's, low on the left so it never covers the corner button. #toastPop is a manual popover so it sits
+   in the top layer, above an open sheet. Screen readers hear the message from the #toastHost live region instead. */
+#toastPop { position:fixed; inset:auto auto calc(max(18px, env(safe-area-inset-bottom, 0px)) + 4px) max(var(--gutter), env(safe-area-inset-left, 0px)); margin:0; width:max-content; max-width:calc(100vw - 2 * var(--gutter) - 76px);
   border:0; padding:0; background:transparent; overflow:visible; z-index:40; color:inherit; }
-.toast { display:flex; align-items:center; gap:4px; background:var(--fg); color:var(--bg); padding:0 6px 0 16px; min-height:44px; border-radius:var(--r-ctl); font-weight:600; font-size:var(--t-md); white-space:nowrap; box-shadow:0 10px 30px -12px rgba(0,0,0,.5); }
+#toastPop.high { bottom:auto; top:calc(env(safe-area-inset-top, 0px) + 14px); }
+.toast { display:flex; align-items:center; justify-content:space-between; gap:4px; min-height:48px; padding:0 4px 0 16px; border-radius:var(--r-pill); font-size:var(--t-sm);
+  background:color-mix(in srgb, var(--fg) 9%, var(--surface)); color:var(--fg); border:1px solid var(--line); box-shadow:0 10px 30px -10px var(--shadow); }
 .toast:not(:has(button)) { padding-right:16px; }
-.toast button { border:0; background:none; color:inherit; font-weight:700; min-height:44px; min-width:44px; padding:0 12px; border-radius:var(--r-btn); text-decoration:underline; text-underline-offset:3px; }
-@media (prefers-reduced-motion: no-preference) { .toast { animation:toastin .22s cubic-bezier(.2,.8,.2,1); } }
+.toast > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.toast button { flex:none; border:0; background:none; color:var(--accent); font-weight:600; font-size:var(--t-sm); min-height:44px; min-width:44px; padding:0 14px; border-radius:var(--r-pill); }
+@media (prefers-reduced-motion: no-preference) { .toast { animation:toastin .22s var(--ease-out); } }
 @keyframes toastin { from { opacity:0; transform:translateY(8px); } }
-.sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 
-/* Floating tab bar: Deck, a white + that opens Capture, and Ledger, in one frosted bar above the home
-   indicator. 1.28.0: it floats over the dark panel in the panel palette, with rounded-square buttons. Every
-   target is at least 44px and the two tabs keep text labels. It keeps its own view-transition name so it stays
-   still while the view under it changes. */
-.tabbar { position:fixed; z-index:5; left:50%; bottom:var(--tab-bottom); transform:translateX(-50%); height:var(--tab-h); width:min(calc(100vw - 28px), 340px);
-  display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:6px; padding:6px; border-radius:var(--r-bar); color:var(--fg);
-  background:color-mix(in srgb, var(--surface) 62%, transparent); -webkit-backdrop-filter:blur(24px) saturate(180%); backdrop-filter:blur(24px) saturate(180%);
-  border:1px solid color-mix(in srgb, #fff 12%, transparent); box-shadow:0 1px 0 color-mix(in srgb, #fff 10%, transparent) inset, 0 18px 40px -16px rgba(0,0,0,.6);
-  view-transition-name:tabbar; }
-.tab { height:52px; min-width:64px; border:1px solid transparent; border-radius:var(--r-ctl); background:transparent; color:var(--muted); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-  font-size:var(--t-xs); font-weight:600; letter-spacing:.02em; touch-action:manipulation; padding:0 14px; }
-.tab svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-.tab[aria-current="page"] { color:var(--fg); background:color-mix(in srgb, var(--fg) 9%, transparent); border-color:color-mix(in srgb, var(--fg) 10%, transparent); }
-.fab { width:64px; height:52px; border-radius:var(--r-ctl); display:grid; place-items:center; padding:0; border:0; background:#fff; color:#111216;
-  box-shadow:0 8px 22px -8px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.04); touch-action:manipulation; }
-.fab svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; }
-.tabbar :focus-visible { outline-color:#fff; }
-@media (prefers-reduced-motion: no-preference) { .fab, .tab { transition:transform .18s var(--ease-spring), background-color .2s, color .2s; } .fab:active, .tab:active { transform:scale(.92); } }
+/* ================= The corner button and its ring =================
+   One control for everything that is not a swipe. A faint accent rim at rest, so the + reads as the way in
+   without shouting; it dims after a few idle seconds and wakes on any touch or key. Tap it for the ring, or hold
+   and slide to a control and let go. The ring is a modal group: focus moves into it, Tab stays inside it,
+   Escape or a tap outside closes it, and the rest of the app is inert while it is open. */
+.corner { position:fixed; z-index:21; right:max(18px, calc(env(safe-area-inset-right, 0px) + 18px)); bottom:max(18px, env(safe-area-inset-bottom, 0px)); view-transition-name:corner; transition:opacity .6s ease, transform .6s ease; }
+.corner.asleep { opacity:.6; transform:scale(.88); transform-origin:100% 100%; }
+.corner.open { z-index:27; opacity:1; transform:none; }
+.fab { width:56px; height:56px; border-radius:50%; display:grid; place-items:center; padding:0; color:var(--fg); touch-action:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none;
+  border:1px solid color-mix(in srgb, var(--accent) 50%, transparent); box-shadow:0 4px 16px var(--shadow), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent); }
+.fab svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; transition:transform .2s ease; }
+.corner.open .fab svg { transform:rotate(45deg); }
+.ringx { position:fixed; inset:0; z-index:26; background:var(--scrim); opacity:0; transition:opacity .14s; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+.ringx[hidden] { display:none; }
+.ringx.on { opacity:1; }
+.ring-bg { position:fixed; width:400px; height:400px; margin:-200px 0 0 -200px; border-radius:50%; border:1px solid var(--line); box-shadow:0 12px 40px var(--shadow);
+  transform:scale(.7); transition:transform .18s cubic-bezier(.2,1,.3,1); pointer-events:none; }
+.ring-bg.wide { width:560px; height:560px; margin:-280px 0 0 -280px; }
+.ringx.on .ring-bg { transform:none; }
+.ri { position:fixed; width:50px; height:50px; margin:-25px 0 0 -25px; padding:0; border-radius:50%; display:grid; place-items:center; touch-action:none;
+  background:color-mix(in srgb, var(--fg) 8%, var(--surface)); border:1px solid var(--line-2); color:var(--fg);
+  transform:scale(.6); opacity:0; transition:transform .18s cubic-bezier(.2,1,.3,1), opacity .14s, border-color .1s, box-shadow .1s; }
+.ringx.on .ri { transform:none; opacity:1; }
+.ri svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; pointer-events:none; }
+.ri span { position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:4px; font-size:var(--t-xs); color:var(--fg); white-space:nowrap; pointer-events:none; }
+.ri span.in { top:50%; margin-top:0; transform:translate(-50%, -50%); }
+.ri.primary { background:var(--accent); border-color:var(--accent); color:var(--onAccent); }
+.ringx.on .ri.on { transform:scale(1.16); border-color:var(--accent); box-shadow:0 0 14px color-mix(in srgb, var(--accent) 45%, transparent); }
+.ri.on span { color:var(--accent); font-weight:600; }
+@media (prefers-reduced-motion: reduce) { .corner, .ringx, .ring-bg, .ri, .fab svg { transition:none; } }
 
-/* Collection chips above the card. Only drawn when the deck has collections; one row that scrolls sideways. The
-   pill is 32px to look light (1.28.0), and an invisible band takes each hit area to 44px. */
-.chips-row { flex:none; display:flex; gap:6px; overflow-x:auto; margin-inline:-14px; padding:7px 14px; scrollbar-width:none; scroll-padding-inline:14px; }
-.chips-row::-webkit-scrollbar { display:none; }
-.chip { position:relative; flex:none; height:32px; min-width:44px; padding:0 14px; border-radius:var(--r-pill); font-size:var(--t-sm); font-weight:600; color:var(--fg); white-space:nowrap; touch-action:manipulation;
-  border:1px solid var(--rim); background:color-mix(in srgb, var(--surface) 70%, transparent); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); }
-.chip::after { content:""; position:absolute; inset:-7px 0; }
-.chip small { font-family:var(--f-num); font-size:var(--t-xs); font-weight:500; color:var(--muted); margin-left:6px; }
-.chip[aria-pressed="true"] { background:#fff; color:#111417; border-color:transparent; box-shadow:0 8px 20px -10px var(--shadow); }
-.chip[aria-pressed="true"] small { color:#4E5558; }
-
-/* Living it burst: one soft ring of the Living it color that blooms from the card and fades. Never drawn with
-   reduced motion. */
+/* Living it burst: one soft ring of the Living it color that blooms from the words and fades. Never with reduced motion. */
 .burst { position:fixed; z-index:6; width:220px; height:220px; margin:-110px 0 0 -110px; border-radius:50%; pointer-events:none;
-  background:radial-gradient(closest-side, transparent 55%, color-mix(in srgb, var(--c-live) 70%, transparent) 70%, transparent);
+  background:radial-gradient(closest-side, transparent 55%, color-mix(in srgb, var(--c-live) 55%, transparent) 70%, transparent);
   animation:burst .7s var(--ease-out) forwards; }
-@keyframes burst { from { transform:scale(.2); opacity:1; } to { transform:scale(2.6); opacity:0; } }
+@keyframes burst { from { transform:scale(.2); opacity:1; } to { transform:scale(2.4); opacity:0; } }
 
-/* View Transitions between Deck and Ledger, where supported: the top bar and tab bar stay put; the view
-   cross-fades with a short slide toward where you are going. Script skips this with reduced motion. */
+/* View Transitions between the deck and the Ledger, where supported: the top line and the corner stay put; the
+   view cross-fades with a short slide toward where you are going. Script skips this with reduced motion. */
 .view { view-transition-name:main-view; }
 ::view-transition-old(main-view) { animation:vt-out .22s var(--ease-out) both; }
 ::view-transition-new(main-view) { animation:vt-in .32s var(--ease-out) both; }
 :root[data-vt="back"]::view-transition-old(main-view) { animation-name:vt-out-back; }
 :root[data-vt="back"]::view-transition-new(main-view) { animation-name:vt-in-back; }
-@keyframes vt-out { to { opacity:0; transform:translateX(-18px) scale(.985); } }
-@keyframes vt-in { from { opacity:0; transform:translateX(24px) scale(.985); } }
-@keyframes vt-out-back { to { opacity:0; transform:translateX(18px) scale(.985); } }
-@keyframes vt-in-back { from { opacity:0; transform:translateX(-24px) scale(.985); } }
+@keyframes vt-out { to { opacity:0; transform:translateX(-18px); } }
+@keyframes vt-in { from { opacity:0; transform:translateX(24px); } }
+@keyframes vt-out-back { to { opacity:0; transform:translateX(18px); } }
+@keyframes vt-in-back { from { opacity:0; transform:translateX(-24px); } }
 
-/* First-swipe coach: an overlay on the first card. A ghost card demonstrates each swipe with one line.
-   Without motion (reduced motion) the three lines are shown together as a static list. */
-.coach { position:absolute; inset:0; z-index:3; border-radius:inherit; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:18px; padding:24px;
-  background:color-mix(in srgb, var(--surface) 88%, transparent); text-align:center; }
+/* First-swipe coach: an overlay on the first principle. Ghost lines of text demonstrate each swipe with one caption;
+   the last line points to the corner. Without motion (reduced motion) the captions are shown together as a list. */
+.coach { position:absolute; inset:-6px calc(-1 * var(--gutter)) 0; z-index:3; display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-start; gap:18px;
+  padding:24px var(--gutter) calc(max(18px, env(safe-area-inset-bottom, 0px)) + 84px); background:var(--bg); }
+.coach h2 { margin:0; font-family:var(--f-display); font-weight:400; font-size:var(--d-lg); line-height:1.05; }
 .coach .ghost { display:none; }
-.coach ul { list-style:none; margin:0; padding:0; display:grid; gap:12px; text-align:left; }
-.coach li { display:flex; gap:10px; align-items:center; font-size:var(--t-md); font-weight:600; }
-.coach li svg { width:20px; height:20px; flex:none; fill:none; stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; }
-.coach li.c-skip svg { stroke:var(--mark); } .coach li.c-keep svg { stroke:var(--fg); } .coach li.c-shed svg { stroke:var(--accent); }
+.coach ul { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+.coach li { display:flex; gap:12px; align-items:center; font-size:var(--t-md); font-weight:500; }
+.coach li svg { width:20px; height:20px; flex:none; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.coach li.c-skip svg { stroke:var(--c-skip); } .coach li.c-keep svg { stroke:var(--c-work); } .coach li.c-shed svg { stroke:var(--c-live); }
 .coach li small { display:block; font-weight:400; font-size:var(--t-sm); color:var(--muted); }
-.coach .tapnote { font-family:var(--f-num); font-size:var(--t-sm); color:var(--muted); }
-.coach-ok { border:0; border-radius:var(--r-btn); min-height:44px; padding:0 22px; font-weight:600; background:var(--fg); color:var(--bg); }
+.coach .tapnote { font-size:var(--t-sm); color:var(--muted); max-width:30ch; }
+.coach-ok { border:0; border-radius:var(--r-pill); min-height:44px; padding:0 22px; font-weight:600; background:var(--accent); color:var(--onAccent); }
 @media (prefers-reduced-motion: no-preference) {
-  .coach .ghost { display:block; position:relative; width:46%; aspect-ratio:3/4; max-height:38%; border-radius:var(--r-btn); border:1.5px dashed color-mix(in srgb, var(--fg) 45%, transparent);
-    background:color-mix(in srgb, var(--fg) 6%, transparent); animation:ghost 9s ease-in-out infinite; }
-  .coach .ghost::after { content:""; position:absolute; left:50%; top:62%; width:34px; height:34px; margin:-17px; border-radius:50%; background:color-mix(in srgb, var(--fg) 30%, transparent); }
-  .coach ul { position:relative; display:block; width:100%; min-height:64px; text-align:center; }
-  .coach li { position:absolute; inset:0; justify-content:center; opacity:0; animation:cap 9s linear infinite; }
+  .coach .ghost { display:grid; gap:8px; width:62%; animation:ghost 9s ease-in-out infinite; }
+  .coach .ghost i { display:block; height:14px; border-radius:var(--r-xs); background:color-mix(in srgb, var(--fg) 18%, transparent); }
+  .coach .ghost i:nth-child(2) { width:82%; } .coach .ghost i:nth-child(3) { width:56%; }
+  .coach ul { position:relative; display:block; width:100%; min-height:48px; }
+  .coach li { position:absolute; inset:0; opacity:0; animation:cap 9s linear infinite; }
   .coach li.c-keep { animation-delay:3s; } .coach li.c-shed { animation-delay:6s; }
 }
 @keyframes ghost {
-  0%, 6% { transform:none; } 20%, 26% { transform:translateX(-70%) rotate(-10deg); opacity:.4; } 33% { transform:none; opacity:1; }
-  39% { transform:none; } 53%, 59% { transform:translateY(-35%); opacity:.4; } 66% { transform:none; opacity:1; }
-  72% { transform:none; } 86%, 92% { transform:translateX(70%) rotate(10deg); opacity:.4; } 100% { transform:none; opacity:1; } }
+  0%, 6% { transform:none; } 20%, 26% { transform:translateX(-40%); opacity:.35; } 33% { transform:none; opacity:1; }
+  39% { transform:none; } 53%, 59% { transform:translateY(-40%); opacity:.35; } 66% { transform:none; opacity:1; }
+  72% { transform:none; } 86%, 92% { transform:translateX(40%); opacity:.35; } 100% { transform:none; opacity:1; } }
 @keyframes cap { 0% { opacity:0; } 3%, 30% { opacity:1; } 33%, 100% { opacity:0; } }
-@media (prefers-reduced-motion: reduce) { .card, .card.spring, .ai p { transition:none; } .card::after { transition:none; } }
+@media (prefers-reduced-motion: reduce) { .card, .card.spring, .ai p, .wash.fade { transition:none; } }
 </style>
 </head>
 <body>
-<!-- Soft color glow behind everything. Purely decorative. -->
-<div class="glow" aria-hidden="true"></div>
-<!-- Main screen. The header stays put; the deck and ledger views swap in place below it, switched from the tab bar. -->
+<!-- Main screen. The top line stays put; the deck and the Ledger swap in place below it. Everything else is reached
+     from the corner button (after the sheets), or by keyboard. -->
+<!-- The swipe wash: a soft light of the outcome color from the edge you are swiping toward. Decorative. -->
+<div class="wash" id="wash" aria-hidden="true"></div>
 <div class="app">
   <header class="top">
-    <div class="who">
-      <img class="mark" src="icons/favicon-64.png" alt="" width="40" height="40">
-      <div class="hello"><span class="brand" id="brand">Scales</span><span class="date" id="todayLbl"></span></div>
-    </div>
-    <div class="hbtns">
-      <!-- Today's count: principles weighed today (any move), from the same activity log as the Ledger grid. -->
-      <span class="stat-pill glass" id="todayStat" role="img" aria-label="0 weighed today"><i></i><b id="todayN">0</b><span>today</span></span>
-      <button type="button" class="iconbtn glass" id="openSettings" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
-    </div>
+    <!-- On the deck: today's date. On the Ledger: the way back to the deck. -->
+    <span class="label" id="todayLbl"></span>
+    <button type="button" class="toplink label" id="backDeck" hidden><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"/></svg>Deck</button>
+    <!-- Today's count: principles weighed today (any move), from the same activity log as the Ledger grid, and what is left in the deck. -->
+    <span class="label" id="todayStat"><b id="todayN">0</b> <span class="sr">weighed</span> today<span id="deckN"></span></span>
   </header>
 
-<!-- The dark panel holds whichever view is showing. -->
-  <main class="panel pscope">
-<!-- Deck view. Empty here on purpose: renderDeck() builds the heading, chips, card and buttons. -->
+  <main class="main">
+<!-- Deck view. Empty here on purpose: renderDeck() builds the chips and the principle. -->
   <section class="view" id="v-deck" aria-label="Deck"></section>
 
-<!-- Ledger view: totals, the list of thoughts, and the 12 week activity grid. Filled by renderLedger(). -->
+<!-- Ledger view: a front page. Masthead, where you stand, the list, and the 12 week grid. Filled by renderLedger(). -->
   <section class="view" id="v-ledger" aria-label="Ledger" hidden>
-    <div class="phead"><h1 class="ptitle">Ledger</h1><span class="pmeta" id="lMeta"></span></div>
-    <div class="hero glass">
-      <div>
-        <div class="eyebrow">Living it</div>
-        <div class="big" id="lShed">0</div>
-        <div class="ymd" id="lLine">0 in deck · 0 pushing back</div>
-        <div class="sub" id="lAvg"></div>
-      </div>
-      <!-- Glowing bars: every principle counted once, as Living it, Still working or Not today (core.js outcomeMix). -->
-      <div class="mix" id="mix" role="img" aria-label="">
-        <div aria-hidden="true"><span class="tr"><i id="mixLive" style="--c:var(--c-live)"></i></span><b id="pLive">0%</b><small>Living</small></div>
-        <div aria-hidden="true"><span class="tr"><i id="mixWork" style="--c:var(--c-work)"></i></span><b id="pWork">0%</b><small>Working</small></div>
-        <div aria-hidden="true"><span class="tr"><i id="mixSkip" style="--c:var(--c-skip)"></i></span><b id="pSkip">0%</b><small>Not today</small></div>
-      </div>
+    <div class="masthead">
+      <h1 class="ptitle">Ledger</h1>
+      <p><b id="lShed">0</b> living it · <span id="lLine">0 in deck · 0 pushing back</span> · <span id="lAvg"></span></p>
     </div>
-    <div class="tile glass">
-      <div class="tilehead">
+    <section class="sec" aria-labelledby="hStand">
+      <div class="sec-head"><h2 id="hStand">Where you stand</h2><span class="legend" id="lMeta"></span></div>
+      <!-- Every principle counted once, as Living it, Still working or Not today (core.js outcomeMix). -->
+      <div class="mix" id="mix" role="img" aria-label="">
+        <div class="prog" aria-hidden="true"><span>Living it</span><span class="tr"><i id="mixLive" style="--c:var(--c-live)"></i></span><b id="pLive">0%</b></div>
+        <div class="prog" aria-hidden="true"><span>Working</span><span class="tr"><i id="mixWork" style="--c:var(--c-work)"></i></span><b id="pWork">0%</b></div>
+        <div class="prog" aria-hidden="true"><span>Not today</span><span class="tr"><i id="mixSkip" style="--c:var(--c-skip)"></i></span><b id="pSkip">0%</b></div>
+      </div>
+    </section>
+    <section class="sec" aria-labelledby="hList">
+      <div class="sec-head"><h2 id="hList">Principles</h2>
         <div class="seg" role="group" aria-label="List">
           <button type="button" id="segDeck" aria-pressed="true">In deck</button>
           <button type="button" id="segShed" aria-pressed="false">Living it</button>
         </div>
-        <div class="legend" id="listLegend">weight 1.0–4.0</div>
       </div>
+      <div class="legend" id="listLegend">weight 1.0–4.0</div>
       <div id="ledgerList"></div>
-    </div>
-    <div class="tile glass">
-      <div class="tilehead"><div class="sec">Last 12 weeks</div><div class="legend">1 row = 2 weeks</div></div>
+    </section>
+    <section class="sec" aria-labelledby="hWeeks">
+      <div class="sec-head"><h2 id="hWeeks">Last 12 weeks</h2><span class="legend">1 row = 2 weeks</span></div>
       <div class="cal" id="cal" aria-label="Inspection days over the last 12 weeks"></div>
       <div class="key"><span><i style="background:var(--lived)"></i>inspected</span><span><i style="background:var(--c-live)"></i>living it</span><span><i style="background:var(--empty)"></i>no session</span></div>
-    </div>
+    </section>
   </section>
   </main>
 </div>
@@ -553,7 +477,7 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
      page behind inert, and draws the dimmed ::backdrop. Tapping the backdrop or Escape closes them. -->
 
 <!-- Capture sheet -->
-<dialog class="sheet glass" id="sheetCapture" aria-modal="true" aria-labelledby="sheetCaptureTitle">
+<dialog class="sheet" id="sheetCapture" aria-modal="true" aria-labelledby="sheetCaptureTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetCaptureTitle">New principle</span> <button type="button" data-close>Cancel</button></h2>
   <form class="group" id="captureForm" autocomplete="off" style="gap:14px">
@@ -585,7 +509,7 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
 </dialog>
 
 <!-- Shed sheet -->
-<dialog class="sheet glass" id="sheetShed" aria-modal="true" aria-labelledby="sheetShedTitle">
+<dialog class="sheet" id="sheetShed" aria-modal="true" aria-labelledby="sheetShedTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetShedTitle">Living it</span> <button type="button" id="shedCancel">Not yet</button></h2>
   <div class="sheet-thought" id="shedText"></div>
@@ -604,7 +528,7 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
 </dialog>
 
 <!-- Evidence sheet: add or edit where a lived principle showed up, from the Living it record. -->
-<dialog class="sheet glass" id="sheetEvidence" aria-modal="true" aria-labelledby="sheetEvidenceTitle">
+<dialog class="sheet" id="sheetEvidence" aria-modal="true" aria-labelledby="sheetEvidenceTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetEvidenceTitle">Where it showed up</span> <button type="button" data-close>Cancel</button></h2>
   <div class="sheet-thought" id="evText"></div>
@@ -617,7 +541,7 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
 </dialog>
 
 <!-- Collections sheet: every collection with its count. Tap one to rename, merge or remove it. -->
-<dialog class="sheet glass" id="sheetCollections" aria-modal="true" aria-labelledby="sheetCollectionsTitle">
+<dialog class="sheet" id="sheetCollections" aria-modal="true" aria-labelledby="sheetCollectionsTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetCollectionsTitle">Collections</span> <button type="button" id="collDone">Done</button></h2>
   <p class="note">Tap a collection to rename it. Renaming to one that already exists merges them.</p>
@@ -625,7 +549,7 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
 </dialog>
 
 <!-- Rename sheet: rename, merge into an existing collection, or remove. -->
-<dialog class="sheet glass" id="sheetRename" aria-modal="true" aria-labelledby="sheetRenameTitle">
+<dialog class="sheet" id="sheetRename" aria-modal="true" aria-labelledby="sheetRenameTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetRenameTitle">Rename collection</span> <button type="button" id="renameCancel">Cancel</button></h2>
   <p class="note" id="renameMeta"></p>
@@ -637,7 +561,7 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
 </dialog>
 
 <!-- Edit sheet: change a principle's wording from the card or the Ledger. History is kept. -->
-<dialog class="sheet glass" id="sheetEdit" aria-modal="true" aria-labelledby="sheetEditTitle">
+<dialog class="sheet" id="sheetEdit" aria-modal="true" aria-labelledby="sheetEditTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetEditTitle">Edit principle</span> <button type="button" data-close>Cancel</button></h2>
   <p class="note" id="editNote"></p>
@@ -670,16 +594,16 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
 </dialog>
 
 <!-- Settings sheet -->
-<dialog class="sheet glass" id="sheetSettings" aria-modal="true" aria-labelledby="sheetSettingsTitle">
+<dialog class="sheet" id="sheetSettings" aria-modal="true" aria-labelledby="sheetSettingsTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetSettingsTitle">Settings</span> <button type="button" data-close>Done</button></h2>
   <div class="group">
-    <div class="sec">Theme</div>
+    <div class="sec-k">Theme</div>
     <div class="skins" id="skins"></div>
     <p class="note">Auto follows the phone's light or dark setting. Return is drawn from the Scales icon.</p>
   </div>
   <div class="group">
-    <div class="sec">AI line</div>
+    <div class="sec-k">AI line</div>
     <input class="field" id="apiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Anthropic API key (sk-ant-...)">
     <div class="row2"><button class="btn ghost" type="button" id="saveKey">Save key</button><button class="btn ghost" type="button" id="clearKey">Remove</button></div>
     <button class="btn ghost" type="button" id="testKey">Test key</button>
@@ -688,7 +612,7 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
     <p class="note">The key stays on this phone and is sent only to Anthropic. Only the principle text, its not today count and days in deck are sent. Without a key, built-in lines are used.</p>
   </div>
   <div class="group">
-    <div class="sec">Storage</div>
+    <div class="sec-k">Storage</div>
     <div class="status"><span class="dot"></span><span id="syncText">Saved on this phone only</span></div>
     <div class="row2"><button class="btn ghost" type="button" id="exportBtn">Back up</button><button class="btn ghost" type="button" id="importBtn">Restore</button></div>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
@@ -698,33 +622,34 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
     <p class="note">CSV uses the text, title, author, creationDate, tags, collection, link, citation columns. Importing leaves out principles already in the deck. Files are read on this phone and never uploaded.</p>
   </div>
   <div class="group" id="starterGroup">
-    <div class="sec">Starter decks</div>
+    <div class="sec-k">Starter decks</div>
     <div class="row2"><button class="btn ghost" type="button" data-starter="stoic">Stoic</button><button class="btn ghost" type="button" data-starter="leadership">Leadership</button></div>
     <div class="row2"><button class="btn ghost" type="button" data-starter="athletic">Athletic mindset</button><button class="btn ghost" type="button" data-starter="overcoming">Self-overcoming</button></div>
     <p class="note">Adds a short set of principles to the deck. Delete any that are not yours from the Ledger.</p>
   </div>
   <div class="group">
-    <div class="sec">Collections</div>
+    <div class="sec-k">Collections</div>
     <button class="btn ghost btn-row" type="button" id="openCollections"><span>Manage collections</span><span id="collCount">0 ›</span></button>
     <p class="note">Tidy up names across every principle at once.</p>
   </div>
   <div class="group">
-    <div class="sec">How it works</div>
+    <div class="sec-k">How it works</div>
+    <p class="note">Swipe left for Not today, up for Still working on it, right for Living it. The + in the corner does the same, and holds Capture, Edit, the Ledger and Settings: tap it, or hold it and slide to one. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, comma for Settings.</p>
     <p class="note">Not today sets a principle aside for four days and raises its weight, up to four times as likely as a new one. When it returns, at 4:00 AM, it comes up first, once, most avoided first; then it rejoins the deck. Still working on it, after at least 8 seconds on the card, lowers that weight by one step. Living it retires the principle to your record.</p>
   </div>
   <div class="group">
-    <div class="sec">Origin</div>
+    <div class="sec-k">Origin</div>
     <p class="note">The name comes from scales falling from the eyes, and from Nietzsche's three metamorphoses: the camel carries ideas, the lion tests them, the child acts from them without thinking. Scales is built for the lion stage.</p>
   </div>
   <div class="group">
-    <div class="sec">Home Screen</div>
+    <div class="sec-k">Home Screen</div>
     <p class="note">In Safari, tap Share, then Add to Home Screen. Works offline once installed.</p>
   </div>
   <div class="group">
-    <div class="sec">About</div>
+    <div class="sec-k">About</div>
     <div class="status"><span class="dot" style="background:var(--muted)"></span><span id="versionText">Version</span></div>
     <p class="note">After an update, close and reopen Scales. If this number has not changed, the phone is still running the previous version.</p>
-    <p class="note" id="screenCheck" style="font-family:var(--f-num);font-size:var(--t-xs);line-height:1.6"></p>
+    <p class="version" id="screenCheck"></p>
   </div>
 </dialog>
 
@@ -732,14 +657,14 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
 <div id="vhProbe" aria-hidden="true" style="position:fixed;left:-9999px;top:0;width:1px;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)">
   <i style="display:block;height:100dvh"></i><i style="display:block;height:100svh"></i><i style="display:block;height:100lvh"></i>
 </div>
-<!-- Floating tab bar: Deck, the + that opens Capture (it replaces the 1.26.0 floating add button), and Ledger. -->
-<nav class="tabbar pscope" aria-label="Main">
-  <button type="button" class="tab" id="toDeck" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="16" rx="3.5"/><path d="M9 9h6M9 13h4"/></svg><span>Deck</span></button>
-  <button type="button" class="fab" id="fab" aria-label="Capture a principle" title="Capture a principle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
-  <button type="button" class="tab" id="toLedger"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-6"/></svg><span>Ledger</span></button>
-</nav>
+<!-- The corner button: the one control on the screen. Tap it for the ring (the three moves, Capture, Edit, the Ledger,
+     Settings), or hold it and slide to one. The ring is built by openRing(). -->
+<div class="corner" id="corner">
+  <button type="button" class="fab glass" id="fab" aria-label="Menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="ring"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+</div>
+<div class="ringx" id="ring" role="dialog" aria-modal="true" aria-label="Menu" hidden></div>
 <!-- Toasts: #toastPop is what you see (a popover, so it shows above an open sheet); #toastHost reads it out. -->
-<div id="toastPop" class="pscope" popover="manual"></div>
+<div id="toastPop" popover="manual"></div>
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <script src="core.js"></script>
@@ -779,9 +704,9 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
   // Theme list for the Settings picker. sw = the three swatch colors shown on each button.
   // The actual colors live in the CSS under :root[data-skin=...].
   var SKINS = [
-    { id: "auto", name: "Auto", sw: ["#E4E1DB", "#17302E", "#86D1CB"] },
+    { id: "auto", name: "Auto", sw: ["#F3F0EA", "#0E0F11", "#D9955F"] },
     { id: "moss", name: "Moss", sw: ["#111A14", "#BCCDA8", "#E8C55C"] },
-    { id: "linen", name: "Linen", sw: ["#EDE6DA", "#2A2420", "#9AD3BB"] },
+    { id: "linen", name: "Linen", sw: ["#EFE8DD", "#2A251F", "#2F6B57"] },
     { id: "ink", name: "Ink", sw: ["#0A0F1E", "#B3C3EC", "#F3BC5E"] },
     { id: "dusk", name: "Dusk", sw: ["#1A121D", "#E4C0DA", "#7FD6C5"] },
     { id: "return", name: "Return", sw: ["#131220", "#E8B860", "#F08A55"] }
@@ -797,7 +722,7 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
   // Card label: collection (or "Principle") on line 1, origin on line 2 when set.
   function labelHtml(t) {
     var l = C.label(t);
-    return '<div class="lab2"><span class="eyebrow">' + esc(l.line1) + "</span>" + (l.line2 ? '<span class="orig">' + esc(l.line2) + "</span>" : "") + "</div>";
+    return '<div class="lab2"><span class="kicker">' + esc(l.line1) + "</span>" + (l.line2 ? '<span class="orig">' + esc(l.line2) + "</span>" : "") + "</div>";
   }
   function byline(t) { var p = [t.title, t.author].filter(Boolean); return p.length ? '<div class="by">' + esc(p.join(" · ")) + "</div>" : ""; }
   function days(iso) { return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)); }
@@ -838,7 +763,8 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
   function paintStat() {
     var d = activity[dayKey()] || { i: 0, s: 0 }, n = (d.i || 0) + (d.s || 0);
     $("todayN").textContent = n;
-    $("todayStat").setAttribute("aria-label", n + (n === 1 ? " principle" : " principles") + " weighed today");
+    var left = activeList().length;
+    $("deckN").textContent = left ? " \u00b7 " + left + " in deck" : "";
   }
   function savePrefs() { lsSet(LSP, prefs); }
 
@@ -856,6 +782,8 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
     if (prefs.skin && prefs.skin !== "auto") document.documentElement.setAttribute("data-skin", prefs.skin);
     else document.documentElement.removeAttribute("data-skin");
     Array.prototype.forEach.call(document.querySelectorAll(".skin"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-skin") === (prefs.skin || "auto"))); });
+    // The browser chrome takes the theme's ground.
+    var bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim(); if (bg) $("themeColor").setAttribute("content", bg);
   }
 
   // ---------- sheets ----------
@@ -1188,7 +1116,7 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
   function flyOut(dir) {
     var c = $("card");
     if (!c) { showNext(); return; }
-    c.style.transform = dir === "left" ? "translate(-140%,0) rotate(-14deg)" : dir === "right" ? "translate(140%,0) rotate(14deg)" : "translate(0,-130%)";
+    c.style.transform = dir === "left" ? "translate(-130%,0) rotate(-5deg)" : dir === "right" ? "translate(130%,0) rotate(5deg)" : "translate(0,-60%)";
     c.style.opacity = "0";
     setTimeout(function () { entering = true; showNext(); }, 230);
   }
@@ -1275,9 +1203,10 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
   }
   var entering = false;
   // Panel heading for the deck, drawn above the chips in every deck state.
-  function deckHead() {
-    var n = activeList().length;
-    return '<div class="phead"><h1 class="ptitle">Today</h1>' + (n ? '<span class="pmeta">' + n + " in deck</span>" : "") + "</div>";
+  // The deck has no heading of its own (1.29.0): the top line carries the date and the counts.
+  function deckHead() { return ""; }
+  function emptyHtml(kick, title, text, acts) {
+    return '<div class="empty"><div class="kicker">' + esc(kick) + "</div><h1>" + title + "</h1><p>" + text + '</p><div class="acts">' + acts + "</div></div>";
   }
   function renderDeck() {
     var v = $("v-deck");
@@ -1288,10 +1217,10 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
     if (!t && coll) {
       // The chosen collection has nothing to show right now.
       var inC = deckList(), nr = inC.filter(function (x) { return C.isResting(x, today()); }).length;
-      v.innerHTML = deckHead() + chipsHtml() + '<div class="empty glass"><div class="eyebrow">' + esc(coll) + '</div><h1>Nothing left in ' + esc(coll) + ' today.</h1><p>' +
-        (nr ? nr + (nr === 1 ? " principle is" : " principles are") + " resting. The next returns " + returnText(C.nextReturn(inC, today())) + "." : "Every principle here is resting or lived.") + "</p>" +
-        '<button type="button" class="btn" style="width:auto;padding-inline:22px" id="showAll">Show all collections</button>' +
-        (nr ? '<button type="button" class="btn ghost" style="width:auto;padding-inline:22px" id="showAnyway">Show anyway</button>' : "") + "</div>";
+      v.innerHTML = deckHead() + chipsHtml() + emptyHtml(coll, "Nothing left in " + esc(coll) + " today.",
+        nr ? nr + (nr === 1 ? " principle is" : " principles are") + " resting. The next returns " + returnText(C.nextReturn(inC, today())) + "." : "Every principle here is resting or lived.",
+        '<button type="button" class="btn" id="showAll">Show all collections</button>' +
+        (nr ? '<button type="button" class="btn ghost" id="showAnyway">Show anyway</button>' : ""));
       bindChips();
       $("showAll").onclick = function () { prefs.deck_coll = ""; savePrefs(); showNext(); };
       if (nr) $("showAnyway").onclick = function () { prefs.anyway_day = today(); savePrefs(); showNext(); };
@@ -1300,11 +1229,11 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
     if (!t && activeList().length) {
       // Everything in the deck is resting after Not today.
       var n = activeList().filter(function (x) { return C.isResting(x, today()); }).length;
-      v.innerHTML = deckHead() + chipsHtml() + '<div class="empty glass"><div class="eyebrow">Done for today</div><h1>Nothing left today.</h1><p>' +
+      v.innerHTML = deckHead() + chipsHtml() + emptyHtml("Done for today", "Nothing left today.",
         n + (n === 1 ? " principle is" : " principles are") + " resting. The next returns " + returnText(C.nextReturn(activeList(), today())) +
-        ". Not today sets a principle aside for " + C.REST_DAYS + " days; when it returns, the most avoided come up first.</p>" +
-        '<button type="button" class="btn" style="width:auto;padding-inline:22px" id="showAnyway">Show anyway</button>' +
-        '<button type="button" class="btn ghost" style="width:auto;padding-inline:22px" id="emptyAdd">Capture a principle</button></div>';
+        ". Not today sets a principle aside for " + C.REST_DAYS + " days; when it returns, the most avoided come up first.",
+        '<button type="button" class="btn" id="showAnyway">Show anyway</button>' +
+        '<button type="button" class="btn ghost" id="emptyAdd">Capture a principle</button>');
       $("showAnyway").onclick = function () { prefs.anyway_day = today(); savePrefs(); showNext(); };
       $("emptyAdd").onclick = openCapture;
       bindChips();
@@ -1312,41 +1241,31 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
     }
     if (!t) {
       var any = all().length;
-      v.innerHTML = deckHead() + '<div class="empty glass"><div class="eyebrow">' + (any ? "Deck clear" : "Start here") + '</div><h1>' +
-        (any ? "You are living every principle." : "No principles yet.") + '</h1><p>Capture a principle you want to live by. It stays in the deck until you live it without prompting.</p>' +
-        '<button type="button" class="btn" style="width:auto;padding-inline:22px" id="emptyAdd">Capture a principle</button>' +
-        '<button type="button" class="btn ghost" style="width:auto;padding-inline:22px" id="emptyStarter">Load a starter deck</button></div>';
+      v.innerHTML = deckHead() + emptyHtml(any ? "Deck clear" : "Start here", any ? "You are living every principle." : "No principles yet.",
+        "Capture a principle you want to live by. It stays in the deck until you live it without prompting.",
+        '<button type="button" class="btn" id="emptyAdd">Capture a principle</button>' +
+        '<button type="button" class="btn ghost" id="emptyStarter">Load a starter deck</button>');
       $("emptyAdd").onclick = openCapture;
       // Scroll only the Settings sheet to the starter decks; scrolling the element into view would also move the page.
       $("emptyStarter").onclick = function () { show("sheetSettings"); var sh = $("sheetSettings"), g = $("starterGroup"); if (g) sh.scrollTop = Math.max(0, g.offsetTop - 12); };
       return;
     }
     var nudge = t.consecutive_reflects >= NUDGE_AT, coachOn = !prefs.coach_seen;
+    // The principle sits on the page (1.29.0): label, words, byline, the AI line and the record, low on the
+    // screen. No buttons: the three moves are swipes, the corner ring and the arrow keys.
     v.innerHTML = deckHead() + chipsHtml() +
-      '<article class="card glass' + (enter ? " enter" : "") + '" id="card" aria-label="Current principle">' +
-        '<div class="stamp skip" id="stSkip">NOT TODAY</div><div class="stamp shed" id="stShed">LIVING IT</div><div class="stamp keep" id="stKeep">WORKING ON IT</div>' +
-        '<div class="card-top">' + labelHtml(t) +
-          '<span class="card-right">' + (t.skip_count > 0 ? '<span class="badge">Not today ' + t.skip_count + "×</span>" : "") +
-          '<button type="button" class="edit-pill" id="bEdit" aria-label="Edit this principle">' + ICON_EDIT + "Edit</button></span></div>" +
+      '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current principle" aria-describedby="cardHow">' +
+        '<div class="card-top">' +
+          '<div class="stamp skip" id="stSkip" aria-hidden="true">NOT TODAY</div><div class="stamp shed" id="stShed" aria-hidden="true">LIVING IT</div><div class="stamp keep" id="stKeep" aria-hidden="true">WORKING ON IT</div>' +
+          labelHtml(t) + (t.skip_count > 0 ? '<span class="badge">Not today ' + t.skip_count + "\u00d7</span>" : "") + "</div>" +
         '<div class="thought' + sizeClass(t.text) + '"><span>' + esc(t.text) + "</span></div>" +
         byline(t) +
-        '<div class="rule"></div>' +
-        '<div class="ai">' + ICON_SPARK + '<p id="aiLine"></p></div>' +
-        '<div class="meta">' + (currentLead === t.id ? '<b class="first">first today</b> \u00b7 ' : "") + "captured " + fmtDate(t.created_at) + " · inspected " + t.reflect_count + "× · weight " + weight(t).toFixed(1) + "</div>" +
+        '<div class="ai"><span class="label">Consider</span><p id="aiLine"></p></div>' +
+        '<div class="meta">' + (currentLead === t.id ? '<b class="first">First today</b> \u00b7 ' : "") + "Captured " + fmtDate(t.created_at) + " · inspected " + t.reflect_count + "× · weight " + weight(t).toFixed(1) + "</div>" +
+        (nudge ? '<div class="banner"><span class="dot" aria-hidden="true"></span><span class="t">Have you lived this yet?</span><span class="btns"><button type="button" class="b-ghost" id="nudgeNo">Not yet</button><button type="button" class="b-accent" id="nudgeYes">Living it</button></span></div>' : "") +
+        '<span class="sr" id="cardHow">Swipe left for Not today, up for Still working on it, right for Living it. The menu button in the corner has the same three moves.</span>' +
       (coachOn ? coachHtml() : "") +
-      "</article>" +
-      (nudge ? '<div class="banner glass"><span>Have you lived this yet?</span><span class="btns"><button type="button" class="b-ghost" id="nudgeNo">Not yet</button><button type="button" class="b-accent" id="nudgeYes">Living it</button></span></div>' : "") +
-      // The small hint row is only kept until the coach has been seen.
-      (coachOn ? '<div class="hints" aria-hidden="true"><span>' + ICON_SKIP + "not today</span><span>" + ICON_UP + "working on it</span><span>living it" + ICON_RIGHT + "</span></div>" : "") +
-      '<div class="actions">' +
-        '<button class="round glass r-skip" type="button" id="bSkip" aria-label="Not today">' + ICON_SKIP + "</button>" +
-        '<button class="keep" type="button" id="bKeep">Still working on it</button>' +
-        '<button class="round r-shed" type="button" id="bShed" aria-label="Living it">' + ICON_SHED + "</button>" +
-      "</div>";
-    $("bSkip").onclick = function () { act("skip"); };
-    $("bKeep").onclick = function () { act("keep"); };
-    $("bShed").onclick = function () { act("shed"); };
-    $("bEdit").onclick = function () { openEdit(t); };
+      "</article>";
     if (nudge) {
       $("nudgeYes").onclick = function () { act("shed"); };
       $("nudgeNo").onclick = function () { t.consecutive_reflects = 0; save(t); renderDeck(); paintLine(); };
@@ -1365,12 +1284,13 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
   var ICON_RIGHT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
   function coachHtml() {
     return '<div class="coach" id="coach" role="group" aria-label="How to use the deck">' +
-      '<div class="ghost" aria-hidden="true"></div>' +
+      '<div class="ghost" aria-hidden="true"><i></i><i></i><i></i></div>' +
+      "<h2>Three moves.</h2>" +
       '<ul><li class="c-skip">' + ICON_SKIP + '<span>Swipe left: Not today<small>Sets it aside for ' + C.REST_DAYS + ' days.</small></span></li>' +
       '<li class="c-keep">' + ICON_UP + '<span>Swipe up: Still working on it<small>Keeps it in the deck.</small></span></li>' +
       '<li class="c-shed">' + ICON_RIGHT + '<span>Swipe right: Living it<small>Retires it to your record.</small></span></li></ul>' +
-      '<button type="button" class="coach-ok" id="coachOk">Got it</button>' +
-      '<div class="tapnote">The buttons below do the same.</div></div>';
+      '<p class="tapnote">The + in the corner does the same, and holds Capture, Edit, the Ledger and Settings. Tap it, or hold and slide.</p>' +
+      '<button type="button" class="coach-ok" id="coachOk">Got it</button></div>';
   }
   function coachSeen() { if (prefs.coach_seen) return; prefs.coach_seen = true; savePrefs(); var c = $("coach"); if (c) c.remove(); var h = document.querySelector(".hints"); if (h) h.remove(); }
   // Drag handling with pointer events (works for touch and mouse). The card follows the finger,
@@ -1381,14 +1301,16 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
     var card = $("card"); if (!card) return;
     var sx = 0, sy = 0, dx = 0, dy = 0, down = false;
     var st = { skip: $("stSkip"), shed: $("stShed"), keep: $("stKeep") };
-    function resetStamps() { st.skip.style.opacity = st.shed.style.opacity = st.keep.style.opacity = 0; card.style.setProperty("--ga", 0); }
-    card.addEventListener("pointerdown", function (e) { if (e.button > 0 || e.target.closest(".edit-pill, .coach-ok")) return; down = true; sx = e.clientX; sy = e.clientY; dx = dy = 0; card.classList.remove("spring", "enter"); card.classList.add("dragging"); try { card.setPointerCapture(e.pointerId); } catch (_) {} });
+    var wash = $("wash");
+    function resetStamps() { st.skip.style.opacity = st.shed.style.opacity = st.keep.style.opacity = 0; card.style.setProperty("--ga", 0); wash.classList.add("fade"); wash.style.setProperty("--ga", 0); }
+    card.addEventListener("pointerdown", function (e) { if (e.button > 0 || e.target.closest(".banner, .coach-ok")) return; down = true; sx = e.clientX; sy = e.clientY; dx = dy = 0; card.classList.remove("spring", "enter"); card.classList.add("dragging"); wash.classList.remove("fade"); try { card.setPointerCapture(e.pointerId); } catch (_) {} });
     card.addEventListener("pointermove", function (e) {
       if (!down) return; dx = e.clientX - sx; dy = e.clientY - sy;
       var w = C.swipeIntent(dx, dy);
-      card.style.transform = "translate(" + dx + "px," + Math.min(dy, 40) + "px) rotate(" + w.tilt + "deg)" + (REDUCED.matches ? "" : " scale(1.012)");
-      if (w.kind) card.setAttribute("data-glow", w.kind === "shed" ? "live" : w.kind === "keep" ? "work" : "skip");
-      card.style.setProperty("--ga", w.strength);
+      // A gentle lean (half the tilt the card had), no lift: the words are on the page, not a held object.
+      card.style.transform = "translate(" + dx + "px," + Math.min(dy, 40) + "px) rotate(" + (w.tilt * 0.4).toFixed(2) + "deg)";
+      if (w.kind) { var g = w.kind === "shed" ? "live" : w.kind === "keep" ? "work" : "skip"; card.setAttribute("data-glow", g); wash.setAttribute("data-glow", g); }
+      card.style.setProperty("--ga", w.strength); wash.style.setProperty("--ga", w.strength);
       st.skip.style.opacity = w.kind === "skip" ? w.strength : 0;
       st.shed.style.opacity = w.kind === "shed" ? w.strength : 0;
       st.keep.style.opacity = w.kind === "keep" ? w.strength : 0;
@@ -1396,6 +1318,7 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
     function end() {
       if (!down) return; down = false; card.classList.remove("dragging");
       var w = C.swipeIntent(dx, dy);
+      wash.classList.add("fade"); wash.style.setProperty("--ga", 0);
       if (w.commit && w.kind === "skip") act("skip");
       else if (w.commit && w.kind === "shed") { card.style.transform = ""; resetStamps(); act("shed"); }
       else if (w.commit && w.kind === "keep") act("keep");
@@ -1801,17 +1724,15 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
     function swap() {
       $("v-deck").hidden = view !== "deck";
       $("v-ledger").hidden = view !== "ledger";
-      $("toDeck").setAttribute("aria-current", view === "deck" ? "page" : "false");
-      $("toLedger").setAttribute("aria-current", view === "ledger" ? "page" : "false");
+      $("todayLbl").hidden = view !== "deck";
+      $("backDeck").hidden = view !== "ledger";
     }
     if (from !== view && document.startViewTransition && !REDUCED.matches && !openSheet) {
       document.documentElement.setAttribute("data-vt", view === "deck" ? "back" : "fwd");
       try { document.startViewTransition(swap); } catch (e) { swap(); }
     } else swap();
   }
-  $("toLedger").onclick = function () { go("ledger"); };
-  $("toDeck").onclick = function () { go("deck"); };
-  $("fab").onclick = openCapture;
+  $("backDeck").onclick = function () { go("deck"); var f = $("fab"); try { f.focus({ preventScroll: true }); } catch (e) {} };
   // Screen check: the measurements that decide whether the app fills the display. Shown under
   // About so a layout change can be checked against real phone numbers, not an emulator.
   function screenCheck() {
@@ -1826,7 +1747,171 @@ textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-
       " \u00b7 safe " + r(parseFloat(ps.paddingTop)) + "/" + r(parseFloat(ps.paddingBottom)) +
       " \u00b7 scroll " + r(window.scrollY);
   }
-  $("openSettings").onclick = function () { paintCollCount(); screenCheck(); show("sheetSettings"); };
+  function openSettings() { paintCollCount(); screenCheck(); show("sheetSettings"); }
+
+  // ---------- the corner button and its ring (1.29.0) ----------
+  // The one control on the screen, after Edition's corner button. Tap + and a ring of controls opens around it;
+  // or hold + and slide your thumb to one and let go. Inner arc: the three moves for the principle on screen,
+  // from straight left (Not today, like the swipe) to straight up (Still working on it, like the swipe).
+  // Outer arc: Settings, the Ledger (or the deck), Edit and Capture. Both arcs run from just above straight left
+  // of + to straight up, where a right thumb reaches. The ring is modal: the app behind is inert, focus moves to
+  // the first control, Tab stays inside the ring and +, and Escape or a tap outside closes it.
+  // The corner dims after IDLE_MS without a touch or key, and wakes on the next one.
+  var RING_HOLD_MS = 400, RING_R = [128, 214], RING_FROM = 196, IDLE_MS = 4000;
+  var ICON_PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+  var ICON_LEDGER = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>';
+  var ICON_DECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg>';
+  var ICON_SET = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>';
+  var ringOpen = false, ringList = [], ringEl = $("ring"), fab = $("fab"), corner = $("corner"), appEl = document.querySelector(".app");
+  function onCard() { var t = $("v-ledger").hidden && current && thoughts[current]; return t && t.status === "active" && $("card") ? t : null; }
+  function ringItems() {
+    var t = onCard(), deck = $("v-ledger").hidden;
+    var outer = [
+      { id: "settings", label: "Settings", icon: ICON_SET, run: openSettings },
+      deck ? { id: "ledger", label: "Ledger", icon: ICON_LEDGER, run: function () { go("ledger"); } }
+           : { id: "deck", label: "Deck", icon: ICON_DECK, primary: true, run: function () { go("deck"); } },
+      { id: "capture", label: "Capture", icon: ICON_PLUS, primary: deck && !t, run: openCapture }
+    ];
+    if (t) outer.splice(2, 0, { id: "edit", label: "Edit", icon: ICON_EDIT, run: function () { openEdit(t); } });
+    if (!t) return [outer];
+    return [[
+      { id: "skip", label: "Not today", icon: ICON_SKIP, run: function () { act("skip"); } },
+      { id: "shed", label: "Living it", icon: ICON_SHED, primary: true, run: function () { act("shed"); } },
+      { id: "keep", label: "Working on it", icon: ICON_UP, run: function () { act("keep"); } }
+    ], outer];
+  }
+  function openRing(live) {
+    if (openSheet) return;
+    if (ringOpen) closeRing(true);
+    var r = fab.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    var arcs = ringItems(), html = '<div class="ring-bg glass' + (arcs.length > 1 ? " wide" : "") + '" style="left:' + cx + "px;top:" + cy + 'px"></div>';
+    ringList = [];
+    arcs.forEach(function (list, ai) {
+      list.forEach(function (it, k) {
+        var deg = RING_FROM + (list.length === 1 ? 270 - RING_FROM : (270 - RING_FROM) * k / (list.length - 1));
+        var a = deg * Math.PI / 180, rad = RING_R[ai];
+        // Inner arc: labels sit inside the arc, toward +, where there is room. Outer arc: under each control.
+        var lab = ai === 0
+          ? '<span class="in" style="left:calc(50% + ' + (-Math.cos(a) * 46).toFixed(1) + "px);top:calc(50% + " + (-Math.sin(a) * 46).toFixed(1) + 'px)">' + esc(it.label) + "</span>"
+          : "<span>" + esc(it.label) + "</span>";
+        html += '<button type="button" class="ri' + (it.primary ? " primary" : "") + '" id="r-' + it.id + '" data-r="' + it.id + '" style="left:' + (cx + rad * Math.cos(a)).toFixed(1) + "px;top:" + (cy + rad * Math.sin(a)).toFixed(1) + 'px">' + it.icon + lab + "</button>";
+        ringList.push(it);
+      });
+    });
+    ringEl.innerHTML = html; ringEl.hidden = false; ringEl.setAttribute("data-live", live ? "1" : "0");
+    ringOpen = true;
+    fab.setAttribute("aria-expanded", "true"); fab.setAttribute("aria-label", "Close menu");
+    corner.classList.add("open"); corner.classList.remove("asleep");
+    appEl.inert = true;
+    pop.classList.add("high"); // an Undo toast moves up out of the ring's way
+    if (!live) { var f = ringEl.querySelector(".ri"); if (f) { try { f.focus({ preventScroll: true }); } catch (e) {} } }
+    requestAnimationFrame(function () { if (ringOpen) ringEl.classList.add("on"); });
+  }
+  function closeRing(now) {
+    if (!ringOpen) return;
+    ringOpen = false;
+    ringEl.classList.remove("on"); ringEl.removeAttribute("data-live");
+    var done = function () { if (!ringOpen) { ringEl.hidden = true; ringEl.innerHTML = ""; } };
+    if (now || REDUCED.matches) done(); else setTimeout(done, 150);
+    fab.setAttribute("aria-expanded", "false"); fab.setAttribute("aria-label", "Menu");
+    corner.classList.remove("open");
+    appEl.inert = false;
+    pop.classList.remove("high");
+    wakeCorner();
+  }
+  // Run a control: close the ring, put focus on + (so a sheet it opens hands focus back there), then act.
+  function runRing(id) {
+    var it = ringList.filter(function (x) { return x.id === id; })[0];
+    closeRing(true);
+    try { fab.focus({ preventScroll: true }); } catch (e) {}
+    if (it) it.run();
+  }
+  ringEl.addEventListener("click", function (e) {
+    var b = e.target.closest(".ri");
+    if (b) { e.stopPropagation(); runRing(b.getAttribute("data-r")); return; }
+    if (e.target === ringEl) { closeRing(); try { fab.focus({ preventScroll: true }); } catch (_) {} }
+  });
+  // While the thumb is down after a hold: light the control nearest it.
+  function pickRing(x, y) {
+    var best = null, gap = 44;
+    Array.prototype.forEach.call(ringEl.querySelectorAll(".ri"), function (b) {
+      var r = b.getBoundingClientRect(), d = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2));
+      if (d < gap) { gap = d; best = b; }
+    });
+    Array.prototype.forEach.call(ringEl.querySelectorAll(".ri"), function (b) { b.classList.toggle("on", b === best); });
+    return best;
+  }
+  var hold = { timer: 0, x: 0, y: 0, opened: false };
+  fab.addEventListener("pointerdown", function (e) {
+    if (e.button > 0) return;
+    hold.opened = false; hold.x = e.clientX; hold.y = e.clientY;
+    clearTimeout(hold.timer);
+    if (!ringOpen) hold.timer = setTimeout(function () { hold.timer = 0; hold.opened = true; openRing(true); }, RING_HOLD_MS);
+  });
+  // After a hold, the click that follows is not a toggle.
+  fab.addEventListener("click", function () {
+    clearTimeout(hold.timer); hold.timer = 0;
+    if (hold.opened) { hold.opened = false; return; }
+    if (ringOpen) closeRing(); else openRing(false);
+  });
+  fab.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+  window.addEventListener("pointermove", function (e) {
+    if (!ringOpen) {
+      if (hold.timer && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > 12) { clearTimeout(hold.timer); hold.timer = 0; }
+      return;
+    }
+    if (ringEl.getAttribute("data-live") === "1") pickRing(e.clientX, e.clientY);
+  });
+  function holdUp() {
+    clearTimeout(hold.timer); hold.timer = 0;
+    if (!ringOpen || ringEl.getAttribute("data-live") !== "1") return;
+    ringEl.setAttribute("data-live", "0");
+    var sel = ringEl.querySelector(".ri.on");
+    if (sel) runRing(sel.getAttribute("data-r"));
+    else { var f = ringEl.querySelector(".ri"); if (f) { try { f.focus({ preventScroll: true }); } catch (e) {} } } // let go without choosing: the ring stays open to tap
+  }
+  window.addEventListener("pointerup", holdUp); window.addEventListener("pointercancel", holdUp);
+
+  // Dim the corner after a few idle seconds; any touch or key wakes it.
+  var idleTimer = 0;
+  function wakeCorner() {
+    corner.classList.remove("asleep");
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () { if (!ringOpen) corner.classList.add("asleep"); }, IDLE_MS);
+  }
+  window.addEventListener("pointerdown", wakeCorner, true);
+
+  // Keyboard. In the ring: Escape closes it and Tab cycles through its controls and +. On the deck, with no sheet
+  // open and no field in use: the arrow keys are the three moves (left Not today, up Still working on it, right
+  // Living it), E edits. Anywhere: N captures, L switches between the deck and the Ledger, comma opens Settings,
+  // and Escape on the Ledger goes back to the deck.
+  document.addEventListener("keydown", function (e) {
+    wakeCorner();
+    if (ringOpen) {
+      if (e.key === "Escape") { e.preventDefault(); closeRing(); try { fab.focus({ preventScroll: true }); } catch (_) {} return; }
+      if (e.key === "Tab") {
+        var list = Array.prototype.slice.call(ringEl.querySelectorAll(".ri")).concat([fab]);
+        var i = list.indexOf(document.activeElement);
+        e.preventDefault();
+        var n = i < 0 ? 0 : (i + (e.shiftKey ? -1 : 1) + list.length) % list.length;
+        try { list[n].focus({ preventScroll: true }); } catch (_) {}
+      }
+      return;
+    }
+    if (openSheet || isTyping(document.activeElement) || e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key, t = onCard(), done = true;
+    if (t && k === "ArrowLeft") act("skip");
+    else if (t && k === "ArrowUp") act("keep");
+    else if (t && k === "ArrowRight") act("shed");
+    else if (t && (k === "e" || k === "E")) openEdit(t);
+    else if (k === "n" || k === "N" || k === "+") openCapture();
+    else if (k === "l" || k === "L") go($("v-ledger").hidden ? "ledger" : "deck");
+    else if (k === ",") openSettings();
+    else if (k === "Escape" && !$("v-ledger").hidden) go("deck");
+    else done = false;
+    if (done) e.preventDefault();
+  });
+  wakeCorner();
 
   // Show a short message for 1.8 seconds, or for UNDO_MS with an Undo button when onUndo is given.
   // The visible toast is a manual popover (top layer, above an open sheet) where supported; the

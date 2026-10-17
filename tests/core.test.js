@@ -479,15 +479,14 @@ test("an undo point is a copy: later changes do not leak in, and applying it twi
   assert.equal(r2.current, null);
 });
 
-test("the page wires sheets as modal dialogs, Undo, the coach and the add button (1.26.0)", () => {
+test("the page wires sheets as modal dialogs, Undo and the coach (1.26.0)", () => {
   const html = read("index.html");
-  assert.equal((html.match(/<dialog class="sheet glass"/g) || []).length, 7, "every sheet is a <dialog>");
+  assert.equal((html.match(/<dialog class="sheet"/g) || []).length, 7, "every sheet is a <dialog>");
   assert.doesNotMatch(html, /<section class="sheet/, "no sheet left as a hidden section");
   assert.match(html, /\.showModal\(\)/);
   for (const id of (html.match(/aria-labelledby="(sheet\w+Title)"/g) || []).map((m) => m.slice(17, -1))) {
     assert.match(html, new RegExp('id="' + id + '"'), id + " labels its sheet");
   }
-  assert.match(html, /id="fab"[^>]*aria-label="Capture a principle"/);
   assert.match(html, /id="toastHost"[^>]*aria-live="polite"/);
   assert.match(html, /prefs\.coach_seen/);
   assert.doesNotMatch(html, /stripHtml|id="addChip"/, "the Pushing back strip is gone from the deck");
@@ -564,75 +563,128 @@ test("swipeIntent keeps the commit rules and reads the direction for the glow", 
   assert.equal(C.swipeIntent(-40, 0).tilt, -2);
 });
 
-test("the page wires the tab bar, chips, glow and motion guards (1.27.0)", () => {
+// ---------- 1.29.0: the Edition system ----------
+const css = () => { const html = read("index.html"), i = html.indexOf("<style>\n/* Layout"); return html.slice(i, html.indexOf("</style>", i)); };
+const rule = (c, sel) => { const i = c.indexOf("\n" + sel + " {"); assert.ok(i >= 0, sel + " rule"); return c.slice(i, c.indexOf("}", i)); };
+
+test("no tab bar and no button row: one corner button opens the ring (1.29.0)", () => {
   const html = read("index.html");
-  const nav = html.slice(html.indexOf('<nav class="tabbar'), html.indexOf("</nav>"));
-  assert.ok(nav.length > 0, "tab bar exists");
-  for (const id of ["toDeck", "fab", "toLedger"]) assert.match(nav, new RegExp('id="' + id + '"'), id + " is in the tab bar");
-  assert.match(nav, /<span>Deck<\/span>[\s\S]*<span>Ledger<\/span>/, "tabs keep text labels");
-  assert.equal((html.match(/id="fab"/g) || []).length, 1, "the standalone add button is gone; + lives in the tab bar");
-  assert.match(html, /\.tab \{[^}]*height:52px/, "tab targets are taller than 44px");
-  assert.match(html, /env\(safe-area-inset-bottom/, "tab bar clears the home indicator");
+  assert.doesNotMatch(html, /class="tabbar|id="toDeck"|id="toLedger"|id="bSkip"|id="bKeep"|id="bShed"|id="openSettings"/, "the tab bar, the action row and the top Settings button are gone");
+  assert.doesNotMatch(html, /class="mark"|favicon-64\.png" alt/, "no app mark in the top line");
+  assert.equal((html.match(/<button[^>]*id="fab"/g) || []).length, 1);
+  assert.match(html, /id="fab"[^>]*aria-label="Menu"[^>]*aria-haspopup="dialog"[^>]*aria-expanded="false"[^>]*aria-controls="ring"/);
+  assert.match(html, /id="ring" role="dialog" aria-modal="true" aria-label="Menu" hidden/);
+  // Every move and every place is in the ring.
+  const items = html.slice(html.indexOf("function ringItems()"), html.indexOf("function openRing("));
+  for (const id of ["skip", "shed", "keep", "settings", "ledger", "deck", "edit", "capture"]) assert.match(items, new RegExp('id: "' + id + '"'), id + " is in the ring");
+  for (const run of ['act("skip")', 'act("shed")', 'act("keep")', "openCapture", "openSettings", 'go("ledger")', 'go("deck")', "openEdit(t)"]) assert.ok(items.includes(run), run + " is reachable from the ring");
+  // The ring is modal and keyboard friendly.
+  assert.match(html, /function openRing\(live\) \{[\s\S]{0,1800}appEl\.inert = true;[\s\S]{0,400}f\.focus\(/, "the app goes inert and focus moves into the ring");
+  assert.match(html, /function closeRing\(now\) \{[\s\S]{0,600}appEl\.inert = false;/);
+  assert.match(html, /if \(ringOpen\) \{\s*if \(e\.key === "Escape"\)[\s\S]{0,200}if \(e\.key === "Tab"\)/, "Escape closes the ring and Tab stays inside it");
+  // Hold and slide.
+  assert.match(html, /RING_HOLD_MS = 400/);
+  assert.match(html, /hold\.timer = setTimeout\(function \(\) \{ hold\.timer = 0; hold\.opened = true; openRing\(true\); \}, RING_HOLD_MS\)/);
+  assert.match(html, /function pickRing\(x, y\)/);
+  // Targets: + is 56px, ring controls 50px, and the corner never dims below 0.88 scale (49px).
+  assert.match(rule(css(), ".fab"), /width:56px; height:56px;/);
+  assert.match(rule(css(), ".ri"), /width:50px; height:50px;/);
+  assert.match(rule(css(), ".corner.asleep"), /opacity:\.6; transform:scale\(\.88\)/);
+});
+
+test("the three moves have keyboard and screen reader paths (1.29.0)", () => {
+  const html = read("index.html");
+  const keys = html.slice(html.indexOf('document.addEventListener("keydown", function (e) {\n    wakeCorner();'));
+  assert.match(keys, /k === "ArrowLeft"\) act\("skip"\)/);
+  assert.match(keys, /k === "ArrowUp"\) act\("keep"\)/);
+  assert.match(keys, /k === "ArrowRight"\) act\("shed"\)/);
+  assert.match(keys, /if \(openSheet \|\| isTyping\(document\.activeElement\)/, "shortcuts never fire while typing or in a sheet");
+  assert.match(html, /aria-describedby="cardHow"/);
+  assert.match(html, /id="cardHow">Swipe left for Not today, up for Still working on it, right for Living it\. The menu button in the corner has the same three moves\./);
+  // The coach names the corner instead of the old buttons.
+  assert.match(html, /The \+ in the corner does the same, and holds Capture, Edit, the Ledger and Settings\./);
+  assert.doesNotMatch(html, /The buttons below do the same/);
+});
+
+test("the principle sits on the page, not on a card (1.29.0)", () => {
+  const c = css();
+  const card = rule(c, ".card");
+  assert.doesNotMatch(card, /background|box-shadow|border-radius|border:/, "no card chrome");
+  assert.match(card, /justify-content:flex-end/, "the words sit low, where the thumb is");
+  assert.match(rule(c, ".thought"), /font-family:var\(--f-display\); font-weight:400; font-size:var\(--d-xl\)/);
+  assert.match(read("index.html"), /rotate\(" \+ \(w\.tilt \* 0\.4\)\.toFixed\(2\) \+ "deg\)/, "the tilt is toned down");
+  assert.match(rule(c, ".wash"), /opacity:var\(--ga\)/, "the swipe wash follows the drag");
+  assert.match(read("index.html"), /wash\.style\.setProperty\("--ga", w\.strength\)/);
+  // Glass only on the corner and the ring.
+  const html = read("index.html");
+  const glassy = [...html.matchAll(/class="([^"]*\bglass\b[^"]*)"/g)].map((m) => m[1]);
+  assert.ok(glassy.length >= 2, "the corner and the ring are glass");
+  assert.ok(glassy.every((g) => /^(fab glass|ring-bg glass)/.test(g)), "glass is used only by the corner and the ring: " + glassy);
+});
+
+test("the page wires chips, the swipe wash, outcome colors and motion guards", () => {
+  const html = read("index.html");
   assert.match(html, /@supports not \(\(-webkit-backdrop-filter:blur\(1px\)\) or \(backdrop-filter:blur\(1px\)\)\)/, "glass has a fallback");
   assert.match(html, /startViewTransition/);
   assert.match(html, /document\.startViewTransition && !REDUCED\.matches/, "no view transition with reduced motion");
   assert.match(html, /function burst\(\) \{[^}]*REDUCED\.matches\) return;/, "no burst with reduced motion");
-  assert.match(html, /@media \(prefers-reduced-motion: no-preference\) \{ \.glow \{ animation:drift/, "background drifts only when motion is allowed");
-  assert.doesNotMatch(html.slice(html.indexOf(".glow {"), html.indexOf("@keyframes drift")), /filter:blur/, "no blur filter on the animated background");
+  assert.match(html, /@media \(prefers-reduced-motion: reduce\) \{ \.corner, \.ringx, \.ring-bg, \.ri, \.fab svg \{ transition:none; \} \}/, "the ring does not animate with reduced motion");
+  assert.match(html, /@media \(prefers-reduced-motion: no-preference\) \{ \.card\.enter/, "the next principle rises only when motion is allowed");
   assert.match(html, /C\.swipeIntent\(dx, dy\)/);
   assert.match(html, /C\.deckFilter\(all\(\), prefs\.deck_coll\)/);
   assert.match(html, /C\.outcomeMix\(items\)/);
   assert.match(html, /id="mix" role="img"/);
+  assert.match(html, /id="chips"/);
   for (const v of ["--c-live", "--c-work", "--c-skip"]) assert.match(html, new RegExp(v + ":color-mix\\(in oklab, var\\(--\\w+-base\\) \\d+%, var\\(--accent\\)\\)"), v + " is derived from the theme accent");
 });
 
-test("the type face is self-hosted, preloaded and cached for offline use (1.28.0: Inter)", () => {
+test("the type faces are self-hosted, preloaded and cached for offline use (1.29.0: Instrument Serif, Geist, Geist Mono)", () => {
   const html = read("index.html"), sw = read("sw.js");
-  assert.ok(fs.statSync(path.join(root, "fonts/inter-latin.woff2")).size > 10000);
-  assert.ok(!fs.existsSync(path.join(root, "fonts/fraunces-latin.woff2")), "the old display face is gone");
-  assert.match(read("fonts/OFL.txt"), /Inter Project Authors/, "font license ships with the font");
-  assert.match(html, /font-family:"Inter"; font-style:normal; font-weight:100 900; font-display:swap; src:url\("fonts\/inter-latin\.woff2"\) format\("woff2"\)/);
-  assert.match(html, /<link rel="preload" href="fonts\/inter-latin\.woff2" as="font" type="font\/woff2" crossorigin>/);
-  assert.match(sw, /"fonts\/inter-latin\.woff2"/);
+  const faces = [["Instrument Serif", "instrument-serif-latin", "400"], ["Geist", "geist-latin", "100 900"], ["Geist Mono", "geist-mono-latin", "100 900"]];
+  for (const [fam, file, wt] of faces) {
+    assert.ok(fs.statSync(path.join(root, "fonts/" + file + ".woff2")).size > 10000, file);
+    assert.match(html, new RegExp('font-family:"' + fam + '"; font-style:normal; font-weight:' + wt + '; font-display:swap; src:url\\("fonts/' + file + '\\.woff2"\\) format\\("woff2"\\)'));
+    assert.match(html, new RegExp('<link rel="preload" href="fonts/' + file + '\\.woff2" as="font" type="font/woff2" crossorigin>'));
+    assert.match(sw, new RegExp('"fonts/' + file + '\\.woff2"'));
+  }
+  for (const gone of ["inter-latin", "fraunces-latin"]) assert.ok(!fs.existsSync(path.join(root, "fonts/" + gone + ".woff2")), gone + " is gone");
+  const lic = read("fonts/OFL.txt");
+  assert.match(lic, /Instrument Serif Project Authors/); assert.match(lic, /Geist Project Authors/); assert.match(lic, /SIL Open Font License/);
   assert.doesNotMatch(html, /fonts\.googleapis\.com|fonts\.gstatic\.com/, "no web font is fetched from another site");
-  for (const v of ["--f-display", "--f-body", "--f-num"]) assert.match(html, new RegExp(v + ':"Inter",[^;]*sans-serif;'), v + " falls back to the system sans");
-  assert.doesNotMatch(html, /font-variation-settings/, "no axes left over from the old serif");
-  assert.match(html, /\.thought\.long \{ font-family:var\(--f-body\)/, "long principles keep the body face");
+  assert.match(html, /--f-display:"Instrument Serif",[^;]*serif;/);
+  assert.match(html, /--f-body:"Geist",[^;]*sans-serif;/);
+  assert.match(html, /--f-mono:"Geist Mono",[^;]*monospace;/);
 });
 
-test("corner radii come from one token scale (1.28.0)", () => {
-  const html = read("index.html");
-  const css = html.slice(html.indexOf("<style>\n/* Layout:"), html.indexOf("</style>", html.indexOf("<style>\n/* Layout:")));
-  assert.match(css, /--r-xs:4px; --r-sm:10px; --r-btn:12px; --r-ctl:14px; --r-tile:16px; --r-card:18px; --r-sheet:20px; --r-bar:20px; --r-panel:24px; --r-pill:999px;/);
-  const rule = (sel) => { const i = css.indexOf("\n" + sel + " {"); assert.ok(i >= 0, sel + " rule"); return css.slice(i, css.indexOf("}", i)); };
-  assert.match(rule(".card"), /border-radius:var\(--r-card\)/);
-  assert.match(rule(".sheet"), /border-radius:var\(--r-sheet\) var\(--r-sheet\) 0 0/);
-  assert.match(rule(".btn"), /border-radius:var\(--r-btn\)/);
-  assert.match(rule(".chip"), /border-radius:var\(--r-pill\)/);
-  assert.match(rule(".panel"), /border-radius:var\(--r-panel\) var\(--r-panel\) 0 0/);
-  const raw = [...css.matchAll(/border-radius:(\d+)px/g)].map((m) => +m[1]);
+test("corner radii come from one token scale (1.29.0, after Edition)", () => {
+  const c = css();
+  assert.match(c, /--r-xs:3px; --r-sm:8px; --r-field:12px; --r-tile:14px; --r-panel:20px; --r-sheet:22px; --r-pill:999px;/);
+  assert.match(rule(c, ".sheet"), /border-radius:var\(--r-sheet\) var\(--r-sheet\) 0 0/);
+  assert.match(rule(c, ".btn"), /border-radius:var\(--r-pill\)/);
+  assert.match(rule(c, ".chip"), /border-radius:var\(--r-pill\)/);
+  assert.match(c, /\ntextarea, input\.field \{[^}]*border-radius:var\(--r-field\)/);
+  const raw = [...c.matchAll(/border-radius:(\d+)px/g)].map((m) => +m[1]);
   assert.ok(raw.every((r) => r <= 6), "only hairline radii are written as raw pixels: " + raw);
-  assert.equal((css.match(/999px/g) || []).length, 1, "fully round only through --r-pill");
+  assert.equal((c.match(/999px/g) || []).length, 1, "fully round only through --r-pill");
 });
 
-test("the top and the panel (1.28.0)", () => {
+test("the top line and the Ledger front page (1.29.0)", () => {
   const html = read("index.html");
-  assert.match(html, /<main class="panel pscope">[\s\S]*id="v-deck"[\s\S]*id="v-ledger"[\s\S]*<\/main>/, "both views sit in the dark panel");
-  assert.match(html, /<nav class="tabbar pscope"/, "the tab bar uses the panel palette");
-  assert.match(html, /\.pscope \{ --bg:var\(--p-bg\); --surface:var\(--p-surface\); --fg:var\(--p-fg\);/);
-  for (const sk of ["linen"]) assert.match(html, new RegExp(':root\\[data-skin="' + sk + '"\\] \\{ --top-bg:#'), sk + " has its own top and panel");
-  assert.match(html, /id="todayStat"[^>]*aria-label=/, "today's count has a spoken label");
+  assert.match(html, /<header class="top">[\s\S]*id="todayLbl"[\s\S]*id="backDeck"[^>]*hidden[\s\S]*id="todayStat"[\s\S]*<\/header>/);
   assert.match(html, /function paintStat\(\) \{[\s\S]{0,200}activity\[dayKey\(\)\]/, "the count comes from the activity log");
   assert.match(html, /function logActivity\(kind\) \{[\s\S]{0,400}paintStat\(\);/, "it updates on every move");
   assert.match(html, /function renderDeck\(\) \{[\s\S]{0,120}paintStat\(\);/, "and after an undo redraws the deck");
+  assert.match(html, /<span class="sr">weighed<\/span> today/, "the count reads as a sentence");
   assert.match(html, /<h1 class="ptitle">Ledger<\/h1>/);
-  assert.match(html, /<h1 class="ptitle">Today<\/h1>/);
+  for (const h of ["Where you stand", "Principles", "Last 12 weeks"]) assert.match(html, new RegExp("<h2 id=\"h\\w+\">" + h + "</h2>"));
+  assert.match(html, /\$\("backDeck"\)\.hidden = view !== "ledger";/);
+  for (const sk of ["moss", "linen", "ink", "dusk", "return"]) assert.match(html, new RegExp(':root\\[data-skin="' + sk + '"\\]\\s*\\{ --bg:#'), sk + " keeps its own ground");
 });
 
-test("the type scale has five steps; only text inputs keep 16px", () => {
-  const html = read("index.html");
-  const css = html.slice(html.indexOf("<style>\n/* Layout:"), html.indexOf("</style>", html.indexOf("<style>\n/* Layout:")));
-  const px = [...css.matchAll(/font-size:(\d+(?:\.\d+)?)px/g)].map((m) => m[1]);
-  assert.deepEqual([...new Set(px)].sort(), ["16", "26", "34", "76"].sort(), "small sizes go through --t-xs/sm/md/lg; the rest are display sizes");
-  assert.match(css, /--t-xs:11px; --t-sm:13px; --t-md:15px; --t-lg:22px;/);
+test("the type scale: four text steps, display sizes from tokens; only text inputs keep 16px", () => {
+  const c = css();
+  const px = [...c.matchAll(/font-size:(\d+(?:\.\d+)?)px/g)].map((m) => m[1]);
+  assert.deepEqual([...new Set(px)], ["16"], "every other size goes through a token");
+  assert.match(c, /--t-xs:11px; --t-sm:13px; --t-md:15px; --t-lg:17px;/);
+  assert.match(c, /--d-sm:24px; --d-md:28px; --d-lg:clamp\(28px, 8\.6vw, 34px\); --d-xl:clamp\(36px, 11\.8vw, 46px\); --d-xxl:52px;/);
 });
