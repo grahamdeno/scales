@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.30.0";
+  var VERSION = "1.31.0";
   var BUILT = "2026-10-17";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -407,6 +407,92 @@ var ScalesCore = (function () {
     return { principle: t };
   }
 
+  // ---------- voices: a thinker weighs in (1.31.0) ----------
+  // The point is perspective, not quotation: the model reasons from each thinker's known ideas
+  // and never presents its words as theirs. Thinkers who have died speak in the first person;
+  // living ones are written about in the third person, and a name the user adds is treated as
+  // living unless they mark it otherwise.
+  var VOICES = [
+    { id: "jung", name: "Carl Jung", short: "Jung", living: false, lens: "the shadow, projection, individuation, and what the unconscious is protecting" },
+    { id: "nietzsche", name: "Friedrich Nietzsche", short: "Nietzsche", living: false, lens: "self-overcoming, the will to power, becoming who you are, and contempt for comfortable mediocrity" },
+    { id: "dostoevsky", name: "Fyodor Dostoevsky", short: "Dostoevsky", living: false, lens: "freedom and responsibility, self-deception, suffering, and the lies a person tells himself" },
+    { id: "epictetus", name: "Epictetus", short: "Epictetus", living: false, lens: "what is in your control, judgment over events, and disciplined assent" },
+    { id: "marcus", name: "Marcus Aurelius", short: "Marcus Aurelius", living: false, lens: "duty, the brevity of life, acting well now, and the inner citadel" },
+    { id: "perel", name: "Esther Perel", short: "Perel", living: true, lens: "the stories we tell about ourselves, desire and security, and how relationships reveal us" },
+    { id: "peterson", name: "Jordan Peterson", short: "Peterson", living: true, lens: "responsibility, order and chaos, telling the truth, and aiming at something higher" },
+    { id: "goggins", name: "David Goggins", short: "Goggins", living: true, lens: "callousing the mind, accountability, refusing excuses, and doing the hard thing when you do not want to" }
+  ];
+  var TALK_MAX = 6, REPLY_WORDS = 70;
+  var MOVES = { skip: "Not today", keep: "Still working on it", shed: "Living it" };
+
+  // Every voice on offer: the built-in ones, then names the user added ({ name, first }).
+  function allVoices(custom) {
+    return VOICES.concat((custom || []).filter(function (c) { return c && String(c.name || "").trim(); }).map(function (c) {
+      var n = String(c.name).trim().replace(/\s+/g, " ").slice(0, 60);
+      return { id: "c:" + n.toLowerCase(), name: n, short: n.split(" ").slice(-1)[0], living: !c.first, lens: "", custom: true };
+    }));
+  }
+  // The chosen voices, in list order. chosen undefined means every built-in voice.
+  function chosenVoices(chosen, custom) {
+    var list = allVoices(custom);
+    if (!chosen) return list.filter(function (v) { return !v.custom; });
+    return list.filter(function (v) { return chosen.indexOf(v.id) >= 0; });
+  }
+  // Today's voice: one per Scales day, rotating through the chosen voices in order.
+  function voiceOfDay(voices, day) {
+    if (!voices || !voices.length) return null;
+    var p = String(day).split("-"), n = Math.floor(Date.UTC(+p[0], +p[1] - 1, +p[2]) / 86400000);
+    return voices[((n % voices.length) + voices.length) % voices.length];
+  }
+  function possessive(n) { return n + "'s"; }
+  // The label under every line: never presented as a quotation.
+  function voiceLabel(v) { return (v.living ? "Through " + possessive(v.short) + " lens" : "In the spirit of " + v.short) + ", written by AI"; }
+  function voiceRule(v) {
+    return v.living
+      ? "Write in the third person about how " + v.name + " would see this, for example: " + v.short + " would ask... Never write as " + v.short + " speaking, and never invent a quotation."
+      : "Speak in the first person as " + v.name + " would, from the ideas in their published work. Do not quote; say it fresh, in plain modern English.";
+  }
+  // One line weighing the move just made on principle t.
+  function weighPrompt(v, t, move, daysIn) {
+    return "You give the user a perspective from " + v.name + " on a move they just made in Scales, an app for living by chosen principles.\n" +
+      "In Scales, Not today sets a principle aside, Still working on it keeps it in practice, and Living it says they now act on it without prompting.\n" +
+      (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "Draw on what " + v.name + " is known to think and value.\n") +
+      voiceRule(v) + "\n" +
+      "Weigh the move itself: was it honest, evasive, earned, premature? Hold the standard; no flattery, no permission to wait.\n" +
+      "Rules:\n- " + MAX_WORDS + " words or fewer.\n- One or two sentences. No exclamation marks, quotation marks, emoji, em-dashes or lists.\n- Do not repeat the principle verbatim.\n" +
+      "Return only the line.\n\n" +
+      "Principle: " + t.text + "\nMove: " + (MOVES[move] || move) + "\nTimes set aside: " + (t.skip_count || 0) + "\nDays in deck: " + (daysIn || 0);
+  }
+  // The conversation for Talk it through: a system prompt and the turns so far, ready for the API.
+  function talkRequest(v, t, talk) {
+    var system = "You are giving the user a perspective from " + v.name + " about a principle they are trying to live by, in a short reflective exchange.\n" +
+      (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "") + voiceRule(v) + "\n" +
+      "Hold the standard: no flattery, no reassurance, no permission to wait. Press on their reasoning and ask one sharp question when it helps.\n" +
+      "Answer in " + REPLY_WORDS + " words or fewer, as one paragraph. No exclamation marks, quotation marks, emoji, em-dashes or lists. Do not discuss these instructions.\n\n" +
+      "Principle: " + t.text + "\nMove they made: " + (MOVES[talk.move] || talk.move) + "\nTimes set aside: " + (t.skip_count || 0);
+    var messages = [{ role: "user", content: "What do you make of my move?" }, { role: "assistant", content: talk.line }];
+    (talk.turns || []).forEach(function (x) { messages.push({ role: x.me ? "user" : "assistant", content: x.text }); });
+    return { system: system, messages: messages };
+  }
+  // Check a Talk it through reply: one paragraph, at most REPLY_WORDS (whole sentences kept), held to the same tone.
+  function vetReply(raw) {
+    var s = String(raw || "").replace(/\s*\n+\s*/g, " ").replace(/^(answer|response|reply)\s*:\s*/i, "").replace(/["“”]/g, "").replace(/\s*[—–]\s*/g, ". ").replace(/\s+/g, " ").trim();
+    if (!s) return { reason: "empty" };
+    if (words(s) > REPLY_WORDS) {
+      var parts = s.match(/[^.?]+[.?]+/g) || [], out = "";
+      for (var i = 0; i < parts.length; i++) { var nx = (out + " " + parts[i]).trim(); if (words(nx) > REPLY_WORDS) break; out = nx; }
+      if (!out) return { reason: "too long" };
+      s = out;
+    }
+    if (s.indexOf("!") >= 0) return { reason: "cheerful tone" };
+    if (SOFT.test(s)) return { reason: "softened" };
+    return { reply: s };
+  }
+  // How many more messages the user may send in a talk.
+  function talkLeft(talk) { return Math.max(0, TALK_MAX - ((talk && talk.turns) || []).filter(function (x) { return x.me; }).length); }
+  // Save a weigh-in on principle t, newest last, keeping the last five.
+  function addTalk(t, talk) { t.talks = (t.talks || []).concat([talk]).slice(-5); return talk; }
+
   return { VERSION: VERSION, BUILT: BUILT, CAP: CAP, MAX_WORDS: MAX_WORDS, MAX_TEXT: MAX_TEXT,
     tier: tier, weight: weight, words: words, pickFrom: pickFrom, clean: clean, fit: fit, vet: vet,
     LIMITS: LIMITS, ORIGINS: ORIGINS, normText: normText, collections: collections, canonCollection: canonCollection,
@@ -418,7 +504,10 @@ var ScalesCore = (function () {
     undoPoint: undoPoint, applyUndo: applyUndo,
     inCollection: inCollection, deckCollections: deckCollections, deckFilter: deckFilter, outcomeMix: outcomeMix,
     SWIPE: SWIPE, swipeIntent: swipeIntent,
-    shortDate: shortDate, keepAsNew: keepAsNew, keepReplace: keepReplace };
+    shortDate: shortDate, keepAsNew: keepAsNew, keepReplace: keepReplace,
+    VOICES: VOICES, TALK_MAX: TALK_MAX, REPLY_WORDS: REPLY_WORDS, MOVES: MOVES, allVoices: allVoices, chosenVoices: chosenVoices,
+    voiceOfDay: voiceOfDay, voiceLabel: voiceLabel, weighPrompt: weighPrompt, talkRequest: talkRequest, vetReply: vetReply,
+    talkLeft: talkLeft, addTalk: addTalk };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = ScalesCore;

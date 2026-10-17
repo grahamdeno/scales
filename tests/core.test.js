@@ -481,7 +481,7 @@ test("an undo point is a copy: later changes do not leak in, and applying it twi
 
 test("the page wires sheets as modal dialogs, Undo and the coach (1.26.0)", () => {
   const html = read("index.html");
-  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 8, "every sheet is a <dialog>");
+  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 9, "every sheet is a <dialog>");
   assert.doesNotMatch(html, /<section class="sheet/, "no sheet left as a hidden section");
   assert.match(html, /\.showModal\(\)/);
   for (const id of (html.match(/aria-labelledby="(sheet\w+Title)"/g) || []).map((m) => m.slice(17, -1))) {
@@ -731,4 +731,83 @@ test("touch targets: keys, chips and row actions are at least 36px with 44px hit
   assert.match(c, /\.chip::after \{ content:""; position:absolute; inset:-4px 0; \}/);
   assert.match(rule(c, ".acts-row button"), /min-height:44px; min-width:44px;/);
   assert.match(rule(c, ".menu button"), /min-height:48px;/);
+});
+
+// ---------- 1.31.0: a thinker weighs in, and Talk it through ----------
+test("the voices: eight built in, living ones in the third person, added names living by default (Story 12)", () => {
+  assert.deepEqual(C.VOICES.map((v) => v.id), ["jung", "nietzsche", "dostoevsky", "epictetus", "marcus", "perel", "peterson", "goggins"]);
+  assert.deepEqual(C.VOICES.filter((v) => v.living).map((v) => v.id), ["perel", "peterson", "goggins"]);
+  const all = C.allVoices([{ name: "  Viktor   Frankl " }, { name: "Seneca", first: true }, { name: " " }]);
+  assert.equal(all.length, 10);
+  assert.deepEqual(all.slice(8).map((v) => [v.id, v.name, v.living]), [["c:viktor frankl", "Viktor Frankl", true], ["c:seneca", "Seneca", false]]);
+  assert.equal(C.chosenVoices(undefined, [{ name: "Seneca" }]).length, 8, "by default every built-in voice, none added");
+  assert.deepEqual(C.chosenVoices(["goggins", "c:seneca", "jung"], [{ name: "Seneca" }]).map((v) => v.id), ["jung", "goggins", "c:seneca"]);
+  assert.equal(C.chosenVoices([], []).length, 0);
+});
+
+test("one voice a day, rotating in order, changing with the Scales day (Story 12)", () => {
+  const vs = C.chosenVoices(["jung", "nietzsche", "goggins"]);
+  const seq = ["2026-10-17", "2026-10-18", "2026-10-19", "2026-10-20"].map((d) => C.voiceOfDay(vs, d).id);
+  assert.equal(new Set(seq.slice(0, 3)).size, 3, "three days, three voices");
+  assert.equal(seq[3], seq[0], "then it comes round again");
+  assert.equal(C.voiceOfDay(vs, "2026-10-17").id, C.voiceOfDay(vs, "2026-10-17").id, "stable within a day");
+  assert.equal(C.voiceOfDay([], "2026-10-17"), null);
+  assert.equal(C.voiceOfDay(vs, C.dayOf(new Date(2026, 9, 18, 3, 30))).id, C.voiceOfDay(vs, "2026-10-17").id, "3:30 AM still belongs to the day before");
+});
+
+test("first person for thinkers who have died, third person for the living, never a quotation (Story 12)", () => {
+  const t = { text: "Discipline is choosing what my future self needs.", skip_count: 2 };
+  const n = C.VOICES.find((v) => v.id === "nietzsche"), g = C.VOICES.find((v) => v.id === "goggins");
+  assert.equal(C.voiceLabel(n), "In the spirit of Nietzsche, written by AI");
+  assert.equal(C.voiceLabel(g), "Through Goggins's lens, written by AI");
+  const pn = C.weighPrompt(n, t, "skip", 27), pg = C.weighPrompt(g, t, "skip", 27);
+  assert.match(pn, /Speak in the first person as Friedrich Nietzsche/);
+  assert.match(pg, /Write in the third person about how David Goggins would see this/);
+  assert.match(pg, /Never write as Goggins speaking, and never invent a quotation/);
+  for (const p of [pn, pg]) {
+    assert.match(p, /Move: Not today/);
+    assert.match(p, new RegExp(C.MAX_WORDS + " words or fewer"));
+    assert.match(p, /no permission to wait/);
+    assert.doesNotMatch(p, /—/);
+  }
+});
+
+test("Talk it through: the request carries the line and turns, replies are checked, six replies at most (Story 13)", () => {
+  const g = C.VOICES.find((v) => v.id === "goggins"), t = { text: "P", skip_count: 1 };
+  const talk = { move: "keep", line: "The line.", turns: [{ me: true, text: "Why?" }, { me: false, text: "Because." }, { me: true, text: "And?" }] };
+  const r = C.talkRequest(g, t, talk);
+  assert.match(r.system, /third person/);
+  assert.deepEqual(r.messages.map((m) => m.role), ["user", "assistant", "user", "assistant", "user"]);
+  assert.equal(r.messages[1].content, "The line.");
+  assert.equal(C.talkLeft(talk), C.TALK_MAX - 2);
+  assert.equal(C.talkLeft({ turns: Array.from({ length: 6 }, () => ({ me: true, text: "x" })) }), 0);
+  assert.equal(C.TALK_MAX, 6);
+  assert.equal(C.vetReply("").reason, "empty");
+  assert.equal(C.vetReply("Go on!").reason, "cheerful tone");
+  assert.equal(C.vetReply("Be gentle with yourself today.").reason, "softened");
+  const long = Array.from({ length: 30 }, (_, i) => "Sentence number " + i + ".").join(" ");
+  const v = C.vetReply(long);
+  assert.ok(v.reply && v.reply.split(/\s+/).length <= C.REPLY_WORDS && /\.$/.test(v.reply), "cut to whole sentences");
+  assert.equal(C.vetReply("One\n\nparagraph.").reply, "One paragraph.");
+});
+
+test("talks are saved on the principle, newest last, five kept (Story 13)", () => {
+  const t = {};
+  for (let i = 0; i < 7; i++) C.addTalk(t, { at: "t" + i, line: "l", turns: [] });
+  assert.deepEqual(t.talks.map((x) => x.at), ["t2", "t3", "t4", "t5", "t6"]);
+});
+
+test("the page offers Weigh in only after a move, with a key, and keeps talks in the Ledger", () => {
+  const html = read("index.html");
+  assert.match(html, /<dialog class="sheet tall" id="sheetWeigh"/);
+  assert.match(html, /function canWeigh\(\) \{ return !!\(sample && lastMove && lastMove\.day === today\(\)/);
+  for (const m of ['noteMove(t, "skip")', 'noteMove(t, "keep")', 'noteMove(t, "shed")']) assert.ok(html.includes(m), m);
+  assert.match(html, /lastMove = null; \/\/ the move is undone/);
+  assert.match(html, /if \(!wTalk\(\)\.line\) askLine\(\);/, "the line is asked for only when Weigh in is tapped");
+  assert.match(html, /C\.voiceLabel\(v\)/, "every line carries its label");
+  assert.match(html, /openKeep\(t, k\.line\)/, "Keep works on these lines");
+  assert.match(html, /data-talk="/);
+  assert.match(html, /undoable\("Talk deleted\.", u\)/);
+  assert.match(html, /id="voiceList"/);
+  assert.match(html, /JSON\.stringify\(Object\.assign\(\{ model: MODEL, max_tokens: 1024 \}, req\)\)/, "one request path for lines and talks");
 });

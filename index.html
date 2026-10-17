@@ -326,6 +326,19 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
 .opt small { display:block; margin-top:3px; font-size:13px; line-height:1.35; color:var(--muted); }
 .radio { width:22px; height:22px; border-radius:50%; margin-top:1px; background:var(--deep); box-shadow:inset 2px 3px 6px var(--lo), inset -2px -2px 5px var(--hi); }
 .opt[aria-pressed="true"] .radio { background:var(--brass); box-shadow:inset 0 0 0 6px var(--deep), 0 0 0 1px color-mix(in srgb, var(--brass) 60%, transparent); }
+/* A thinker weighs in (1.31.0): the line in glass, then a short exchange. */
+.weighbtn { display:inline-flex; align-items:center; gap:8px; min-height:40px; margin-block:-8px; padding:0 12px; border-radius:var(--r-s); font-size:var(--t-sm); font-weight:560; color:var(--ink); white-space:nowrap; max-width:100%; overflow:hidden; }
+.weighbtn span { color:var(--muted); font-weight:400; overflow:hidden; text-overflow:ellipsis; }
+.weighbtn svg.i, .talk svg.i { width:16px; height:16px; stroke:var(--brass); }
+.talk { display:grid; gap:12px; }
+.bub { max-width:90%; padding:12px 14px; border-radius:var(--r-m); font-size:15px; line-height:1.42; overflow-wrap:anywhere; }
+.bub.me { justify-self:end; }
+.bub.them { justify-self:start; }
+.bub.pending { opacity:.55; }
+.vlabel { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; font-size:var(--t-xs); color:var(--muted); }
+.talkbar { display:flex; gap:10px; align-items:flex-end; }
+.talkbar textarea { min-height:52px; max-height:30vh; }
+.talkbar .primary { width:auto; flex:none; padding:0 18px; }
 /* Collections. */
 .coll-list { display:grid; gap:12px; }
 .crow { display:flex; justify-content:space-between; align-items:center; gap:10px; min-height:52px; padding:0 16px; border-radius:var(--r-m); font-size:var(--t-md); font-weight:500; text-align:left; color:var(--ink); }
@@ -526,6 +539,21 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   <button class="primary" type="button" id="keepSave">Keep</button>
 </dialog>
 
+<!-- Weigh in (Stories 12 and 13): today's voice on the move just made, then Talk it through. -->
+<dialog class="sheet tall" id="sheetWeigh" aria-modal="true" aria-labelledby="sheetWeighTitle">
+  <div class="grabber" aria-hidden="true"></div>
+  <h2><span id="sheetWeighTitle">Weigh in</span> <button type="button" data-close>Done</button></h2>
+  <p class="note" id="weighAbout"></p>
+  <div class="talk" id="talkLog" aria-live="polite"></div>
+  <button type="button" class="btn3d raised" id="talkOpen" hidden>Talk it through</button>
+  <p class="note" id="talkNote" hidden></p>
+  <button type="button" class="link-danger" id="talkDelete" hidden>Delete this talk</button>
+  <form class="sheet-foot talkbar" id="talkForm" autocomplete="off" hidden>
+    <textarea id="talkInput" rows="1" maxlength="600" placeholder="Push back, or ask why" aria-label="Your reply"></textarea>
+    <button class="primary" type="submit" id="talkSend" disabled>Send</button>
+  </form>
+</dialog>
+
 <!-- Collections sheet: every collection with its count. Tap one to rename, merge or remove it. -->
 <dialog class="sheet tall" id="sheetCollections" aria-modal="true" aria-labelledby="sheetCollectionsTitle">
   <div class="grabber" aria-hidden="true"></div>
@@ -609,6 +637,18 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     </div>
   </div>
 
+  <h3 class="sec2">Voices<span id="voiceToday"></span></h3>
+  <div class="panel raised" id="voiceList"></div>
+  <div class="panel raised">
+    <div class="setrow stack">
+      <input class="field" id="voiceName" maxlength="60" autocomplete="off" placeholder="Add someone you admire" aria-label="Name to add">
+      <div class="setrow" style="border:0;padding:0;min-height:0"><span id="voiceFirstLbl">Speaks in the first person<small>Only for someone no longer living</small></span>
+        <button type="button" class="toggle" id="voiceFirst" role="switch" aria-checked="false" aria-labelledby="voiceFirstLbl"><i></i></button></div>
+      <button class="btn3d sm raised" type="button" id="voiceAdd" disabled>Add</button>
+    </div>
+  </div>
+  <p class="note">One voice weighs in each day, in turn, changing at 4:00 AM. After a move, tap Weigh in under the keys. Lines are perspectives written by AI in the spirit of each thinker, never quotations. Living people are written about, not voiced. Needs an API key.</p>
+
   <h3 class="sec2">Your data</h3>
   <div class="panel raised">
     <div class="setrow"><span>Back up<small id="syncText">One file with everything, for iCloud Drive</small></span><button class="btn3d sm raised" type="button" id="exportBtn">Back up</button></div>
@@ -626,7 +666,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   </div>
 
   <h3 class="sec2">How it works</h3>
-  <p class="note">Swipe left for Not today, up for Still working on it, right for Living it, or press the three keys. Press and hold a principle to edit it. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
+  <p class="note">Swipe left for Not today, up for Still working on it, right for Living it, or press the three keys. Press and hold a principle to edit it. After a move, Weigh in under the keys asks today's voice for a perspective on it, and Talk it through lets you answer back. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
   <p class="note" id="howRest"></p>
 
   <h3 class="sec2">About</h3>
@@ -853,11 +893,13 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   // on reasoning and return no text. The prompt keeps the line itself short.
   function makeSampler(key) {
     if (!key) return null;
+    // prompt is one user message, or { system, messages } for Talk it through.
     return function (prompt) {
+      var req = typeof prompt === "string" ? { messages: [{ role: "user", content: prompt }] } : prompt;
       return fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-        body: JSON.stringify({ model: MODEL, max_tokens: 1024, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify(Object.assign({ model: MODEL, max_tokens: 1024 }, req))
       }).then(function (r) {
         if (r.ok) return r.json();
         // Read Anthropic's error body so the real reason can be shown in Settings.
@@ -1049,7 +1091,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     if (kind === "skip") {
       // Not today: counted, rested until the next day, and owed one turn at the front.
       var u = undoPoint();
-      C.applySkip(t, today(), restDays());
+      C.applySkip(t, today(), restDays()); noteMove(t, "skip");
       save(t); logActivity("skip"); flyOut("left");
       undoable("Not today. " + backText(t.rest_until), u); return;
     }
@@ -1057,6 +1099,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
       var k = undoPoint();
       t.reflect_count++; t.consecutive_reflects++;
       if (dwell >= DWELL_SEC && t.skip_count > 0) t.skip_count--;
+      noteMove(t, "keep");
       save(t); logActivity("keep"); flyOut("up");
       undoable("Still working on it.", k); return;
     }
@@ -1073,6 +1116,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   function undoable(msg, point) {
     toast(msg, function () {
       var r = C.applyUndo(point);
+      lastMove = null; // the move is undone, so there is nothing to weigh
       thoughts = r.thoughts; activity = r.activity; history = r.history; queued = null;
       lsSet(LS, thoughts); lsSet(LSA, activity);
       var t = r.current && thoughts[r.current];
@@ -1126,6 +1170,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     var t = shedTarget; if (!t) return;
     var u = undoPoint();
     t.status = "shed"; t.shed_at = new Date().toISOString(); t.evidence = $("evidenceInput").value.trim();
+    noteMove(t, "shed");
     save(t); logActivity("shed"); shedDone = true; hide(); burst(); flyOut("right");
     undoable("Living it. Moved to your record.", u);
   });
@@ -1191,7 +1236,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   }
   function footHtml(left) { return '<div class="foot"><span>' + left + '</span><span id="deckN"></span></div>'; }
   function emptyHtml(title, text, acts, left) {
-    return '<div class="empty"><h1>' + title + "</h1><p>" + text + '</p><div class="acts">' + acts + "</div></div>" + footHtml(left || "");
+    return '<div class="empty"><h1>' + title + "</h1><p>" + text + '</p><div class="acts">' + acts + "</div></div>" + footHtml(footLeft(left || ""));
   }
   function renderDeck() {
     var v = $("v-deck");
@@ -1250,7 +1295,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
       '<div class="swipetag raised keep" id="tagKeep" aria-hidden="true">' + ICON_UP + "Working on it</div>" +
       '<div class="swipetag raised shed" id="tagShed" aria-hidden="true">' + ICON_SHED + "Living it</div>" +
       (nudge ? '<div class="banner raised"><span class="t">Have you lived this yet?</span><button type="button" id="nudgeNo">Not yet</button><button type="button" class="yes" id="nudgeYes">Living it</button></div>' : "") +
-      keysHtml() + footHtml(left) +
+      keysHtml() + footHtml(footLeft(left)) +
       (coachOn ? coachHtml() : "");
     if (nudge) {
       $("nudgeYes").onclick = function () { act("shed"); };
@@ -1390,6 +1435,175 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     keepT = null;
     if (!$("v-ledger").hidden) renderLedger();
   };
+
+  // ---------- a thinker weighs in (Stories 12 and 13) ----------
+  // After a move, Weigh in under the keys asks today's voice (core.js voiceOfDay) for one line on that
+  // move. The line, and any Talk it through exchange that follows, is saved on the principle (t.talks)
+  // and shown in the Ledger. Nothing is asked for until Weigh in is tapped. Needs a key.
+  var ICON_VOICE = icon("M5 10v4M9 7v10M13 4v16M17 8v8M21 11v2");
+  var lastMove = null; // { id, move, day, at }: the move Weigh in is about, until the next move
+  function noteMove(t, move) { lastMove = { id: t.id, move: move, day: today(), at: null }; }
+  function voices() { return C.chosenVoices(prefs.voices, prefs.custom_voices); }
+  function todayVoice() { return C.voiceOfDay(voices(), today()); }
+  function voiceById(id, talk) {
+    var v = C.allVoices(prefs.custom_voices).filter(function (x) { return x.id === id; })[0];
+    if (v) return v;
+    var n = (talk && talk.voice_name) || "A thinker";
+    return { id: id, name: n, short: n.split(" ").slice(-1)[0], living: !!(talk && talk.living), lens: "" };
+  }
+  function canWeigh() { return !!(sample && lastMove && lastMove.day === today() && thoughts[lastMove.id] && todayVoice()); }
+  // The footer's left side: Weigh in when a move can be weighed, otherwise the given text.
+  function footLeft(text) {
+    if (!canWeigh()) return text;
+    var v = todayVoice();
+    return '<button type="button" class="weighbtn raised" id="weighBtn">' + ICON_VOICE + "Weigh in<span>" + esc(v.short) + " on " + esc(C.MOVES[lastMove.move]) + "</span></button>";
+  }
+  $("v-deck").addEventListener("click", function (e) { if (e.target.closest("#weighBtn")) openWeigh(); });
+
+  var wT = null, wAt = null, wBusy = false, wFromLedger = false;
+  function wTalk() { var t = thoughts[wT]; return t && (t.talks || []).filter(function (x) { return x.at === wAt; })[0]; }
+  // Open from the deck: reuse the talk already started for this move, or start one.
+  function openWeigh() {
+    if (!canWeigh()) return;
+    var t = thoughts[lastMove.id];
+    wT = t.id; wFromLedger = false; wAt = lastMove.at;
+    if (!wAt || !wTalk()) {
+      var v = todayVoice();
+      wAt = lastMove.at = new Date().toISOString();
+      C.addTalk(t, { at: wAt, day: today(), move: lastMove.move, voice: v.id, voice_name: v.name, living: v.living, line: "", turns: [] });
+      save(t);
+    }
+    paintWeigh(); show("sheetWeigh");
+    if (!wTalk().line) askLine();
+  }
+  // Open a saved talk from the Ledger: the newest one on that principle.
+  function openTalks(t) {
+    var list = t.talks || []; if (!list.length) return;
+    wT = t.id; wAt = list[list.length - 1].at; wFromLedger = true;
+    paintWeigh(); show("sheetWeigh");
+  }
+  function paintWeigh() {
+    var t = thoughts[wT], k = wTalk(); if (!t || !k) return;
+    var v = voiceById(k.voice, k);
+    $("sheetWeighTitle").textContent = v.short;
+    $("weighAbout").textContent = "On " + C.MOVES[k.move] + ", " + fmtDate(k.at) + ": " + clip(t.text, 110);
+    var h = "";
+    if (k.line) {
+      h += '<div class="bub them glass"><div>' + esc(k.line) + '</div><div class="vlabel"><span>' + esc(C.voiceLabel(v)) + "</span>" +
+        '<button type="button" class="keep raised" id="weighKeep">' + ICON_KEEP + "Keep</button></div></div>";
+    } else if (k.failed) {
+      h += '<div class="bub them glass"><div>No usable answer came back. ' + esc(k.failed) + '</div><div class="vlabel"><span></span><button type="button" class="keep raised" id="weighRetry">Try again</button></div></div>';
+    } else h += '<div class="bub them glass pending">Considering…</div>';
+    (k.turns || []).forEach(function (x) { h += '<div class="bub ' + (x.me ? "me pressed" : "them glass") + '">' + esc(x.text) + "</div>"; });
+    if (wBusy && k.line) h += '<div class="bub them glass pending">Considering…</div>';
+    $("talkLog").innerHTML = h;
+    var left = C.talkLeft(k), talking = (k.turns || []).length > 0;
+    var formOpen = !!(k.line && sample && left && (talking || $("talkForm").dataset.open === "1"));
+    $("talkForm").hidden = !formOpen;
+    $("talkOpen").hidden = !(k.line && sample && left && !formOpen);
+    $("talkNote").hidden = !(k.line && (talking || !sample));
+    $("talkNote").textContent = !sample ? "Add an API key in Settings to talk it through." : left ? left + (left === 1 ? " reply left in this talk." : " replies left in this talk.") : "That is the end of this talk. Take it into the day.";
+    $("talkDelete").hidden = !wFromLedger;
+    $("talkSend").disabled = wBusy || !$("talkInput").value.trim();
+    var wk = $("weighKeep"); if (wk) wk.onclick = function () { openKeep(t, k.line); };
+    var wr = $("weighRetry"); if (wr) wr.onclick = function () { delete k.failed; save(t); paintWeigh(); askLine(); };
+  }
+  // Ask for the line: the same checks as the AI line (core.js vet), up to three tries.
+  function askLine() {
+    var t = thoughts[wT], k = wTalk(); if (!t || !k || !sample) return;
+    var v = voiceById(k.voice, k), at = k.at, tries = 0, why = "";
+    function attempt() {
+      return sample(C.weighPrompt(v, t, k.move, days(t.created_at))).then(function (res) {
+        var r = vet(res && res.text, t);
+        if (r.line) return r.line;
+        why = r.reason; return ++tries < 3 ? attempt() : null;
+      });
+    }
+    attempt().then(function (line) {
+      var live = thoughts[t.id], kk = live && (live.talks || []).filter(function (x) { return x.at === at; })[0]; if (!kk) return;
+      if (line) kk.line = line; else kk.failed = "The answers did not pass the checks (" + why + ").";
+      save(live); if (wT === live.id && wAt === at) paintWeigh();
+    }, function (e) {
+      var live = thoughts[t.id], kk = live && (live.talks || []).filter(function (x) { return x.at === at; })[0]; if (!kk) return;
+      kk.failed = (e && e.message) || "No connection."; save(live); if (wT === live.id && wAt === at) paintWeigh();
+    });
+  }
+  $("talkOpen").onclick = function () { $("talkForm").dataset.open = "1"; paintWeigh(); setTimeout(function () { $("talkInput").focus(); }, 60); };
+  $("talkInput").addEventListener("input", function () { $("talkSend").disabled = wBusy || !$("talkInput").value.trim(); });
+  $("talkForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var t = thoughts[wT], k = wTalk(), text = $("talkInput").value.trim();
+    if (!t || !k || !text || wBusy || !sample || !C.talkLeft(k)) return;
+    k.turns.push({ me: true, text: text }); save(t);
+    $("talkInput").value = ""; wBusy = true; paintWeigh();
+    var v = voiceById(k.voice, k), at = k.at, tries = 0;
+    function attempt() {
+      return sample(C.talkRequest(v, t, k)).then(function (res) {
+        var r = C.vetReply(res && res.text);
+        if (r.reply) return r.reply;
+        return ++tries < 3 ? attempt() : null;
+      });
+    }
+    function done(reply) {
+      wBusy = false;
+      var live = thoughts[t.id], kk = live && (live.talks || []).filter(function (x) { return x.at === at; })[0];
+      if (kk) { if (reply) kk.turns.push({ me: false, text: reply }); save(live); }
+      if (!reply) toast("No usable reply came back. Send again.");
+      paintWeigh();
+    }
+    attempt().then(done, function () { done(null); });
+  });
+  // Delete a saved talk, from the Ledger. Undo from the toast.
+  $("talkDelete").onclick = function () {
+    var t = thoughts[wT]; if (!t) return;
+    var u = undoPoint();
+    t.talks = (t.talks || []).filter(function (x) { return x.at !== wAt; });
+    if (!t.talks.length) delete t.talks;
+    save(t); hide(); renderLedger(); undoable("Talk deleted.", u);
+  };
+  $("sheetWeigh").addEventListener("close", function () { $("talkForm").dataset.open = ""; });
+
+  // Settings: the voices, each with a switch; names you add can be removed.
+  function paintVoices() {
+    var chosen = voices().map(function (v) { return v.id; }), tv = todayVoice();
+    $("voiceToday").textContent = tv ? "Today: " + tv.short : "None chosen";
+    $("voiceList").innerHTML = C.allVoices(prefs.custom_voices).map(function (v) {
+      var on = chosen.indexOf(v.id) >= 0, lid = "vl-" + v.id.replace(/[^a-z0-9]/g, "-");
+      return '<div class="setrow"><span id="' + lid + '">' + esc(v.name) + "<small>" + (v.living ? "Written about, in the third person" : "In the first person") +
+        (v.custom ? '  <button type="button" class="hint" style="min-height:32px;color:var(--danger)" data-vrm="' + esc(v.name) + '">Remove</button>' : "") + "</small></span>" +
+        '<button type="button" class="toggle" role="switch" aria-checked="' + on + '" aria-labelledby="' + lid + '" data-voice="' + esc(v.id) + '"><i></i></button></div>';
+    }).join("");
+  }
+  $("voiceList").addEventListener("click", function (e) {
+    var rm = e.target.closest("[data-vrm]");
+    if (rm) {
+      var name = rm.getAttribute("data-vrm"), id = "c:" + name.toLowerCase();
+      prefs.custom_voices = (prefs.custom_voices || []).filter(function (c) { return String(c.name).trim().replace(/\s+/g, " ") !== name; });
+      if (prefs.voices) prefs.voices = prefs.voices.filter(function (x) { return x !== id; });
+      savePrefs(); paintVoices(); renderDeckFoot(); return;
+    }
+    var b = e.target.closest("[data-voice]"); if (!b) return;
+    var vid = b.getAttribute("data-voice"), list = voices().map(function (v) { return v.id; });
+    prefs.voices = list.indexOf(vid) >= 0 ? list.filter(function (x) { return x !== vid; }) : list.concat([vid]);
+    // Keep list order: built-in voices first, then added names, as listed.
+    var order = C.allVoices(prefs.custom_voices).map(function (v) { return v.id; });
+    prefs.voices.sort(function (a, c) { return order.indexOf(a) - order.indexOf(c); });
+    savePrefs(); paintVoices(); renderDeckFoot();
+  });
+  $("voiceName").addEventListener("input", function () { $("voiceAdd").disabled = !$("voiceName").value.trim(); });
+  $("voiceFirst").onclick = function () { var b = $("voiceFirst"); b.setAttribute("aria-checked", String(b.getAttribute("aria-checked") !== "true")); };
+  $("voiceAdd").onclick = function () {
+    var name = $("voiceName").value.trim().replace(/\s+/g, " ").slice(0, 60); if (!name) return;
+    var id = "c:" + name.toLowerCase();
+    if (C.allVoices(prefs.custom_voices).some(function (v) { return v.id === id || v.name.toLowerCase() === name.toLowerCase(); })) { toast(name + " is already on the list."); return; }
+    var list = voices().map(function (v) { return v.id; });
+    prefs.custom_voices = (prefs.custom_voices || []).concat([{ name: name, first: $("voiceFirst").getAttribute("aria-checked") === "true" }]);
+    prefs.voices = list.concat([id]);
+    $("voiceName").value = ""; $("voiceAdd").disabled = true; $("voiceFirst").setAttribute("aria-checked", "false");
+    savePrefs(); paintVoices(); renderDeckFoot(); toast("Added " + name + ".");
+  };
+  // Redraw only the deck when voices change while it shows, so Weigh in appears or goes.
+  function renderDeckFoot() { if ($("v-ledger").hidden && !openSheet) renderDeck(); }
 
   // ---------- evidence sheet ----------
   // Add or edit the evidence line on a lived principle. An empty save clears it.
@@ -1581,8 +1795,11 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     if (t.worded_from_ai) h += '<div class="was kfrom">Wording kept from an AI line on ' + esc(fmtDate(t.worded_from_ai)) + "</div>";
     var e = t.earlier && t.earlier.length ? t.earlier[t.earlier.length - 1] : null;
     if (e) h += '<div class="was">Earlier wording: ' + esc(clip(e.text, 160)) + "</div>";
+    var tk = (t.talks || []).filter(function (x) { return x.line; });
+    if (tk.length) { var lt = tk[tk.length - 1]; h += '<div class="was">' + (tk.length === 1 ? "Weighed in by " : tk.length + " weigh-ins, last by ") + esc(voiceById(lt.voice, lt).short) + " on " + esc(fmtDate(lt.at)) + "</div>"; }
     return h;
   }
+  function talksBtn(t) { return (t.talks || []).some(function (x) { return x.line; }) ? '<button type="button" data-talk="' + t.id + '">Talk</button>' : ""; }
   function renderLedger() {
     var items = all(), td = today();
     var act_ = items.filter(function (t) { return t.status === "active"; }).sort(function (a, b) { return weight(b) - weight(a) || b.lifetime_skips - a.lifetime_skips; });
@@ -1623,7 +1840,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
         return '<div class="lrow raised"><div class="lt">' + esc(t.text) + "</div>" + historyHtml(t) +
           '<div class="lm"><span>' + esc(String(t.collection || "").trim() || "No collection") + "</span><span>" + esc(state) + "</span></div>" +
           '<div class="tube h pressed" aria-hidden="true"><i style="--p:' + pct.toFixed(0) + '%"></i></div><span class="sr">Weight ' + weight(t).toFixed(1) + " of 4.</span>" +
-          '<div class="acts-row"><button type="button" data-show="' + t.id + '">Show</button><button type="button" data-edit="' + t.id + '">Edit</button><button type="button" data-del="' + t.id + '">Delete</button></div></div>';
+          '<div class="acts-row">' + talksBtn(t) + '<button type="button" data-show="' + t.id + '">Show</button><button type="button" data-edit="' + t.id + '">Edit</button><button type="button" data-del="' + t.id + '">Delete</button></div></div>';
       }).join("") : '<p class="none">Nothing in the deck.</p>';
     } else {
       // The Living it record: each principle you now live, its last AI line, and where it showed up.
@@ -1635,7 +1852,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
           (l ? '<div class="glass"><p>' + esc(l) + "</p></div>" : "") +
           (t.evidence ? '<div class="ev">' + esc(t.evidence) + "</div>" : "") + historyHtml(t) +
           '<div class="lm"><span>Lived ' + esc(fmtDate(t.shed_at)) + ", after " + span + (span === 1 ? " day" : " days") + "</span><span>" + (t.lifetime_skips ? "set aside " + times(t.lifetime_skips) : "") + "</span></div>" +
-          '<div class="acts-row">' + (l ? '<button type="button" data-keep="' + t.id + '">Keep line</button>' : "") +
+          '<div class="acts-row">' + talksBtn(t) + (l ? '<button type="button" data-keep="' + t.id + '">Keep line</button>' : "") +
           '<button type="button" data-edit="' + t.id + '">Edit</button><button type="button" data-ev="' + t.id + '">' + (t.evidence ? "Evidence" : "Add evidence") + '</button><button type="button" data-del="' + t.id + '">Delete</button></div></div>';
       }).join("") : '<p class="none">Nothing here yet. A principle moves here once you live it without prompting.</p>';
     }
@@ -1652,8 +1869,8 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   }
   // Row and tile actions, bound once on the Ledger.
   $("v-ledger").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-show], [data-edit], [data-ev], [data-del], [data-keep]"); if (!b) return;
-    var id = b.getAttribute("data-show") || b.getAttribute("data-edit") || b.getAttribute("data-ev") || b.getAttribute("data-del") || b.getAttribute("data-keep");
+    var b = e.target.closest("[data-show], [data-edit], [data-ev], [data-del], [data-keep], [data-talk]"); if (!b) return;
+    var id = b.getAttribute("data-show") || b.getAttribute("data-edit") || b.getAttribute("data-ev") || b.getAttribute("data-del") || b.getAttribute("data-keep") || b.getAttribute("data-talk");
     var t = thoughts[id]; if (!t) return;
     if (b.hasAttribute("data-show")) {
       // A principle outside the chosen collection clears the collection key, so the row matches the deck.
@@ -1662,10 +1879,12 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     } else if (b.hasAttribute("data-edit")) openEdit(t);
     else if (b.hasAttribute("data-ev")) openEvidence(t);
     else if (b.hasAttribute("data-keep")) openKeep(t, lastLine(t));
+    else if (b.hasAttribute("data-talk")) openTalks(t);
     else {
       // Delete is one tap; the toast offers Undo for 5 seconds instead of asking first.
       var u = undoPoint();
       if (current === id) current = null;
+      if (lastMove && lastMove.id === id) lastMove = null;
       remove(id); renderLedger(); undoable("Deleted.", u);
     }
   });
@@ -1829,7 +2048,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
       " \u00b7 safe " + r(parseFloat(ps.paddingTop)) + "/" + r(parseFloat(ps.paddingBottom)) +
       " \u00b7 scroll " + r(window.scrollY);
   }
-  function openSettings() { paintSettings(); screenCheck(); show("sheetSettings"); }
+  function openSettings() { paintSettings(); paintVoices(); screenCheck(); show("sheetSettings", function () { if ($("v-ledger").hidden) { renderDeck(); } }); }
   // Settings controls (1.30.0): look, Show where it came from, rest after Not today, AI lines on or off.
   function paintSettings() {
     var n = restDays();

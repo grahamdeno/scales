@@ -129,9 +129,9 @@ sequenceDiagram
 
 | Key | Holds |
 |---|---|
-| `scales.thoughts.v1` | Every principle by id: text, collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai` |
+| `scales.thoughts.v1` | Every principle by id: text, collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai`; `talks` (last five weigh-ins, each with its voice, move, line and replies) |
 | `scales.activity.v1` | Per day counts of inspections and Living it, last 120 days |
-| `scales.prefs.v1` | Look, rest length, Show where it came from, AI lines on or off, the collection key, Show anyway's day, first-swipe tip seen |
+| `scales.prefs.v1` | Look, rest length, Show where it came from, AI lines on or off, chosen voices and names added, the collection key, Show anyway's day, first-swipe tip seen |
 | `scales.apikey.v1` | Anthropic API key, only if saved |
 
 ## Key numbers
@@ -142,6 +142,8 @@ sequenceDiagram
 | Weight cap | 4x | One principle cannot take over the deck |
 | Day boundary | 4:00 AM local | A late-night session counts as the day it started in |
 | Rest after Not today | 4 days (`REST_DAYS`), 1 to 7 in Settings (`restDays`) | Long enough that a reflex skip each morning cannot become a habit; was 1 day in 1.24.0 |
+| Talk it through | 6 replies, 70 words each | A reflection, not a chat |
+| Voices | one per Scales day, in turn | Each voice gets its day; the order is the list order |
 | Press and hold to edit | 550 ms | Longer than a tap, shorter than a deliberate wait |
 | Front of the stack | once per Not today | Most avoided first, then longest waiting since last shown |
 | Cooldown | last 3 shown (last 1 in a deck of 3 or fewer) | No back to back repeats |
