@@ -11,10 +11,7 @@ img { max-width: 100%; }
 [hidden]:not([hidden=until-found i]) { display: none !important; }
 </style>
 <title>Scales</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" href="fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Scales">
 <meta name="mobile-web-app-capable" content="yes">
@@ -32,19 +29,26 @@ img { max-width: 100%; }
    <dialog> elements shown with showModal(), dimmed by ::backdrop.
    All colors are CSS custom properties so a theme is just a different set of values.
    Color roles: accent = shed, mark = skip / resistance, lived = inspected, g1/g2 = background glow.
+   Layout (1.28.0): a light top (date, today's count, Settings) over a dark panel that rises from the bottom
+   with rounded top corners and holds the view. The panel and the tab bar re-map the color tokens to the
+   theme's panel palette (.pscope, below), so every component inside them just uses --bg, --surface, --fg.
    Outcome colors (1.27.0): --c-live / --c-work / --c-skip are the green, amber and rose used for the swipe
    glow, the stamps and the Ledger bars. Each is a fixed hue mixed with the theme's accent so it belongs to the
    theme; light and dark schemes get their own base so the glow reads on either. */
 
 /* Default light theme. */
 :root {
-  --bg:#E9EDEC; --surface:#FFFFFF; --fg:#17201E; --muted:#5F6B67; --rim:rgba(255,255,255,.75); --line:rgba(23,32,30,.10);
+  --bg:#ECEAE6; --surface:#FFFFFF; --fg:#17201E; --muted:#5F6B67; --rim:rgba(255,255,255,.75); --line:rgba(23,32,30,.10);
   --lived:#24302D; --empty:rgba(23,32,30,.12); --accent:#2C78A0; --mark:#C2642A; --g1:#9CD3E6; --g2:#E8C9A6;
   --markText:#9A4B1B; --onAccent:#FFFFFF;
-  /* Display face: Fraunces, self-hosted (fonts/) so the principle keeps its type offline. */
-  --f-display:"Fraunces","Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
-  --f-body:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  /* One face (1.28.0): Inter, a variable font with an optical size axis, self-hosted (fonts/) so every word
+     keeps its type offline. Large sizes pick up Inter's tighter display cut on their own; --f-num is the same
+     face used with tabular figures for counts and dates. */
+  --f-display:"Inter",-apple-system,"Segoe UI",system-ui,sans-serif;
+  --f-body:"Inter",-apple-system,"Segoe UI",system-ui,sans-serif;
+  --f-num:"Inter",-apple-system,"Segoe UI",system-ui,sans-serif;
+  /* Corner radii (1.28.0): one scale, used everywhere. Chips and small tags stay fully round. */
+  --r-xs:4px; --r-sm:10px; --r-btn:12px; --r-ctl:14px; --r-tile:16px; --r-card:18px; --r-sheet:20px; --r-bar:20px; --r-panel:24px; --r-pill:999px;
   /* Type scale: five steps for everything that is not the principle itself. Text inputs stay at 16px,
      the smallest size iOS does not zoom into on focus. */
   --t-xs:11px; --t-sm:13px; --t-md:15px; --t-lg:22px;
@@ -53,18 +57,37 @@ img { max-width: 100%; }
 }
 /* Scheme-level tokens: outcome base hues, shadow depth and the floating tab bar. Light first, then dark for the
    system setting, forced dark and the four dark themes, then Linen back to light. */
-:root { --live-base:#178A4E; --work-base:#B07206; --skip-base:#CC3D5A; --shadow:rgba(24,28,36,.34);
-  --bar-bg:color-mix(in srgb, #15161B 88%, transparent); --bar-fg:#F6F6F8; --bar-muted:rgba(246,246,248,.66); --bar-on:rgba(255,255,255,.14); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --live-base:#4BD98C; --work-base:#F4B740; --skip-base:#FF7A8E; --shadow:rgba(0,0,0,.72);
-  --bar-bg:color-mix(in srgb, var(--surface) 72%, transparent); --bar-fg:var(--fg); --bar-muted:var(--muted); --bar-on:rgba(255,255,255,.10); } }
+:root { --live-base:#178A4E; --work-base:#B07206; --skip-base:#CC3D5A; --shadow:rgba(24,28,36,.34); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --live-base:#4BD98C; --work-base:#F4B740; --skip-base:#FF7A8E; --shadow:rgba(0,0,0,.72); } }
 :root[data-theme="dark"], :root[data-skin="moss"], :root[data-skin="ink"], :root[data-skin="dusk"], :root[data-skin="return"] {
-  --live-base:#4BD98C; --work-base:#F4B740; --skip-base:#FF7A8E; --shadow:rgba(0,0,0,.72);
-  --bar-bg:color-mix(in srgb, var(--surface) 72%, transparent); --bar-fg:var(--fg); --bar-muted:var(--muted); --bar-on:rgba(255,255,255,.10); }
-:root[data-skin="linen"] { --live-base:#178A4E; --work-base:#B07206; --skip-base:#CC3D5A; --shadow:rgba(60,44,28,.30);
-  --bar-bg:color-mix(in srgb, #221D18 88%, transparent); --bar-fg:#FBF7F1; --bar-muted:rgba(251,247,241,.66); --bar-on:rgba(255,255,255,.14); }
+  --live-base:#4BD98C; --work-base:#F4B740; --skip-base:#FF7A8E; --shadow:rgba(0,0,0,.72); }
+:root[data-skin="linen"] { --live-base:#178A4E; --work-base:#B07206; --skip-base:#CC3D5A; --shadow:rgba(60,44,28,.30); }
+/* Top and panel palettes (1.28.0). --top-* paint the light area at the top; --p-* are the panel's colors.
+   Light themes get a warm light top over a deep panel of their own (teal for Auto, espresso for Linen).
+   Dark themes keep their colors in the panel and get a lighter top tinted by their glow color. */
+:root { --top-bg:#E4E1DB; --top-fg:#191E1D; --top-muted:#575D5A; --top-glass:rgba(255,255,255,.46); --top-rim:rgba(255,255,255,.7);
+  --p-bg:#17302E; --p-surface:#21403D; --p-fg:#EEF4F2; --p-muted:#A2B9B5; --p-rim:rgba(255,255,255,.10); --p-line:rgba(255,255,255,.10);
+  --p-lived:#CFE2DE; --p-empty:rgba(255,255,255,.09); --p-accent:#86D1CB; --p-mark:#F2A56B; --p-markText:#F7B686; --p-onAccent:#0E201F; --p-shadow:rgba(0,0,0,.55); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --top-bg:color-mix(in oklab, var(--surface) 64%, var(--g1)); --top-fg:var(--fg); --top-muted:color-mix(in oklab, var(--fg) 40%, var(--muted)); --top-glass:rgba(255,255,255,.07); --top-rim:rgba(255,255,255,.12);
+  --p-bg:var(--bg); --p-surface:var(--surface); --p-fg:var(--fg); --p-muted:var(--muted); --p-rim:var(--rim); --p-line:var(--line); --p-lived:var(--lived); --p-empty:var(--empty);
+  --p-accent:var(--accent); --p-mark:var(--mark); --p-markText:var(--markText); --p-onAccent:var(--onAccent); --p-shadow:rgba(0,0,0,.6); } }
+:root[data-theme="dark"], :root[data-skin="moss"], :root[data-skin="ink"], :root[data-skin="dusk"], :root[data-skin="return"] {
+  --top-bg:color-mix(in oklab, var(--surface) 64%, var(--g1)); --top-fg:var(--fg); --top-muted:color-mix(in oklab, var(--fg) 40%, var(--muted)); --top-glass:rgba(255,255,255,.07); --top-rim:rgba(255,255,255,.12);
+  --p-bg:var(--bg); --p-surface:var(--surface); --p-fg:var(--fg); --p-muted:var(--muted); --p-rim:var(--rim); --p-line:var(--line); --p-lived:var(--lived); --p-empty:var(--empty);
+  --p-accent:var(--accent); --p-mark:var(--mark); --p-markText:var(--markText); --p-onAccent:var(--onAccent); --p-shadow:rgba(0,0,0,.6); }
+:root[data-skin="linen"] { --top-bg:#EDE6DA; --top-fg:#2A251F; --top-muted:#6B6054; --top-glass:rgba(255,255,255,.5); --top-rim:rgba(255,255,255,.75);
+  --p-bg:#2A2420; --p-surface:#3A322C; --p-fg:#F7F0E6; --p-muted:#BEB09F; --p-rim:rgba(255,255,255,.10); --p-line:rgba(255,255,255,.10);
+  --p-lived:#E8DCCB; --p-empty:rgba(255,255,255,.09); --p-accent:#9AD3BB; --p-mark:#F2A27F; --p-markText:#F2A27F; --p-onAccent:#1E1A16; --p-shadow:rgba(0,0,0,.55); }
 /* Resolved on the root, where each theme sets its accent. */
 :root { --c-live:color-mix(in oklab, var(--live-base) 80%, var(--accent)); --c-work:color-mix(in oklab, var(--work-base) 82%, var(--accent)); --c-skip:color-mix(in oklab, var(--skip-base) 82%, var(--accent)); }
-@font-face { font-family:"Fraunces"; font-style:normal; font-weight:300 800; font-display:swap; src:url("fonts/fraunces-latin.woff2") format("woff2");
+/* Panel scope: the panel, the tab bar and the toast take the panel palette. The outcome colors are derived
+   again here from the panel accent, with the bright bases, because the panel is always dark. */
+.pscope { --bg:var(--p-bg); --surface:var(--p-surface); --fg:var(--p-fg); --muted:var(--p-muted); --rim:var(--p-rim); --line:var(--p-line);
+  --lived:var(--p-lived); --empty:var(--p-empty); --accent:var(--p-accent); --mark:var(--p-mark); --markText:var(--p-markText); --onAccent:var(--p-onAccent); --shadow:var(--p-shadow);
+  --live-base:#4BD98C; --work-base:#F4B740; --skip-base:#FF7A8E;
+  --c-live:color-mix(in oklab, var(--live-base) 80%, var(--accent)); --c-work:color-mix(in oklab, var(--work-base) 82%, var(--accent)); --c-skip:color-mix(in oklab, var(--skip-base) 82%, var(--accent));
+  color:var(--fg); color-scheme:dark; }
+@font-face { font-family:"Inter"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/inter-latin.woff2") format("woff2");
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 /* Dark values follow the system setting unless a light theme is forced. The same values are repeated
    under [data-theme="dark"] so dark can also be forced regardless of the system. */
@@ -95,8 +118,8 @@ img { max-width: 100%; }
    bar short of the bottom. body is locked to the dynamic viewport and never scrolls; views and
    sheets scroll inside it. Page offsets left by the keyboard are reset in script (resetScroll). */
 * { box-sizing:border-box; }
-html { height:100%; min-height:100lvh; background:var(--bg); }
-body { height:100%; height:100dvh; overflow:hidden; background:var(--bg); color:var(--fg); font-family:var(--f-body); font-size:var(--t-md); line-height:1.4; -webkit-tap-highlight-color:transparent; overscroll-behavior:none; -webkit-font-smoothing:antialiased; }
+html { height:100%; min-height:100lvh; background:var(--p-bg); }
+body { height:100%; height:100dvh; overflow:hidden; background:var(--top-bg); color:var(--fg); font-family:var(--f-body); font-size:var(--t-md); line-height:1.4; -webkit-tap-highlight-color:transparent; overscroll-behavior:none; -webkit-font-smoothing:antialiased; font-optical-sizing:auto; }
 button, input, textarea { font:inherit; color:inherit; }
 button { cursor:pointer; }
 :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
@@ -108,7 +131,7 @@ button { cursor:pointer; }
     radial-gradient(closest-side at 26% 22%, color-mix(in srgb, var(--g1) 92%, transparent), transparent),
     radial-gradient(closest-side at 78% 76%, color-mix(in srgb, var(--g2) 88%, transparent), transparent),
     radial-gradient(closest-side at 72% 30%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 80%);
-  opacity:.95; transform:translateZ(0); }
+  opacity:.5; transform:translateZ(0); }
 /* No blur filter: the gradients are soft on their own, and only transform animates, so the drift stays on the
    compositor. Very slow, and static with reduced motion. */
 @media (prefers-reduced-motion: no-preference) { .glow { animation:drift 60s ease-in-out infinite alternate; } }
@@ -118,46 +141,61 @@ button { cursor:pointer; }
    color-mix(), backdrop blur, a thin light rim and a soft drop shadow. */
 .glass { position:relative; background:color-mix(in srgb, var(--surface) 58%, transparent);
   -webkit-backdrop-filter:blur(24px) saturate(180%); backdrop-filter:blur(24px) saturate(180%);
-  border:1px solid var(--rim); border-radius:26px; box-shadow:0 1px 0 var(--rim) inset, 0 10px 30px -18px rgba(0,0,0,.35); }
+  border:1px solid var(--rim); border-radius:var(--r-tile); box-shadow:0 1px 0 var(--rim) inset, 0 10px 30px -18px rgba(0,0,0,.35); }
 /* Without backdrop blur, glass becomes a nearly solid surface so text over it stays readable. */
 @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
   .glass { background:color-mix(in srgb, var(--surface) 94%, transparent); }
-  .tabbar { background:color-mix(in srgb, var(--bar-bg) 100%, #000 6%); }
+  .tabbar { background:color-mix(in srgb, var(--surface) 96%, #000); }
 }
 
 /* App shell: centered column capped at 520px, padded by the iOS safe-area insets so content clears
    the notch and home indicator in standalone mode. */
 /* --tab-bottom: the tab bar floats just above the home indicator. --tab-space is what it covers, plus a gap. */
 :root { --tab-h:64px; --tab-bottom:max(12px, calc(env(safe-area-inset-bottom, 0px) - 6px)); --tab-space:calc(var(--tab-bottom) + var(--tab-h) + 12px); }
-.app { position:relative; z-index:1; height:100%; max-width:520px; margin:0 auto; padding-inline:14px; padding-top:calc(8px + env(safe-area-inset-top, 0px)); padding-bottom:var(--tab-space); display:flex; flex-direction:column; gap:10px; overflow-x:clip; }
+.app { position:relative; z-index:1; height:100%; max-width:520px; margin:0 auto; padding-inline:14px; padding-top:calc(8px + env(safe-area-inset-top, 0px)); display:flex; flex-direction:column; overflow-x:clip; }
 /* overflow-x:clip keeps a card dragged or flown off the side from widening the page (which on a phone shifts
    the fixed tab bar); unlike hidden, it leaves vertical overflow and the glow above and below alone. */
-/* Top bar: one frosted pill holding the title, the date and Settings. */
-header.top { display:flex; align-items:center; justify-content:space-between; gap:10px; flex:none; padding:4px 4px 4px 18px; border-radius:999px; view-transition-name:topbar; }
-.brand { font-family:var(--f-display); font-weight:600; font-size:var(--t-lg); letter-spacing:-0.02em; font-variation-settings:"opsz" 72; }
-.brand span { color:var(--muted); font-weight:400; font-family:var(--f-mono); font-size:var(--t-sm); margin-left:8px; letter-spacing:0; }
-.hbtns { display:flex; gap:8px; }
+/* Top (1.28.0): the light area above the panel. The app mark and the date on the left; today's count and
+   Settings, both frosted, on the right. */
+header.top { display:flex; align-items:center; justify-content:space-between; gap:10px; flex:none; padding:8px 2px 20px; color:var(--top-fg); view-transition-name:topbar; }
+.who { display:flex; align-items:center; gap:10px; min-width:0; }
+.mark { width:40px; height:40px; border-radius:50%; flex:none; box-shadow:0 0 0 2px color-mix(in srgb, var(--top-bg) 80%, #fff), 0 6px 14px -6px rgba(0,0,0,.45); }
+.hello { display:flex; flex-direction:column; min-width:0; line-height:1.2; }
+.brand { font-family:var(--f-display); font-weight:650; font-size:var(--t-md); letter-spacing:-0.01em; }
+.hello .date { color:var(--top-muted); font-size:var(--t-sm); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hbtns { display:flex; gap:8px; align-items:center; }
 .iconbtn { width:44px; height:44px; border-radius:50%; display:grid; place-items:center; padding:0; }
-header.top .iconbtn { border:0; background:var(--empty); color:var(--fg); }
+header.top .glass { background:var(--top-glass); border:1px solid var(--top-rim); color:var(--top-fg); box-shadow:0 1px 0 var(--top-rim) inset, 0 6px 16px -10px rgba(0,0,0,.35); }
+.stat-pill { height:36px; display:inline-flex; align-items:center; gap:7px; padding:0 13px 0 11px; border-radius:var(--r-pill); font-size:var(--t-sm); font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.stat-pill i { width:8px; height:8px; border-radius:50%; background:var(--c-live); box-shadow:0 0 8px color-mix(in srgb, var(--c-live) 70%, transparent); }
+.stat-pill span { color:var(--top-muted); font-weight:500; }
+/* The dark panel rising from below. It runs to the bottom edge, under the tab bar. */
+.panel { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; margin-inline:-14px; padding:18px 14px var(--tab-space);
+  border-radius:var(--r-panel) var(--r-panel) 0 0; position:relative;
+  background:radial-gradient(120% 55% at 100% 0%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 62%), var(--bg);
+  box-shadow:0 1px 0 var(--rim) inset, 0 -18px 40px -24px rgba(0,0,0,.45); }
+.phead { flex:none; display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding-inline:2px; }
+.ptitle { margin:0; font-family:var(--f-display); font-weight:700; font-size:26px; line-height:1.15; letter-spacing:-0.025em; }
+.phead .pmeta { font-size:var(--t-sm); color:var(--muted); font-weight:500; font-variant-numeric:tabular-nums; }
 .iconbtn svg { width:19px; height:19px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-.pillbtn { height:44px; padding:0 14px; border-radius:999px; display:flex; align-items:center; gap:6px; font-size:var(--t-sm); font-weight:600; }
+.pillbtn { height:44px; padding:0 14px; border-radius:var(--r-pill); display:flex; align-items:center; gap:6px; font-size:var(--t-sm); font-weight:600; }
 .pillbtn svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
 
-.view { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:10px; }
+.view { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:12px; }
 .view[hidden] { display:none !important; }
 .eyebrow, .sec { font-size:var(--t-xs); text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); font-weight:600; }
-.mono { font-family:var(--f-mono); }
+.mono { font-family:var(--f-num); }
 
 /* Deck card. touch-action:none hands all touch movement to the swipe handler instead of the browser.
    The transform transition animates the card back or off screen; it is turned off while dragging
    so the card tracks the finger with no lag. */
-/* The card is the hero: a large radius, a layered shadow (contact, near and a deep soft drop), a faint top sheen,
+/* The card is the hero: a modest radius (1.28.0), a layered shadow (contact, near and a deep soft drop), a faint top sheen,
    and a pivot below the card so a sideways drag tilts it like a held card. During a drag, --ga (0 to 1) and
    data-glow (live, work, skip) drive the colored glow drawn by ::after. */
 .card { flex:1 1 auto; min-height:0; padding:22px 22px 20px; display:flex; flex-direction:column; touch-action:none; user-select:none; -webkit-user-select:none;
-  border-radius:34px; transform-origin:50% 120%; --gc:var(--c-live); --ga:0;
-  background:linear-gradient(180deg, color-mix(in srgb, #fff 7%, transparent), transparent 38%), color-mix(in srgb, var(--surface) 74%, transparent);
-  box-shadow:0 1px 0 var(--rim) inset, 0 1px 2px rgba(0,0,0,.06), 0 10px 24px -10px rgba(0,0,0,.16), 0 36px 72px -24px var(--shadow);
+  border-radius:var(--r-card); transform-origin:50% 120%; --gc:var(--c-live); --ga:0;
+  background:linear-gradient(180deg, color-mix(in srgb, #fff 6%, transparent), transparent 42%), color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow:0 1px 0 var(--rim) inset, 0 1px 2px rgba(0,0,0,.12), 0 14px 28px -14px rgba(0,0,0,.4), 0 30px 60px -26px var(--shadow);
   transition:transform .25s ease, opacity .25s ease; will-change:transform; }
 .card::after { content:""; position:absolute; inset:-1px; border-radius:inherit; pointer-events:none; opacity:var(--ga);
   box-shadow:0 0 0 2px var(--gc) inset, 0 0 46px 4px color-mix(in srgb, var(--gc) 70%, transparent), 0 0 120px 10px color-mix(in srgb, var(--gc) 32%, transparent); }
@@ -171,131 +209,133 @@ header.top .iconbtn { border:0; background:var(--empty); color:var(--fg); }
 @media (prefers-reduced-motion: no-preference) { .card.enter { animation:rise .42s var(--ease-out) both; } }
 @keyframes rise { from { transform:translateY(26px) scale(.955); opacity:0; } }
 .card-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-.badge { font-family:var(--f-mono); font-size:var(--t-sm); font-weight:500; color:var(--markText); background:color-mix(in srgb, var(--mark) 15%, transparent); border-radius:999px; padding:4px 10px; white-space:nowrap; }
-/* The principle: Fraunces at display optical size, centered in the space the card has (the inner span's auto
+.badge { font-family:var(--f-num); font-size:var(--t-sm); font-weight:600; font-variant-numeric:tabular-nums; color:var(--markText); background:color-mix(in srgb, var(--mark) 15%, transparent); border-radius:var(--r-pill); padding:4px 10px; white-space:nowrap; }
+/* The principle: Inter semibold with tight tracking (its display optical size kicks in on its own), centered in the space the card has (the inner span's auto
    margins center it but never clip the top when it overflows and scrolls). Long text keeps the body face. */
-.thought { font-family:var(--f-display); font-weight:560; font-size:var(--t-xl); line-height:1.06; letter-spacing:-0.022em; font-variation-settings:"opsz" 144, "SOFT" 30;
+.thought { font-family:var(--f-display); font-weight:620; font-size:var(--t-xl); line-height:1.1; letter-spacing:-0.03em;
   margin-top:14px; flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; text-wrap:pretty; overflow-wrap:anywhere; white-space:pre-line; }
 .thought > span { margin-block:auto; }
-.thought.mid { font-size:clamp(23px, min(6.8vw, 3.8vh), 30px); line-height:1.12; letter-spacing:-0.015em; font-variation-settings:"opsz" 72, "SOFT" 30; }
-.thought.long { font-family:var(--f-body); font-weight:500; font-size:var(--t-md); line-height:1.5; letter-spacing:0; font-variation-settings:normal; }
-.by { flex:none; margin-top:10px; font-family:var(--f-mono); font-size:var(--t-sm); color:var(--muted); overflow-wrap:anywhere; }
+.thought.mid { font-size:clamp(23px, min(6.8vw, 3.8vh), 30px); line-height:1.16; letter-spacing:-0.022em; }
+.thought.long { font-family:var(--f-body); font-weight:500; font-size:var(--t-md); line-height:1.5; letter-spacing:0; }
+.by { flex:none; margin-top:10px; font-family:var(--f-num); font-size:var(--t-sm); color:var(--muted); overflow-wrap:anywhere; }
 .rule { height:1px; background:var(--line); margin:16px 0 14px; flex:none; }
 .ai { display:flex; gap:10px; align-items:flex-start; min-height:44px; flex:none; }
 .ai svg { width:16px; height:16px; flex:none; margin-top:3px; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; }
-.ai p { margin:0; font-size:var(--t-md); line-height:1.45; font-style:italic; transition:opacity .3s; }
+.ai p { margin:0; font-size:var(--t-md); line-height:1.45; color:color-mix(in srgb, var(--fg) 86%, var(--muted)); transition:opacity .3s; }
 .ai p.pending { opacity:.55; }
-.meta { font-family:var(--f-mono); font-size:var(--t-xs); color:var(--muted); margin-top:12px; flex:none; font-variant-numeric:tabular-nums; }
+.meta { font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); margin-top:12px; flex:none; font-variant-numeric:tabular-nums; }
 
-.stamp { position:absolute; top:22px; font-family:var(--f-body); font-weight:700; z-index:2; background:color-mix(in srgb, var(--surface) 70%, transparent); font-size:var(--t-lg); letter-spacing:.06em; padding:4px 12px; border-radius:10px; border:3px solid; opacity:0; pointer-events:none; }
+.stamp { position:absolute; top:22px; font-family:var(--f-body); font-weight:800; z-index:2; background:color-mix(in srgb, var(--surface) 70%, transparent); font-size:var(--t-lg); letter-spacing:.06em; padding:4px 12px; border-radius:var(--r-sm); border:3px solid; opacity:0; pointer-events:none; }
 .stamp.skip { right:22px; color:var(--c-skip); transform:rotate(8deg); }
 .stamp.shed { left:22px; color:var(--c-live); transform:rotate(-8deg); }
 .stamp.keep { left:50%; top:auto; bottom:80px; transform:translateX(-50%); color:var(--c-work); }
 
-.banner { flex:none; display:flex; gap:10px; align-items:center; justify-content:space-between; padding:8px 8px 8px 14px; border-radius:16px; font-size:var(--t-sm); font-weight:500; }
+.banner { flex:none; display:flex; gap:10px; align-items:center; justify-content:space-between; padding:8px 8px 8px 14px; border-radius:var(--r-tile); font-size:var(--t-sm); font-weight:500; }
 .banner .btns { display:flex; gap:6px; }
-.banner button { border:0; border-radius:12px; padding:8px 12px; font-weight:600; font-size:var(--t-sm); white-space:nowrap; }
+.banner button { border:0; border-radius:var(--r-sm); padding:8px 12px; font-weight:600; font-size:var(--t-sm); white-space:nowrap; }
 .b-ghost { background:var(--empty); color:var(--fg); }
 .b-accent { background:var(--accent); color:var(--onAccent); }
 
-.hints { flex:none; display:flex; justify-content:space-between; padding:0 8px; font-family:var(--f-mono); font-size:var(--t-xs); color:var(--muted); }
+.hints { flex:none; display:flex; justify-content:space-between; padding:0 8px; font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); }
 .hints span { display:inline-flex; align-items:center; gap:4px; }
 .hints svg { width:11px; height:11px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
 .actions { flex:none; display:flex; gap:10px; align-items:center; }
-.round { width:60px; height:60px; flex:none; border-radius:50%; display:grid; place-items:center; padding:0; }
+.round { width:60px; height:60px; flex:none; border-radius:var(--r-ctl); display:grid; place-items:center; padding:0; }
 .round svg { width:22px; height:22px; fill:none; stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; }
-.r-skip { border:1.5px solid var(--mark); }
+.r-skip { border:1.5px solid color-mix(in srgb, var(--mark) 80%, transparent); background:color-mix(in srgb, var(--mark) 8%, transparent); box-shadow:none; }
 .r-skip svg { stroke:var(--mark); }
 .r-shed { background:var(--accent); border:0; box-shadow:0 12px 28px -12px color-mix(in srgb, var(--accent) 80%, transparent); }
 .r-shed svg { stroke:var(--onAccent); }
-.keep { flex:1; height:60px; border:0; border-radius:999px; background:var(--fg); color:var(--bg); box-shadow:0 12px 26px -14px var(--shadow); font-size:var(--t-md); font-weight:600; }
+.keep { flex:1; height:60px; border:0; border-radius:var(--r-ctl); background:var(--fg); color:var(--bg); box-shadow:0 12px 26px -14px var(--shadow); font-size:var(--t-md); font-weight:650; letter-spacing:-0.005em; }
 
 .empty { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; gap:12px; padding:24px; }
-.empty h1 { margin:0; font-family:var(--f-display); font-weight:560; font-size:34px; line-height:1.06; letter-spacing:-0.025em; font-variation-settings:"opsz" 144; text-wrap:balance; }
+.empty { border-radius:var(--r-card); }
+.empty h1 { margin:0; font-family:var(--f-display); font-weight:650; font-size:34px; line-height:1.1; letter-spacing:-0.03em; text-wrap:balance; }
 .empty p { margin:0; color:var(--muted); max-width:32ch; }
 
 /* Ledger. The only view that scrolls. The scrollbar is hidden and the negative margin lets content
    scroll edge to edge while the padding keeps it aligned with the rest of the app. */
 /* It runs on under the floating tab bar, so the list scrolls behind the frosted glass. */
-#v-ledger { overflow-y:auto; margin-inline:-14px; padding-inline:14px; margin-bottom:calc(-1 * var(--tab-space)); padding-bottom:calc(var(--tab-space) + 8px); scrollbar-width:none; }
+#v-ledger { overflow-y:auto; margin-inline:-14px; padding-inline:14px; gap:12px; margin-bottom:calc(-1 * var(--tab-space)); padding-bottom:calc(var(--tab-space) + 8px); scrollbar-width:none; }
 #v-ledger::-webkit-scrollbar { display:none; }
 .hero { flex:none; padding:14px 16px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 14px; align-items:center; }
-.big { font-family:var(--f-display); font-weight:500; font-size:76px; line-height:.92; letter-spacing:-0.04em; font-variation-settings:"opsz" 144; font-variant-numeric:tabular-nums; margin-top:2px; }
-.ymd { font-family:var(--f-mono); font-size:var(--t-sm); margin-top:6px; }
-.sub { font-family:var(--f-mono); font-size:var(--t-xs); color:var(--muted); margin-top:2px; }
+.big { font-family:var(--f-display); font-weight:650; font-size:76px; line-height:.95; letter-spacing:-0.055em; font-variant-numeric:tabular-nums; margin-top:4px; }
+.ymd { font-family:var(--f-num); font-size:var(--t-sm); font-weight:600; margin-top:8px; font-variant-numeric:tabular-nums; }
+.sub { font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); margin-top:2px; }
 /* Glowing bars: Living it, Still working and Not today as shares of every principle. Each fill glows in its
    outcome color; the percentages under them are plain text in the foreground color. */
 .mix { display:grid; grid-template-columns:repeat(3, 58px); gap:2px; align-items:end; }
 .mix > div { display:grid; justify-items:center; gap:6px; }
-.mix .tr { position:relative; width:18px; height:92px; border-radius:999px; background:var(--empty); box-shadow:inset 0 1px 2px rgba(0,0,0,.10); }
-.mix .tr i { position:absolute; inset:auto 0 0 0; height:var(--p, 0%); min-height:18px; border-radius:999px; background:linear-gradient(180deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c));
+.mix .tr { position:relative; width:18px; height:92px; border-radius:var(--r-xs); background:var(--empty); box-shadow:inset 0 1px 2px rgba(0,0,0,.10); }
+.mix .tr i { position:absolute; inset:auto 0 0 0; height:var(--p, 0%); min-height:18px; border-radius:var(--r-xs); background:linear-gradient(180deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c));
   box-shadow:0 0 18px 1px color-mix(in srgb, var(--c) 60%, transparent), 0 6px 16px -4px var(--c); }
 .mix .tr i.zero { opacity:.35; box-shadow:none; }
 @media (prefers-reduced-motion: no-preference) { .mix .tr i { transition:height .6s var(--ease-out); } }
-.mix b { font-family:var(--f-mono); font-weight:500; font-size:var(--t-sm); font-variant-numeric:tabular-nums; }
+.mix b { font-family:var(--f-num); font-weight:600; font-size:var(--t-sm); font-variant-numeric:tabular-nums; }
 .mix small { font-size:var(--t-xs); color:var(--muted); font-weight:600; margin-top:-4px; white-space:nowrap; }
+.tile, .hero { border-radius:var(--r-tile); background:color-mix(in srgb, var(--surface) 76%, transparent); }
 .tile { flex:none; padding:12px 14px; display:flex; flex-direction:column; gap:10px; }
 .tilehead { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-.seg { display:inline-flex; background:var(--empty); border-radius:999px; padding:3px; gap:2px; }
-.seg button { border:0; background:transparent; min-height:44px; padding:0 14px; border-radius:999px; font-size:var(--t-sm); font-weight:600; color:var(--muted); }
-.seg button[aria-pressed="true"] { background:var(--surface); color:var(--fg); box-shadow:0 1px 4px rgba(0,0,0,.12); }
-.legend { font-family:var(--f-mono); font-size:var(--t-xs); color:var(--muted); white-space:nowrap; }
+.seg { display:inline-flex; background:var(--empty); border-radius:var(--r-btn); padding:3px; gap:2px; }
+.seg button { border:0; background:transparent; min-height:44px; padding:0 14px; border-radius:var(--r-sm); font-size:var(--t-sm); font-weight:600; color:var(--muted); }
+.seg button[aria-pressed="true"] { background:var(--fg); color:var(--bg); box-shadow:0 1px 4px rgba(0,0,0,.2); }
+.legend { font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); white-space:nowrap; }
 .row { display:flex; flex-direction:column; gap:6px; padding-block:2px; }
 .row + .row { border-top:1px solid var(--line); padding-top:10px; }
 .row-top { display:flex; justify-content:space-between; gap:12px; align-items:baseline; }
 .row-top .t { font-size:var(--t-md); font-weight:500; line-height:1.3; min-width:0; overflow-wrap:anywhere; white-space:pre-line; display:-webkit-box; -webkit-line-clamp:6; -webkit-box-orient:vertical; overflow:hidden; }
-.row-top .n { font-family:var(--f-mono); font-size:var(--t-sm); color:var(--markText); flex:none; font-variant-numeric:tabular-nums; text-align:right; }
+.row-top .n { font-family:var(--f-num); font-size:var(--t-sm); color:var(--markText); flex:none; font-variant-numeric:tabular-nums; text-align:right; }
 .row-top .n.ok { color:var(--accent); }
-.bar { height:6px; border-radius:999px; background:var(--empty); }
-.bar i { display:block; height:6px; border-radius:999px; background:var(--c-skip); box-shadow:0 0 10px color-mix(in srgb, var(--c-skip) 55%, transparent); }
-.row-foot { display:flex; justify-content:space-between; align-items:center; gap:8px; font-family:var(--f-mono); font-size:var(--t-xs); color:var(--muted); }
+.bar { height:6px; border-radius:3px; background:var(--empty); }
+.bar i { display:block; height:6px; border-radius:3px; background:var(--c-skip); box-shadow:0 0 10px color-mix(in srgb, var(--c-skip) 55%, transparent); }
+.row-foot { display:flex; justify-content:space-between; align-items:center; gap:8px; font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); }
 /* Row actions: 44px tall hit areas; the negative margin keeps the row about as compact as before. */
 .row-foot button { background:none; border:0; color:var(--muted); font-family:var(--f-body); font-size:var(--t-sm); min-height:44px; min-width:44px; padding:0 6px; margin-block:-8px; }
 .row-foot button:last-child { margin-right:-6px; }
 .row-foot > span:last-child { display:flex; align-items:center; flex:none; white-space:nowrap; }
 .row-foot > span:first-child { min-width:0; }
-.evidence { font-size:var(--t-sm); font-style:italic; line-height:1.45; }
+.evidence { font-size:var(--t-sm); line-height:1.45; color:color-mix(in srgb, var(--fg) 86%, var(--muted)); }
 /* Living it record: full principle, then its last model line, then the evidence. */
 .row-top .t.full { display:block; -webkit-line-clamp:unset; overflow:visible; }
-.row-ai { display:flex; gap:8px; align-items:flex-start; font-size:var(--t-sm); font-style:italic; line-height:1.45; color:var(--muted); }
+.row-ai { display:flex; gap:8px; align-items:flex-start; font-size:var(--t-sm); line-height:1.45; color:var(--muted); }
 .row-ai svg, .sheet-ai svg { width:14px; height:14px; flex:none; margin-top:3px; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; }
 .sheet-ai { display:flex; gap:10px; align-items:flex-start; }
-.sheet-ai p { margin:0; font-size:var(--t-md); line-height:1.45; font-style:italic; color:var(--muted); }
+.sheet-ai p { margin:0; font-size:var(--t-md); line-height:1.45; color:var(--muted); }
 .sheet-ai[hidden] { display:none; }
 /* Edit control on the card and the edit sheet. */
 .card-right { display:flex; align-items:center; gap:8px; flex:none; }
-.edit-pill { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:color-mix(in srgb, var(--surface) 70%, transparent); color:var(--fg); font-family:var(--f-body); font-size:var(--t-sm); font-weight:600; border-radius:999px; padding:5px 11px 5px 9px; touch-action:manipulation; position:relative; }
+.edit-pill { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:color-mix(in srgb, var(--surface) 70%, transparent); color:var(--fg); font-family:var(--f-body); font-size:var(--t-sm); font-weight:600; border-radius:var(--r-pill); padding:5px 11px 5px 9px; touch-action:manipulation; position:relative; }
 /* The pill stays small on the card; an invisible ring extends its hit area to 44px. */
 .edit-pill::after { content:""; position:absolute; inset:-9px -4px; }
 .edit-pill svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
 .kept { display:flex; gap:8px; flex-wrap:wrap; }
-.kept span { font-family:var(--f-mono); font-size:var(--t-xs); color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:4px 9px; }
+.kept span { font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); border:1px solid var(--line); border-radius:var(--r-pill); padding:4px 9px; }
 .sheet-err { margin:0; font-size:var(--t-sm); color:var(--markText); }
 .sheet-err[hidden] { display:none; }
 /* Card label: collection on line 1, origin on line 2 (Story 6). */
 .card-top { align-items:flex-start; }
 .lab2 { display:flex; flex-direction:column; gap:3px; min-width:0; }
 .lab2 .eyebrow, .lab2 .orig { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.lab2 .orig { font-size:var(--t-sm); color:var(--muted); font-style:italic; }
+.lab2 .orig { font-size:var(--t-sm); color:var(--muted); }
 /* Details fields, collection suggestions and the More details toggle. */
 .group[hidden] { display:none; }
 .chips { display:flex; gap:6px; flex-wrap:wrap; }
-.chips button { font-size:var(--t-sm); border:1px solid var(--line); background:none; border-radius:999px; padding:4px 10px; color:var(--fg); }
+.chips button { font-size:var(--t-sm); border:1px solid var(--line); background:none; border-radius:var(--r-pill); padding:4px 10px; color:var(--fg); }
 .chips button.on { border-color:var(--accent); color:var(--accent); }
 .hint { margin:0; font-size:var(--t-sm); color:var(--muted); }
 .hint b { color:var(--accent); font-weight:600; }
 .hint[hidden] { display:none; }
 .details { border-top:1px solid var(--line); padding-top:14px; gap:14px; }
-.more { display:flex; justify-content:space-between; align-items:center; width:100%; background:none; border:1px solid var(--line); border-radius:14px; padding:12px 14px; color:var(--fg); font-size:var(--t-md); font-weight:600; }
+.more { display:flex; justify-content:space-between; align-items:center; width:100%; background:none; border:1px solid var(--line); border-radius:var(--r-btn); padding:12px 14px; color:var(--fg); font-size:var(--t-md); font-weight:600; }
 .more small { color:var(--muted); font-weight:500; font-size:var(--t-sm); }
 /* Primary button pinned to the bottom of a tall sheet, on a solid strip so nothing shows beneath it. */
 .sheet-foot { position:sticky; bottom:calc(-22px - env(safe-area-inset-bottom, 0px)); margin:0 -18px calc(-22px - env(safe-area-inset-bottom, 0px)); padding:12px 18px calc(22px + env(safe-area-inset-bottom, 0px)); background:color-mix(in srgb, var(--surface) 92%, transparent); -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px); border-top:1px solid var(--line); z-index:2; }
 /* Manage collections (Story 7). */
 .coll-list { display:flex; flex-direction:column; }
 .coll-list button { display:flex; justify-content:space-between; align-items:center; gap:10px; background:none; border:0; border-bottom:1px solid var(--line); padding:13px 2px; color:var(--fg); font-size:var(--t-md); font-weight:600; text-align:left; }
-.coll-list button span { font-family:var(--f-mono); font-size:var(--t-sm); font-weight:400; color:var(--muted); white-space:nowrap; }
+.coll-list button span { font-family:var(--f-num); font-size:var(--t-sm); font-weight:400; color:var(--muted); white-space:nowrap; }
 .coll-list button b { font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.notice { border:1px solid color-mix(in srgb, var(--mark) 50%, transparent); background:color-mix(in srgb, var(--mark) 12%, transparent); border-radius:14px; padding:12px 14px; font-size:var(--t-md); line-height:1.45; }
+.notice { border:1px solid color-mix(in srgb, var(--mark) 50%, transparent); background:color-mix(in srgb, var(--mark) 12%, transparent); border-radius:var(--r-btn); padding:12px 14px; font-size:var(--t-md); line-height:1.45; }
 .notice b { color:var(--markText); }
 .notice[hidden] { display:none; }
 .link-danger { background:none; border:0; color:var(--markText); font-weight:600; font-size:var(--t-md); padding:6px 0; justify-self:center; }
@@ -303,11 +343,11 @@ header.top .iconbtn { border:0; background:var(--empty); color:var(--fg); }
 .meta .first { color:var(--accent); font-weight:600; }
 .none { font-size:var(--t-sm); color:var(--muted); margin:0; }
 .cal { display:grid; grid-template-columns:repeat(14, minmax(0,1fr)); gap:4px; }
-.cal i { aspect-ratio:1; border-radius:3px; background:var(--empty); }
+.cal i { aspect-ratio:1; border-radius:var(--r-xs); background:var(--empty); }
 .cal i.on { background:var(--lived); }
 .cal i.sh { background:var(--c-live); box-shadow:0 0 8px color-mix(in srgb, var(--c-live) 60%, transparent); }
 .cal i.today { outline:2px solid var(--accent); outline-offset:1px; }
-.key { display:flex; gap:12px; font-family:var(--f-mono); font-size:var(--t-xs); color:var(--muted); flex-wrap:wrap; }
+.key { display:flex; gap:12px; font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); flex-wrap:wrap; }
 .key i { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:4px; }
 
 /* Sheets. Fixed to the bottom, capped at 90% of the height and scrollable inside. A more opaque
@@ -315,8 +355,8 @@ header.top .iconbtn { border:0; background:var(--empty); color:var(--fg); }
    animations are skipped when reduced motion is on. */
 /* The UA styles for <dialog> (centered, inset:0, its own border and padding) are reset here. */
 .sheet { position:fixed; inset:auto 0 0 0; width:100%; max-width:520px; margin:0 auto; max-height:90%; overflow-y:auto; overscroll-behavior:contain;
-  border-radius:32px 32px 0 0; border-bottom:0; padding:10px 18px calc(22px + env(safe-area-inset-bottom, 0px)); gap:14px; color:var(--fg);
-  background:color-mix(in srgb, var(--surface) 80%, transparent); -webkit-backdrop-filter:blur(30px) saturate(180%); backdrop-filter:blur(30px) saturate(180%);
+  border-radius:var(--r-sheet) var(--r-sheet) 0 0; border-bottom:0; padding:10px 18px calc(22px + env(safe-area-inset-bottom, 0px)); gap:14px; color:var(--fg);
+  background:color-mix(in srgb, var(--surface) 86%, transparent); -webkit-backdrop-filter:blur(30px) saturate(180%); backdrop-filter:blur(30px) saturate(180%);
   box-shadow:0 1px 0 var(--rim) inset, 0 -20px 60px -20px var(--shadow); }
 .sheet[open] { display:grid; }
 .sheet::backdrop { background:rgba(0,0,0,.38); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
@@ -330,79 +370,79 @@ header.top .iconbtn { border:0; background:var(--empty); color:var(--fg); }
 .grabber { width:38px; height:5px; border-radius:3px; background:var(--line); margin:0 auto 2px; position:relative; }
 .grabber::after { content:""; position:absolute; inset:-14px -60px -10px; }
 .grabber, .sheet h2 { touch-action:none; }
-.sheet h2 { margin:0; font-family:var(--f-display); font-weight:600; font-variation-settings:"opsz" 72; font-size:var(--t-lg); letter-spacing:-0.02em; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.sheet h2 { margin:0; font-family:var(--f-display); font-weight:700; font-size:var(--t-lg); letter-spacing:-0.022em; display:flex; justify-content:space-between; align-items:center; gap:10px; }
 .sheet h2 button { font-family:var(--f-body); font-size:var(--t-md); font-weight:600; border:0; background:none; color:var(--accent); min-height:44px; min-width:44px; padding:0 8px; margin:-6px -8px -6px 0; touch-action:manipulation; }
-.sheet-thought { font-family:var(--f-display); font-weight:560; font-size:26px; line-height:1.1; letter-spacing:-0.02em; font-variation-settings:"opsz" 96; overflow-wrap:anywhere; white-space:pre-line; max-height:30vh; overflow-y:auto; }
+.sheet-thought { font-family:var(--f-display); font-weight:620; font-size:26px; line-height:1.14; letter-spacing:-0.028em; overflow-wrap:anywhere; white-space:pre-line; max-height:30vh; overflow-y:auto; }
 .group { display:grid; gap:8px; }
 label, .lbl { font-size:var(--t-xs); font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
-textarea { width:100%; min-width:0; background:var(--empty); border:1px solid transparent; border-radius:12px; padding:11px 12px; font-size:16px; color:var(--fg); font-family:var(--f-body); resize:none; }
-input.field { width:100%; min-width:0; background:var(--empty); border:1px solid transparent; border-radius:12px; padding:11px 12px; font-size:16px; color:var(--fg); font-family:var(--f-mono); }
+textarea { width:100%; min-width:0; background:var(--empty); border:1px solid transparent; border-radius:var(--r-btn); padding:11px 12px; font-size:16px; color:var(--fg); font-family:var(--f-body); resize:none; }
+input.field { width:100%; min-width:0; background:var(--empty); border:1px solid transparent; border-radius:var(--r-btn); padding:11px 12px; font-size:16px; color:var(--fg); font-family:var(--f-body); }
 input.field:focus { border-color:var(--accent); outline:none; }
 .row2 { display:flex; gap:8px; }
 .row2 .btn { padding:12px 14px; font-size:var(--t-md); }
 textarea:focus { border-color:var(--accent); outline:none; }
-textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-lg); line-height:1.2; letter-spacing:-0.01em; min-height:140px; }
-.counter { font-family:var(--f-mono); font-size:var(--t-xs); color:var(--muted); text-align:right; }
+textarea.big { font-family:var(--f-display); font-weight:600; font-size:var(--t-lg); line-height:1.25; letter-spacing:-0.02em; min-height:140px; }
+.counter { font-family:var(--f-num); font-size:var(--t-xs); color:var(--muted); text-align:right; }
 .pills { display:flex; gap:8px; flex-wrap:wrap; }
-.pill { height:38px; padding:0 14px; border-radius:999px; background:var(--empty); border:1px solid transparent; font-size:var(--t-sm); font-weight:500; }
+.pill { height:38px; padding:0 14px; border-radius:var(--r-pill); background:var(--empty); border:1px solid transparent; font-size:var(--t-sm); font-weight:500; }
 .pill[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); background:transparent; }
-.btn { border:0; border-radius:14px; padding:14px 16px; font-weight:600; font-size:var(--t-md); background:var(--fg); color:var(--bg); width:100%; }
+.btn { border:0; border-radius:var(--r-btn); padding:14px 16px; font-weight:600; font-size:var(--t-md); background:var(--fg); color:var(--bg); width:100%; }
 .btn:disabled { opacity:.4; cursor:default; }
 .btn.accent { background:var(--accent); color:var(--onAccent); }
 .btn.ghost { background:var(--empty); color:var(--fg); }
 .stats { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
-.stat { background:var(--empty); border-radius:14px; padding:10px 12px; }
-.stat b { display:block; font-family:var(--f-mono); font-size:var(--t-md); font-weight:500; font-variant-numeric:tabular-nums; }
+.stat { background:var(--empty); border-radius:var(--r-btn); padding:10px 12px; }
+.stat b { display:block; font-family:var(--f-num); font-size:var(--t-md); font-weight:500; font-variant-numeric:tabular-nums; }
 .stat span { font-size:var(--t-xs); text-transform:uppercase; letter-spacing:.08em; font-weight:600; color:var(--muted); }
 .note { font-size:var(--t-sm); color:var(--muted); margin:0; line-height:1.45; }
 .skins { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
-.skin { border:1px solid var(--line); background:transparent; border-radius:14px; padding:8px 2px; display:grid; gap:6px; justify-items:center; font-size:var(--t-xs); font-weight:500; }
+.skin { border:1px solid var(--line); background:transparent; border-radius:var(--r-btn); padding:8px 2px; display:grid; gap:6px; justify-items:center; font-size:var(--t-xs); font-weight:500; }
 .skin[aria-pressed="true"] { border-color:var(--fg); box-shadow:inset 0 0 0 1px var(--fg); }
 .sw { width:28px; height:28px; border-radius:50%; overflow:hidden; display:grid; grid-template-columns:1fr 1fr; }
 .sw i:first-child { grid-row:span 2; }
-.status { display:flex; align-items:center; gap:8px; font-family:var(--f-mono); font-size:var(--t-sm); color:var(--muted); }
+.status { display:flex; align-items:center; gap:8px; font-family:var(--f-num); font-size:var(--t-sm); color:var(--muted); }
 .status .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); }
 
 /* Toast. #toastPop is a manual popover so it sits in the top layer, above an open sheet. It floats just
    above the action row, which sits above the tab bar. Screen readers hear the message from the #toastHost live region instead. */
 #toastPop { position:fixed; inset:auto 0 calc(var(--tab-space) + 72px) 0; margin:0 auto; width:max-content; max-width:calc(100vw - 28px);
   border:0; padding:0; background:transparent; overflow:visible; z-index:40; color:inherit; }
-.toast { display:flex; align-items:center; gap:4px; background:var(--fg); color:var(--bg); padding:0 6px 0 16px; min-height:44px; border-radius:999px; font-weight:600; font-size:var(--t-md); white-space:nowrap; box-shadow:0 10px 30px -12px rgba(0,0,0,.5); }
+.toast { display:flex; align-items:center; gap:4px; background:var(--fg); color:var(--bg); padding:0 6px 0 16px; min-height:44px; border-radius:var(--r-ctl); font-weight:600; font-size:var(--t-md); white-space:nowrap; box-shadow:0 10px 30px -12px rgba(0,0,0,.5); }
 .toast:not(:has(button)) { padding-right:16px; }
-.toast button { border:0; background:none; color:inherit; font-weight:700; min-height:44px; min-width:44px; padding:0 12px; border-radius:999px; text-decoration:underline; text-underline-offset:3px; }
+.toast button { border:0; background:none; color:inherit; font-weight:700; min-height:44px; min-width:44px; padding:0 12px; border-radius:var(--r-btn); text-decoration:underline; text-underline-offset:3px; }
 @media (prefers-reduced-motion: no-preference) { .toast { animation:toastin .22s cubic-bezier(.2,.8,.2,1); } }
 @keyframes toastin { from { opacity:0; transform:translateY(8px); } }
 .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 
-/* Floating tab bar (1.27.0): Deck, a white + that opens Capture, and Ledger, in one frosted pill above the home
-   indicator. Dark glass in light themes and tinted glass in dark ones, so the white + always stands out. Every
+/* Floating tab bar: Deck, a white + that opens Capture, and Ledger, in one frosted bar above the home
+   indicator. 1.28.0: it floats over the dark panel in the panel palette, with rounded-square buttons. Every
    target is at least 44px and the two tabs keep text labels. It keeps its own view-transition name so it stays
    still while the view under it changes. */
 .tabbar { position:fixed; z-index:5; left:50%; bottom:var(--tab-bottom); transform:translateX(-50%); height:var(--tab-h); width:min(calc(100vw - 28px), 340px);
-  display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:6px; padding:6px; border-radius:999px; color:var(--bar-fg);
-  background:var(--bar-bg); -webkit-backdrop-filter:blur(24px) saturate(180%); backdrop-filter:blur(24px) saturate(180%);
-  border:1px solid color-mix(in srgb, #fff 14%, transparent); box-shadow:0 1px 0 color-mix(in srgb, #fff 12%, transparent) inset, 0 18px 40px -16px rgba(0,0,0,.55);
+  display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:6px; padding:6px; border-radius:var(--r-bar); color:var(--fg);
+  background:color-mix(in srgb, var(--surface) 62%, transparent); -webkit-backdrop-filter:blur(24px) saturate(180%); backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid color-mix(in srgb, #fff 12%, transparent); box-shadow:0 1px 0 color-mix(in srgb, #fff 10%, transparent) inset, 0 18px 40px -16px rgba(0,0,0,.6);
   view-transition-name:tabbar; }
-.tab { height:52px; min-width:64px; border:0; border-radius:999px; background:transparent; color:var(--bar-muted); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+.tab { height:52px; min-width:64px; border:1px solid transparent; border-radius:var(--r-ctl); background:transparent; color:var(--muted); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
   font-size:var(--t-xs); font-weight:600; letter-spacing:.02em; touch-action:manipulation; padding:0 14px; }
 .tab svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-.tab[aria-current="page"] { color:var(--bar-fg); background:var(--bar-on); }
-.fab { width:68px; height:52px; border-radius:999px; display:grid; place-items:center; padding:0; border:0; background:#fff; color:#111216;
+.tab[aria-current="page"] { color:var(--fg); background:color-mix(in srgb, var(--fg) 9%, transparent); border-color:color-mix(in srgb, var(--fg) 10%, transparent); }
+.fab { width:64px; height:52px; border-radius:var(--r-ctl); display:grid; place-items:center; padding:0; border:0; background:#fff; color:#111216;
   box-shadow:0 8px 22px -8px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.04); touch-action:manipulation; }
 .fab svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; }
 .tabbar :focus-visible { outline-color:#fff; }
 @media (prefers-reduced-motion: no-preference) { .fab, .tab { transition:transform .18s var(--ease-spring), background-color .2s, color .2s; } .fab:active, .tab:active { transform:scale(.92); } }
 
 /* Collection chips above the card. Only drawn when the deck has collections; one row that scrolls sideways. The
-   pill is 36px to look light, and an invisible band takes each hit area to 44px. */
-.chips-row { flex:none; display:flex; gap:8px; overflow-x:auto; margin-inline:-14px; padding:4px 14px; scrollbar-width:none; scroll-padding-inline:14px; }
+   pill is 32px to look light (1.28.0), and an invisible band takes each hit area to 44px. */
+.chips-row { flex:none; display:flex; gap:6px; overflow-x:auto; margin-inline:-14px; padding:7px 14px; scrollbar-width:none; scroll-padding-inline:14px; }
 .chips-row::-webkit-scrollbar { display:none; }
-.chip { position:relative; flex:none; height:36px; min-width:44px; padding:0 16px; border-radius:999px; font-size:var(--t-sm); font-weight:600; color:var(--fg); white-space:nowrap; touch-action:manipulation;
-  border:1px solid var(--rim); background:color-mix(in srgb, var(--surface) 50%, transparent); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); }
-.chip::after { content:""; position:absolute; inset:-4px 0; }
-.chip small { font-family:var(--f-mono); font-size:var(--t-xs); font-weight:500; color:var(--muted); margin-left:6px; }
-.chip[aria-pressed="true"] { background:var(--fg); color:var(--bg); border-color:transparent; box-shadow:0 8px 20px -10px var(--shadow); }
-.chip[aria-pressed="true"] small { color:color-mix(in srgb, var(--bg) 72%, transparent); }
+.chip { position:relative; flex:none; height:32px; min-width:44px; padding:0 14px; border-radius:var(--r-pill); font-size:var(--t-sm); font-weight:600; color:var(--fg); white-space:nowrap; touch-action:manipulation;
+  border:1px solid var(--rim); background:color-mix(in srgb, var(--surface) 70%, transparent); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); }
+.chip::after { content:""; position:absolute; inset:-7px 0; }
+.chip small { font-family:var(--f-num); font-size:var(--t-xs); font-weight:500; color:var(--muted); margin-left:6px; }
+.chip[aria-pressed="true"] { background:#fff; color:#111417; border-color:transparent; box-shadow:0 8px 20px -10px var(--shadow); }
+.chip[aria-pressed="true"] small { color:#4E5558; }
 
 /* Living it burst: one soft ring of the Living it color that blooms from the card and fades. Never drawn with
    reduced motion. */
@@ -433,10 +473,10 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
 .coach li svg { width:20px; height:20px; flex:none; fill:none; stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; }
 .coach li.c-skip svg { stroke:var(--mark); } .coach li.c-keep svg { stroke:var(--fg); } .coach li.c-shed svg { stroke:var(--accent); }
 .coach li small { display:block; font-weight:400; font-size:var(--t-sm); color:var(--muted); }
-.coach .tapnote { font-family:var(--f-mono); font-size:var(--t-sm); color:var(--muted); }
-.coach-ok { border:0; border-radius:999px; min-height:44px; padding:0 22px; font-weight:600; background:var(--fg); color:var(--bg); }
+.coach .tapnote { font-family:var(--f-num); font-size:var(--t-sm); color:var(--muted); }
+.coach-ok { border:0; border-radius:var(--r-btn); min-height:44px; padding:0 22px; font-weight:600; background:var(--fg); color:var(--bg); }
 @media (prefers-reduced-motion: no-preference) {
-  .coach .ghost { display:block; position:relative; width:46%; aspect-ratio:3/4; max-height:38%; border-radius:18px; border:1.5px dashed color-mix(in srgb, var(--fg) 45%, transparent);
+  .coach .ghost { display:block; position:relative; width:46%; aspect-ratio:3/4; max-height:38%; border-radius:var(--r-btn); border:1.5px dashed color-mix(in srgb, var(--fg) 45%, transparent);
     background:color-mix(in srgb, var(--fg) 6%, transparent); animation:ghost 9s ease-in-out infinite; }
   .coach .ghost::after { content:""; position:absolute; left:50%; top:62%; width:34px; height:34px; margin:-17px; border-radius:50%; background:color-mix(in srgb, var(--fg) 30%, transparent); }
   .coach ul { position:relative; display:block; width:100%; min-height:64px; text-align:center; }
@@ -456,18 +496,26 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
 <div class="glow" aria-hidden="true"></div>
 <!-- Main screen. The header stays put; the deck and ledger views swap in place below it, switched from the tab bar. -->
 <div class="app">
-  <header class="top glass">
-    <div class="brand" id="brand">Scales<span id="todayLbl"></span></div>
+  <header class="top">
+    <div class="who">
+      <img class="mark" src="icons/favicon-64.png" alt="" width="40" height="40">
+      <div class="hello"><span class="brand" id="brand">Scales</span><span class="date" id="todayLbl"></span></div>
+    </div>
     <div class="hbtns">
-      <button type="button" class="iconbtn" id="openSettings" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+      <!-- Today's count: principles weighed today (any move), from the same activity log as the Ledger grid. -->
+      <span class="stat-pill glass" id="todayStat" role="img" aria-label="0 weighed today"><i></i><b id="todayN">0</b><span>today</span></span>
+      <button type="button" class="iconbtn glass" id="openSettings" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
     </div>
   </header>
 
-<!-- Deck view. Empty here on purpose: renderDeck() builds the card, buttons and strip. -->
+<!-- The dark panel holds whichever view is showing. -->
+  <main class="panel pscope">
+<!-- Deck view. Empty here on purpose: renderDeck() builds the heading, chips, card and buttons. -->
   <section class="view" id="v-deck" aria-label="Deck"></section>
 
 <!-- Ledger view: totals, the list of thoughts, and the 12 week activity grid. Filled by renderLedger(). -->
   <section class="view" id="v-ledger" aria-label="Ledger" hidden>
+    <div class="phead"><h1 class="ptitle">Ledger</h1><span class="pmeta" id="lMeta"></span></div>
     <div class="hero glass">
       <div>
         <div class="eyebrow">Living it</div>
@@ -498,6 +546,7 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
       <div class="key"><span><i style="background:var(--lived)"></i>inspected</span><span><i style="background:var(--c-live)"></i>living it</span><span><i style="background:var(--empty)"></i>no session</span></div>
     </div>
   </section>
+  </main>
 </div>
 
 <!-- Sheets are native <dialog> elements opened with showModal(): the browser traps focus, makes the
@@ -675,7 +724,7 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
     <div class="sec">About</div>
     <div class="status"><span class="dot" style="background:var(--muted)"></span><span id="versionText">Version</span></div>
     <p class="note">After an update, close and reopen Scales. If this number has not changed, the phone is still running the previous version.</p>
-    <p class="note" id="screenCheck" style="font-family:var(--f-mono);font-size:var(--t-xs);line-height:1.6"></p>
+    <p class="note" id="screenCheck" style="font-family:var(--f-num);font-size:var(--t-xs);line-height:1.6"></p>
   </div>
 </dialog>
 
@@ -684,13 +733,13 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
   <i style="display:block;height:100dvh"></i><i style="display:block;height:100svh"></i><i style="display:block;height:100lvh"></i>
 </div>
 <!-- Floating tab bar: Deck, the + that opens Capture (it replaces the 1.26.0 floating add button), and Ledger. -->
-<nav class="tabbar" aria-label="Main">
+<nav class="tabbar pscope" aria-label="Main">
   <button type="button" class="tab" id="toDeck" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="16" rx="3.5"/><path d="M9 9h6M9 13h4"/></svg><span>Deck</span></button>
   <button type="button" class="fab" id="fab" aria-label="Capture a principle" title="Capture a principle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
   <button type="button" class="tab" id="toLedger"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-6"/></svg><span>Ledger</span></button>
 </nav>
 <!-- Toasts: #toastPop is what you see (a popover, so it shows above an open sheet); #toastHost reads it out. -->
-<div id="toastPop" popover="manual"></div>
+<div id="toastPop" class="pscope" popover="manual"></div>
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <script src="core.js"></script>
@@ -730,9 +779,9 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
   // Theme list for the Settings picker. sw = the three swatch colors shown on each button.
   // The actual colors live in the CSS under :root[data-skin=...].
   var SKINS = [
-    { id: "auto", name: "Auto", sw: ["#E9EDEC", "#24302D", "#2C78A0"] },
+    { id: "auto", name: "Auto", sw: ["#E4E1DB", "#17302E", "#86D1CB"] },
     { id: "moss", name: "Moss", sw: ["#111A14", "#BCCDA8", "#E8C55C"] },
-    { id: "linen", name: "Linen", sw: ["#EFE8DD", "#3B342C", "#2F6B57"] },
+    { id: "linen", name: "Linen", sw: ["#EDE6DA", "#2A2420", "#9AD3BB"] },
     { id: "ink", name: "Ink", sw: ["#0A0F1E", "#B3C3EC", "#F3BC5E"] },
     { id: "dusk", name: "Dusk", sw: ["#1A121D", "#E4C0DA", "#7FD6C5"] },
     { id: "return", name: "Return", sw: ["#131220", "#E8B860", "#F08A55"] }
@@ -783,6 +832,13 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
     var cutoff = dayKey(new Date(Date.now() - 120 * 86400000));
     Object.keys(activity).forEach(function (x) { if (x < cutoff) delete activity[x]; });
     lsSet(LSA, activity);
+    paintStat();
+  }
+  // The stat pill at the top: how many principles were weighed today (any move counts once).
+  function paintStat() {
+    var d = activity[dayKey()] || { i: 0, s: 0 }, n = (d.i || 0) + (d.s || 0);
+    $("todayN").textContent = n;
+    $("todayStat").setAttribute("aria-label", n + (n === 1 ? " principle" : " principles") + " weighed today");
   }
   function savePrefs() { lsSet(LSP, prefs); }
 
@@ -1218,15 +1274,21 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
     if (sel && sel.offsetLeft + sel.offsetWidth > row.clientWidth) row.scrollLeft = sel.offsetLeft - 14;
   }
   var entering = false;
+  // Panel heading for the deck, drawn above the chips in every deck state.
+  function deckHead() {
+    var n = activeList().length;
+    return '<div class="phead"><h1 class="ptitle">Today</h1>' + (n ? '<span class="pmeta">' + n + " in deck</span>" : "") + "</div>";
+  }
   function renderDeck() {
     var v = $("v-deck");
+    paintStat();
     var t = thoughts[current];
     var enter = entering; entering = false;
     var coll = deckColl();
     if (!t && coll) {
       // The chosen collection has nothing to show right now.
       var inC = deckList(), nr = inC.filter(function (x) { return C.isResting(x, today()); }).length;
-      v.innerHTML = chipsHtml() + '<div class="empty glass"><div class="eyebrow">' + esc(coll) + '</div><h1>Nothing left in ' + esc(coll) + ' today.</h1><p>' +
+      v.innerHTML = deckHead() + chipsHtml() + '<div class="empty glass"><div class="eyebrow">' + esc(coll) + '</div><h1>Nothing left in ' + esc(coll) + ' today.</h1><p>' +
         (nr ? nr + (nr === 1 ? " principle is" : " principles are") + " resting. The next returns " + returnText(C.nextReturn(inC, today())) + "." : "Every principle here is resting or lived.") + "</p>" +
         '<button type="button" class="btn" style="width:auto;padding-inline:22px" id="showAll">Show all collections</button>' +
         (nr ? '<button type="button" class="btn ghost" style="width:auto;padding-inline:22px" id="showAnyway">Show anyway</button>' : "") + "</div>";
@@ -1238,7 +1300,7 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
     if (!t && activeList().length) {
       // Everything in the deck is resting after Not today.
       var n = activeList().filter(function (x) { return C.isResting(x, today()); }).length;
-      v.innerHTML = chipsHtml() + '<div class="empty glass"><div class="eyebrow">Done for today</div><h1>Nothing left today.</h1><p>' +
+      v.innerHTML = deckHead() + chipsHtml() + '<div class="empty glass"><div class="eyebrow">Done for today</div><h1>Nothing left today.</h1><p>' +
         n + (n === 1 ? " principle is" : " principles are") + " resting. The next returns " + returnText(C.nextReturn(activeList(), today())) +
         ". Not today sets a principle aside for " + C.REST_DAYS + " days; when it returns, the most avoided come up first.</p>" +
         '<button type="button" class="btn" style="width:auto;padding-inline:22px" id="showAnyway">Show anyway</button>' +
@@ -1250,7 +1312,7 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
     }
     if (!t) {
       var any = all().length;
-      v.innerHTML = '<div class="empty glass"><div class="eyebrow">' + (any ? "Deck clear" : "Start here") + '</div><h1>' +
+      v.innerHTML = deckHead() + '<div class="empty glass"><div class="eyebrow">' + (any ? "Deck clear" : "Start here") + '</div><h1>' +
         (any ? "You are living every principle." : "No principles yet.") + '</h1><p>Capture a principle you want to live by. It stays in the deck until you live it without prompting.</p>' +
         '<button type="button" class="btn" style="width:auto;padding-inline:22px" id="emptyAdd">Capture a principle</button>' +
         '<button type="button" class="btn ghost" style="width:auto;padding-inline:22px" id="emptyStarter">Load a starter deck</button></div>';
@@ -1260,7 +1322,7 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
       return;
     }
     var nudge = t.consecutive_reflects >= NUDGE_AT, coachOn = !prefs.coach_seen;
-    v.innerHTML = chipsHtml() +
+    v.innerHTML = deckHead() + chipsHtml() +
       '<article class="card glass' + (enter ? " enter" : "") + '" id="card" aria-label="Current principle">' +
         '<div class="stamp skip" id="stSkip">NOT TODAY</div><div class="stamp shed" id="stShed">LIVING IT</div><div class="stamp keep" id="stKeep">WORKING ON IT</div>' +
         '<div class="card-top">' + labelHtml(t) +
@@ -1531,6 +1593,8 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
     var resisting = act_.filter(function (t) { return t.skip_count >= 3; }).length;
     $("lShed").textContent = shed.length;
     $("lLine").textContent = act_.length + " in deck · " + resisting + " pushing back";
+    $("lMeta").textContent = items.length + (items.length === 1 ? " principle" : " principles");
+    paintStat();
     var avg = shed.length ? Math.round(shed.reduce(function (a, t) { return a + Math.max(1, (new Date(t.shed_at) - new Date(t.created_at)) / 86400000); }, 0) / shed.length) : 0;
     $("lAvg").textContent = shed.length ? "avg " + avg + (avg === 1 ? " day" : " days") + " to live it" : "none lived yet";
     // Glowing bars: every principle counted once (core.js outcomeMix); the percentages add up to 100.
@@ -1739,7 +1803,6 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
       $("v-ledger").hidden = view !== "ledger";
       $("toDeck").setAttribute("aria-current", view === "deck" ? "page" : "false");
       $("toLedger").setAttribute("aria-current", view === "ledger" ? "page" : "false");
-      $("brand").firstChild.nodeValue = view === "ledger" ? "Ledger" : "Scales";
     }
     if (from !== view && document.startViewTransition && !REDUCED.matches && !openSheet) {
       document.documentElement.setAttribute("data-vt", view === "deck" ? "back" : "fwd");
@@ -1783,7 +1846,7 @@ textarea.big { font-family:var(--f-display); font-weight:500; font-size:var(--t-
 
   // ---------- boot ----------
   // Startup: load saved data, apply the theme, show the first thought.
-  $("todayLbl").textContent = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  $("todayLbl").textContent = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   thoughts = lsGet(LS, {}); activity = lsGet(LSA, {}); prefs = Object.assign({ skin: "auto" }, lsGet(LSP, {}));
   prefs.deck_coll = C.deckFilter(all(), prefs.deck_coll);
   applySkin();

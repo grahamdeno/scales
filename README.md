@@ -78,7 +78,9 @@ To check the key, tap **Test key** under AI line. It sends one tiny request and 
 
 ## Themes
 
-**The look (1.27.0).** The card is the hero: a large rounded card with a deep, soft shadow that tilts as you drag it and glows green toward Living it, amber toward Still working on it and rose toward Not today. Let go early and it springs back; the next card rises into place, and Living it ends with a short burst of green. A frosted top bar holds the title and Settings, and a floating frosted tab bar at the bottom holds Deck, a white + for Capture, and Ledger. When the deck has collections, pill chips above the card filter the deck to one collection (All shows everything); the choice is remembered, follows a rename, and falls back to All when the collection is gone. The principle is set in Fraunces, a display serif that ships with the app so it looks the same offline; long principles keep the plainer body face. The Ledger shows Living it, Still working and Not today as three glowing bars, every principle counted once. Behind it all, a slow gradient in the theme's colors drifts. With Reduce Motion on, the background holds still and the tilt, springs, burst and view transitions are left out.
+**The layout (1.28.0).** A light top holds the Scales mark, the date, a small count of the principles you weighed today and Settings. Below it, a dark panel rises from the bottom with rounded top corners and holds the view: a **Today** heading, the collection chips and the card on the deck, a **Ledger** heading and its tiles on the Ledger. The frosted tab bar floats over the panel. Corners come from one scale of tokens (`--r-*`): 18px cards, 16px tiles, 12 to 14px buttons, 20px sheets and tab bar, 24px for the panel, and fully round only for chips and small tags. All type is Inter, a variable sans with an optical size axis, self-hosted so it looks the same offline. Light themes get a warm light top over a deep panel of their own (teal for Auto, espresso for Linen); dark themes keep their colors in the panel and get a lighter top tinted by their glow color.
+
+**The look (1.27.0).** The card is the hero: a large rounded card with a deep, soft shadow that tilts as you drag it and glows green toward Living it, amber toward Still working on it and rose toward Not today. Let go early and it springs back; the next card rises into place, and Living it ends with a short burst of green. A floating frosted tab bar at the bottom holds Deck, a white + for Capture, and Ledger. When the deck has collections, pill chips above the card filter the deck to one collection (All shows everything); the choice is remembered, follows a rename, and falls back to All when the collection is gone. Long principles drop to the body size so they fit. The Ledger shows Living it, Still working and Not today as three glowing bars, every principle counted once. Behind it all, a slow gradient in the theme's colors drifts. With Reduce Motion on, the background holds still and the tilt, springs, burst and view transitions are left out.
 
 Six themes: Auto (follows the phone's light or dark setting), Moss, Linen, Ink, Dusk and Return. Return is drawn from the Scales icon. Each theme is a set of CSS custom properties, so adding one means adding one block of color values and one entry in the theme list.
 
@@ -88,7 +90,7 @@ Six themes: Auto (follows the phone's light or dark setting), Moss, Linen, Ink, 
 index.html              the app: markup, styles, UI script
 core.js                 pure logic: weighting, selection, answer checks, version
 sw.js                   service worker: offline shell, network first
-fonts/                  Fraunces display face (woff2, latin) and its license (OFL)
+fonts/                  Inter (variable woff2, latin) and its license (OFL)
 manifest.webmanifest    home screen name, colors, icons
 icons/                  app icon, maskable icon, favicons, source SVG
 tests/                  node:test suite for core.js and release wiring
@@ -97,7 +99,7 @@ docs/                   architecture diagrams and screenshots
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams of how the pieces fit, how a principle moves from capture to Living it, and what happens each time a card is shown.
 
-No build step and no runtime dependencies. The display face is served from `fonts/`; the only outside requests are Google Fonts (the IBM Plex body and mono faces) and, if a key is set, the Anthropic API.
+No build step and no runtime dependencies. The type face is served from `fonts/`; the only outside request is the Anthropic API, and only if a key is set.
 
 ## Design decisions
 

@@ -566,7 +566,7 @@ test("swipeIntent keeps the commit rules and reads the direction for the glow", 
 
 test("the page wires the tab bar, chips, glow and motion guards (1.27.0)", () => {
   const html = read("index.html");
-  const nav = html.slice(html.indexOf('<nav class="tabbar"'), html.indexOf("</nav>"));
+  const nav = html.slice(html.indexOf('<nav class="tabbar'), html.indexOf("</nav>"));
   assert.ok(nav.length > 0, "tab bar exists");
   for (const id of ["toDeck", "fab", "toLedger"]) assert.match(nav, new RegExp('id="' + id + '"'), id + " is in the tab bar");
   assert.match(nav, /<span>Deck<\/span>[\s\S]*<span>Ledger<\/span>/, "tabs keep text labels");
@@ -586,15 +586,47 @@ test("the page wires the tab bar, chips, glow and motion guards (1.27.0)", () =>
   for (const v of ["--c-live", "--c-work", "--c-skip"]) assert.match(html, new RegExp(v + ":color-mix\\(in oklab, var\\(--\\w+-base\\) \\d+%, var\\(--accent\\)\\)"), v + " is derived from the theme accent");
 });
 
-test("the display face is self-hosted, preloaded and cached for offline use", () => {
+test("the type face is self-hosted, preloaded and cached for offline use (1.28.0: Inter)", () => {
   const html = read("index.html"), sw = read("sw.js");
-  assert.ok(fs.statSync(path.join(root, "fonts/fraunces-latin.woff2")).size > 10000);
-  assert.ok(fs.existsSync(path.join(root, "fonts/OFL.txt")), "font license ships with the font");
-  assert.match(html, /src:url\("fonts\/fraunces-latin\.woff2"\) format\("woff2"\)/);
-  assert.match(html, /<link rel="preload" href="fonts\/fraunces-latin\.woff2" as="font" type="font\/woff2" crossorigin>/);
-  assert.match(sw, /"fonts\/fraunces-latin\.woff2"/);
-  assert.match(html, /--f-display:"Fraunces",[^;]*serif;/, "falls back to a system serif");
+  assert.ok(fs.statSync(path.join(root, "fonts/inter-latin.woff2")).size > 10000);
+  assert.ok(!fs.existsSync(path.join(root, "fonts/fraunces-latin.woff2")), "the old display face is gone");
+  assert.match(read("fonts/OFL.txt"), /Inter Project Authors/, "font license ships with the font");
+  assert.match(html, /font-family:"Inter"; font-style:normal; font-weight:100 900; font-display:swap; src:url\("fonts\/inter-latin\.woff2"\) format\("woff2"\)/);
+  assert.match(html, /<link rel="preload" href="fonts\/inter-latin\.woff2" as="font" type="font\/woff2" crossorigin>/);
+  assert.match(sw, /"fonts\/inter-latin\.woff2"/);
+  assert.doesNotMatch(html, /fonts\.googleapis\.com|fonts\.gstatic\.com/, "no web font is fetched from another site");
+  for (const v of ["--f-display", "--f-body", "--f-num"]) assert.match(html, new RegExp(v + ':"Inter",[^;]*sans-serif;'), v + " falls back to the system sans");
+  assert.doesNotMatch(html, /font-variation-settings/, "no axes left over from the old serif");
   assert.match(html, /\.thought\.long \{ font-family:var\(--f-body\)/, "long principles keep the body face");
+});
+
+test("corner radii come from one token scale (1.28.0)", () => {
+  const html = read("index.html");
+  const css = html.slice(html.indexOf("<style>\n/* Layout:"), html.indexOf("</style>", html.indexOf("<style>\n/* Layout:")));
+  assert.match(css, /--r-xs:4px; --r-sm:10px; --r-btn:12px; --r-ctl:14px; --r-tile:16px; --r-card:18px; --r-sheet:20px; --r-bar:20px; --r-panel:24px; --r-pill:999px;/);
+  const rule = (sel) => { const i = css.indexOf("\n" + sel + " {"); assert.ok(i >= 0, sel + " rule"); return css.slice(i, css.indexOf("}", i)); };
+  assert.match(rule(".card"), /border-radius:var\(--r-card\)/);
+  assert.match(rule(".sheet"), /border-radius:var\(--r-sheet\) var\(--r-sheet\) 0 0/);
+  assert.match(rule(".btn"), /border-radius:var\(--r-btn\)/);
+  assert.match(rule(".chip"), /border-radius:var\(--r-pill\)/);
+  assert.match(rule(".panel"), /border-radius:var\(--r-panel\) var\(--r-panel\) 0 0/);
+  const raw = [...css.matchAll(/border-radius:(\d+)px/g)].map((m) => +m[1]);
+  assert.ok(raw.every((r) => r <= 6), "only hairline radii are written as raw pixels: " + raw);
+  assert.equal((css.match(/999px/g) || []).length, 1, "fully round only through --r-pill");
+});
+
+test("the top and the panel (1.28.0)", () => {
+  const html = read("index.html");
+  assert.match(html, /<main class="panel pscope">[\s\S]*id="v-deck"[\s\S]*id="v-ledger"[\s\S]*<\/main>/, "both views sit in the dark panel");
+  assert.match(html, /<nav class="tabbar pscope"/, "the tab bar uses the panel palette");
+  assert.match(html, /\.pscope \{ --bg:var\(--p-bg\); --surface:var\(--p-surface\); --fg:var\(--p-fg\);/);
+  for (const sk of ["linen"]) assert.match(html, new RegExp(':root\\[data-skin="' + sk + '"\\] \\{ --top-bg:#'), sk + " has its own top and panel");
+  assert.match(html, /id="todayStat"[^>]*aria-label=/, "today's count has a spoken label");
+  assert.match(html, /function paintStat\(\) \{[\s\S]{0,200}activity\[dayKey\(\)\]/, "the count comes from the activity log");
+  assert.match(html, /function logActivity\(kind\) \{[\s\S]{0,400}paintStat\(\);/, "it updates on every move");
+  assert.match(html, /function renderDeck\(\) \{[\s\S]{0,120}paintStat\(\);/, "and after an undo redraws the deck");
+  assert.match(html, /<h1 class="ptitle">Ledger<\/h1>/);
+  assert.match(html, /<h1 class="ptitle">Today<\/h1>/);
 });
 
 test("the type scale has five steps; only text inputs keep 16px", () => {
