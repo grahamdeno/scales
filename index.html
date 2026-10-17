@@ -695,9 +695,10 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   <h3 class="sec2">Daily reminder</h3>
   <div class="panel raised">
     <div class="setrow stack">
-      <p class="note">Scales has no server, so it cannot send notifications. An iPhone automation can open it for you instead. Set it up once, for the morning set and again for the evening check-in.</p>
-      <div class="steps"><div><b>1</b><span>Tap Copy link.</span></div><div><b>2</b><span>In Shortcuts: Automation, New Automation, Time of Day. Pick a time, then Run Immediately.</span></div><div><b>3</b><span>Add the Open URLs action and paste the link. Repeat for the evening, after 6 PM.</span></div></div>
-      <div class="btnrow"><button class="btn3d sm raised" type="button" id="copyLink">Copy link</button><button class="btn3d sm raised" type="button" id="openShortcuts">Open Shortcuts</button></div>
+      <p class="note">Scales has no server, so it cannot send notifications itself. An iPhone automation can remind you instead. Set it up once for the morning set and once for the evening check-in.</p>
+      <div class="steps"><div><b>1</b><span>In Shortcuts: Automation, New Automation, Time of Day. Pick a time, then Run Immediately.</span></div><div><b>2</b><span>Add the Show Notification action with the words: Scales, today’s set.</span></div><div><b>3</b><span>Repeat for the evening, after 6 PM: Scales, evening check-in. Open Scales from the Home Screen when it arrives.</span></div></div>
+      <p class="note">A link would open Safari, which keeps its own copy of the data, so the reminder points you to the Home Screen app instead.</p>
+      <div class="btnrow"><button class="btn3d sm raised" type="button" id="openShortcuts">Open Shortcuts</button></div>
     </div>
   </div>
 
@@ -2357,12 +2358,8 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   function setSet(n) { prefs.set_size = C.setSize(n); savePrefs(); paintSettings(); }
   $("setDown").onclick = function () { setSet(setSize() - 1); };
   $("setUp").onclick = function () { setSet(setSize() + 1); };
-  // Daily reminder: the app's own address for an iPhone Shortcuts automation.
-  $("copyLink").onclick = function () {
-    var url = location.origin + location.pathname;
-    var done = function () { toast("Link copied: " + url); };
-    try { navigator.clipboard.writeText(url).then(done, function () { toast(url); }); } catch (e) { toast(url); }
-  };
+  // Daily reminder: an iPhone Shortcuts automation that shows a notification. Opening a link would land
+  // in Safari, whose storage is separate from the Home Screen app, so it is not offered.
   $("openShortcuts").onclick = function () { location.href = "shortcuts://"; };
   $("aiToggle").onclick = function () { prefs.ai_off = !prefs.ai_off; savePrefs(); applyKey(); paintSettings(); };
 

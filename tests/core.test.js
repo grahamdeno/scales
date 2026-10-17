@@ -908,6 +908,6 @@ test("the page wires the day: moves counted, undo restores the day, check-in fir
   assert.match(html, /C\.checkinDue\(day, new Date\(\)\) && renderCheckin\(\)\) return;/);
   assert.match(html, /if \(C\.askAct\(prefs\.tests\)\)/);
   assert.match(html, /C\.isReviewDay\(td\) && prefs\.week_seen !== td/);
-  for (const id of ["sheetCaught", "sheetAct", "sheetWeek", "setOut", "copyLink", "openShortcuts", "mCaught"]) assert.match(html, new RegExp('id="' + id + '"'), id);
+  for (const id of ["sheetCaught", "sheetAct", "sheetWeek", "setOut", "openShortcuts", "mCaught"]) assert.match(html, new RegExp('id="' + id + '"'), id);
   assert.match(html, /if \(kind === "shed"\) d\.s\+\+; else if \(kind === "caught"\) d\.c = \(d\.c \|\| 0\) \+ 1; else d\.i\+\+;/);
 });

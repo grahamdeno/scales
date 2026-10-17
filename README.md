@@ -36,7 +36,7 @@ The same three moves are three keys under the principle, always on screen, and t
 
 **Your week.** On Sunday, Scales opens a short review of the last seven days: how many principles you weighed, how many times you caught yourself, what you now live, and what pushed back most, with one voice weighing in on the week if you ask. It is in the Ledger any day.
 
-**Daily reminder.** Scales has no server, so it cannot send notifications. Settings > Daily reminder walks through an iPhone Shortcuts automation that opens Scales at a time you choose, once for the morning set and once for the evening check-in.
+**Daily reminder.** Scales has no server, so it cannot send notifications. Settings > Daily reminder walks through an iPhone Shortcuts automation that shows a notification at a time you choose, once for the morning set and once for the evening check-in. It does not open a link, because a link opens Safari, which keeps a separate copy of the data from the Home Screen app.
 
 **Weighting.** What you set aside comes back more often. A principle's chance of showing up is `1 + 0.5 x not today count`, capped at 4x. A short cooldown keeps the same principle from repeating back to back.
 
