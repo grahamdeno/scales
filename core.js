@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.26.0";
+  var VERSION = "1.27.0";
   var BUILT = "2026-10-16";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -312,6 +312,64 @@ var ScalesCore = (function () {
     return { thoughts: copy(point.thoughts), activity: copy(point.activity), history: copy(point.history), current: point.current };
   }
 
+  // Collection chips on the deck (1.27.0). A chip filters the deck to one collection; "" means all.
+  // Matching ignores capitalization and spacing, like collections() and canonCollection().
+  function collKey(n) { return String(n || "").trim().replace(/\s+/g, " ").toLowerCase(); }
+  function inCollection(t, name) { return !collKey(name) || collKey(t && t.collection) === collKey(name); }
+  // Chips for the deck: the collections that still have principles in the deck, most used first.
+  // Empty when no deck principle has a collection, so the row is not drawn at all.
+  function deckCollections(list) {
+    return collections(list.filter(function (t) { return t.status === "active"; }));
+  }
+  // The saved filter, spelled as the collection is now, or "" when that collection is gone from the
+  // deck (renamed, removed, or every principle in it lived), so the deck falls back to all.
+  function deckFilter(list, name) {
+    if (!collKey(name)) return "";
+    var hit = deckCollections(list).filter(function (c) { return collKey(c.name) === collKey(name); })[0];
+    return hit ? hit.name : "";
+  }
+
+  // Swipe reading (1.27.0), from the drag offset in pixels (dy is negative going up). The commit
+  // rules are the ones the deck has always used: past SWIPE left = skip, right = shed, up = keep
+  // while staying within 60px sideways. While dragging, kind is the move the card is heading for
+  // (sideways unless the drag is mostly upward), strength (0 to 1) drives the glow and stamps, and
+  // tilt is the card's rotation in degrees, capped so a long drag never spins it.
+  var SWIPE = 90;
+  function swipeIntent(dx, dy) {
+    dx = +dx || 0; dy = +dy || 0;
+    var commit = dx < -SWIPE ? "skip" : dx > SWIPE ? "shed" : (dy < -SWIPE && Math.abs(dx) < 60) ? "keep" : "";
+    var kind = commit, strength = 0;
+    if (!kind) {
+      if (Math.abs(dx) >= 60 || Math.abs(dx) > -dy) kind = dx < -8 ? "skip" : dx > 8 ? "shed" : "";
+      else kind = "keep";
+    }
+    if (kind === "keep") strength = Math.min(1, Math.max(0, -dy / SWIPE));
+    else if (kind) strength = Math.min(1, Math.abs(dx) / SWIPE);
+    var tilt = Math.max(-14, Math.min(14, dx / 20));
+    return { kind: kind, strength: Math.round(strength * 1000) / 1000, commit: !!commit, tilt: Math.round(tilt * 100) / 100 };
+  }
+
+  // Ledger bars (1.27.0): every principle counted once. Living it = lived; Not today = still in the
+  // deck and currently set aside more than worked through (skip_count above 0); Still working = the
+  // rest of the deck. Percentages are whole numbers that add up to 100 (largest remainder), or all 0
+  // for an empty deck.
+  function outcomeMix(list) {
+    var n = { live: 0, work: 0, skip: 0 };
+    list.forEach(function (t) {
+      if (t.status === "shed") n.live++;
+      else if (t.status === "active") { if ((t.skip_count || 0) > 0) n.skip++; else n.work++; }
+    });
+    var total = n.live + n.work + n.skip, keys = ["live", "work", "skip"], pct = { live: 0, work: 0, skip: 0 };
+    if (total) {
+      var raw = keys.map(function (k) { return { k: k, v: n[k] * 100 / total }; });
+      raw.forEach(function (r) { pct[r.k] = Math.floor(r.v); });
+      var left = 100 - keys.reduce(function (a, k) { return a + pct[k]; }, 0);
+      raw.sort(function (a, b) { return (b.v - Math.floor(b.v)) - (a.v - Math.floor(a.v)) || keys.indexOf(a.k) - keys.indexOf(b.k); });
+      for (var i = 0; i < left; i++) pct[raw[i].k]++;
+    }
+    return { live: n.live, work: n.work, skip: n.skip, total: total, pct: pct };
+  }
+
   return { VERSION: VERSION, BUILT: BUILT, CAP: CAP, MAX_WORDS: MAX_WORDS, MAX_TEXT: MAX_TEXT,
     tier: tier, weight: weight, words: words, pickFrom: pickFrom, clean: clean, fit: fit, vet: vet,
     LIMITS: LIMITS, ORIGINS: ORIGINS, normText: normText, collections: collections, canonCollection: canonCollection,
@@ -320,7 +378,9 @@ var ScalesCore = (function () {
     STARTER_FIELDS: STARTER_FIELDS, loadStarter: loadStarter,
     DAY_START_HOUR: DAY_START_HOUR, REST_DAYS: REST_DAYS, dayOf: dayOf, addDays: addDays, isResting: isResting,
     applySkip: applySkip, nextReturn: nextReturn, frontQueue: frontQueue, nextCard: nextCard, markShown: markShown,
-    undoPoint: undoPoint, applyUndo: applyUndo };
+    undoPoint: undoPoint, applyUndo: applyUndo,
+    inCollection: inCollection, deckCollections: deckCollections, deckFilter: deckFilter, outcomeMix: outcomeMix,
+    SWIPE: SWIPE, swipeIntent: swipeIntent };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = ScalesCore;
