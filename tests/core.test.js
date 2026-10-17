@@ -493,3 +493,114 @@ test("the page wires sheets as modal dialogs, Undo, the coach and the add button
   assert.doesNotMatch(html, /stripHtml|id="addChip"/, "the Pushing back strip is gone from the deck");
   assert.doesNotMatch(html, /Tap again to delete/, "Delete uses Undo, not a second tap");
 });
+
+// ---------- 1.27.0: the new look ----------
+const A = (id, extra = {}) => Object.assign({ id, text: "P " + id, status: "active", skip_count: 0, lifetime_skips: 0 }, extra);
+
+test("inCollection matches ignoring case and spacing; an empty filter matches everything", () => {
+  assert.equal(C.inCollection(A("a", { collection: "Stoic" }), ""), true);
+  assert.equal(C.inCollection(A("a"), ""), true);
+  assert.equal(C.inCollection(A("a", { collection: "  stoic " }), "Stoic"), true);
+  assert.equal(C.inCollection(A("a", { collection: "Explore  This" }), "explore this"), true);
+  assert.equal(C.inCollection(A("a", { collection: "Poems" }), "Stoic"), false);
+  assert.equal(C.inCollection(A("a"), "Stoic"), false);
+});
+
+test("deck chips list only collections still in the deck, most used first", () => {
+  const list = [A("a", { collection: "Stoic" }), A("b", { collection: "Poems" }), A("c", { collection: "stoic" }),
+    A("d", { collection: "Lived only", status: "shed" }), A("e")];
+  assert.deepEqual(C.deckCollections(list), [{ name: "Stoic", count: 2 }, { name: "Poems", count: 1 }]);
+  assert.deepEqual(C.deckCollections([A("x"), A("y", { status: "shed", collection: "Gone" })]), [], "no chips without collections in the deck");
+});
+
+test("the saved deck filter follows the collection's spelling and falls back to all when it is gone", () => {
+  const list = [A("a", { collection: "Stoic" }), A("b", { collection: "Poems", status: "shed" })];
+  assert.equal(C.deckFilter(list, "stoic"), "Stoic");
+  assert.equal(C.deckFilter(list, ""), "");
+  assert.equal(C.deckFilter(list, undefined), "");
+  assert.equal(C.deckFilter(list, "Poems"), "", "every principle in it is lived");
+  assert.equal(C.deckFilter(list, "Renamed away"), "");
+});
+
+test("a filtered deck draws only from its collection, front of the stack included", () => {
+  const today = "2026-10-16";
+  const list = [A("s1", { collection: "Stoic" }), A("s2", { collection: "Stoic" }),
+    A("l1", { collection: "Leadership", lead_due: true, skip_count: 3 })];
+  const pool = list.filter((t) => C.inCollection(t, "Stoic"));
+  const r = lcg(3);
+  for (let i = 0; i < 40; i++) assert.notEqual(C.nextCard(pool, [], today, false, r).card.id, "l1");
+  assert.equal(C.nextCard(list, [], today, false, r).card.id, "l1", "unfiltered, the principle owed a turn leads");
+});
+
+test("outcomeMix counts every principle once and its percentages add up to 100", () => {
+  const list = [A("a", { status: "shed" }), A("b", { status: "shed" }), A("c"), A("d"), A("e", { skip_count: 1 }), A("f", { skip_count: 2 }), A("g", { skip_count: 4 })];
+  const m = C.outcomeMix(list);
+  assert.deepEqual([m.live, m.work, m.skip, m.total], [2, 2, 3, 7]);
+  assert.deepEqual(m.pct, { live: 29, work: 28, skip: 43 });
+  assert.equal(m.pct.live + m.pct.work + m.pct.skip, 100);
+  const thirds = C.outcomeMix([A("a", { status: "shed" }), A("b"), A("c", { skip_count: 1 })]).pct;
+  assert.equal(thirds.live + thirds.work + thirds.skip, 100);
+  assert.deepEqual(C.outcomeMix([]).pct, { live: 0, work: 0, skip: 0 }, "empty deck draws empty bars");
+  assert.deepEqual(C.outcomeMix([A("a", { status: "shed" })]).pct, { live: 100, work: 0, skip: 0 });
+  // Lifetime skips that were worked back down do not count as Not today now.
+  assert.equal(C.outcomeMix([A("a", { lifetime_skips: 5, skip_count: 0 })]).work, 1);
+});
+
+test("swipeIntent keeps the commit rules and reads the direction for the glow", () => {
+  assert.equal(C.SWIPE, 90);
+  assert.deepEqual([C.swipeIntent(-91, 0).kind, C.swipeIntent(-91, 0).commit], ["skip", true]);
+  assert.deepEqual([C.swipeIntent(91, 0).kind, C.swipeIntent(91, 0).commit], ["shed", true]);
+  assert.deepEqual([C.swipeIntent(10, -91).kind, C.swipeIntent(10, -91).commit], ["keep", true]);
+  assert.equal(C.swipeIntent(-90, 0).commit, false, "exactly 90px is not past the line");
+  assert.equal(C.swipeIntent(-70, -100).commit, false, "up but too far sideways, and not far enough sideways");
+  assert.equal(C.swipeIntent(-95, -200).kind, "skip", "sideways commit wins, as before");
+  const mid = C.swipeIntent(45, 5);
+  assert.deepEqual([mid.kind, mid.strength, mid.commit], ["shed", 0.5, false]);
+  assert.equal(C.swipeIntent(10, -45).kind, "keep");
+  assert.equal(C.swipeIntent(3, 2).kind, "", "a tap has no direction");
+  assert.equal(C.swipeIntent(0, 0).strength, 0);
+  assert.equal(C.swipeIntent(400, 0).strength, 1);
+  assert.equal(C.swipeIntent(1000, 0).tilt, 14, "tilt is capped");
+  assert.equal(C.swipeIntent(-40, 0).tilt, -2);
+});
+
+test("the page wires the tab bar, chips, glow and motion guards (1.27.0)", () => {
+  const html = read("index.html");
+  const nav = html.slice(html.indexOf('<nav class="tabbar"'), html.indexOf("</nav>"));
+  assert.ok(nav.length > 0, "tab bar exists");
+  for (const id of ["toDeck", "fab", "toLedger"]) assert.match(nav, new RegExp('id="' + id + '"'), id + " is in the tab bar");
+  assert.match(nav, /<span>Deck<\/span>[\s\S]*<span>Ledger<\/span>/, "tabs keep text labels");
+  assert.equal((html.match(/id="fab"/g) || []).length, 1, "the standalone add button is gone; + lives in the tab bar");
+  assert.match(html, /\.tab \{[^}]*height:52px/, "tab targets are taller than 44px");
+  assert.match(html, /env\(safe-area-inset-bottom/, "tab bar clears the home indicator");
+  assert.match(html, /@supports not \(\(-webkit-backdrop-filter:blur\(1px\)\) or \(backdrop-filter:blur\(1px\)\)\)/, "glass has a fallback");
+  assert.match(html, /startViewTransition/);
+  assert.match(html, /document\.startViewTransition && !REDUCED\.matches/, "no view transition with reduced motion");
+  assert.match(html, /function burst\(\) \{[^}]*REDUCED\.matches\) return;/, "no burst with reduced motion");
+  assert.match(html, /@media \(prefers-reduced-motion: no-preference\) \{ \.glow \{ animation:drift/, "background drifts only when motion is allowed");
+  assert.doesNotMatch(html.slice(html.indexOf(".glow {"), html.indexOf("@keyframes drift")), /filter:blur/, "no blur filter on the animated background");
+  assert.match(html, /C\.swipeIntent\(dx, dy\)/);
+  assert.match(html, /C\.deckFilter\(all\(\), prefs\.deck_coll\)/);
+  assert.match(html, /C\.outcomeMix\(items\)/);
+  assert.match(html, /id="mix" role="img"/);
+  for (const v of ["--c-live", "--c-work", "--c-skip"]) assert.match(html, new RegExp(v + ":color-mix\\(in oklab, var\\(--\\w+-base\\) \\d+%, var\\(--accent\\)\\)"), v + " is derived from the theme accent");
+});
+
+test("the display face is self-hosted, preloaded and cached for offline use", () => {
+  const html = read("index.html"), sw = read("sw.js");
+  assert.ok(fs.statSync(path.join(root, "fonts/fraunces-latin.woff2")).size > 10000);
+  assert.ok(fs.existsSync(path.join(root, "fonts/OFL.txt")), "font license ships with the font");
+  assert.match(html, /src:url\("fonts\/fraunces-latin\.woff2"\) format\("woff2"\)/);
+  assert.match(html, /<link rel="preload" href="fonts\/fraunces-latin\.woff2" as="font" type="font\/woff2" crossorigin>/);
+  assert.match(sw, /"fonts\/fraunces-latin\.woff2"/);
+  assert.match(html, /--f-display:"Fraunces",[^;]*serif;/, "falls back to a system serif");
+  assert.match(html, /\.thought\.long \{ font-family:var\(--f-body\)/, "long principles keep the body face");
+});
+
+test("the type scale has five steps; only text inputs keep 16px", () => {
+  const html = read("index.html");
+  const css = html.slice(html.indexOf("<style>\n/* Layout:"), html.indexOf("</style>", html.indexOf("<style>\n/* Layout:")));
+  const px = [...css.matchAll(/font-size:(\d+(?:\.\d+)?)px/g)].map((m) => m[1]);
+  assert.deepEqual([...new Set(px)].sort(), ["16", "26", "34", "76"].sort(), "small sizes go through --t-xs/sm/md/lg; the rest are display sizes");
+  assert.match(css, /--t-xs:11px; --t-sm:13px; --t-md:15px; --t-lg:22px;/);
+});

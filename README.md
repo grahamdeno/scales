@@ -32,7 +32,7 @@ You write down a principle you want to live by ("the hard conversation is usuall
 
 **Pushing back.** The Ledger's In deck list puts the principles you set aside most at the top, so resistance is visible instead of hidden. (Until 1.26.0 this was a strip under the deck buttons; it moved so the card can use the whole screen.)
 
-**Undo and the first card.** Not today, Still working on it, Living it and Delete each show a toast with Undo for 5 seconds that puts everything back, counts, rest days, the activity grid and the Ledger included. The first card anyone sees shows a short demo of the three swipes (a static list with reduced motion); it is dismissed by a tap or the first real swipe and does not come back. The + button floating over the card opens Capture.
+**Undo and the first card.** Not today, Still working on it, Living it and Delete each show a toast with Undo for 5 seconds that puts everything back, counts, rest days, the activity grid and the Ledger included. The first card anyone sees shows a short demo of the three swipes (a static list with reduced motion); it is dismissed by a tap or the first real swipe and does not come back. The white + in the middle of the tab bar opens Capture.
 
 **Starter decks.** Stoic, Leadership, Athletic mindset and Self-overcoming sets, loaded from Settings or the empty deck, so a new deck has something in it. Every starter principle fills every field (collection, title, author, origin, tags, link and citation) as a worked example. Original lines are credited to Scales and cite their deck. The lines by Epictetus and Nietzsche use the exact wording of a named public-domain translation (Elizabeth Carter, George Long, Thomas Common), cite the work and section, and link to that chapter. Loading a deck again adds nothing new; it fills any empty fields on starter principles already in the deck without overwriting your own values.
 
@@ -78,6 +78,8 @@ To check the key, tap **Test key** under AI line. It sends one tiny request and 
 
 ## Themes
 
+**The look (1.27.0).** The card is the hero: a large rounded card with a deep, soft shadow that tilts as you drag it and glows green toward Living it, amber toward Still working on it and rose toward Not today. Let go early and it springs back; the next card rises into place, and Living it ends with a short burst of green. A frosted top bar holds the title and Settings, and a floating frosted tab bar at the bottom holds Deck, a white + for Capture, and Ledger. When the deck has collections, pill chips above the card filter the deck to one collection (All shows everything); the choice is remembered, follows a rename, and falls back to All when the collection is gone. The principle is set in Fraunces, a display serif that ships with the app so it looks the same offline; long principles keep the plainer body face. The Ledger shows Living it, Still working and Not today as three glowing bars, every principle counted once. Behind it all, a slow gradient in the theme's colors drifts. With Reduce Motion on, the background holds still and the tilt, springs, burst and view transitions are left out.
+
 Six themes: Auto (follows the phone's light or dark setting), Moss, Linen, Ink, Dusk and Return. Return is drawn from the Scales icon. Each theme is a set of CSS custom properties, so adding one means adding one block of color values and one entry in the theme list.
 
 ## Project layout
@@ -86,6 +88,7 @@ Six themes: Auto (follows the phone's light or dark setting), Moss, Linen, Ink, 
 index.html              the app: markup, styles, UI script
 core.js                 pure logic: weighting, selection, answer checks, version
 sw.js                   service worker: offline shell, network first
+fonts/                  Fraunces display face (woff2, latin) and its license (OFL)
 manifest.webmanifest    home screen name, colors, icons
 icons/                  app icon, maskable icon, favicons, source SVG
 tests/                  node:test suite for core.js and release wiring
@@ -94,7 +97,7 @@ docs/                   architecture diagrams and screenshots
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams of how the pieces fit, how a principle moves from capture to Living it, and what happens each time a card is shown.
 
-No build step and no runtime dependencies. The only outside requests are Google Fonts and, if a key is set, the Anthropic API.
+No build step and no runtime dependencies. The display face is served from `fonts/`; the only outside requests are Google Fonts (the IBM Plex body and mono faces) and, if a key is set, the Anthropic API.
 
 ## Design decisions
 
