@@ -563,11 +563,11 @@ test("swipeIntent keeps the commit rules and reads the direction for the glow", 
   assert.equal(C.swipeIntent(-40, 0).tilt, -2);
 });
 
-// ---------- 1.28.0: the Edition system ----------
+// ---------- 1.29.0: the Edition system ----------
 const css = () => { const html = read("index.html"), i = html.indexOf("<style>\n/* Layout"); return html.slice(i, html.indexOf("</style>", i)); };
 const rule = (c, sel) => { const i = c.indexOf("\n" + sel + " {"); assert.ok(i >= 0, sel + " rule"); return c.slice(i, c.indexOf("}", i)); };
 
-test("no tab bar and no button row: one corner button opens the ring (1.28.0)", () => {
+test("no tab bar and no button row: one corner button opens the ring (1.29.0)", () => {
   const html = read("index.html");
   assert.doesNotMatch(html, /class="tabbar|id="toDeck"|id="toLedger"|id="bSkip"|id="bKeep"|id="bShed"|id="openSettings"/, "the tab bar, the action row and the top Settings button are gone");
   assert.doesNotMatch(html, /class="mark"|favicon-64\.png" alt/, "no app mark in the top line");
@@ -592,7 +592,7 @@ test("no tab bar and no button row: one corner button opens the ring (1.28.0)", 
   assert.match(rule(css(), ".corner.asleep"), /opacity:\.6; transform:scale\(\.88\)/);
 });
 
-test("the three moves have keyboard and screen reader paths (1.28.0)", () => {
+test("the three moves have keyboard and screen reader paths (1.29.0)", () => {
   const html = read("index.html");
   const keys = html.slice(html.indexOf('document.addEventListener("keydown", function (e) {\n    wakeCorner();'));
   assert.match(keys, /k === "ArrowLeft"\) act\("skip"\)/);
@@ -606,7 +606,7 @@ test("the three moves have keyboard and screen reader paths (1.28.0)", () => {
   assert.doesNotMatch(html, /The buttons below do the same/);
 });
 
-test("the principle sits on the page, not on a card (1.28.0)", () => {
+test("the principle sits on the page, not on a card (1.29.0)", () => {
   const c = css();
   const card = rule(c, ".card");
   assert.doesNotMatch(card, /background|box-shadow|border-radius|border:/, "no card chrome");
@@ -638,7 +638,7 @@ test("the page wires chips, the swipe wash, outcome colors and motion guards", (
   for (const v of ["--c-live", "--c-work", "--c-skip"]) assert.match(html, new RegExp(v + ":color-mix\\(in oklab, var\\(--\\w+-base\\) \\d+%, var\\(--accent\\)\\)"), v + " is derived from the theme accent");
 });
 
-test("the type faces are self-hosted, preloaded and cached for offline use (1.28.0: Instrument Serif, Geist, Geist Mono)", () => {
+test("the type faces are self-hosted, preloaded and cached for offline use (1.29.0: Instrument Serif, Geist, Geist Mono)", () => {
   const html = read("index.html"), sw = read("sw.js");
   const faces = [["Instrument Serif", "instrument-serif-latin", "400"], ["Geist", "geist-latin", "100 900"], ["Geist Mono", "geist-mono-latin", "100 900"]];
   for (const [fam, file, wt] of faces) {
@@ -656,7 +656,7 @@ test("the type faces are self-hosted, preloaded and cached for offline use (1.28
   assert.match(html, /--f-mono:"Geist Mono",[^;]*monospace;/);
 });
 
-test("corner radii come from one token scale (1.28.0, after Edition)", () => {
+test("corner radii come from one token scale (1.29.0, after Edition)", () => {
   const c = css();
   assert.match(c, /--r-xs:3px; --r-sm:8px; --r-field:12px; --r-tile:14px; --r-panel:20px; --r-sheet:22px; --r-pill:999px;/);
   assert.match(rule(c, ".sheet"), /border-radius:var\(--r-sheet\) var\(--r-sheet\) 0 0/);
@@ -668,7 +668,7 @@ test("corner radii come from one token scale (1.28.0, after Edition)", () => {
   assert.equal((c.match(/999px/g) || []).length, 1, "fully round only through --r-pill");
 });
 
-test("the top line and the Ledger front page (1.28.0)", () => {
+test("the top line and the Ledger front page (1.29.0)", () => {
   const html = read("index.html");
   assert.match(html, /<header class="top">[\s\S]*id="todayLbl"[\s\S]*id="backDeck"[^>]*hidden[\s\S]*id="todayStat"[\s\S]*<\/header>/);
   assert.match(html, /function paintStat\(\) \{[\s\S]{0,200}activity\[dayKey\(\)\]/, "the count comes from the activity log");

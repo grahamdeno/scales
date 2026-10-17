@@ -25,7 +25,7 @@ img { max-width: 100%; }
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <style>
-/* Layout (1.28.0): the Edition system, applied to Scales.
+/* Layout (1.29.0): the Edition system, applied to Scales.
    One quiet ground per theme, warm ink, one accent. Instrument Serif carries the principle and the headings;
    Geist is for reading and labels; Geist Mono for the small uppercase labels. All three are self-hosted (fonts/).
    The principle is not a card: its words sit on the page, low on the screen where the thumb is, and the whole
@@ -1203,7 +1203,7 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
   }
   var entering = false;
   // Panel heading for the deck, drawn above the chips in every deck state.
-  // The deck has no heading of its own (1.28.0): the top line carries the date and the counts.
+  // The deck has no heading of its own (1.29.0): the top line carries the date and the counts.
   function deckHead() { return ""; }
   function emptyHtml(kick, title, text, acts) {
     return '<div class="empty"><div class="kicker">' + esc(kick) + "</div><h1>" + title + "</h1><p>" + text + '</p><div class="acts">' + acts + "</div></div>";
@@ -1251,7 +1251,7 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
       return;
     }
     var nudge = t.consecutive_reflects >= NUDGE_AT, coachOn = !prefs.coach_seen;
-    // The principle sits on the page (1.28.0): label, words, byline, the AI line and the record, low on the
+    // The principle sits on the page (1.29.0): label, words, byline, the AI line and the record, low on the
     // screen. No buttons: the three moves are swipes, the corner ring and the arrow keys.
     v.innerHTML = deckHead() + chipsHtml() +
       '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current principle" aria-describedby="cardHow">' +
@@ -1749,7 +1749,7 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
   }
   function openSettings() { paintCollCount(); screenCheck(); show("sheetSettings"); }
 
-  // ---------- the corner button and its ring (1.28.0) ----------
+  // ---------- the corner button and its ring (1.29.0) ----------
   // The one control on the screen, after Edition's corner button. Tap + and a ring of controls opens around it;
   // or hold + and slide your thumb to one and let go. Inner arc: the three moves for the principle on screen,
   // from straight left (Not today, like the swipe) to straight up (Still working on it, like the swipe).
