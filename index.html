@@ -11,83 +11,53 @@ img { max-width: 100%; }
 [hidden]:not([hidden=until-found i]) { display: none !important; }
 </style>
 <title>Scales</title>
-<link rel="preload" href="fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/geist-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Scales">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#F3F0EA" id="themeColor">
+<meta name="theme-color" content="#2E3038" id="themeColor">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <style>
-/* Layout (1.29.0): the Edition system, applied to Scales.
-   One quiet ground per theme, warm ink, one accent. Instrument Serif carries the principle and the headings;
-   Geist is for reading and labels; Geist Mono for the small uppercase labels. All three are self-hosted (fonts/).
-   The principle is not a card: its words sit on the page, low on the screen where the thumb is, and the whole
-   area is what you swipe. There is no tab bar and no button row. One corner button opens a ring of everything
-   else (the three moves, Capture, Edit, the Ledger, Settings): tap it, or hold and slide to a control. It dims
-   after a few idle seconds so the page is all reading space.
-   The Ledger is a front page: a serif masthead, sections with serif heads, and rows divided by hairlines.
-   Capture, shed and settings are bottom sheets: native <dialog> elements shown with showModal(), dimmed by ::backdrop.
-   Glass is used only where Edition uses it: the corner button and the ring.
-   Color roles: accent = Living it and links, mark = Not today / resistance, lived = inspected.
-   Outcome colors: --c-live / --c-work / --c-skip are the green, amber and rose of the swipe wash, the stamps and
-   the Ledger bars. Each is a fixed hue mixed with the theme's accent so it belongs to the theme. */
+/* Layout (1.30.0): Matte.
+   A matte, lightly grained ground in two looks (Matte, the default, and Light). Two materials sit on it:
+   raised (a soft highlight up-left and a shadow down-right, like a key standing off the page) and pressed
+   (the same light from inside, like a well cut into it). Controls you press are raised; fields, wells and
+   the selected choice are pressed. Frosted glass is kept for what floats over the page: the AI line, the
+   menu, sheets and the toast. Brass marks Living it and the one primary action; violet only lights the
+   glass behind the AI line. One face, Geist, set at several weights.
+   The principle is not on a card: its words sit on the page, and the whole page is what you swipe. The
+   three moves are also three keys, always on screen; the key for the move you are swiping toward presses
+   in as you drag. Everything else is in the menu at the top right. */
 
-/* Auto, light. */
+/* Matte (default). */
 :root {
-  --bg:#F3F0EA; --surface:#FBF9F5; --fg:#1B1A18; --muted:#5E5953; --lived:#3A3632;
-  --accent:#9C5226; --onAccent:#FFFFFF; --mark:#B4442F; --markText:#A33D29;
-  --f-display:"Instrument Serif","Iowan Old Style",Georgia,serif;
-  --f-body:"Geist",-apple-system,"SF Pro Text",system-ui,sans-serif;
-  --f-num:"Geist",-apple-system,"SF Pro Text",system-ui,sans-serif;
-  --f-mono:"Geist Mono",ui-monospace,Menlo,monospace;
-  /* Corner radii: one scale, as in Edition. Pills for chips, buttons and the toast; soft rectangles for rows and fields. */
-  --r-xs:3px; --r-sm:8px; --r-field:12px; --r-tile:14px; --r-panel:20px; --r-sheet:22px; --r-pill:999px;
-  /* Type: four text steps and four display steps. Text inputs stay at 16px, the smallest size iOS does not zoom into. */
-  --t-xs:11px; --t-sm:13px; --t-md:15px; --t-lg:17px;
-  --d-sm:24px; --d-md:28px; --d-lg:clamp(28px, 8.6vw, 34px); --d-xl:clamp(36px, 11.8vw, 46px); --d-xxl:52px;
-  --ease-spring:cubic-bezier(.34,1.56,.64,1); --ease-out:cubic-bezier(.2,.8,.2,1);
-  --gutter:20px;
+  --paper:#2E3038; --deep:#24262C; --rise:#363841; --ink:#ECE8E1; --muted:#8E919B; --faint:#6A6D77;
+  --line:rgba(255,255,255,.07); --brass:#CFA968; --brass-hi:#E0BF83; --violet:#9C8CF0; --danger:#E0A293;
+  --hi:rgba(255,255,255,.055); --lo:rgba(10,11,14,.62); --scrim:rgba(10,11,14,.38); --onBrass:#1E1F24;
+  --font:"Geist",-apple-system,"SF Pro Text",system-ui,sans-serif;
+  /* Corner radii: keys and panels 20, fields and options 16, small keys 12, sheets 30. */
+  --r-s:12px; --r-m:16px; --r-l:20px; --r-xl:30px;
+  /* Type: four text steps and the display steps. Text inputs stay at 16px, the smallest size iOS does not zoom into. */
+  --t-xs:12.5px; --t-sm:13.5px; --t-md:15.5px; --t-lg:17px;
+  --d-sm:21px; --d-md:30px; --d-lg:clamp(28px, 8.8vw, 34px); --d-mid:clamp(24px, 7vw, 28px);
+  --ease-out:cubic-bezier(.2,.8,.2,1); --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --gutter:22px;
+  color-scheme:dark;
+}
+/* Light: the same materials on a cool pale ground. */
+:root[data-look="light"] {
+  --paper:#E3E7ED; --deep:#CDD3DC; --rise:#EEF1F5; --ink:#262A33; --muted:#646B7A; --faint:#8C93A1;
+  --line:rgba(30,40,60,.09); --brass:#9A7334; --brass-hi:#C29A57; --violet:#7B68E0; --danger:#A9412E;
+  --hi:rgba(255,255,255,.9); --lo:rgba(120,135,160,.42); --scrim:rgba(60,70,90,.22); --onBrass:#1E1F24;
   color-scheme:light;
 }
-/* Dark values follow the system setting unless a light theme is forced; the same values under [data-theme="dark"]
-   force dark regardless of the system. Auto dark is Edition's own ground: near-black, warm off-white, copper. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --bg:#0E0F11; --surface:#15161A; --fg:#ECE8E3; --muted:#A9A39C; --lived:#CFC9C1;
-    --accent:#D9955F; --onAccent:#14110E; --mark:#F08A7A; --markText:#F08A7A; color-scheme:dark; }
-}
-:root[data-theme="dark"] { --bg:#0E0F11; --surface:#15161A; --fg:#ECE8E3; --muted:#A9A39C; --lived:#CFC9C1;
-  --accent:#D9955F; --onAccent:#14110E; --mark:#F08A7A; --markText:#F08A7A; color-scheme:dark; }
-/* Named themes, set by data-skin on <html>. Placed after the defaults so a chosen theme wins over the system setting. */
-:root[data-skin="moss"]  { --bg:#111A14; --surface:#18231C; --fg:#E6ECDF; --muted:#9AA897; --lived:#BCCDA8; --accent:#E8C55C; --onAccent:#111A14; --mark:#E68B5E; --markText:#EC9A70; color-scheme:dark; }
-:root[data-skin="linen"] { --bg:#EFE8DD; --surface:#F8F3EA; --fg:#2A251F; --muted:#6A5F53; --lived:#3B342C; --accent:#2F6B57; --onAccent:#FFFFFF; --mark:#B0482F; --markText:#9E3E28; color-scheme:light; }
-:root[data-skin="ink"]   { --bg:#0A0F1E; --surface:#111A31; --fg:#E5EAF6; --muted:#939DB8; --lived:#B3C3EC; --accent:#F3BC5E; --onAccent:#0A0F1E; --mark:#FF808C; --markText:#FF8C97; color-scheme:dark; }
-:root[data-skin="dusk"]  { --bg:#1A121D; --surface:#221829; --fg:#F2E8F0; --muted:#AD9BAB; --lived:#E4C0DA; --accent:#7FD6C5; --onAccent:#1A121D; --mark:#F5A95C; --markText:#F5A95C; color-scheme:dark; }
-:root[data-skin="return"] { --bg:#131220; --surface:#1C1A2E; --fg:#F3EAD8; --muted:#A9A1BD; --lived:#D9CFEA; --accent:#F08A55; --onAccent:#131220; --mark:#E8B860; --markText:#E8B860; color-scheme:dark; }
-/* Edition's quiet layers, worked out from each theme's ink so every theme gets the same structure:
-   --panel (a faint raised surface), --line and --line-2 (hairlines), --empty (tracks and empty cells). */
-:root { --panel:color-mix(in srgb, var(--fg) 5%, transparent); --panel-2:color-mix(in srgb, var(--fg) 9%, transparent);
-  --line:color-mix(in srgb, var(--fg) 10%, transparent); --line-2:color-mix(in srgb, var(--fg) 16%, transparent);
-  --empty:color-mix(in srgb, var(--fg) 9%, transparent); }
-/* Outcome base hues: deep on light grounds, bright on dark ones. */
-:root { --live-base:#0C7139; --work-base:#875400; --skip-base:#B02D4A; --shadow:rgba(24,22,20,.22); --scrim:rgba(20,18,16,.32); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --live-base:#4BD98C; --work-base:#F4B740; --skip-base:#FF7A8E; --shadow:rgba(0,0,0,.5); --scrim:rgba(0,0,0,.5); } }
-:root[data-theme="dark"], :root[data-skin="moss"], :root[data-skin="ink"], :root[data-skin="dusk"], :root[data-skin="return"] {
-  --live-base:#4BD98C; --work-base:#F4B740; --skip-base:#FF7A8E; --shadow:rgba(0,0,0,.5); --scrim:rgba(0,0,0,.5); }
-:root[data-skin="linen"] { --live-base:#0C7139; --work-base:#875400; --skip-base:#B02D4A; --shadow:rgba(60,44,28,.22); --scrim:rgba(30,24,18,.32); }
-:root { --c-live:color-mix(in oklab, var(--live-base) 80%, var(--accent)); --c-work:color-mix(in oklab, var(--work-base) 82%, var(--accent)); --c-skip:color-mix(in oklab, var(--skip-base) 82%, var(--accent)); }
 
-@font-face { font-family:"Instrument Serif"; font-style:normal; font-weight:400; font-display:swap; src:url("fonts/instrument-serif-latin.woff2") format("woff2");
-  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family:"Geist"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/geist-latin.woff2") format("woff2");
-  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family:"Geist Mono"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/geist-mono-latin.woff2") format("woff2");
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 
 /* Base. These two rules are the sizing confirmed full screen from the Home Screen (1.22.0); keep
@@ -96,167 +66,210 @@ img { max-width: 100%; }
    bar short of the bottom. body is locked to the dynamic viewport and never scrolls; views and
    sheets scroll inside it. Page offsets left by the keyboard are reset in script (resetScroll). */
 * { box-sizing:border-box; }
-html { height:100%; min-height:100lvh; background:var(--bg); }
-body { height:100%; height:100dvh; overflow:hidden; background:var(--bg); color:var(--fg); font-family:var(--f-body); font-size:var(--t-md); line-height:1.5; -webkit-tap-highlight-color:transparent; overscroll-behavior:none; -webkit-font-smoothing:antialiased; }
+html { height:100%; min-height:100lvh; background:var(--paper); }
+body { height:100%; height:100dvh; overflow:hidden; background:var(--paper); color:var(--ink); font-family:var(--font); font-size:var(--t-md); line-height:1.45; -webkit-tap-highlight-color:transparent; overscroll-behavior:none; -webkit-font-smoothing:antialiased; }
+/* Grain: a fixed layer of fine noise over the ground, so the surface reads as matte paper. Decorative. */
+body::before { content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5; mix-blend-mode:soft-light;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
 button, input, textarea { font:inherit; color:inherit; }
-button { cursor:pointer; }
-:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+button { cursor:pointer; border:0; background:none; padding:0; }
+:focus-visible { outline:2px solid var(--brass); outline-offset:2px; }
 .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
-/* The small uppercase label, Edition's kicker: mono, tracked, quiet. */
-.label, .eyebrow, .sec-k { font-family:var(--f-mono); font-size:var(--t-xs); font-weight:500; line-height:1.3; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
-.kicker { font-family:var(--f-mono); font-size:var(--t-xs); font-weight:500; line-height:1.3; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); }
+svg.i { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none; }
 
-/* Frosted glass, used sparingly: only the corner button and the ring. Without backdrop blur it becomes a solid surface. */
-.glass { background:color-mix(in srgb, var(--surface) 82%, transparent); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
-@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) { .glass { background:var(--surface); } }
+/* ---------- Materials ---------- */
+.raised { background:linear-gradient(150deg, var(--rise), var(--paper) 70%); border-radius:var(--r-l);
+  box-shadow:-6px -6px 14px var(--hi), 8px 10px 20px var(--lo), inset 0 1px 0 var(--hi); }
+.pressed, .raised[aria-pressed="true"], .raised.down { background:var(--deep); border-radius:var(--r-l);
+  box-shadow:inset 5px 6px 12px var(--lo), inset -4px -4px 10px var(--hi); }
+.raised { transition:box-shadow .12s ease, background .12s ease, transform .12s ease; }
+.raised:active, .raised.down { transform:translateY(1px); }
+/* Frosted glass: for what floats over the page. Without backdrop blur it becomes a solid surface. */
+.glass { position:relative; border-radius:22px; background:color-mix(in srgb, var(--ink) 7%, transparent);
+  border:1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  -webkit-backdrop-filter:blur(22px) saturate(150%); backdrop-filter:blur(22px) saturate(150%);
+  box-shadow:inset 0 1px 0 color-mix(in srgb, var(--ink) 14%, transparent); }
+.frost { background:color-mix(in srgb, var(--paper) 72%, transparent); -webkit-backdrop-filter:blur(26px) saturate(140%); backdrop-filter:blur(26px) saturate(140%);
+  border:1px solid color-mix(in srgb, var(--ink) 12%, transparent); }
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) { .glass { background:var(--rise); } .frost { background:var(--paper); } }
 
-/* App shell: one centered column capped at 560px, Edition's 20px gutters, padded by the safe-area insets. */
-.app { position:relative; z-index:1; height:100%; max-width:560px; margin:0 auto; padding:calc(14px + env(safe-area-inset-top, 0px)) var(--gutter) 0; display:flex; flex-direction:column; overflow-x:clip; }
-/* overflow-x:clip keeps a principle swiped off the side from widening the page; vertical overflow is left alone. */
-/* Top line: today's date and count, in the mono label, as on Edition's feed. On the Ledger the date becomes the way back. */
-header.top { flex:none; display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:44px; view-transition-name:topbar; }
-header.top .label { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#todayStat { font-variant-numeric:tabular-nums; flex:none; }
-#todayStat b { font-weight:500; color:var(--fg); }
-.toplink { display:inline-flex; align-items:center; gap:4px; min-height:44px; min-width:44px; margin-left:-2px; padding:0 2px; border:0; background:none; color:var(--accent); }
-.toplink[hidden] { display:none; }
-
-.main { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
-.view { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+/* App shell: one centered column capped at 560px, 22px gutters, padded by the safe-area insets. */
+.app { position:relative; z-index:1; height:100%; max-width:560px; margin:0 auto; padding:calc(16px + env(safe-area-inset-top, 0px)) var(--gutter) 0; display:flex; flex-direction:column; overflow-x:clip; }
+/* Top: the day and date, large, on the deck; the way back on the Ledger. The menu button on the right. */
+header.top { flex:none; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; min-height:48px; view-transition-name:topbar; }
+.date { margin:0; font-size:var(--d-md); line-height:1.08; letter-spacing:-.02em; font-weight:500; }
+.date span { display:block; color:var(--muted); font-weight:400; }
+.iconbtn { width:44px; height:44px; border-radius:14px; display:grid; place-items:center; color:var(--muted); flex:none; }
+.iconbtn[hidden] { display:none; }
+.main { position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+.view { position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
 .view[hidden] { display:none !important; }
-.mono { font-family:var(--f-mono); }
 
-/* The principle. No card: the words sit on the page, low on the screen, and the whole area is what you swipe.
-   touch-action:none hands touch movement to the swipe handler. The transform transition carries the words back
-   or off the screen; it is off while dragging so they track the finger. The bottom padding keeps them clear of
-   the corner button. During a drag, --ga (0 to 1) and data-glow (live, work, skip) drive a soft wash of the
-   outcome color from the side you are heading toward, and the tilt is a gentle lean, not a held card. */
-.card { position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:flex-end; gap:14px;
-  padding:18px 0 calc(max(18px, env(safe-area-inset-bottom, 0px)) + 84px); touch-action:none; user-select:none; -webkit-user-select:none;
-  transform-origin:50% 100%; --ga:0; transition:transform .25s ease, opacity .25s ease; will-change:transform; }
-/* The wash lives on the page, not on the moving words: a soft light of the outcome color rising from the edge
-   you are swiping toward (right for Living it, left for Not today, the top for Still working on it). */
-.wash { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:var(--ga); --ga:0; --gc:var(--c-live); --gx:100%; --gy:60%;
-  background:radial-gradient(80% 60% at var(--gx) var(--gy), color-mix(in srgb, var(--gc) 30%, transparent), transparent); }
-.wash[data-glow="work"] { --gc:var(--c-work); --gx:50%; --gy:0%; }
-.wash[data-glow="skip"] { --gc:var(--c-skip); --gx:0%; }
-.wash.fade { transition:opacity .3s ease; }
-/* Released before the threshold: the words spring home with a little overshoot, and the wash fades. */
-.card.spring { transition:transform .55s var(--ease-spring), opacity .25s ease; }
-.card.dragging { transition:none; }
-/* The next principle fades up into place. */
-@media (prefers-reduced-motion: no-preference) { .card.enter { animation:rise .42s var(--ease-out) both; } }
-@keyframes rise { from { transform:translateY(18px); opacity:0; } }
-.card-top { position:relative; display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex:none; }
-.lab2 { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; min-width:0; }
-.lab2 .kicker { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.lab2 .orig { font-size:var(--t-sm); color:var(--muted); white-space:nowrap; }
-.badge { font-family:var(--f-mono); font-size:var(--t-xs); font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:var(--markText); white-space:nowrap; font-variant-numeric:tabular-nums; }
-/* The words: Instrument Serif, set large and balanced. The inner span's auto margin keeps short ones low without
-   clipping the top of long ones, which scroll. Long principles step down to a reading size of the same face. */
-.thought { font-family:var(--f-display); font-weight:400; font-size:var(--d-xl); line-height:1.02; letter-spacing:-0.005em;
-  flex:0 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; text-wrap:balance; overflow-wrap:anywhere; white-space:pre-line; }
-.thought > span { margin-top:auto; }
-.thought.mid { font-size:var(--d-lg); line-height:1.1; }
-.thought.long { font-family:var(--f-display); font-size:var(--d-sm); line-height:1.25; text-wrap:pretty; }
-.by { flex:none; margin-top:-6px; font-size:var(--t-md); color:var(--accent); overflow-wrap:anywhere; }
-/* The AI line: Edition's aside, a short rule on the left in the accent and the line in quieter ink. */
-.ai { flex:none; display:flex; flex-direction:column; gap:2px; padding-left:12px; border-left:2px solid color-mix(in srgb, var(--accent) 60%, transparent); min-height:44px; justify-content:center; }
-.ai .label { color:var(--muted); }
-.ai p { margin:0; font-size:var(--t-md); line-height:1.45; color:color-mix(in srgb, var(--fg) 82%, var(--muted)); transition:opacity .3s; }
-.ai p.pending { opacity:.55; }
-.meta { flex:none; font-size:var(--t-sm); color:var(--muted); font-variant-numeric:tabular-nums; }
-.meta .first { color:var(--accent); font-weight:500; }
-
-/* Stamps, as on Edition's reader: a small outlined label that fades in with the drag. */
-.stamp { position:absolute; bottom:calc(100% + 16px); z-index:2; padding:5px 12px; border-radius:var(--r-sm); border:1.5px solid currentColor; background:color-mix(in srgb, var(--bg) 80%, transparent);
-  font-family:var(--f-mono); font-size:var(--t-sm); font-weight:600; letter-spacing:.08em; opacity:0; pointer-events:none; }
-.stamp.skip { right:0; color:var(--c-skip); }
-.stamp.shed { left:0; color:var(--c-live); }
-.stamp.keep { left:50%; transform:translateX(-50%); color:var(--c-work); }
-
-/* Have you lived this yet? Edition's banner: a dot, the question, and two small pills. */
-.banner { flex:none; display:flex; align-items:center; gap:10px; min-height:48px; padding:6px 6px 6px 14px; border-radius:var(--r-tile); background:var(--panel); border:1px solid var(--line); font-size:var(--t-sm); }
-.banner .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); flex:none; }
-.banner .t { flex:1; }
-.banner .btns { display:flex; gap:4px; }
-.banner button { min-height:44px; padding:0 14px; border-radius:var(--r-pill); border:0; font-size:var(--t-sm); font-weight:600; white-space:nowrap; }
-.b-ghost { background:transparent; color:var(--fg); }
-.b-accent { background:var(--accent); color:var(--onAccent); }
-
-/* Empty states: Edition's empty front page, words first. */
-.empty { flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-start; gap:12px; padding:18px 0 calc(max(18px, env(safe-area-inset-bottom, 0px)) + 84px); }
-.empty h1 { margin:0; font-family:var(--f-display); font-weight:400; font-size:var(--d-xl); line-height:1.02; text-wrap:balance; }
-.empty p { margin:0; color:var(--muted); max-width:34ch; }
-.empty .acts { display:flex; flex-wrap:wrap; gap:8px; padding-top:4px; }
-
-/* Collection chips: Edition's outlined pills; the selected one fills with the accent. One row that scrolls sideways,
-   drawn only when the deck has collections. Each pill is 36px with an invisible band taking it to 44px. */
-.chips-row { position:relative; z-index:2; flex:none; display:flex; gap:8px; overflow-x:auto; margin:4px calc(-1 * var(--gutter)) 0; padding:6px var(--gutter); scrollbar-width:none; scroll-padding-inline:var(--gutter); }
+/* ---------- Deck ---------- */
+/* Collection keys: one row that scrolls sideways; the chosen one is pressed. Drawn only when the deck has collections. */
+.chips-row { position:relative; z-index:2; flex:none; display:flex; gap:10px; overflow-x:auto; margin:4px calc(-1 * var(--gutter)) -12px; padding:12px var(--gutter) 28px; scrollbar-width:none; scroll-padding-inline:var(--gutter); }
 .chips-row::-webkit-scrollbar { display:none; }
-.chip { position:relative; flex:none; height:36px; min-width:44px; padding:0 14px; border-radius:var(--r-pill); border:1px solid var(--line-2); background:transparent; color:var(--fg); font-size:var(--t-sm); white-space:nowrap; touch-action:manipulation; }
-.chip::after { content:""; position:absolute; inset:-5px 0; }
-.chip small { font-size:var(--t-xs); color:var(--muted); margin-left:6px; font-variant-numeric:tabular-nums; }
-.chip[aria-pressed="true"] { background:var(--accent); border-color:var(--accent); color:var(--onAccent); font-weight:600; }
-.chip[aria-pressed="true"] small { color:inherit; opacity:.85; }
+.chip { position:relative; flex:none; height:36px; min-width:44px; padding:0 13px; border-radius:var(--r-s); font-size:13px; color:var(--muted); white-space:nowrap; touch-action:manipulation; }
+.chip::after { content:""; position:absolute; inset:-4px 0; }
+.chip[aria-pressed="true"] { color:var(--ink); }
+.chip small { font-size:12px; color:var(--faint); margin-left:6px; font-variant-numeric:tabular-nums; }
+/* The principle, on the page. The whole deck area is what you swipe (bindSwipe); touch-action:none on the
+   words hands their touch movement to script. The words lean a little as they move and spring back. */
+.card { position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:flex-end; padding-top:8px; -webkit-touch-callout:none;
+  touch-action:none; user-select:none; -webkit-user-select:none; transform-origin:100% 100%; transition:transform .25s ease, opacity .25s ease; will-change:transform; }
+.card.spring { transition:transform .5s var(--ease-spring), opacity .25s ease; }
+.card.dragging { transition:none; }
+@media (prefers-reduced-motion: no-preference) { .card.enter { animation:rise .42s var(--ease-out) both; } }
+@keyframes rise { from { transform:translateY(16px); opacity:0; } }
+.thought { flex:0 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; font-size:var(--d-lg); line-height:1.07; letter-spacing:-.028em; font-weight:520;
+  text-wrap:balance; overflow-wrap:anywhere; white-space:pre-line; scrollbar-width:none; }
+.thought::-webkit-scrollbar { display:none; }
+.thought > span { margin-top:auto; }
+.thought.mid { font-size:var(--d-mid); line-height:1.12; letter-spacing:-.02em; }
+.thought.long { font-size:19px; line-height:1.38; letter-spacing:-.01em; font-weight:450; text-wrap:pretty; }
+.where { flex:none; margin-top:12px; display:flex; flex-wrap:wrap; gap:4px 14px; font-size:var(--t-sm); color:var(--muted); }
+.where b { color:var(--ink); font-weight:500; }
+/* The AI line: glass over a soft violet light, the one lit element on the page. */
+.lineWrap { position:relative; flex:none; margin-top:20px; }
+.lineWrap::before { content:""; position:absolute; left:-30px; right:40px; top:-26px; bottom:-30px; pointer-events:none;
+  background:radial-gradient(60% 70% at 30% 50%, color-mix(in srgb, var(--violet) 55%, transparent), transparent 70%); filter:blur(18px); opacity:.55; }
+.lineWrap .glass { padding:15px 14px 12px 18px; }
+.ai-p { margin:0; font-size:16px; line-height:1.42; letter-spacing:-.005em; transition:opacity .3s; }
+.ai-p.pending { opacity:.5; }
+.ai-row { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; min-height:40px; }
+.ai-row small { font-size:var(--t-xs); color:var(--muted); }
+.keep { flex:none; display:flex; gap:7px; align-items:center; min-height:40px; padding:0 14px; border-radius:var(--r-s); font-size:var(--t-sm); font-weight:550; color:var(--ink); }
+.keep svg.i { width:15px; height:15px; stroke:var(--brass); stroke-width:1.9; }
+.keep[hidden] { display:none; }
+/* Have you lived this yet? A small raised strip above the keys. */
+.banner { flex:none; display:flex; align-items:center; gap:10px; margin-top:16px; padding:6px 6px 6px 16px; border-radius:var(--r-m); font-size:var(--t-sm); }
+.banner .t { flex:1; }
+.banner button { min-height:40px; padding:0 14px; border-radius:var(--r-s); font-size:var(--t-sm); font-weight:550; white-space:nowrap; }
+.banner .yes { color:var(--brass); }
+/* The three moves: hardware keys, always on screen. Living it is the brass one. */
+.moves { flex:none; margin-top:22px; display:grid; grid-template-columns:1fr 1.25fr 1fr; gap:14px; }
+.key { height:clamp(66px, 11svh, 92px); padding:12px 14px; display:flex; flex-direction:column; justify-content:space-between; align-items:flex-start; text-align:left; color:var(--ink); touch-action:manipulation; }
+.key span { font-size:var(--t-sm); font-weight:520; }
+.key.live svg.i { stroke:var(--brass); }
+.foot { flex:none; display:flex; justify-content:space-between; gap:12px; padding:16px 0 max(14px, env(safe-area-inset-bottom, 0px)); font-size:var(--t-xs); color:var(--faint); font-variant-numeric:tabular-nums; }
+.foot .first { color:var(--brass); }
+/* Swipe label: shows the move as you drag toward it. */
+.swipetag { position:absolute; z-index:3; top:42%; display:flex; gap:8px; align-items:center; padding:9px 14px; border-radius:14px; font-size:15px; font-weight:560; opacity:0; pointer-events:none; transition:opacity .1s; }
+.swipetag.skip { right:0; } .swipetag.shed { left:0; } .swipetag.keep { left:50%; transform:translateX(-50%); top:20%; }
+.swipetag.shed svg.i { stroke:var(--brass); }
+/* Empty states: words first, then raised keys. */
+.empty { flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-start; padding-bottom:28px; }
+.empty h1 { margin:0; font-size:var(--d-lg); line-height:1.07; letter-spacing:-.028em; font-weight:520; text-wrap:balance; }
+.empty p { margin:12px 0 0; font-size:var(--t-md); line-height:1.45; color:var(--muted); max-width:32ch; }
+.empty .acts { display:flex; flex-wrap:wrap; gap:12px; margin-top:22px; }
+/* Living it: one soft ring of brass that blooms from the words and fades. Never with reduced motion. */
+.burst { position:fixed; z-index:6; width:220px; height:220px; margin:-110px 0 0 -110px; border-radius:50%; pointer-events:none;
+  background:radial-gradient(closest-side, transparent 55%, color-mix(in srgb, var(--brass) 55%, transparent) 70%, transparent); animation:burst .7s var(--ease-out) forwards; }
+@keyframes burst { from { transform:scale(.2); opacity:1; } to { transform:scale(2.4); opacity:0; } }
 
-/* ================= Ledger: a front page ================= */
-#v-ledger { overflow-y:auto; overscroll-behavior:contain; margin-inline:calc(-1 * var(--gutter)); padding:6px var(--gutter) calc(max(18px, env(safe-area-inset-bottom, 0px)) + 96px); gap:22px; scrollbar-width:none; }
+/* First-swipe tip: a glass panel over the dimmed page, above the keys, shown once. */
+.coach { position:absolute; inset:-8px calc(-1 * var(--gutter)) 0; z-index:5; display:flex; flex-direction:column; justify-content:flex-end; padding:0 var(--gutter) calc(clamp(66px, 11svh, 92px) + 60px + max(14px, env(safe-area-inset-bottom, 0px)));
+  background:color-mix(in srgb, var(--paper) 62%, transparent); }
+.coach .glass { padding:18px; background:color-mix(in srgb, var(--paper) 94%, transparent); }
+.coach h2 { margin:0; font-size:20px; font-weight:560; letter-spacing:-.01em; }
+.coach ul { list-style:none; padding:0; margin:12px 0 0; display:grid; gap:10px; font-size:15px; }
+.coach li { display:grid; grid-template-columns:28px 1fr; align-items:center; color:var(--muted); }
+.coach li b { color:var(--ink); font-weight:550; }
+.coach li svg.i { width:18px; height:18px; stroke-width:2; color:var(--ink); }
+.coach .tapnote { margin:12px 0 0; font-size:var(--t-sm); color:var(--muted); }
+.coach .row { margin-top:14px; display:flex; justify-content:flex-end; }
+
+/* Raised text key, for actions that are not the primary one. */
+.btn3d { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 18px; border-radius:var(--r-m); font-size:15px; font-weight:560; color:var(--ink); white-space:nowrap; }
+.btn3d.sm { min-height:40px; padding:0 14px; font-size:14px; border-radius:var(--r-s); }
+.btn3d:disabled { opacity:.45; cursor:default; }
+/* The primary action: brass, one per sheet. */
+.primary { display:flex; align-items:center; justify-content:center; width:100%; min-height:54px; border-radius:var(--r-m); font-size:16px; font-weight:600; color:var(--onBrass);
+  background:linear-gradient(180deg, var(--brass-hi), var(--brass)); box-shadow:0 8px 18px -6px color-mix(in srgb, var(--brass) 70%, transparent), inset 0 1px 0 rgba(255,255,255,.4); }
+.primary:disabled { cursor:default; color:var(--faint); background:var(--deep); box-shadow:inset 3px 4px 8px var(--lo), inset -3px -3px 8px var(--hi); }
+
+/* ---------- Menu ---------- */
+/* A frosted panel under the menu button. A native <dialog> shown with showModal(): focus stays inside,
+   the page behind is inert, and Escape or a tap outside closes it. */
+.menu { position:fixed; inset:calc(env(safe-area-inset-top, 0px) + 68px) max(var(--gutter), calc((100vw - 560px) / 2 + var(--gutter))) auto auto; margin:0; width:232px; padding:8px; border-radius:22px; color:var(--ink);
+  box-shadow:0 24px 40px -18px rgba(0,0,0,.6); }
+.menu[open] { display:grid; gap:2px; }
+.menu::backdrop { background:color-mix(in srgb, var(--scrim) 70%, transparent); }
+@media (prefers-reduced-motion: no-preference) { .menu[open] { animation:menuin .16s var(--ease-out); transform-origin:100% 0; } }
+@keyframes menuin { from { opacity:0; transform:scale(.96); } }
+.menu button { display:flex; justify-content:space-between; align-items:center; gap:10px; min-height:48px; padding:0 12px; border-radius:14px; font-size:var(--t-md); text-align:left; }
+.menu button:hover, .menu button:focus-visible { background:color-mix(in srgb, var(--ink) 7%, transparent); }
+.menu button span { color:var(--faint); font-size:13px; }
+.menu button[hidden] { display:none; }
+.menu hr { border:0; border-top:1px solid var(--line); margin:4px 10px; }
+
+/* ---------- Ledger ---------- */
+#v-ledger { overflow-y:auto; overscroll-behavior:contain; margin-inline:calc(-1 * var(--gutter)); padding:4px var(--gutter) calc(max(18px, env(safe-area-inset-bottom, 0px)) + 40px); scrollbar-width:none; }
 #v-ledger::-webkit-scrollbar { display:none; }
 #v-ledger > * { flex-shrink:0; }
-.masthead { padding-bottom:16px; border-bottom:1px solid var(--line-2); }
-.ptitle { margin:0; font-family:var(--f-display); font-weight:400; font-size:var(--d-xxl); line-height:.95; letter-spacing:-0.01em; }
-.masthead p { margin:8px 0 0; font-size:var(--t-sm); color:var(--muted); font-variant-numeric:tabular-nums; }
-.masthead p b { color:var(--fg); font-weight:500; }
-.sec { display:flex; flex-direction:column; gap:12px; }
-.sec-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-.sec h2 { margin:0; font-family:var(--f-display); font-weight:400; font-size:var(--d-md); line-height:1.05; }
-/* Where you stand: three of Edition's progress bars, one per outcome. */
-.mix { display:flex; flex-direction:column; gap:10px; }
-.prog { display:grid; grid-template-columns:84px minmax(0,1fr) 40px; align-items:center; gap:12px; font-size:var(--t-sm); }
-.prog span { color:var(--muted); }
-.prog .tr { height:6px; border-radius:var(--r-xs); background:var(--empty); overflow:hidden; }
-.prog .tr i { display:block; height:100%; width:var(--p, 0%); border-radius:var(--r-xs); background:var(--c); }
-.prog b { font-weight:500; text-align:right; font-variant-numeric:tabular-nums; }
-@media (prefers-reduced-motion: no-preference) { .prog .tr i { transition:width .6s var(--ease-out); } }
-.seg { display:flex; gap:8px; }
-.seg button { height:36px; min-width:44px; padding:0 14px; border-radius:var(--r-pill); border:1px solid var(--line-2); background:transparent; color:var(--fg); font-size:var(--t-sm); position:relative; }
-.seg button::after { content:""; position:absolute; inset:-4px 0; }
-.seg button[aria-pressed="true"] { background:var(--accent); border-color:var(--accent); color:var(--onAccent); font-weight:600; }
-.legend { font-size:var(--t-xs); color:var(--muted); white-space:nowrap; }
+.ptitle { margin:4px 0 0; font-size:var(--d-md); font-weight:520; letter-spacing:-.02em; line-height:1.1; }
+.gaugeRow { margin-top:18px; display:grid; grid-template-columns:1.1fr 1fr; gap:14px; }
+.gauge { border-radius:26px; padding:14px; display:grid; place-items:center; }
+.ring { width:150px; height:150px; border-radius:50%; position:relative; display:grid; place-items:center; }
+.ring svg { position:absolute; inset:7px; width:136px; height:136px; }
+.ring circle.arc { filter:drop-shadow(0 0 8px color-mix(in srgb, var(--brass) 55%, transparent)); }
+@media (prefers-reduced-motion: no-preference) { .ring circle.arc { transition:stroke-dashoffset .7s var(--ease-out); } }
+.ring .mid { width:78px; height:78px; border-radius:50%; display:grid; place-content:center; text-align:center; background:linear-gradient(150deg, var(--rise), var(--paper)); box-shadow:-4px -4px 10px var(--hi), 5px 6px 12px var(--lo); }
+.ring .mid b { font-size:26px; font-weight:560; line-height:1; font-variant-numeric:tabular-nums; }
+.ring .mid span { font-size:11.5px; color:var(--muted); }
+.caps { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; align-content:center; }
+.cap { display:grid; justify-items:center; gap:6px; font-size:12px; color:var(--muted); }
+.cap b { color:var(--ink); font-size:var(--t-sm); font-weight:560; font-variant-numeric:tabular-nums; }
+.tube { width:34px; height:118px; border-radius:17px; position:relative; overflow:hidden; }
+.tube i { position:absolute; left:6px; right:6px; bottom:6px; border-radius:12px; height:var(--p, 0%); max-height:calc(100% - 12px); }
+.tube i.on { min-height:12px; }
+@media (prefers-reduced-motion: no-preference) { .tube i { transition:height .6s var(--ease-out); } }
+.tube .live { background:linear-gradient(var(--brass-hi), var(--brass)); box-shadow:0 0 14px -2px color-mix(in srgb, var(--brass) 45%, transparent); }
+.tube .rest { background:linear-gradient(color-mix(in srgb, var(--violet) 70%, white), var(--violet)); }
+.tube .push { background:linear-gradient(color-mix(in srgb, var(--muted) 40%, white), var(--muted)); }
+.sec2 { margin:24px 0 0; display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-size:var(--t-md); font-weight:550; }
+.sec2 span { font-size:var(--t-xs); color:var(--faint); font-weight:400; }
+.pb { margin-top:12px; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; }
+.pbc { border-radius:18px; padding:12px; min-height:104px; display:flex; flex-direction:column; justify-content:space-between; gap:8px; text-align:left; color:var(--ink); }
+.pbc b { font-size:22px; color:var(--brass); font-weight:560; font-variant-numeric:tabular-nums; }
+.pbc span { font-size:var(--t-xs); line-height:1.3; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.grid12 { margin-top:12px; border-radius:18px; padding:12px; display:grid; grid-template-columns:repeat(14, minmax(0,1fr)); gap:6px; }
+.grid12 i { aspect-ratio:1; border-radius:50%; background:color-mix(in srgb, var(--ink) 8%, transparent); }
+.grid12 i.on { background:color-mix(in srgb, var(--ink) 26%, transparent); }
+.grid12 i.on2 { background:color-mix(in srgb, var(--ink) 48%, transparent); }
+.grid12 i.lv { background:var(--brass); box-shadow:0 0 6px var(--brass); }
+.grid12 i.today { outline:1.5px solid var(--ink); outline-offset:1px; }
+.gkey { margin-top:10px; display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--muted); }
+.gkey i { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:0; }
+.seg2 { margin-top:24px; display:grid; grid-template-columns:1fr 1fr; padding:5px; gap:5px; border-radius:var(--r-m); }
+.seg2 button { min-height:40px; border-radius:var(--r-s); font-size:14.5px; color:var(--muted); }
+.seg2 button[aria-pressed="true"] { color:var(--ink); }
+.list { margin-top:14px; display:grid; gap:12px; }
 .none { font-size:var(--t-sm); color:var(--muted); margin:0; }
-#ledgerList > .none { padding-bottom:4px; }
-.row { display:flex; flex-direction:column; gap:8px; padding:13px 0 4px; border-top:1px solid var(--line-2); }
-.row-top { display:flex; justify-content:space-between; gap:12px; align-items:baseline; }
-.row-top .t { font-size:var(--t-md); line-height:1.4; min-width:0; overflow-wrap:anywhere; white-space:pre-line; display:-webkit-box; -webkit-line-clamp:6; -webkit-box-orient:vertical; overflow:hidden; }
-.row-top .t.full { display:block; -webkit-line-clamp:unset; overflow:visible; font-family:var(--f-display); font-size:var(--d-sm); line-height:1.2; }
-.row-top .n { font-size:var(--t-xs); color:var(--markText); flex:none; font-variant-numeric:tabular-nums; text-align:right; font-family:var(--f-mono); letter-spacing:.04em; }
-.row-top .n.ok { color:var(--accent); }
-.bar { height:4px; border-radius:var(--r-xs); background:var(--empty); }
-.bar i { display:block; height:4px; border-radius:var(--r-xs); background:var(--c-skip); }
-.row-foot { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:var(--t-xs); color:var(--muted); }
-/* Row actions: plain text, 44px tall hit areas; the negative margin keeps the row compact. */
-.row-foot button { background:none; border:0; color:var(--muted); font-size:var(--t-sm); min-height:44px; min-width:44px; padding:0 6px; margin-block:-6px; }
-.row-foot button:last-child { margin-right:-6px; }
-.row-foot > span:last-child { display:flex; align-items:center; flex:none; white-space:nowrap; }
-.row-foot > span:first-child { min-width:0; }
-.evidence { font-size:var(--t-sm); line-height:1.45; color:color-mix(in srgb, var(--fg) 86%, var(--muted)); padding-left:12px; border-left:2px solid color-mix(in srgb, var(--c-live) 60%, transparent); }
-.row-ai { font-size:var(--t-sm); line-height:1.45; color:var(--muted); }
-.cal { display:grid; grid-template-columns:repeat(14, minmax(0,1fr)); gap:4px; }
-.cal i { aspect-ratio:1; border-radius:var(--r-xs); background:var(--empty); }
-.cal i.on { background:var(--lived); }
-.cal i.sh { background:var(--c-live); }
-.cal i.today { outline:2px solid var(--accent); outline-offset:1px; }
-.key { display:flex; gap:14px; font-size:var(--t-xs); color:var(--muted); flex-wrap:wrap; }
-.key i { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:5px; }
+.lrow { border-radius:18px; padding:14px 15px 6px; }
+.lt { font-size:var(--t-md); line-height:1.32; font-weight:500; letter-spacing:-.005em; overflow-wrap:anywhere; white-space:pre-line; }
+.lrow .glass { margin-top:10px; padding:10px 12px; border-radius:16px; }
+.lrow .glass p { margin:0; font-size:var(--t-sm); line-height:1.42; }
+.lm { margin-top:8px; display:flex; justify-content:space-between; gap:12px; font-size:var(--t-xs); color:var(--muted); }
+.lm span:last-child { text-align:right; }
+.ev { margin-top:10px; font-size:var(--t-sm); line-height:1.4; padding-left:10px; border-left:2px solid var(--brass); opacity:.9; }
+.was { margin-top:8px; font-size:var(--t-xs); line-height:1.4; color:var(--muted); }
+.kfrom { color:var(--brass); }
+.tube.h { width:auto; height:12px; border-radius:6px; margin-top:12px; }
+.tube.h i { left:3px; top:3px; bottom:3px; right:auto; height:auto; max-height:none; min-height:0; width:var(--p, 0%); border-radius:4px; background:linear-gradient(90deg, color-mix(in srgb, var(--muted) 70%, transparent), var(--ink)); }
+.acts-row { display:flex; justify-content:flex-end; gap:2px; margin:4px -8px 0 0; }
+.acts-row button { min-height:44px; min-width:44px; padding:0 8px; font-size:var(--t-sm); color:var(--muted); }
 
-/* ================= Sheets ================= */
-/* Edition's sheet: a solid surface a step up from the ground, 22px top corners, a grabber, and a serif head.
-   Fixed to the bottom, capped at 90% of the height and scrollable inside. The UA styles for <dialog> are reset. */
-.sheet { position:fixed; inset:auto 0 0 0; width:100%; max-width:560px; margin:0 auto; max-height:90%; overflow-y:auto; overscroll-behavior:contain;
-  border:0; border-top:1px solid var(--line); border-radius:var(--r-sheet) var(--r-sheet) 0 0; padding:10px var(--gutter) calc(22px + env(safe-area-inset-bottom, 0px)); gap:14px;
-  color:var(--fg); background:var(--surface); box-shadow:0 -20px 60px -24px var(--shadow); }
-.sheet[open] { display:grid; }
+/* ---------- Sheets ---------- */
+/* Frosted, 30px top corners, a grabber; fixed to the bottom, at most 92% of the height, scrollable inside.
+   Native <dialog> elements shown with showModal(); the UA styles are reset. */
+.sheet { position:fixed; inset:auto 0 0 0; width:100%; max-width:560px; margin:0 auto; max-height:92%; overflow-y:auto; overscroll-behavior:contain;
+  border:0; border-top:1px solid color-mix(in srgb, var(--ink) 12%, transparent); border-radius:var(--r-xl) var(--r-xl) 0 0; padding:12px var(--gutter) calc(24px + env(safe-area-inset-bottom, 0px)); gap:16px;
+  color:var(--ink); background:color-mix(in srgb, var(--paper) 80%, transparent); -webkit-backdrop-filter:blur(26px) saturate(140%); backdrop-filter:blur(26px) saturate(140%); scrollbar-width:none; }
+.sheet::-webkit-scrollbar { display:none; }
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) { .sheet { background:var(--paper); } }
+.sheet[open] { display:grid; align-content:start; }
+.sheet.tall { min-height:88%; }
 .sheet::backdrop { background:var(--scrim); }
 .sheet.dragging { transition:none; }
 .sheet.settle { transition:transform .22s var(--ease-out); }
@@ -264,124 +277,103 @@ header.top .label { white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 @media (prefers-reduced-motion: reduce) { .sheet.settle { transition:none; } }
 @keyframes up { from { transform:translateY(100%); } }
 @keyframes fade { from { opacity:0; } }
-/* Drag handle: the grabber and the title row. touch-action:none hands the drag to script. */
-.grabber { width:36px; height:5px; border-radius:var(--r-xs); background:var(--line-2); margin:0 auto 2px; position:relative; }
+.grabber { width:40px; height:5px; border-radius:3px; background:var(--faint); opacity:.6; margin:0 auto; position:relative; }
 .grabber::after { content:""; position:absolute; inset:-14px -60px -10px; }
 .grabber, .sheet h2 { touch-action:none; }
-.sheet h2 { margin:0; font-family:var(--f-display); font-weight:400; font-size:var(--d-md); line-height:1.05; display:flex; justify-content:space-between; align-items:center; gap:10px; }
-.sheet h2 button { font-family:var(--f-body); font-size:var(--t-md); font-weight:500; border:0; background:none; color:var(--muted); min-height:44px; min-width:44px; padding:0 8px; margin:-6px -8px -6px 0; touch-action:manipulation; }
-.sheet-thought { font-family:var(--f-display); font-size:var(--d-sm); line-height:1.2; overflow-wrap:anywhere; white-space:pre-line; max-height:30vh; overflow-y:auto; }
-.sheet-ai { padding-left:12px; border-left:2px solid color-mix(in srgb, var(--accent) 60%, transparent); }
-.sheet-ai p { margin:0; font-size:var(--t-md); line-height:1.45; color:var(--muted); }
-.sheet-ai[hidden] { display:none; }
-.sheet-err { margin:0; font-size:var(--t-sm); color:var(--markText); }
+.sheet h2 { margin:0; font-size:22px; font-weight:560; letter-spacing:-.015em; line-height:1.2; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.sheet h2 button { font-size:15px; font-weight:500; color:var(--muted); min-height:44px; min-width:44px; padding:0 8px; margin:-6px -8px -6px 0; touch-action:manipulation; }
+.quote { font-size:20px; line-height:1.3; letter-spacing:-.012em; overflow-wrap:anywhere; white-space:pre-line; max-height:30vh; overflow-y:auto; }
+.sheet .glass { padding:12px 14px; }
+.sheet .glass p { margin:0; font-size:14.5px; line-height:1.42; }
+.sheet .glass[hidden] { display:none; }
+.sheet-err { margin:0; font-size:var(--t-sm); color:var(--danger); }
 .sheet-err[hidden] { display:none; }
 .group { display:grid; gap:8px; }
 .group[hidden] { display:none; }
-label, .lbl { font-size:var(--t-sm); color:var(--muted); }
-.sheet .sec-k { padding-top:4px; }
-textarea, input.field { width:100%; min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:var(--r-field); padding:11px 12px; font-size:16px; line-height:1.45; color:var(--fg); font-family:var(--f-body); resize:none; outline:none; }
-textarea:focus, input.field:focus { border-color:var(--accent); }
-textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:1.2; min-height:140px; }
-.counter { font-size:var(--t-xs); color:var(--muted); text-align:right; font-variant-numeric:tabular-nums; }
-.pills, .chips { display:flex; gap:8px; flex-wrap:wrap; }
-.pill, .chips button { height:36px; padding:0 14px; border-radius:var(--r-pill); background:transparent; border:1px solid var(--line-2); font-size:var(--t-sm); color:var(--fg); position:relative; }
-.pill::after, .chips button::after { content:""; position:absolute; inset:-4px 0; }
-.pill[aria-pressed="true"], .chips button.on { background:var(--accent); border-color:var(--accent); color:var(--onAccent); font-weight:600; }
+.lbl, label { font-size:13px; color:var(--muted); display:flex; justify-content:space-between; gap:10px; }
+.counter { font-variant-numeric:tabular-nums; }
+textarea, input.field { width:100%; min-width:0; border:0; border-radius:var(--r-m); padding:14px 15px; font-size:16px; line-height:1.45; color:var(--ink); resize:none; outline:none;
+  background:var(--deep); box-shadow:inset 5px 6px 12px var(--lo), inset -4px -4px 10px var(--hi); }
+textarea::placeholder, input.field::placeholder { color:var(--faint); }
+textarea:focus-visible, input.field:focus-visible { outline:1.5px solid color-mix(in srgb, var(--brass) 70%, transparent); outline-offset:0; }
+textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-weight:500; min-height:120px; }
+.pills, .chips { display:flex; gap:10px; flex-wrap:wrap; }
+.pill, .chips button { position:relative; min-height:40px; padding:0 13px; border-radius:13px; font-size:14px; color:var(--muted); }
+.pill::after, .chips button::after { content:""; position:absolute; inset:-3px 0; }
+.pill[aria-pressed="true"], .chips button.on { color:var(--ink); }
+.pill[aria-pressed="true"]::before, .chips button.on::before { content:""; display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--brass); margin-right:7px; vertical-align:1px; }
 .hint { margin:0; font-size:var(--t-sm); color:var(--muted); }
-.hint b { color:var(--accent); font-weight:600; }
+.hint b { color:var(--brass); font-weight:600; }
 .hint[hidden] { display:none; }
-.details { border-top:1px solid var(--line-2); padding-top:14px; gap:14px; }
-.more { display:flex; justify-content:space-between; align-items:center; width:100%; min-height:48px; background:var(--panel); border:1px solid var(--line); border-radius:var(--r-tile); padding:0 14px; color:var(--fg); font-size:var(--t-md); }
+.more { display:flex; justify-content:space-between; align-items:center; width:100%; min-height:50px; border-radius:var(--r-m); padding:0 15px; font-size:15px; color:var(--ink); }
 .more small { color:var(--muted); font-size:var(--t-sm); }
-/* Edition's buttons: pills. The primary fills with the accent; the rest sit on a faint panel. */
-.btn { display:flex; align-items:center; justify-content:center; gap:8px; min-height:46px; border:0; border-radius:var(--r-pill); padding:0 18px; font-weight:600; font-size:var(--t-md); background:var(--accent); color:var(--onAccent); width:100%; }
-.btn:disabled { opacity:.4; cursor:default; }
-.btn.accent { background:var(--accent); color:var(--onAccent); }
-.btn.ghost { background:var(--panel-2); color:var(--fg); font-weight:500; }
-.btn.line { background:transparent; color:var(--fg); border:1px solid var(--line-2); font-weight:500; }
-.empty .btn { width:auto; }
-.row2 { display:flex; gap:8px; }
-.btn-row { justify-content:space-between; }
-/* Primary button pinned to the bottom of a tall sheet, on a solid strip so nothing shows beneath it. */
-.sheet-foot { position:sticky; bottom:calc(-22px - env(safe-area-inset-bottom, 0px)); margin:0 calc(-1 * var(--gutter)) calc(-22px - env(safe-area-inset-bottom, 0px)); padding:12px var(--gutter) calc(22px + env(safe-area-inset-bottom, 0px)); background:var(--surface); border-top:1px solid var(--line); z-index:2; }
+.two { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.note { font-size:var(--t-sm); color:var(--muted); margin:0; line-height:1.42; }
+/* Primary action pinned to the bottom of a tall sheet, over a fade so the fields scroll beneath it. */
+.sheet-foot { position:sticky; bottom:calc(-24px - env(safe-area-inset-bottom, 0px)); margin:0 calc(-1 * var(--gutter)) calc(-24px - env(safe-area-inset-bottom, 0px)); padding:14px var(--gutter) calc(24px + env(safe-area-inset-bottom, 0px));
+  background:linear-gradient(transparent, color-mix(in srgb, var(--paper) 94%, transparent) 28%); z-index:2; }
 .kept { display:flex; gap:8px; flex-wrap:wrap; }
-.kept span { font-size:var(--t-xs); color:var(--muted); border:1px solid var(--line-2); border-radius:var(--r-pill); padding:4px 10px; }
-/* Manage collections. */
-.coll-list { display:flex; flex-direction:column; }
-.coll-list button { display:flex; justify-content:space-between; align-items:center; gap:10px; background:none; border:0; border-top:1px solid var(--line-2); min-height:48px; padding:12px 0; color:var(--fg); font-size:var(--t-md); text-align:left; }
-.coll-list button span { font-size:var(--t-sm); color:var(--muted); white-space:nowrap; }
-.coll-list button b { font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.notice { border:1px solid color-mix(in srgb, var(--mark) 50%, transparent); background:color-mix(in srgb, var(--mark) 10%, transparent); border-radius:var(--r-tile); padding:12px 14px; font-size:var(--t-md); line-height:1.45; }
-.notice b { color:var(--markText); }
+.kept span { font-size:var(--t-xs); color:var(--muted); padding:6px 10px; border-radius:11px; }
+.stats { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; }
+.stat { padding:12px; border-radius:var(--r-m); }
+.stat b { display:block; font-size:22px; font-weight:560; line-height:1.2; font-variant-numeric:tabular-nums; }
+.stat b.br { color:var(--brass); }
+.stat span { font-size:var(--t-xs); color:var(--muted); }
+/* Keep this line: two options, the chosen one pressed with a brass dot. */
+.choice { display:grid; gap:12px; }
+.opt { display:grid; grid-template-columns:22px 1fr; gap:12px; align-items:start; padding:15px 16px; text-align:left; color:var(--ink); border-radius:var(--r-m); }
+.opt b { display:block; font-size:var(--t-md); font-weight:550; }
+.opt small { display:block; margin-top:3px; font-size:13px; line-height:1.35; color:var(--muted); }
+.radio { width:22px; height:22px; border-radius:50%; margin-top:1px; background:var(--deep); box-shadow:inset 2px 3px 6px var(--lo), inset -2px -2px 5px var(--hi); }
+.opt[aria-pressed="true"] .radio { background:var(--brass); box-shadow:inset 0 0 0 6px var(--deep), 0 0 0 1px color-mix(in srgb, var(--brass) 60%, transparent); }
+/* Collections. */
+.coll-list { display:grid; gap:12px; }
+.crow { display:flex; justify-content:space-between; align-items:center; gap:10px; min-height:52px; padding:0 16px; border-radius:var(--r-m); font-size:var(--t-md); font-weight:500; text-align:left; color:var(--ink); }
+.crow b { font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.crow span { display:flex; align-items:center; gap:6px; color:var(--muted); font-size:14px; font-weight:400; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.crow svg.i { width:16px; height:16px; }
+.notice { border-radius:var(--r-m); padding:13px 15px; font-size:14px; line-height:1.45; }
+.notice b { color:var(--brass); font-weight:560; }
 .notice[hidden] { display:none; }
-.link-danger { background:none; border:0; color:var(--markText); font-weight:600; font-size:var(--t-md); min-height:44px; padding:0; justify-self:center; }
-.stats { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
-.stat { background:var(--panel); border:1px solid var(--line); border-radius:var(--r-field); padding:10px 12px; }
-.stat b { display:block; font-family:var(--f-display); font-size:var(--d-sm); font-weight:400; line-height:1.1; font-variant-numeric:tabular-nums; }
-.stat span { font-family:var(--f-mono); font-size:var(--t-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
-.note { font-size:var(--t-sm); color:var(--muted); margin:0; line-height:1.45; }
-.skins { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
-.skin { min-height:64px; border:1px solid var(--line); background:var(--panel); border-radius:var(--r-field); padding:8px 2px; display:grid; gap:6px; justify-items:center; font-size:var(--t-sm); }
-.skin[aria-pressed="true"] { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
-.sw { width:28px; height:28px; border-radius:50%; overflow:hidden; display:grid; grid-template-columns:1fr 1fr; box-shadow:0 0 0 1px var(--line); }
-.sw i:first-child { grid-row:span 2; }
-.status { display:flex; align-items:center; gap:8px; font-size:var(--t-sm); color:var(--muted); }
-.status .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); }
-.version { font-family:var(--f-mono); font-size:var(--t-xs); color:var(--muted); line-height:1.6; }
+.link-danger { font-size:14.5px; font-weight:550; color:var(--danger); min-height:44px; justify-self:center; }
+/* Settings: raised panels of rows. */
+.panel { padding:4px 16px; border-radius:var(--r-l); }
+.setrow { display:flex; justify-content:space-between; align-items:center; gap:14px; min-height:56px; padding:12px 0; border-bottom:1px solid var(--line); font-size:var(--t-md); }
+.setrow:last-child { border-bottom:0; }
+.setrow.stack { display:grid; gap:10px; }
+.setrow small { display:block; font-size:var(--t-xs); color:var(--muted); margin-top:2px; line-height:1.35; }
+.setrow > span:first-child { min-width:0; }
+.seg { display:grid; grid-template-columns:1fr 1fr; padding:5px; gap:5px; border-radius:var(--r-m); width:170px; flex:none; }
+.seg button { min-height:36px; border-radius:var(--r-s); font-size:14px; color:var(--muted); }
+.seg button[aria-pressed="true"] { color:var(--ink); }
+.toggle { width:58px; height:32px; border-radius:16px; position:relative; flex:none; background:var(--deep); box-shadow:inset 5px 6px 12px var(--lo), inset -4px -4px 10px var(--hi); }
+.toggle::after { content:""; position:absolute; inset:-6px 0; }
+.toggle i { position:absolute; top:4px; left:4px; width:24px; height:24px; border-radius:50%; background:linear-gradient(150deg, var(--rise), var(--paper) 70%);
+  box-shadow:-2px -2px 5px var(--hi), 3px 4px 8px var(--lo); transition:left .18s var(--ease-out); }
+.toggle[aria-checked="true"] { background:color-mix(in srgb, var(--brass) 62%, var(--deep)); box-shadow:inset 3px 4px 8px rgba(0,0,0,.35), 0 0 14px -4px var(--brass); }
+.toggle[aria-checked="true"] i { left:30px; }
+.stepper { display:flex; align-items:center; gap:8px; flex:none; }
+.stepper button { width:40px; height:40px; border-radius:var(--r-s); display:grid; place-items:center; font-size:18px; color:var(--muted); }
+.stepper button:disabled { opacity:.4; cursor:default; }
+.stepper output { font-size:16px; font-weight:550; min-width:56px; text-align:center; font-variant-numeric:tabular-nums; }
+.btnrow { display:flex; gap:10px; flex-wrap:wrap; }
+.btnrow .btn3d { flex:1; }
+.sd { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.status { font-size:var(--t-xs); color:var(--muted); }
+.version { font-size:11.5px; color:var(--faint); line-height:1.6; font-variant-numeric:tabular-nums; }
 
-/* Toast: Edition's, low on the left so it never covers the corner button. #toastPop is a manual popover so it sits
-   in the top layer, above an open sheet. Screen readers hear the message from the #toastHost live region instead. */
-#toastPop { position:fixed; inset:auto auto calc(max(18px, env(safe-area-inset-bottom, 0px)) + 4px) max(var(--gutter), env(safe-area-inset-left, 0px)); margin:0; width:max-content; max-width:calc(100vw - 2 * var(--gutter) - 76px);
+/* Toast: frosted, along the bottom. #toastPop is a manual popover so it sits in the top layer, above an
+   open sheet. Screen readers hear the message from the #toastHost live region instead. */
+#toastPop { position:fixed; inset:auto max(var(--gutter), calc((100vw - 560px) / 2 + var(--gutter))) max(8px, calc(env(safe-area-inset-bottom, 0px) - 8px)); margin:0; width:auto;
   border:0; padding:0; background:transparent; overflow:visible; z-index:40; color:inherit; }
-#toastPop.high { bottom:auto; top:calc(env(safe-area-inset-top, 0px) + 14px); }
-.toast { display:flex; align-items:center; justify-content:space-between; gap:4px; min-height:48px; padding:0 4px 0 16px; border-radius:var(--r-pill); font-size:var(--t-sm);
-  background:color-mix(in srgb, var(--fg) 9%, var(--surface)); color:var(--fg); border:1px solid var(--line); box-shadow:0 10px 30px -10px var(--shadow); }
+.toast { display:flex; align-items:center; justify-content:space-between; gap:6px; min-height:46px; padding:0 4px 0 16px; border-radius:18px; font-size:14.5px; color:var(--ink); box-shadow:0 18px 30px -16px rgba(0,0,0,.55); }
 .toast:not(:has(button)) { padding-right:16px; }
 .toast > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.toast button { flex:none; border:0; background:none; color:var(--accent); font-weight:600; font-size:var(--t-sm); min-height:44px; min-width:44px; padding:0 14px; border-radius:var(--r-pill); }
+.toast button { flex:none; color:var(--brass); font-weight:600; font-size:14px; min-height:44px; min-width:44px; padding:0 14px; border-radius:14px; }
 @media (prefers-reduced-motion: no-preference) { .toast { animation:toastin .22s var(--ease-out); } }
 @keyframes toastin { from { opacity:0; transform:translateY(8px); } }
 
-/* ================= The corner button and its ring =================
-   One control for everything that is not a swipe. A faint accent rim at rest, so the + reads as the way in
-   without shouting; it dims after a few idle seconds and wakes on any touch or key. Tap it for the ring, or hold
-   and slide to a control and let go. The ring is a modal group: focus moves into it, Tab stays inside it,
-   Escape or a tap outside closes it, and the rest of the app is inert while it is open. */
-.corner { position:fixed; z-index:21; right:max(18px, calc(env(safe-area-inset-right, 0px) + 18px)); bottom:max(18px, env(safe-area-inset-bottom, 0px)); view-transition-name:corner; transition:opacity .6s ease, transform .6s ease; }
-.corner.asleep { opacity:.6; transform:scale(.88); transform-origin:100% 100%; }
-.corner.open { z-index:27; opacity:1; transform:none; }
-.fab { width:56px; height:56px; border-radius:50%; display:grid; place-items:center; padding:0; color:var(--fg); touch-action:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none;
-  border:1px solid color-mix(in srgb, var(--accent) 50%, transparent); box-shadow:0 4px 16px var(--shadow), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent); }
-.fab svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; transition:transform .2s ease; }
-.corner.open .fab svg { transform:rotate(45deg); }
-.ringx { position:fixed; inset:0; z-index:26; background:var(--scrim); opacity:0; transition:opacity .14s; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
-.ringx[hidden] { display:none; }
-.ringx.on { opacity:1; }
-.ring-bg { position:fixed; width:400px; height:400px; margin:-200px 0 0 -200px; border-radius:50%; border:1px solid var(--line); box-shadow:0 12px 40px var(--shadow);
-  transform:scale(.7); transition:transform .18s cubic-bezier(.2,1,.3,1); pointer-events:none; }
-.ring-bg.wide { width:560px; height:560px; margin:-280px 0 0 -280px; }
-.ringx.on .ring-bg { transform:none; }
-.ri { position:fixed; width:50px; height:50px; margin:-25px 0 0 -25px; padding:0; border-radius:50%; display:grid; place-items:center; touch-action:none;
-  background:color-mix(in srgb, var(--fg) 8%, var(--surface)); border:1px solid var(--line-2); color:var(--fg);
-  transform:scale(.6); opacity:0; transition:transform .18s cubic-bezier(.2,1,.3,1), opacity .14s, border-color .1s, box-shadow .1s; }
-.ringx.on .ri { transform:none; opacity:1; }
-.ri svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; pointer-events:none; }
-.ri span { position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:4px; font-size:var(--t-xs); color:var(--fg); white-space:nowrap; pointer-events:none; }
-.ri span.in { top:50%; margin-top:0; transform:translate(-50%, -50%); }
-.ri.primary { background:var(--accent); border-color:var(--accent); color:var(--onAccent); }
-.ringx.on .ri.on { transform:scale(1.16); border-color:var(--accent); box-shadow:0 0 14px color-mix(in srgb, var(--accent) 45%, transparent); }
-.ri.on span { color:var(--accent); font-weight:600; }
-@media (prefers-reduced-motion: reduce) { .corner, .ringx, .ring-bg, .ri, .fab svg { transition:none; } }
-
-/* Living it burst: one soft ring of the Living it color that blooms from the words and fades. Never with reduced motion. */
-.burst { position:fixed; z-index:6; width:220px; height:220px; margin:-110px 0 0 -110px; border-radius:50%; pointer-events:none;
-  background:radial-gradient(closest-side, transparent 55%, color-mix(in srgb, var(--c-live) 55%, transparent) 70%, transparent);
-  animation:burst .7s var(--ease-out) forwards; }
-@keyframes burst { from { transform:scale(.2); opacity:1; } to { transform:scale(2.4); opacity:0; } }
-
-/* View Transitions between the deck and the Ledger, where supported: the top line and the corner stay put; the
-   view cross-fades with a short slide toward where you are going. Script skips this with reduced motion. */
+/* View Transitions between the deck and the Ledger, where supported. Script skips this with reduced motion. */
 .view { view-transition-name:main-view; }
 ::view-transition-old(main-view) { animation:vt-out .22s var(--ease-out) both; }
 ::view-transition-new(main-view) { animation:vt-in .32s var(--ease-out) both; }
@@ -391,87 +383,68 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
 @keyframes vt-in { from { opacity:0; transform:translateX(24px); } }
 @keyframes vt-out-back { to { opacity:0; transform:translateX(18px); } }
 @keyframes vt-in-back { from { opacity:0; transform:translateX(-24px); } }
-
-/* First-swipe coach: an overlay on the first principle. Ghost lines of text demonstrate each swipe with one caption;
-   the last line points to the corner. Without motion (reduced motion) the captions are shown together as a list. */
-.coach { position:absolute; inset:-6px calc(-1 * var(--gutter)) 0; z-index:3; display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-start; gap:18px;
-  padding:24px var(--gutter) calc(max(18px, env(safe-area-inset-bottom, 0px)) + 84px); background:var(--bg); }
-.coach h2 { margin:0; font-family:var(--f-display); font-weight:400; font-size:var(--d-lg); line-height:1.05; }
-.coach .ghost { display:none; }
-.coach ul { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
-.coach li { display:flex; gap:12px; align-items:center; font-size:var(--t-md); font-weight:500; }
-.coach li svg { width:20px; height:20px; flex:none; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-.coach li.c-skip svg { stroke:var(--c-skip); } .coach li.c-keep svg { stroke:var(--c-work); } .coach li.c-shed svg { stroke:var(--c-live); }
-.coach li small { display:block; font-weight:400; font-size:var(--t-sm); color:var(--muted); }
-.coach .tapnote { font-size:var(--t-sm); color:var(--muted); max-width:30ch; }
-.coach-ok { border:0; border-radius:var(--r-pill); min-height:44px; padding:0 22px; font-weight:600; background:var(--accent); color:var(--onAccent); }
-@media (prefers-reduced-motion: no-preference) {
-  .coach .ghost { display:grid; gap:8px; width:62%; animation:ghost 9s ease-in-out infinite; }
-  .coach .ghost i { display:block; height:14px; border-radius:var(--r-xs); background:color-mix(in srgb, var(--fg) 18%, transparent); }
-  .coach .ghost i:nth-child(2) { width:82%; } .coach .ghost i:nth-child(3) { width:56%; }
-  .coach ul { position:relative; display:block; width:100%; min-height:48px; }
-  .coach li { position:absolute; inset:0; opacity:0; animation:cap 9s linear infinite; }
-  .coach li.c-keep { animation-delay:3s; } .coach li.c-shed { animation-delay:6s; }
-}
-@keyframes ghost {
-  0%, 6% { transform:none; } 20%, 26% { transform:translateX(-40%); opacity:.35; } 33% { transform:none; opacity:1; }
-  39% { transform:none; } 53%, 59% { transform:translateY(-40%); opacity:.35; } 66% { transform:none; opacity:1; }
-  72% { transform:none; } 86%, 92% { transform:translateX(40%); opacity:.35; } 100% { transform:none; opacity:1; } }
-@keyframes cap { 0% { opacity:0; } 3%, 30% { opacity:1; } 33%, 100% { opacity:0; } }
-@media (prefers-reduced-motion: reduce) { .card, .card.spring, .ai p, .wash.fade { transition:none; } }
+@media (prefers-reduced-motion: reduce) { .card, .card.spring, .ai-p, .raised, .toggle i, .swipetag { transition:none; } }
 </style>
 </head>
 <body>
-<!-- Main screen. The top line stays put; the deck and the Ledger swap in place below it. Everything else is reached
-     from the corner button (after the sheets), or by keyboard. -->
-<!-- The swipe wash: a soft light of the outcome color from the edge you are swiping toward. Decorative. -->
-<div class="wash" id="wash" aria-hidden="true"></div>
+<!-- Main screen. The top stays put; the deck and the Ledger swap in place below it. Everything that is not
+     one of the three moves is in the menu at the top right. -->
 <div class="app">
   <header class="top">
-    <!-- On the deck: today's date. On the Ledger: the way back to the deck. -->
-    <span class="label" id="todayLbl"></span>
-    <button type="button" class="toplink label" id="backDeck" hidden><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"/></svg>Deck</button>
-    <!-- Today's count: principles weighed today (any move), from the same activity log as the Ledger grid, and what is left in the deck. -->
-    <span class="label" id="todayStat"><b id="todayN">0</b> <span class="sr">weighed</span> today<span id="deckN"></span></span>
+    <!-- On the deck: the day and the date. On the Ledger: the way back to the deck. -->
+    <h1 class="date" id="todayLbl"></h1>
+    <button type="button" class="iconbtn raised" id="backDeck" aria-label="Back to the deck" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button type="button" class="iconbtn raised" id="menuBtn" aria-label="Menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16M4 16h10"/></svg></button>
   </header>
 
   <main class="main">
-<!-- Deck view. Empty here on purpose: renderDeck() builds the chips and the principle. -->
+<!-- Deck view. Empty here on purpose: renderDeck() builds the collection keys, the principle, the three keys and the footer. -->
   <section class="view" id="v-deck" aria-label="Deck"></section>
 
-<!-- Ledger view: a front page. Masthead, where you stand, the list, and the 12 week grid. Filled by renderLedger(). -->
+<!-- Ledger view: where you stand, what is pushing back, the last 12 weeks, and the list. Filled by renderLedger(). -->
   <section class="view" id="v-ledger" aria-label="Ledger" hidden>
-    <div class="masthead">
-      <h1 class="ptitle">Ledger</h1>
-      <p><b id="lShed">0</b> living it · <span id="lLine">0 in deck · 0 pushing back</span> · <span id="lAvg"></span></p>
-    </div>
-    <section class="sec" aria-labelledby="hStand">
-      <div class="sec-head"><h2 id="hStand">Where you stand</h2><span class="legend" id="lMeta"></span></div>
-      <!-- Every principle counted once, as Living it, Still working or Not today (core.js outcomeMix). -->
-      <div class="mix" id="mix" role="img" aria-label="">
-        <div class="prog" aria-hidden="true"><span>Living it</span><span class="tr"><i id="mixLive" style="--c:var(--c-live)"></i></span><b id="pLive">0%</b></div>
-        <div class="prog" aria-hidden="true"><span>Working</span><span class="tr"><i id="mixWork" style="--c:var(--c-work)"></i></span><b id="pWork">0%</b></div>
-        <div class="prog" aria-hidden="true"><span>Not today</span><span class="tr"><i id="mixSkip" style="--c:var(--c-skip)"></i></span><b id="pSkip">0%</b></div>
-      </div>
-    </section>
-    <section class="sec" aria-labelledby="hList">
-      <div class="sec-head"><h2 id="hList">Principles</h2>
-        <div class="seg" role="group" aria-label="List">
-          <button type="button" id="segDeck" aria-pressed="true">In deck</button>
-          <button type="button" id="segShed" aria-pressed="false">Living it</button>
+    <h2 class="ptitle">Ledger</h2>
+    <div class="gaugeRow">
+      <div class="gauge raised">
+        <div class="ring pressed" id="gauge" role="img" aria-label="">
+          <svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--brass-hi)"/><stop offset="1" stop-color="var(--brass)"/></linearGradient></defs>
+            <circle class="arc" id="gaugeArc" cx="60" cy="60" r="44" fill="none" stroke="url(#gg)" stroke-width="16" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="276.5" transform="rotate(-90 60 60)"/></svg>
+          <div class="mid"><b id="lShed">0</b><span>living</span></div>
         </div>
       </div>
-      <div class="legend" id="listLegend">weight 1.0–4.0</div>
-      <div id="ledgerList"></div>
-    </section>
-    <section class="sec" aria-labelledby="hWeeks">
-      <div class="sec-head"><h2 id="hWeeks">Last 12 weeks</h2><span class="legend">1 row = 2 weeks</span></div>
-      <div class="cal" id="cal" aria-label="Inspection days over the last 12 weeks"></div>
-      <div class="key"><span><i style="background:var(--lived)"></i>inspected</span><span><i style="background:var(--c-live)"></i>living it</span><span><i style="background:var(--empty)"></i>no session</span></div>
-    </section>
+      <!-- Three capsules: Living it as a share of every principle, then how many in the deck are resting and pushing back. -->
+      <div class="caps" id="caps" role="img" aria-label="">
+        <div class="cap" aria-hidden="true"><div class="tube pressed"><i class="live" id="capLive"></i></div><span>Living</span><b id="pLive">0%</b></div>
+        <div class="cap" aria-hidden="true"><div class="tube pressed"><i class="rest" id="capRest"></i></div><span>Resting</span><b id="pRest">0</b></div>
+        <div class="cap" aria-hidden="true"><div class="tube pressed"><i class="push" id="capPush"></i></div><span>Pushing</span><b id="pPush">0</b></div>
+      </div>
+    </div>
+    <div id="pbWrap">
+      <h3 class="sec2">Pushing back<span>Set aside most</span></h3>
+      <div class="pb" id="pb"></div>
+    </div>
+    <h3 class="sec2">Last 12 weeks<span>Each dot is a day</span></h3>
+    <div class="grid12 pressed" id="cal" role="img" aria-label="Days weighed over the last 12 weeks"></div>
+    <div class="gkey"><span><i style="background:color-mix(in srgb, var(--ink) 40%, transparent)"></i>weighed</span><span><i style="background:var(--brass)"></i>living it</span></div>
+    <div class="seg2 pressed" role="group" aria-label="List">
+      <button type="button" id="segDeck" aria-pressed="true">In deck</button>
+      <button type="button" id="segShed" aria-pressed="false">Living it</button>
+    </div>
+    <div class="list" id="ledgerList"></div>
   </section>
   </main>
 </div>
+
+<!-- Menu: a frosted panel under the menu button. -->
+<dialog class="menu frost" id="menu" aria-label="Menu">
+  <button type="button" data-m="capture">Capture<span>New principle</span></button>
+  <button type="button" data-m="edit" id="mEdit">Edit this principle</button>
+  <hr>
+  <button type="button" data-m="ledger" id="mLedger">Ledger<span>Your record</span></button>
+  <button type="button" data-m="collections">Collections<span id="mColl">0</span></button>
+  <hr>
+  <button type="button" data-m="settings">Settings<span id="mVer"></span></button>
+</dialog>
 
 <!-- Sheets are native <dialog> elements opened with showModal(): the browser traps focus, makes the
      page behind inert, and draws the dimmed ::backdrop. Tapping the backdrop or Escape closes them. -->
@@ -480,71 +453,84 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
 <dialog class="sheet" id="sheetCapture" aria-modal="true" aria-labelledby="sheetCaptureTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetCaptureTitle">New principle</span> <button type="button" data-close>Cancel</button></h2>
-  <form class="group" id="captureForm" autocomplete="off" style="gap:14px">
-    <p class="note">Write it as a claim. It stays in the deck until you live it without prompting.</p>
+  <form class="group" id="captureForm" autocomplete="off" style="gap:16px">
     <div class="group">
-      <label for="thoughtInput">Principle</label>
+      <label for="thoughtInput"><span>Principle</span><span class="counter" id="thoughtCount">0 / 1500</span></label>
       <textarea id="thoughtInput" class="big" maxlength="1500" placeholder="Rest is part of the work, not a reward for it."></textarea>
-      <div class="counter" id="thoughtCount">0 / 1500</div>
+      <p class="note">Write it as a claim. It stays in the deck until you live it without prompting.</p>
     </div>
     <div class="group">
-      <span class="lbl" id="originLabel">Where it came from (optional)</span>
+      <span class="lbl" id="originLabel">Where it came from</span>
       <div class="pills" role="group" aria-labelledby="originLabel" id="originPills">
-        <button type="button" class="pill" data-o="Handed to me" aria-pressed="false">Handed to me</button>
-        <button type="button" class="pill" data-o="Chosen" aria-pressed="false">Chosen</button>
-        <button type="button" class="pill" data-o="Not sure" aria-pressed="false">Not sure</button>
+        <button type="button" class="pill raised" data-o="Handed to me" aria-pressed="false">Handed to me</button>
+        <button type="button" class="pill raised" data-o="Chosen" aria-pressed="false">Chosen</button>
+        <button type="button" class="pill raised" data-o="Not sure" aria-pressed="false">Not sure</button>
       </div>
     </div>
-    <div class="group">
-      <button type="button" class="more" id="capMore" aria-expanded="false" aria-controls="capDetails">More details <small id="capMoreHint">Collection, title, author ›</small></button>
-      <div class="group" id="capDetails" hidden style="gap:14px">
-    <div class="group"><label for="capCollection">Collection</label><input class="field" id="capCollection" maxlength="40" autocomplete="off" placeholder="Optional, e.g. Poems">
-      <div class="chips" id="capChips"></div><p class="hint" id="capHint" hidden></p></div>
-    <div class="group"><label for="capTitle">Title</label><input class="field" id="capTitle" maxlength="120" autocomplete="off" placeholder="Optional"></div>
-    <div class="group"><label for="capAuthor">Author</label><input class="field" id="capAuthor" maxlength="80" autocomplete="off" placeholder="Optional"></div>
+    <button type="button" class="more raised" id="capMore" aria-expanded="false" aria-controls="capDetails">More details <small id="capMoreHint">Collection, title, author</small></button>
+    <div class="group" id="capDetails" hidden style="gap:16px">
+      <div class="group"><label for="capCollection">Collection</label><input class="field" id="capCollection" maxlength="40" autocomplete="off" placeholder="Optional, e.g. Poems">
+        <div class="chips" id="capChips"></div><p class="hint" id="capHint" hidden></p></div>
+      <div class="two">
+        <div class="group"><label for="capTitle">Title</label><input class="field" id="capTitle" maxlength="120" autocomplete="off" placeholder="Optional"></div>
+        <div class="group"><label for="capAuthor">Author</label><input class="field" id="capAuthor" maxlength="80" autocomplete="off" placeholder="Optional"></div>
       </div>
     </div>
-    <div class="sheet-foot"><button class="btn" type="submit" id="addBtn" disabled>Add to the deck</button></div>
+    <div class="sheet-foot"><button class="primary" type="submit" id="addBtn" disabled>Add to the deck</button></div>
   </form>
 </dialog>
 
-<!-- Shed sheet -->
+<!-- Living it sheet -->
 <dialog class="sheet" id="sheetShed" aria-modal="true" aria-labelledby="sheetShedTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetShedTitle">Living it</span> <button type="button" id="shedCancel">Not yet</button></h2>
-  <div class="sheet-thought" id="shedText"></div>
-  <div class="sheet-ai" id="shedLine" hidden></div>
+  <div class="quote" id="shedText"></div>
+  <div class="glass" id="shedLine" hidden></div>
   <p class="note">Mark it only if you acted on it without prompting yourself.</p>
   <div class="group">
     <label for="evidenceInput">Where did it show up?</label>
     <textarea id="evidenceInput" rows="3" maxlength="280" placeholder="One line on when you lived it."></textarea>
   </div>
   <div class="stats">
-    <div class="stat"><b id="sReflect">0</b><span>Worked on</span></div>
-    <div class="stat"><b id="sSkips" style="color:var(--markText)">0</b><span>Not today</span></div>
-    <div class="stat"><b id="sDays">0</b><span>Days in deck</span></div>
+    <div class="stat pressed"><b id="sReflect">0</b><span>Worked on</span></div>
+    <div class="stat pressed"><b id="sSkips" class="br">0</b><span>Set aside</span></div>
+    <div class="stat pressed"><b id="sDays">0</b><span>Days in deck</span></div>
   </div>
-  <button class="btn accent" type="button" id="confirmShed">I live this now</button>
+  <button class="primary" type="button" id="confirmShed">I live this now</button>
 </dialog>
 
 <!-- Evidence sheet: add or edit where a lived principle showed up, from the Living it record. -->
 <dialog class="sheet" id="sheetEvidence" aria-modal="true" aria-labelledby="sheetEvidenceTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetEvidenceTitle">Where it showed up</span> <button type="button" data-close>Cancel</button></h2>
-  <div class="sheet-thought" id="evText"></div>
-  <div class="sheet-ai" id="evLine" hidden></div>
+  <div class="quote" id="evText"></div>
+  <div class="glass" id="evLine" hidden></div>
   <div class="group">
     <label for="evEdit">One line on when you lived it</label>
     <textarea id="evEdit" rows="3" maxlength="280" placeholder="Stayed calm when the release slipped a week."></textarea>
   </div>
-  <button class="btn accent" type="button" id="evSave">Save</button>
+  <button class="primary" type="button" id="evSave">Save</button>
+</dialog>
+
+<!-- Keep this line (Story 10): add an AI line as a new principle, or let it replace the wording. -->
+<dialog class="sheet" id="sheetKeep" aria-modal="true" aria-labelledby="sheetKeepTitle">
+  <div class="grabber" aria-hidden="true"></div>
+  <h2><span id="sheetKeepTitle">Keep this line</span> <button type="button" data-close>Cancel</button></h2>
+  <div class="quote" id="keepText"></div>
+  <p class="note" id="keepFrom"></p>
+  <div class="choice" role="radiogroup" aria-label="How to keep it">
+    <button type="button" class="opt raised" id="keepAdd" data-k="add" aria-pressed="true"><i class="radio" aria-hidden="true"></i><span><b>Add as a new principle</b><small id="keepAddNote"></small></span></button>
+    <button type="button" class="opt raised" id="keepRep" data-k="replace" aria-pressed="false"><i class="radio" aria-hidden="true"></i><span><b>Replace my wording</b><small>The principle keeps its counts and dates; only the words change. Your earlier wording is saved in the Ledger.</small></span></button>
+  </div>
+  <p class="sheet-err" id="keepErr" role="alert" hidden></p>
+  <button class="primary" type="button" id="keepSave">Keep</button>
 </dialog>
 
 <!-- Collections sheet: every collection with its count. Tap one to rename, merge or remove it. -->
-<dialog class="sheet" id="sheetCollections" aria-modal="true" aria-labelledby="sheetCollectionsTitle">
+<dialog class="sheet tall" id="sheetCollections" aria-modal="true" aria-labelledby="sheetCollectionsTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetCollectionsTitle">Collections</span> <button type="button" id="collDone">Done</button></h2>
-  <p class="note">Tap a collection to rename it. Renaming to one that already exists merges them.</p>
+  <p class="note">Rename one to tidy it. Rename it to an existing name to merge them.</p>
   <div class="coll-list" id="collList"></div>
 </dialog>
 
@@ -554,115 +540,106 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
   <h2><span id="sheetRenameTitle">Rename collection</span> <button type="button" id="renameCancel">Cancel</button></h2>
   <p class="note" id="renameMeta"></p>
   <div class="group"><label for="renameInput">New name</label><input class="field" id="renameInput" maxlength="40" autocomplete="off"></div>
-  <div class="notice" id="renameNotice" role="status" hidden></div>
-  <button class="btn accent" type="button" id="renameSave" disabled>Rename</button>
+  <div class="notice pressed" id="renameNotice" role="status" hidden></div>
+  <button class="primary" type="button" id="renameSave" disabled>Rename</button>
   <button type="button" class="link-danger" id="renameRemove">Remove this collection</button>
-  <p class="note" id="renameRemoveNote" style="margin-top:-8px"></p>
+  <p class="note" id="renameRemoveNote" style="margin-top:-8px;text-align:center"></p>
 </dialog>
 
-<!-- Edit sheet: change a principle's wording from the card or the Ledger. History is kept. -->
-<dialog class="sheet" id="sheetEdit" aria-modal="true" aria-labelledby="sheetEditTitle">
+<!-- Edit sheet: change a principle's wording and details from the deck or the Ledger. History is kept. -->
+<dialog class="sheet tall" id="sheetEdit" aria-modal="true" aria-labelledby="sheetEditTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetEditTitle">Edit principle</span> <button type="button" data-close>Cancel</button></h2>
   <p class="note" id="editNote"></p>
   <div class="group">
-    <label for="editInput">Principle</label>
+    <label for="editInput"><span>Principle</span><span class="counter" id="editCount">0 / 1500</span></label>
     <textarea id="editInput" class="big" maxlength="1500"></textarea>
-    <div class="counter" id="editCount">0 / 1500</div>
   </div>
   <p class="sheet-err" id="editErr" role="alert" hidden></p>
-  <div class="group details">
-    <span class="lbl">Details</span>
-    <div class="group"><label for="editCollection">Collection</label><input class="field" id="editCollection" maxlength="40" autocomplete="off" placeholder="Optional, e.g. Poems">
-      <div class="chips" id="editChips"></div><p class="hint" id="editHint" hidden></p></div>
+  <div class="group"><label for="editCollection">Collection</label><input class="field" id="editCollection" maxlength="40" autocomplete="off" placeholder="Optional, e.g. Poems">
+    <div class="chips" id="editChips"></div><p class="hint" id="editHint" hidden></p></div>
+  <div class="two">
     <div class="group"><label for="editTitle">Title</label><input class="field" id="editTitle" maxlength="120" autocomplete="off" placeholder="Optional"></div>
     <div class="group"><label for="editAuthor">Author</label><input class="field" id="editAuthor" maxlength="80" autocomplete="off" placeholder="Optional"></div>
-    <div class="group"><span class="lbl" id="editOriginLabel">Where it came from</span>
-      <div class="pills" role="group" aria-labelledby="editOriginLabel" id="editOriginPills">
-        <button type="button" class="pill" data-o="Handed to me" aria-pressed="false">Handed to me</button>
-        <button type="button" class="pill" data-o="Chosen" aria-pressed="false">Chosen</button>
-        <button type="button" class="pill" data-o="Not sure" aria-pressed="false">Not sure</button>
-      </div>
-      <p class="hint">Tap the selected one again to clear it.</p>
+  </div>
+  <div class="group"><span class="lbl" id="editOriginLabel"><span>Where it came from</span><span>Tap again to clear</span></span>
+    <div class="pills" role="group" aria-labelledby="editOriginLabel" id="editOriginPills">
+      <button type="button" class="pill raised" data-o="Handed to me" aria-pressed="false">Handed to me</button>
+      <button type="button" class="pill raised" data-o="Chosen" aria-pressed="false">Chosen</button>
+      <button type="button" class="pill raised" data-o="Not sure" aria-pressed="false">Not sure</button>
     </div>
   </div>
   <div class="group">
     <span class="lbl">Kept on save</span>
     <div class="kept" id="editKept"></div>
   </div>
-  <div class="sheet-foot"><button class="btn accent" type="button" id="editSave" disabled>Save changes</button></div>
+  <div class="sheet-foot"><button class="primary" type="button" id="editSave" disabled>Save changes</button></div>
 </dialog>
 
 <!-- Settings sheet -->
-<dialog class="sheet" id="sheetSettings" aria-modal="true" aria-labelledby="sheetSettingsTitle">
+<dialog class="sheet tall" id="sheetSettings" aria-modal="true" aria-labelledby="sheetSettingsTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetSettingsTitle">Settings</span> <button type="button" data-close>Done</button></h2>
-  <div class="group">
-    <div class="sec-k">Theme</div>
-    <div class="skins" id="skins"></div>
-    <p class="note">Auto follows the phone's light or dark setting. Return is drawn from the Scales icon.</p>
+
+  <h3 class="sec2" style="margin-top:4px">Look</h3>
+  <div class="panel raised">
+    <div class="setrow"><span id="lookLbl">Surface</span>
+      <div class="seg pressed" role="group" aria-labelledby="lookLbl"><button type="button" data-look="matte" aria-pressed="true">Matte</button><button type="button" data-look="light" aria-pressed="false">Light</button></div></div>
+    <div class="setrow"><span id="whereLbl">Show where it came from<small>Collection and origin under each principle</small></span>
+      <button type="button" class="toggle" id="whereToggle" role="switch" aria-checked="true" aria-labelledby="whereLbl"><i></i></button></div>
   </div>
-  <div class="group">
-    <div class="sec-k">AI line</div>
-    <input class="field" id="apiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Anthropic API key (sk-ant-...)">
-    <div class="row2"><button class="btn ghost" type="button" id="saveKey">Save key</button><button class="btn ghost" type="button" id="clearKey">Remove</button></div>
-    <button class="btn ghost" type="button" id="testKey">Test key</button>
-    <p class="note" id="testResult" hidden></p>
-    <div class="status"><span class="dot" id="aiDot" style="background:var(--muted)"></span><span id="aiText">AI lines: built-in (no key)</span></div>
-    <p class="note">The key stays on this phone and is sent only to Anthropic. Only the principle text, its not today count and days in deck are sent. Without a key, built-in lines are used.</p>
+
+  <h3 class="sec2">Deck</h3>
+  <div class="panel raised">
+    <div class="setrow"><span id="restLbl">Rest after Not today<small>It comes up first when it returns</small></span>
+      <div class="stepper" role="group" aria-labelledby="restLbl"><button type="button" class="raised" id="restDown" aria-label="One day less">&minus;</button><output id="restOut" aria-live="polite">4 days</output><button type="button" class="raised" id="restUp" aria-label="One day more">+</button></div></div>
+    <button type="button" class="setrow" id="openCollections" style="width:100%;text-align:left;color:inherit"><span>Manage collections<small>Rename, merge or remove</small></span><span class="status" style="display:flex;align-items:center;gap:6px;font-size:14px"><span id="collCount">0</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px"><path d="M9 6l6 6-6 6"/></svg></span></button>
   </div>
-  <div class="group">
-    <div class="sec-k">Storage</div>
-    <div class="status"><span class="dot"></span><span id="syncText">Saved on this phone only</span></div>
-    <div class="row2"><button class="btn ghost" type="button" id="exportBtn">Back up</button><button class="btn ghost" type="button" id="importBtn">Restore</button></div>
+
+  <h3 class="sec2">AI lines</h3>
+  <div class="panel raised">
+    <div class="setrow"><span id="aiLbl">Write a line for each principle<small>Your key stays on this phone</small></span>
+      <button type="button" class="toggle" id="aiToggle" role="switch" aria-checked="true" aria-labelledby="aiLbl"><i></i></button></div>
+    <div class="setrow stack">
+      <input class="field" id="apiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Anthropic API key (sk-ant-...)" aria-label="Anthropic API key">
+      <div class="btnrow"><button class="btn3d sm raised" type="button" id="saveKey">Save key</button><button class="btn3d sm raised" type="button" id="testKey">Test key</button><button class="btn3d sm raised" type="button" id="clearKey">Remove</button></div>
+      <p class="note" id="testResult" hidden></p>
+      <p class="status" id="aiText">AI lines: built-in (no key)</p>
+      <p class="note">Only the principle text, its not today count and days in deck are sent, and only to Anthropic. Without a key, built-in lines are used.</p>
+    </div>
+  </div>
+
+  <h3 class="sec2">Your data</h3>
+  <div class="panel raised">
+    <div class="setrow"><span>Back up<small id="syncText">One file with everything, for iCloud Drive</small></span><button class="btn3d sm raised" type="button" id="exportBtn">Back up</button></div>
+    <div class="setrow"><span>Restore<small>Merges a backup into this phone</small></span><button class="btn3d sm raised" type="button" id="importBtn">Restore</button></div>
+    <div class="setrow"><span>CSV<small>Read and written on this phone only</small></span><div class="btnrow" style="flex:none"><button class="btn3d sm raised" type="button" id="csvExportBtn">Export</button><button class="btn3d sm raised" type="button" id="csvImportBtn">Import</button></div></div>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
-    <p class="note">Back up saves a file you can keep in iCloud Drive. Restore merges a backup into this phone.</p>
-    <div class="row2"><button class="btn ghost" type="button" id="csvExportBtn">Export CSV</button><button class="btn ghost" type="button" id="csvImportBtn">Import CSV</button></div>
     <input type="file" id="csvFile" accept=".csv,text/csv,text/plain" hidden>
-    <p class="note">CSV uses the text, title, author, creationDate, tags, collection, link, citation columns. Importing leaves out principles already in the deck. Files are read on this phone and never uploaded.</p>
   </div>
+  <p class="note">CSV uses the text, title, author, creationDate, tags, collection, link, citation columns. Importing leaves out principles already in the deck.</p>
+
   <div class="group" id="starterGroup">
-    <div class="sec-k">Starter decks</div>
-    <div class="row2"><button class="btn ghost" type="button" data-starter="stoic">Stoic</button><button class="btn ghost" type="button" data-starter="leadership">Leadership</button></div>
-    <div class="row2"><button class="btn ghost" type="button" data-starter="athletic">Athletic mindset</button><button class="btn ghost" type="button" data-starter="overcoming">Self-overcoming</button></div>
+    <h3 class="sec2">Starter decks</h3>
+    <div class="sd"><button class="btn3d raised" type="button" data-starter="stoic">Stoic</button><button class="btn3d raised" type="button" data-starter="leadership">Leadership</button><button class="btn3d raised" type="button" data-starter="athletic">Athletic mindset</button><button class="btn3d raised" type="button" data-starter="overcoming">Self-overcoming</button></div>
     <p class="note">Adds a short set of principles to the deck. Delete any that are not yours from the Ledger.</p>
   </div>
-  <div class="group">
-    <div class="sec-k">Collections</div>
-    <button class="btn ghost btn-row" type="button" id="openCollections"><span>Manage collections</span><span id="collCount">0 ›</span></button>
-    <p class="note">Tidy up names across every principle at once.</p>
-  </div>
-  <div class="group">
-    <div class="sec-k">How it works</div>
-    <p class="note">Swipe left for Not today, up for Still working on it, right for Living it. The + in the corner does the same, and holds Capture, Edit, the Ledger and Settings: tap it, or hold it and slide to one. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, comma for Settings.</p>
-    <p class="note">Not today sets a principle aside for four days and raises its weight, up to four times as likely as a new one. When it returns, at 4:00 AM, it comes up first, once, most avoided first; then it rejoins the deck. Still working on it, after at least 8 seconds on the card, lowers that weight by one step. Living it retires the principle to your record.</p>
-  </div>
-  <div class="group">
-    <div class="sec-k">Origin</div>
-    <p class="note">The name comes from scales falling from the eyes, and from Nietzsche's three metamorphoses: the camel carries ideas, the lion tests them, the child acts from them without thinking. Scales is built for the lion stage.</p>
-  </div>
-  <div class="group">
-    <div class="sec-k">Home Screen</div>
-    <p class="note">In Safari, tap Share, then Add to Home Screen. Works offline once installed.</p>
-  </div>
-  <div class="group">
-    <div class="sec-k">About</div>
-    <div class="status"><span class="dot" style="background:var(--muted)"></span><span id="versionText">Version</span></div>
-    <p class="note">After an update, close and reopen Scales. If this number has not changed, the phone is still running the previous version.</p>
-    <p class="version" id="screenCheck"></p>
-  </div>
+
+  <h3 class="sec2">How it works</h3>
+  <p class="note">Swipe left for Not today, up for Still working on it, right for Living it, or press the three keys. Press and hold a principle to edit it. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
+  <p class="note" id="howRest"></p>
+
+  <h3 class="sec2">About</h3>
+  <p class="note" id="versionText">Version</p>
+  <p class="note">The name comes from scales falling from the eyes, and from Nietzsche's three metamorphoses: the camel carries ideas, the lion tests them, the child acts from them without thinking. Scales is built for the lion stage.</p>
+  <p class="note">In Safari, tap Share, then Add to Home Screen. Works offline once installed. After an update, close and reopen Scales; if the version has not changed, the phone is still running the previous one.</p>
+  <p class="version" id="screenCheck"></p>
 </dialog>
 
 <!-- Measuring element for the Settings screen check: viewport heights and safe areas. Never visible. -->
 <div id="vhProbe" aria-hidden="true" style="position:fixed;left:-9999px;top:0;width:1px;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)">
   <i style="display:block;height:100dvh"></i><i style="display:block;height:100svh"></i><i style="display:block;height:100lvh"></i>
 </div>
-<!-- The corner button: the one control on the screen. Tap it for the ring (the three moves, Capture, Edit, the Ledger,
-     Settings), or hold it and slide to one. The ring is built by openRing(). -->
-<div class="corner" id="corner">
-  <button type="button" class="fab glass" id="fab" aria-label="Menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="ring"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
-</div>
-<div class="ringx" id="ring" role="dialog" aria-modal="true" aria-label="Menu" hidden></div>
 <!-- Toasts: #toastPop is what you see (a popover, so it shows above an open sheet); #toastHost reads it out. -->
 <div id="toastPop" popover="manual"></div>
 <div id="toastHost" class="sr" aria-live="polite"></div>
@@ -701,16 +678,6 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
     1: "name what was chosen instead of this principle, and what that choice costs the person the user is becoming",
     3: "confront the avoidance directly: name the shadow it protects (comfort, fear, pride, a flattering self-image) and what the future self pays for it"
   };
-  // Theme list for the Settings picker. sw = the three swatch colors shown on each button.
-  // The actual colors live in the CSS under :root[data-skin=...].
-  var SKINS = [
-    { id: "auto", name: "Auto", sw: ["#F3F0EA", "#0E0F11", "#D9955F"] },
-    { id: "moss", name: "Moss", sw: ["#111A14", "#BCCDA8", "#E8C55C"] },
-    { id: "linen", name: "Linen", sw: ["#EFE8DD", "#2A251F", "#2F6B57"] },
-    { id: "ink", name: "Ink", sw: ["#0A0F1E", "#B3C3EC", "#F3BC5E"] },
-    { id: "dusk", name: "Dusk", sw: ["#1A121D", "#E4C0DA", "#7FD6C5"] },
-    { id: "return", name: "Return", sw: ["#131220", "#E8B860", "#F08A55"] }
-  ];
   // Small helpers used throughout.
   var $ = function (id) { return document.getElementById(id); };
   // Escapes text before it goes into HTML so a thought can never inject markup.
@@ -732,9 +699,10 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
   // ---------- storage (localStorage, this device only) ----------
   // thoughts: every thought by id, active and shed
   // activity: per day counts { i: inspections, s: sheds }, kept for 120 days
-  // prefs:    theme choice
+  // prefs:    look, rest length, Show where it came from, AI lines on or off, the collection key,
+  //           Show anyway's day and whether the first-swipe tip was seen
   // All three are saved to localStorage under versioned keys.
-  var thoughts = {}, activity = {}, prefs = { skin: "auto" };
+  var thoughts = {}, activity = {}, prefs = { look: "matte" };
   var LS = "scales.thoughts.v1", LSA = "scales.activity.v1", LSP = "scales.prefs.v1";
   function lsGet(k, d) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -759,32 +727,28 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
     lsSet(LSA, activity);
     paintStat();
   }
-  // The stat pill at the top: how many principles were weighed today (any move counts once).
+  // The deck count in the footer.
   function paintStat() {
-    var d = activity[dayKey()] || { i: 0, s: 0 }, n = (d.i || 0) + (d.s || 0);
-    $("todayN").textContent = n;
+    var el = $("deckN"); if (!el) return;
     var left = activeList().length;
-    $("deckN").textContent = left ? " \u00b7 " + left + " in deck" : "";
+    el.textContent = left ? left + " in deck" : "";
   }
   function savePrefs() { lsSet(LSP, prefs); }
 
-  // ---------- theme ----------
-  // Build the theme buttons, save the choice, and apply it by setting data-skin on <html>.
-  $("skins").innerHTML = SKINS.map(function (s) {
-    return '<button type="button" class="skin" data-skin="' + s.id + '" aria-pressed="false"><span class="sw">' +
-      s.sw.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join("") + "</span>" + s.name + "</button>";
-  }).join("");
-  $("skins").addEventListener("click", function (e) {
-    var b = e.target.closest(".skin"); if (!b) return;
-    prefs.skin = b.getAttribute("data-skin"); savePrefs(); applySkin();
-  });
-  function applySkin() {
-    if (prefs.skin && prefs.skin !== "auto") document.documentElement.setAttribute("data-skin", prefs.skin);
-    else document.documentElement.removeAttribute("data-skin");
-    Array.prototype.forEach.call(document.querySelectorAll(".skin"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-skin") === (prefs.skin || "auto"))); });
-    // The browser chrome takes the theme's ground.
-    var bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim(); if (bg) $("themeColor").setAttribute("content", bg);
+  // ---------- look ----------
+  // Matte (the default) or Light, set by data-look on <html>. The browser chrome takes the ground color.
+  function applyLook() {
+    var light = prefs.look === "light";
+    if (light) document.documentElement.setAttribute("data-look", "light"); else document.documentElement.removeAttribute("data-look");
+    Array.prototype.forEach.call(document.querySelectorAll(".seg [data-look]"), function (b) {
+      var on = b.getAttribute("data-look") === (light ? "light" : "matte");
+      b.setAttribute("aria-pressed", String(on)); b.classList.toggle("raised", on);
+    });
+    var bg = getComputedStyle(document.documentElement).getPropertyValue("--paper").trim(); if (bg) $("themeColor").setAttribute("content", bg);
   }
+  // Settings that change the deck: the rest after Not today (1 to 7 days), and Show where it came from.
+  function restDays() { return C.restDays(prefs.rest_days); }
+  function showWhere() { return prefs.show_where !== false; }
 
   // ---------- sheets ----------
   // Bottom sheets (capture, shed, settings...) are <dialog> elements opened with showModal(), so the
@@ -862,7 +826,7 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
   try { if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual"; } catch (e) {}
   // A new Scales day may have started while the app was in the background; if the deck was
   // showing Nothing left today, look again.
-  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && !current && activeList().length) showNext(); });
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState !== "visible") return; paintDate(); if (!current && activeList().length) showNext(); });
   window.addEventListener("pageshow", resetScroll);
   window.addEventListener("load", resetScroll);
   function isTyping(el) { return !!el && (el.tagName === "TEXTAREA" || (el.tagName === "INPUT" && el.type !== "file")); }
@@ -911,9 +875,7 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
   }
   // Updates the dot and label in Settings to show whether model lines are on.
   function setAiStatus() {
-    var on = !!sample;
-    $("aiDot").style.background = on ? "var(--accent)" : "var(--muted)";
-    $("aiText").textContent = on ? "AI lines: on (your key)" : "AI lines: built-in (no key)";
+    $("aiText").textContent = prefs.ai_off ? "AI lines: off. Built-in questions are shown." : sample ? "AI lines: on (your key)" : "AI lines: built-in (no key)";
   }
   function all() { return Object.keys(thoughts).map(function (k) { return thoughts[k]; }); }
   // Thoughts still in the deck (not shed).
@@ -927,6 +889,13 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
     if (!day) return "soon";
     var p = day.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]);
     return d.toLocaleDateString("en-US", { weekday: "long" }) + " at " + C.DAY_START_HOUR + ":00 AM";
+  }
+  // The Undo toast after Not today: "Back tomorrow.", "Back on Wednesday.", or a date a week or more out.
+  function backText(day) {
+    var p = day.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]);
+    if (day === C.addDays(today(), 1)) return "Back tomorrow.";
+    if (day >= C.addDays(today(), 7)) return "Back on " + d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) + ".";
+    return "Back on " + d.toLocaleDateString("en-US", { weekday: "long" }) + ".";
   }
   function showAnyway() { return prefs.anyway_day === today(); }
   var currentLead = null;
@@ -1063,6 +1032,8 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
     var l = lineFor[current]; if (!l) return;
     el.textContent = l.text;
     el.classList.toggle("pending", !!l.pending);
+    var k = $("keepBtn"); if (k) k.hidden = !l.ai;
+    var src = $("aiSrc"); if (src) src.textContent = l.pending ? "Considering" : l.ai ? "Considered for you" : "A question to sit with";
   }
 
   // ---------- actions ----------
@@ -1078,9 +1049,9 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
     if (kind === "skip") {
       // Not today: counted, rested until the next day, and owed one turn at the front.
       var u = undoPoint();
-      C.applySkip(t, today());
+      C.applySkip(t, today(), restDays());
       save(t); logActivity("skip"); flyOut("left");
-      undoable("Not today. Back in " + C.REST_DAYS + " days.", u); return;
+      undoable("Not today. " + backText(t.rest_until), u); return;
     }
     if (kind === "keep") {
       var k = undoPoint();
@@ -1129,7 +1100,7 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
   function showSheetLine(id, t) {
     var el = $(id), l = lastLine(t);
     el.hidden = !l;
-    el.innerHTML = l ? ICON_SPARK + "<p>" + esc(l) + "</p>" : "";
+    el.innerHTML = l ? "<p>" + esc(l) + "</p>" : "";
   }
 
   // ---------- shed sheet ----------
@@ -1160,32 +1131,30 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
   });
 
   // ---------- render: deck ----------
-  // Inline SVG icons used when building the deck.
-  var ICON_SKIP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>';
-  var ICON_SHED = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
-  var ICON_EDIT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
-  var ICON_SPARK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></svg>';
+  // Inline SVG icons.
+  function icon(d) { return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="' + d + '"/></svg>'; }
+  var ICON_SKIP = icon("M15 5l-7 7 7 7"), ICON_UP = icon("M12 19V6M6 11l6-6 6 6"), ICON_SHED = icon("M5 12.5l4.5 4.5L19 7.5");
+  var ICON_KEEP = icon("M7 4h10v16l-5-4-5 4z"), ICON_NEXT = icon("M9 6l6 6-6 6");
 
-  // Builds the deck view: the card, the optional 'Have you lived this yet?' banner,
-  // the three buttons, and the first-swipe coach the first time. Shows an empty state when nothing is active.
-  // The Pushing back strip that sat under the buttons is gone (1.26.0) so the card gets the screen;
-  // the same list, most set aside first, is the Ledger's In deck list, with Show to open one here.
-  // Living it: one soft ring of the Living it color blooms from the card (skipped with reduced motion).
+  // Builds the deck view (1.30.0): the collection keys, the principle on the page with where it came from,
+  // the AI line in glass with Keep, the optional 'Have you lived this yet?' strip, the three keys and the
+  // footer, plus the first-swipe tip the first time. Shows an empty state when nothing is on screen.
+  // Living it: one soft ring of brass blooms from the words (skipped with reduced motion).
   var REDUCED = window.matchMedia ? matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
   function burst() {
     var c = $("card"); if (!c || REDUCED.matches) return;
     var r = c.getBoundingClientRect(), b = document.createElement("div");
     b.className = "burst"; b.setAttribute("aria-hidden", "true");
-    b.style.left = (r.left + r.width / 2) + "px"; b.style.top = (r.top + r.height / 2) + "px";
+    b.style.left = (r.left + r.width / 2) + "px"; b.style.top = (r.top + r.height * 0.6) + "px";
     document.body.appendChild(b); setTimeout(function () { b.remove(); }, 800);
   }
-  // Chips: All plus each collection still in the deck, with counts. Not drawn when there are none.
+  // Collection keys: All plus each collection still in the deck, with counts. Not drawn when there are none.
   function chipsHtml() {
     var cs = C.deckCollections(all()); if (!cs.length) return "";
     var on = deckColl();
     return '<div class="chips-row" role="group" aria-label="Show collection" id="chips">' +
-      '<button type="button" class="chip" data-coll="" aria-pressed="' + String(!on) + '">All<small>' + activeList().length + "</small></button>" +
-      cs.map(function (c) { return '<button type="button" class="chip" data-coll="' + esc(c.name) + '" aria-pressed="' + String(on === c.name) + '">' + esc(c.name) + "<small>" + c.count + "</small></button>"; }).join("") + "</div>";
+      '<button type="button" class="chip raised" data-coll="" aria-pressed="' + String(!on) + '">All<small>' + activeList().length + "</small></button>" +
+      cs.map(function (c) { return '<button type="button" class="chip raised" data-coll="' + esc(c.name) + '" aria-pressed="' + String(on === c.name) + '">' + esc(c.name) + "<small>" + c.count + "</small></button>"; }).join("") + "</div>";
   }
   function bindChips() {
     var row = $("chips"); if (!row) return;
@@ -1202,26 +1171,41 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
     if (sel && sel.offsetLeft + sel.offsetWidth > row.clientWidth) row.scrollLeft = sel.offsetLeft - 14;
   }
   var entering = false;
-  // Panel heading for the deck, drawn above the chips in every deck state.
-  // The deck has no heading of its own (1.29.0): the top line carries the date and the counts.
-  function deckHead() { return ""; }
-  function emptyHtml(kick, title, text, acts) {
-    return '<div class="empty"><div class="kicker">' + esc(kick) + "</div><h1>" + title + "</h1><p>" + text + '</p><div class="acts">' + acts + "</div></div>";
+  function times(n) { return n === 1 ? "once" : n === 2 ? "twice" : n + " times"; }
+  // Under the words: collection, origin and author (when Show where it came from is on), and how often it was set aside.
+  function whereHtml(t) {
+    var p = [];
+    if (showWhere()) {
+      if (String(t.collection || "").trim()) p.push("<b>" + esc(t.collection) + "</b>");
+      if (t.origin) p.push("<span>" + esc(t.origin) + "</span>");
+      if (t.author) p.push("<span>" + esc(t.author) + "</span>");
+    }
+    if (t.skip_count > 0) p.push("<span>Set aside " + times(t.skip_count) + "</span>");
+    return p.length ? '<div class="where">' + p.join("") + "</div>" : "";
+  }
+  function keysHtml() {
+    return '<div class="moves" id="keys" role="group" aria-label="Moves">' +
+      '<button type="button" class="key raised" id="kSkip" data-move="skip">' + ICON_SKIP + "<span>Not today</span></button>" +
+      '<button type="button" class="key raised" id="kKeep" data-move="keep">' + ICON_UP + "<span>Working on it</span></button>" +
+      '<button type="button" class="key raised live" id="kShed" data-move="shed">' + ICON_SHED + "<span>Living it</span></button></div>";
+  }
+  function footHtml(left) { return '<div class="foot"><span>' + left + '</span><span id="deckN"></span></div>'; }
+  function emptyHtml(title, text, acts, left) {
+    return '<div class="empty"><h1>' + title + "</h1><p>" + text + '</p><div class="acts">' + acts + "</div></div>" + footHtml(left || "");
   }
   function renderDeck() {
     var v = $("v-deck");
-    paintStat();
     var t = thoughts[current];
     var enter = entering; entering = false;
     var coll = deckColl();
     if (!t && coll) {
       // The chosen collection has nothing to show right now.
       var inC = deckList(), nr = inC.filter(function (x) { return C.isResting(x, today()); }).length;
-      v.innerHTML = deckHead() + chipsHtml() + emptyHtml(coll, "Nothing left in " + esc(coll) + " today.",
+      v.innerHTML = chipsHtml() + emptyHtml("Nothing left in " + esc(coll) + " today.",
         nr ? nr + (nr === 1 ? " principle is" : " principles are") + " resting. The next returns " + returnText(C.nextReturn(inC, today())) + "." : "Every principle here is resting or lived.",
-        '<button type="button" class="btn" id="showAll">Show all collections</button>' +
-        (nr ? '<button type="button" class="btn ghost" id="showAnyway">Show anyway</button>' : ""));
-      bindChips();
+        '<button type="button" class="btn3d raised" id="showAll">Show all collections</button>' +
+        (nr ? '<button type="button" class="btn3d raised" id="showAnyway">Show anyway</button>' : ""), nr ? nr + " resting" : "");
+      bindChips(); paintStat();
       $("showAll").onclick = function () { prefs.deck_coll = ""; savePrefs(); showNext(); };
       if (nr) $("showAnyway").onclick = function () { prefs.anyway_day = today(); savePrefs(); showNext(); };
       return;
@@ -1229,107 +1213,183 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
     if (!t && activeList().length) {
       // Everything in the deck is resting after Not today.
       var n = activeList().filter(function (x) { return C.isResting(x, today()); }).length;
-      v.innerHTML = deckHead() + chipsHtml() + emptyHtml("Done for today", "Nothing left today.",
-        n + (n === 1 ? " principle is" : " principles are") + " resting. The next returns " + returnText(C.nextReturn(activeList(), today())) +
-        ". Not today sets a principle aside for " + C.REST_DAYS + " days; when it returns, the most avoided come up first.",
-        '<button type="button" class="btn" id="showAnyway">Show anyway</button>' +
-        '<button type="button" class="btn ghost" id="emptyAdd">Capture a principle</button>');
+      v.innerHTML = chipsHtml() + emptyHtml("Nothing left today.",
+        (n === activeList().length ? "Every principle is resting." : n + (n === 1 ? " principle is" : " principles are") + " resting.") +
+        " The next one returns " + returnText(C.nextReturn(activeList(), today())) + ", and the most avoided come up first.",
+        '<button type="button" class="btn3d raised" id="showAnyway">Show anyway</button>' +
+        '<button type="button" class="btn3d raised" id="emptyAdd">Capture</button>', n + " resting");
       $("showAnyway").onclick = function () { prefs.anyway_day = today(); savePrefs(); showNext(); };
       $("emptyAdd").onclick = openCapture;
-      bindChips();
+      bindChips(); paintStat();
       return;
     }
     if (!t) {
       var any = all().length;
-      v.innerHTML = deckHead() + emptyHtml(any ? "Deck clear" : "Start here", any ? "You are living every principle." : "No principles yet.",
+      v.innerHTML = emptyHtml(any ? "You are living every principle." : "No principles yet.",
         "Capture a principle you want to live by. It stays in the deck until you live it without prompting.",
-        '<button type="button" class="btn" id="emptyAdd">Capture a principle</button>' +
-        '<button type="button" class="btn ghost" id="emptyStarter">Load a starter deck</button>');
+        '<button type="button" class="btn3d raised" id="emptyAdd">Capture a principle</button>' +
+        '<button type="button" class="btn3d raised" id="emptyStarter">Load a starter deck</button>');
       $("emptyAdd").onclick = openCapture;
       // Scroll only the Settings sheet to the starter decks; scrolling the element into view would also move the page.
-      $("emptyStarter").onclick = function () { show("sheetSettings"); var sh = $("sheetSettings"), g = $("starterGroup"); if (g) sh.scrollTop = Math.max(0, g.offsetTop - 12); };
+      $("emptyStarter").onclick = function () { openSettings(); var sh = $("sheetSettings"), g = $("starterGroup"); if (g) sh.scrollTop = Math.max(0, g.offsetTop - 12); };
+      paintStat();
       return;
     }
     var nudge = t.consecutive_reflects >= NUDGE_AT, coachOn = !prefs.coach_seen;
-    // The principle sits on the page (1.29.0): label, words, byline, the AI line and the record, low on the
-    // screen. No buttons: the three moves are swipes, the corner ring and the arrow keys.
-    v.innerHTML = deckHead() + chipsHtml() +
+    var left = currentLead === t.id ? '<span class="first">First today</span>'
+      : "Captured " + fmtDate(t.created_at) + ", inspected " + (t.reflect_count === 1 ? "once" : t.reflect_count + " times");
+    v.innerHTML = chipsHtml() +
       '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current principle" aria-describedby="cardHow">' +
-        '<div class="card-top">' +
-          '<div class="stamp skip" id="stSkip" aria-hidden="true">NOT TODAY</div><div class="stamp shed" id="stShed" aria-hidden="true">LIVING IT</div><div class="stamp keep" id="stKeep" aria-hidden="true">WORKING ON IT</div>' +
-          labelHtml(t) + (t.skip_count > 0 ? '<span class="badge">Not today ' + t.skip_count + "\u00d7</span>" : "") + "</div>" +
         '<div class="thought' + sizeClass(t.text) + '"><span>' + esc(t.text) + "</span></div>" +
-        byline(t) +
-        '<div class="ai"><span class="label">Consider</span><p id="aiLine"></p></div>' +
-        '<div class="meta">' + (currentLead === t.id ? '<b class="first">First today</b> \u00b7 ' : "") + "Captured " + fmtDate(t.created_at) + " · inspected " + t.reflect_count + "× · weight " + weight(t).toFixed(1) + "</div>" +
-        (nudge ? '<div class="banner"><span class="dot" aria-hidden="true"></span><span class="t">Have you lived this yet?</span><span class="btns"><button type="button" class="b-ghost" id="nudgeNo">Not yet</button><button type="button" class="b-accent" id="nudgeYes">Living it</button></span></div>' : "") +
-        '<span class="sr" id="cardHow">Swipe left for Not today, up for Still working on it, right for Living it. The menu button in the corner has the same three moves.</span>' +
-      (coachOn ? coachHtml() : "") +
-      "</article>";
+        whereHtml(t) +
+        '<div class="lineWrap"><div class="glass"><p class="ai-p" id="aiLine"></p>' +
+          '<div class="ai-row"><small id="aiSrc">Considered for you</small><button type="button" class="keep raised" id="keepBtn" hidden>' + ICON_KEEP + "Keep</button></div></div></div>" +
+        '<span class="sr" id="cardHow">Swipe left for Not today, up for Still working on it, right for Living it, or use the three keys. Press and hold to edit.</span>' +
+      "</article>" +
+      '<div class="swipetag raised skip" id="tagSkip" aria-hidden="true">' + ICON_SKIP + "Not today</div>" +
+      '<div class="swipetag raised keep" id="tagKeep" aria-hidden="true">' + ICON_UP + "Working on it</div>" +
+      '<div class="swipetag raised shed" id="tagShed" aria-hidden="true">' + ICON_SHED + "Living it</div>" +
+      (nudge ? '<div class="banner raised"><span class="t">Have you lived this yet?</span><button type="button" id="nudgeNo">Not yet</button><button type="button" class="yes" id="nudgeYes">Living it</button></div>' : "") +
+      keysHtml() + footHtml(left) +
+      (coachOn ? coachHtml() : "");
     if (nudge) {
       $("nudgeYes").onclick = function () { act("shed"); };
       $("nudgeNo").onclick = function () { t.consecutive_reflects = 0; save(t); renderDeck(); paintLine(); };
     }
-    if (coachOn) $("coachOk").onclick = function () { coachSeen(); renderDeck(); paintLine(); };
+    if (coachOn) {
+      $("coachOk").onclick = function () { coachSeen(); };
+      $("coach").onclick = function (e) { if (e.target === $("coach")) coachSeen(); };
+    }
+    $("keepBtn").onclick = function () { var l = lineFor[t.id]; if (l && l.ai) openKeep(t, l.text); };
     bindChips();
-    bindSwipe();
+    paintStat();
     paintLine();
   }
+  // The three keys do what the swipes do.
+  $("v-deck").addEventListener("click", function (e) {
+    var k = e.target.closest("[data-move]"); if (!k || !onCard()) return;
+    act(k.getAttribute("data-move"));
+  });
 
-  // ---------- first-swipe coach ----------
-  // Shown over the first card anyone sees: a ghost card swipes each way with one line each (a
-  // static list when reduced motion is on). A tap, Got it, or the first real move dismisses it,
-  // and prefs.coach_seen keeps it from coming back.
-  var ICON_UP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>';
-  var ICON_RIGHT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  // ---------- first-swipe tip ----------
+  // Shown over the first principle anyone sees: the three moves in a glass panel above the keys. Got it, a tap
+  // outside the panel, or the first real move dismisses it, and prefs.coach_seen keeps it from coming back.
   function coachHtml() {
-    return '<div class="coach" id="coach" role="group" aria-label="How to use the deck">' +
-      '<div class="ghost" aria-hidden="true"><i></i><i></i><i></i></div>' +
-      "<h2>Three moves.</h2>" +
-      '<ul><li class="c-skip">' + ICON_SKIP + '<span>Swipe left: Not today<small>Sets it aside for ' + C.REST_DAYS + ' days.</small></span></li>' +
-      '<li class="c-keep">' + ICON_UP + '<span>Swipe up: Still working on it<small>Keeps it in the deck.</small></span></li>' +
-      '<li class="c-shed">' + ICON_RIGHT + '<span>Swipe right: Living it<small>Retires it to your record.</small></span></li></ul>' +
-      '<p class="tapnote">The + in the corner does the same, and holds Capture, Edit, the Ledger and Settings. Tap it, or hold and slide.</p>' +
-      '<button type="button" class="coach-ok" id="coachOk">Got it</button></div>';
+    var n = restDays();
+    return '<div class="coach" id="coach" role="group" aria-label="How to use the deck"><div class="glass">' +
+      "<h2>Three moves</h2>" +
+      "<ul><li>" + ICON_SKIP + "<span><b>Not today</b>: swipe left. Rests it for " + n + (n === 1 ? " day" : " days") + ".</span></li>" +
+      "<li>" + ICON_UP + "<span><b>Working on it</b>: swipe up.</span></li>" +
+      "<li>" + ICON_SHED + "<span><b>Living it</b>: swipe right.</span></li></ul>" +
+      '<p class="tapnote">Or press the keys below. Press and hold a principle to edit it. Everything else is in the menu at the top right.</p>' +
+      '<div class="row"><button type="button" class="btn3d sm raised" id="coachOk">Got it</button></div></div></div>';
   }
-  function coachSeen() { if (prefs.coach_seen) return; prefs.coach_seen = true; savePrefs(); var c = $("coach"); if (c) c.remove(); var h = document.querySelector(".hints"); if (h) h.remove(); }
-  // Drag handling with pointer events (works for touch and mouse). The card follows the finger,
-  // tilts around a point below it, and glows in the color of the move it is heading for (core.js
-  // swipeIntent) while the SKIP / SHED / KEEP stamps fade in. Past 90px it commits: left = skip,
-  // right = shed, up = keep. Anything shorter springs back with a small overshoot.
-  function bindSwipe() {
-    var card = $("card"); if (!card) return;
-    var sx = 0, sy = 0, dx = 0, dy = 0, down = false;
-    var st = { skip: $("stSkip"), shed: $("stShed"), keep: $("stKeep") };
-    var wash = $("wash");
-    function resetStamps() { st.skip.style.opacity = st.shed.style.opacity = st.keep.style.opacity = 0; card.style.setProperty("--ga", 0); wash.classList.add("fade"); wash.style.setProperty("--ga", 0); }
-    card.addEventListener("pointerdown", function (e) { if (e.button > 0 || e.target.closest(".banner, .coach-ok")) return; down = true; sx = e.clientX; sy = e.clientY; dx = dy = 0; card.classList.remove("spring", "enter"); card.classList.add("dragging"); wash.classList.remove("fade"); try { card.setPointerCapture(e.pointerId); } catch (_) {} });
-    card.addEventListener("pointermove", function (e) {
-      if (!down) return; dx = e.clientX - sx; dy = e.clientY - sy;
+  function coachSeen() { if (prefs.coach_seen) return; prefs.coach_seen = true; savePrefs(); var c = $("coach"); if (c) c.remove(); }
+
+  // ---------- swipe, and press and hold ----------
+  // Pointer events on the whole deck view (touch and mouse), bound once. The words follow the finger with a
+  // slight lean; the key for the move you are heading toward (core.js swipeIntent) presses in and its label
+  // fades in. Past 90px it commits: left = Not today, right = Living it, up = Still working on it. Anything
+  // shorter springs back. Holding still on the words for HOLD_MS opens Edit instead.
+  var HOLD_MS = 550;
+  (function bindSwipe() {
+    var deck = $("v-deck"), sx = 0, sy = 0, dx = 0, dy = 0, down = false, holdT = 0;
+    var KEY = { skip: "kSkip", keep: "kKeep", shed: "kShed" }, TAG = { skip: "tagSkip", keep: "tagKeep", shed: "tagShed" };
+    function show(kind, strength) {
+      Object.keys(KEY).forEach(function (k) {
+        var key = $(KEY[k]), tag = $(TAG[k]);
+        if (key) key.classList.toggle("down", k === kind && strength > 0.15);
+        if (tag) tag.style.opacity = k === kind ? strength : 0;
+      });
+    }
+    deck.addEventListener("pointerdown", function (e) {
+      var card = $("card");
+      if (e.button > 0 || !card || e.target.closest("button, .chips-row, .coach, .banner")) return;
+      down = true; sx = e.clientX; sy = e.clientY; dx = dy = 0;
+      card.classList.remove("spring", "enter"); card.classList.add("dragging");
+      try { deck.setPointerCapture(e.pointerId); } catch (_) {}
+      clearTimeout(holdT);
+      holdT = setTimeout(function () {
+        if (!down || Math.abs(dx) > 8 || Math.abs(dy) > 8) return;
+        down = false; card.classList.remove("dragging"); card.style.transform = ""; show("", 0);
+        var t = onCard(); if (t) { coachSeen(); openEdit(t); }
+      }, HOLD_MS);
+    });
+    deck.addEventListener("pointermove", function (e) {
+      if (!down) return;
+      var card = $("card"); if (!card) { down = false; return; }
+      dx = e.clientX - sx; dy = e.clientY - sy;
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) clearTimeout(holdT);
       var w = C.swipeIntent(dx, dy);
-      // A gentle lean (half the tilt the card had), no lift: the words are on the page, not a held object.
       card.style.transform = "translate(" + dx + "px," + Math.min(dy, 40) + "px) rotate(" + (w.tilt * 0.4).toFixed(2) + "deg)";
-      if (w.kind) { var g = w.kind === "shed" ? "live" : w.kind === "keep" ? "work" : "skip"; card.setAttribute("data-glow", g); wash.setAttribute("data-glow", g); }
-      card.style.setProperty("--ga", w.strength); wash.style.setProperty("--ga", w.strength);
-      st.skip.style.opacity = w.kind === "skip" ? w.strength : 0;
-      st.shed.style.opacity = w.kind === "shed" ? w.strength : 0;
-      st.keep.style.opacity = w.kind === "keep" ? w.strength : 0;
+      show(w.kind, w.strength);
     });
     function end() {
-      if (!down) return; down = false; card.classList.remove("dragging");
+      clearTimeout(holdT);
+      if (!down) return; down = false;
+      var card = $("card"); if (!card) return;
+      card.classList.remove("dragging");
       var w = C.swipeIntent(dx, dy);
-      wash.classList.add("fade"); wash.style.setProperty("--ga", 0);
+      show("", 0);
       if (w.commit && w.kind === "skip") act("skip");
-      else if (w.commit && w.kind === "shed") { card.style.transform = ""; resetStamps(); act("shed"); }
+      else if (w.commit && w.kind === "shed") { card.style.transform = ""; act("shed"); }
       else if (w.commit && w.kind === "keep") act("keep");
-      else {
-        card.classList.add("spring"); card.style.transform = ""; resetStamps();
-        // A tap (no real drag) on the coach dismisses it.
-        if (Math.abs(dx) < 8 && Math.abs(dy) < 8 && $("coach")) { coachSeen(); }
-      }
+      else { card.classList.add("spring"); card.style.transform = ""; }
     }
-    card.addEventListener("pointerup", end); card.addEventListener("pointercancel", end);
+    deck.addEventListener("pointerup", end); deck.addEventListener("pointercancel", end);
+    deck.addEventListener("contextmenu", function (e) { if (e.target.closest("#card")) e.preventDefault(); });
+  })();
+
+  // ---------- keep an AI line (Story 10) ----------
+  // An AI line can be kept as a new principle in the same collection, citing where it came from and linked to
+  // the original, or it can replace the principle's wording, as an edit would (core.js keepAsNew, keepReplace).
+  // Either one can be undone from the toast.
+  var keepT = null, keepLine = "", keepMode = "add";
+  function clip(s, n) { s = String(s || "").trim(); return s.length > n ? s.slice(0, n) + "…" : s; }
+  function openKeep(t, line) {
+    if (!t || !line) return;
+    keepT = t; keepLine = line; keepMode = "add";
+    var coll = String(t.collection || "").trim();
+    $("keepText").textContent = line;
+    $("keepFrom").textContent = "From your principle" + (coll ? " in " + coll : "") + ": " + clip(t.text, 90);
+    $("keepAddNote").textContent = (coll ? "Goes into " + coll + " beside the original." : "Goes into the deck beside the original.") + " It cites the line and starts with fresh counts.";
+    paintKeep();
+    show("sheetKeep");
   }
+  function keepCheck() {
+    if (keepMode === "add") return C.keepAsNew(all(), keepT, keepLine, new Date());
+    return C.checkEdit(all(), keepT, { text: keepLine });
+  }
+  function paintKeep() {
+    $("keepAdd").setAttribute("aria-pressed", String(keepMode === "add"));
+    $("keepRep").setAttribute("aria-pressed", String(keepMode === "replace"));
+    var r = keepCheck(), err = $("keepErr");
+    if (r.reason === "duplicate") {
+      err.textContent = "Already in your " + (r.conflict.status === "shed" ? "Living it record" : "deck") + ": " + clip(r.conflict.text, 80);
+      err.hidden = false;
+    } else err.hidden = true;
+    $("keepSave").disabled = !!r.reason;
+    $("keepSave").textContent = keepMode === "add" ? "Add to the deck" : "Replace my wording";
+  }
+  $("keepAdd").onclick = function () { keepMode = "add"; paintKeep(); };
+  $("keepRep").onclick = function () { keepMode = "replace"; paintKeep(); };
+  $("keepSave").onclick = function () {
+    var t = keepT; if (!t) return;
+    var u = undoPoint(), now = new Date();
+    if (keepMode === "add") {
+      var r = C.keepAsNew(all(), t, keepLine, now); if (!r.principle) return;
+      r.principle.id = newId(); save(r.principle);
+      hide(); undoable("Added to " + (String(t.collection || "").trim() || "the deck") + ".", u);
+      paintStat();
+    } else {
+      var q = C.keepReplace(all(), t, keepLine, now); if (!q.principle) return;
+      delete ready[t.id]; save(t);
+      hide(); undoable("Wording replaced. Earlier wording kept.", u);
+      if (t.id === current) { renderDeck(); requestLine(t); }
+    }
+    keepT = null;
+    if (!$("v-ledger").hidden) renderLedger();
+  };
 
   // ---------- evidence sheet ----------
   // Add or edit the evidence line on a lived principle. An empty save clears it.
@@ -1358,7 +1418,7 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
     function paint() {
       var v = input.value.trim(), canon = C.canonCollection(all(), v);
       chips.innerHTML = C.collections(all()).slice(0, 8).map(function (c) {
-        return '<button type="button" class="' + (canon && c.name === canon ? "on" : "") + '" data-c="' + esc(c.name) + '">' + esc(c.name) + "</button>";
+        return '<button type="button" class="raised' + (canon && c.name === canon ? " on down" : "") + '" data-c="' + esc(c.name) + '">' + esc(c.name) + "</button>";
       }).join("");
       var show = v && canon !== v && canon.toLowerCase() === v.replace(/\s+/g, " ").toLowerCase() && canon !== v.replace(/\s+/g, " ");
       hint.hidden = !show;
@@ -1387,7 +1447,7 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
     $("editKept").innerHTML = (lived
       ? ["Lived " + fmtDate(t.shed_at), t.evidence ? "Where it showed up" : "", lastLine(t) ? "Last AI line" : "", t.lifetime_skips + " not today"]
       : ["Not today " + t.skip_count, "Worked on " + t.reflect_count, "Since " + fmtDate(t.created_at), "Weight " + weight(t).toFixed(1)]
-    ).filter(Boolean).map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("");
+    ).filter(Boolean).map(function (x) { return '<span class="pressed">' + esc(x) + "</span>"; }).join("");
     $("editInput").value = t.text;
     $("editCollection").value = t.collection || "";
     $("editTitle").value = t.title || "";
@@ -1444,23 +1504,26 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
   // List every collection with its count; rename, merge or remove one across every
   // principle. Only the collection field changes (core.js renameCollection and
   // removeCollection); wording, counts, dates, status, evidence and AI lines stay.
-  function paintCollCount() { $("collCount").textContent = C.collections(all()).length + " \u203a"; }
-  function openCollections() {
+  function paintCollCount() { $("collCount").textContent = C.collections(all()).length; }
+  // from: "settings" or "menu", so Done goes back to where Collections was opened. Left out, it stays as it was.
+  var collFrom = "menu";
+  function openCollections(from) {
+    if (from) collFrom = from;
     var list = C.collections(all());
     $("collList").innerHTML = list.length ? list.map(function (c) {
-      return '<button type="button" data-coll="' + esc(c.name) + '"><b>' + esc(c.name) + "</b><span>" + c.count + (c.count === 1 ? " principle" : " principles") + " \u203a</span></button>";
+      return '<button type="button" class="crow raised" data-coll="' + esc(c.name) + '" aria-label="' + esc(c.name) + ", " + c.count + (c.count === 1 ? " principle" : " principles") + '"><b>' + esc(c.name) + "</b><span>" + c.count + ICON_NEXT + "</span></button>";
     }).join("") : '<p class="none">No collections yet. Add one from a principle\'s Edit sheet or when capturing.</p>';
     show("sheetCollections");
   }
-  $("openCollections").onclick = openCollections;
-  $("collDone").onclick = function () { paintCollCount(); show("sheetSettings"); };
+  $("openCollections").onclick = function () { openCollections("settings"); };
+  $("collDone").onclick = function () { if (collFrom === "settings") openSettings(); else hide(); };
   $("collList").addEventListener("click", function (e) { var b = e.target.closest("[data-coll]"); if (b) openRename(b.getAttribute("data-coll")); });
 
   var renameFrom = null;
   function openRename(name) {
     var c = C.collections(all()).filter(function (x) { return x.name === name; })[0]; if (!c) return;
     renameFrom = c.name;
-    $("renameMeta").textContent = c.name + " \u00b7 " + c.count + (c.count === 1 ? " principle" : " principles");
+    $("renameMeta").textContent = c.name + ", " + c.count + (c.count === 1 ? " principle" : " principles");
     $("renameInput").value = c.name;
     var rm = $("renameRemove"); rm.classList.remove("confirm"); rm.textContent = "Remove this collection";
     $("renameRemoveNote").textContent = "Removing leaves the " + (c.count === 1 ? "principle" : c.count + " principles") + " in place with no collection.";
@@ -1506,88 +1569,106 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
   $("renameCancel").onclick = openCollections;
 
   // ---------- render: ledger ----------
-  // Ledger. Totals and three glowing bars (Living it, Still working, Not today), the In deck / Shed list,
-  // and an 84 day grid (12 weeks). Delete is undone from the toast.
-  var listMode = "deck";
+  // Ledger (1.30.0). A ring gauge of how many principles you live, three capsules (Living it as a share of
+  // every principle, then resting and pushing back in the deck), the three most set aside as tiles that open
+  // on the deck, a 12 week grid of dots, and the In deck / Living it list. Delete is undone from the toast.
+  var listMode = "deck", GAUGE_LEN = 276.5;
+  function weekdayOf(day, opts) { var p = day.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", opts || { weekday: "short" }); }
+  // Notes under a principle's words: kept from an AI line, and the wording it had before.
+  function historyHtml(t) {
+    var h = "";
+    if (t.kept_from && t.kept_at) h += '<div class="was kfrom">Kept from an AI line on ' + esc(fmtDate(t.kept_at)) + "</div>";
+    if (t.worded_from_ai) h += '<div class="was kfrom">Wording kept from an AI line on ' + esc(fmtDate(t.worded_from_ai)) + "</div>";
+    var e = t.earlier && t.earlier.length ? t.earlier[t.earlier.length - 1] : null;
+    if (e) h += '<div class="was">Earlier wording: ' + esc(clip(e.text, 160)) + "</div>";
+    return h;
+  }
   function renderLedger() {
-    var items = all();
+    var items = all(), td = today();
     var act_ = items.filter(function (t) { return t.status === "active"; }).sort(function (a, b) { return weight(b) - weight(a) || b.lifetime_skips - a.lifetime_skips; });
     var shed = items.filter(function (t) { return t.status === "shed"; }).sort(function (a, b) { return (b.shed_at || "").localeCompare(a.shed_at || ""); });
-    var resisting = act_.filter(function (t) { return t.skip_count >= 3; }).length;
+    var resting = act_.filter(function (t) { return C.isResting(t, td); }).length;
+    var pushing = act_.filter(function (t) { return t.skip_count > 0; });
+    // Gauge: principles lived, out of every principle.
+    var frac = items.length ? shed.length / items.length : 0;
+    $("gaugeArc").setAttribute("stroke-dashoffset", (GAUGE_LEN * (1 - frac)).toFixed(1));
+    $("gaugeArc").style.visibility = shed.length ? "" : "hidden";
     $("lShed").textContent = shed.length;
-    $("lLine").textContent = act_.length + " in deck · " + resisting + " pushing back";
-    $("lMeta").textContent = items.length + (items.length === 1 ? " principle" : " principles");
-    paintStat();
-    var avg = shed.length ? Math.round(shed.reduce(function (a, t) { return a + Math.max(1, (new Date(t.shed_at) - new Date(t.created_at)) / 86400000); }, 0) / shed.length) : 0;
-    $("lAvg").textContent = shed.length ? "avg " + avg + (avg === 1 ? " day" : " days") + " to live it" : "none lived yet";
-    // Glowing bars: every principle counted once (core.js outcomeMix); the percentages add up to 100.
+    $("gauge").setAttribute("aria-label", shed.length + " living it, of " + items.length + (items.length === 1 ? " principle" : " principles"));
+    // Capsules.
     var mx = C.outcomeMix(items);
-    [["Live", "live"], ["Work", "work"], ["Skip", "skip"]].forEach(function (k) {
-      var bar = $("mix" + k[0]), pc = mx.pct[k[1]];
-      $("p" + k[0]).textContent = pc + "%"; bar.style.setProperty("--p", pc + "%"); bar.classList.toggle("zero", !pc);
-    });
-    $("mix").setAttribute("aria-label", "Living it " + mx.pct.live + "%, still working " + mx.pct.work + "%, not today " + mx.pct.skip + "% of " + mx.total + (mx.total === 1 ? " principle" : " principles"));
+    var cap = function (id, pct) { var el = $(id); el.style.setProperty("--p", pct + "%"); el.classList.toggle("on", pct > 0); };
+    cap("capLive", mx.pct.live); $("pLive").textContent = mx.pct.live + "%";
+    cap("capRest", act_.length ? Math.round(resting * 100 / act_.length) : 0); $("pRest").textContent = resting;
+    cap("capPush", act_.length ? Math.round(pushing.length * 100 / act_.length) : 0); $("pPush").textContent = pushing.length;
+    $("caps").setAttribute("aria-label", "Living it " + mx.pct.live + "% of every principle. In the deck, " + resting + " resting and " + pushing.length + " pushing back.");
+    // Pushing back: the three set aside most. Tapping one opens it on the deck.
+    var top = pushing.slice().sort(function (a, b) { return b.skip_count - a.skip_count || b.lifetime_skips - a.lifetime_skips; }).slice(0, 3);
+    $("pbWrap").hidden = !top.length;
+    $("pb").innerHTML = top.map(function (t) {
+      return '<button type="button" class="pbc raised" data-show="' + t.id + '" aria-label="Set aside ' + times(t.skip_count) + ": " + esc(clip(t.text, 80)) + '. Show on the deck."><b>' + t.skip_count + "</b><span>" + esc(t.text) + "</span></button>";
+    }).join("");
 
     $("segDeck").setAttribute("aria-pressed", String(listMode === "deck"));
     $("segShed").setAttribute("aria-pressed", String(listMode === "shed"));
-    $("listLegend").textContent = listMode === "deck" ? "weight 1.0–4.0" : "newest first";
+    $("segDeck").classList.toggle("raised", listMode === "deck");
+    $("segShed").classList.toggle("raised", listMode === "shed");
     var L = $("ledgerList");
     if (listMode === "deck") {
       L.innerHTML = act_.length ? act_.map(function (t) {
         var pct = Math.max(3, (weight(t) - 1) / (CAP - 1) * 100);
-        var label = t.lifetime_skips > t.skip_count ? t.lifetime_skips + " not today · now " + t.skip_count : t.skip_count + " not today";
-        return '<div class="row"><div class="row-top"><div class="t">' + esc(t.text) + '</div><div class="n">' + label + "</div></div>" +
-          '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
-          '<div class="row-foot"><span>since ' + fmtDate(t.created_at) + " · worked on " + t.reflect_count + '×</span><span><button type="button" data-show="' + t.id + '">Show</button> · <button type="button" data-edit="' + t.id + '">Edit</button> · <button type="button" data-del="' + t.id + '">Delete</button></span></div></div>';
+        var state = C.isResting(t, td) ? "resting until " + weekdayOf(t.rest_until)
+          : t.skip_count > 0 ? "set aside " + times(t.skip_count)
+          : (t.reflect_count || t.lifetime_skips) ? "worked on " + times(t.reflect_count || 0) : "new";
+        return '<div class="lrow raised"><div class="lt">' + esc(t.text) + "</div>" + historyHtml(t) +
+          '<div class="lm"><span>' + esc(String(t.collection || "").trim() || "No collection") + "</span><span>" + esc(state) + "</span></div>" +
+          '<div class="tube h pressed" aria-hidden="true"><i style="--p:' + pct.toFixed(0) + '%"></i></div><span class="sr">Weight ' + weight(t).toFixed(1) + " of 4.</span>" +
+          '<div class="acts-row"><button type="button" data-show="' + t.id + '">Show</button><button type="button" data-edit="' + t.id + '">Edit</button><button type="button" data-del="' + t.id + '">Delete</button></div></div>';
       }).join("") : '<p class="none">Nothing in the deck.</p>';
-      // The Pushing back list (formerly the strip under the deck buttons): most set aside first.
-      if (act_.length) L.innerHTML = '<p class="none" style="margin-bottom:10px">' + (resisting || act_.some(function (t) { return t.skip_count > 0; })
-        ? "Most set aside first. What you set aside comes back more often." : "Nothing is pushing back right now.") + "</p>" + L.innerHTML;
     } else {
-      // The Living it record: each principle you now live, with where it showed up.
+      // The Living it record: each principle you now live, its last AI line, and where it showed up.
       // Evidence can be added or edited later, since the proof often comes after the decision.
-      L.innerHTML = shed.length ? '<p class="none" style="margin-bottom:10px">What you live now, and where it showed up.</p>' + shed.map(function (t) {
+      L.innerHTML = shed.length ? shed.map(function (t) {
         var span = Math.max(1, Math.round((new Date(t.shed_at) - new Date(t.created_at)) / 86400000));
         var l = lastLine(t);
-        return '<div class="row"><div class="row-top"><div class="t full">' + esc(t.text) + '</div><div class="n ok">' + fmtDate(t.shed_at) + "</div></div>" +
-          (l ? '<div class="row-ai">' + ICON_SPARK + "<span>" + esc(l) + "</span></div>" : "") +
-          (t.evidence ? '<div class="evidence">' + esc(t.evidence) + "</div>" : "") +
-          '<div class="row-foot"><span>' + span + (span === 1 ? " day · " : " days · ") + t.lifetime_skips + ' not today</span><span><button type="button" data-edit="' + t.id + '">Edit</button> · <button type="button" data-ev="' + t.id + '">' + (t.evidence ? "Edit evidence" : "Add evidence") + '</button> · <button type="button" data-del="' + t.id + '">Delete</button></span></div></div>';
+        return '<div class="lrow raised"><div class="lt">' + esc(t.text) + "</div>" +
+          (l ? '<div class="glass"><p>' + esc(l) + "</p></div>" : "") +
+          (t.evidence ? '<div class="ev">' + esc(t.evidence) + "</div>" : "") + historyHtml(t) +
+          '<div class="lm"><span>Lived ' + esc(fmtDate(t.shed_at)) + ", after " + span + (span === 1 ? " day" : " days") + "</span><span>" + (t.lifetime_skips ? "set aside " + times(t.lifetime_skips) : "") + "</span></div>" +
+          '<div class="acts-row">' + (l ? '<button type="button" data-keep="' + t.id + '">Keep line</button>' : "") +
+          '<button type="button" data-edit="' + t.id + '">Edit</button><button type="button" data-ev="' + t.id + '">' + (t.evidence ? "Evidence" : "Add evidence") + '</button><button type="button" data-del="' + t.id + '">Delete</button></div></div>';
       }).join("") : '<p class="none">Nothing here yet. A principle moves here once you live it without prompting.</p>';
     }
-    Array.prototype.forEach.call(L.querySelectorAll("[data-edit]"), function (b) {
-      b.onclick = function () { openEdit(thoughts[b.getAttribute("data-edit")]); };
-    });
-    Array.prototype.forEach.call(L.querySelectorAll("[data-ev]"), function (b) {
-      b.onclick = function () { openEvidence(thoughts[b.getAttribute("data-ev")]); };
-    });
-    Array.prototype.forEach.call(L.querySelectorAll("[data-show]"), function (b) {
-      b.onclick = function () {
-        var t = thoughts[b.getAttribute("data-show")]; if (!t) return;
-        // A principle outside the chosen collection clears the chip, so the row matches the card.
-        if (!C.inCollection(t, deckColl())) { prefs.deck_coll = ""; savePrefs(); }
-        go("deck"); showThought(t);
-      };
-    });
-    // Delete is one tap; the toast offers Undo for 5 seconds instead of asking first.
-    Array.prototype.forEach.call(L.querySelectorAll("[data-del]"), function (b) {
-      b.onclick = function () {
-        var id = b.getAttribute("data-del"), u = undoPoint();
-        if (current === id) current = null;
-        remove(id); renderLedger(); undoable("Deleted.", u);
-      };
-    });
 
     var cells = [], now = new Date();
     for (var i = 83; i >= 0; i--) {
       var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-      var a = activity[dayKey(d)];
-      var cls = a && a.s ? "sh" : (a && a.i ? "on" : "");
+      var a = activity[dayKey(d)], n = a ? (a.i || 0) : 0;
+      var cls = a && a.s ? "lv" : n >= 3 ? "on2" : n ? "on" : "";
       if (i === 0) cls += " today";
       cells.push('<i class="' + cls + '" title="' + d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + '"></i>');
     }
     $("cal").innerHTML = cells.join("");
   }
+  // Row and tile actions, bound once on the Ledger.
+  $("v-ledger").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-show], [data-edit], [data-ev], [data-del], [data-keep]"); if (!b) return;
+    var id = b.getAttribute("data-show") || b.getAttribute("data-edit") || b.getAttribute("data-ev") || b.getAttribute("data-del") || b.getAttribute("data-keep");
+    var t = thoughts[id]; if (!t) return;
+    if (b.hasAttribute("data-show")) {
+      // A principle outside the chosen collection clears the collection key, so the row matches the deck.
+      if (!C.inCollection(t, deckColl())) { prefs.deck_coll = ""; savePrefs(); }
+      go("deck"); showThought(t);
+    } else if (b.hasAttribute("data-edit")) openEdit(t);
+    else if (b.hasAttribute("data-ev")) openEvidence(t);
+    else if (b.hasAttribute("data-keep")) openKeep(t, lastLine(t));
+    else {
+      // Delete is one tap; the toast offers Undo for 5 seconds instead of asking first.
+      var u = undoPoint();
+      if (current === id) current = null;
+      remove(id); renderLedger(); undoable("Deleted.", u);
+    }
+  });
   $("segDeck").onclick = function () { listMode = "deck"; renderLedger(); };
   $("segShed").onclick = function () { listMode = "shed"; renderLedger(); };
 
@@ -1599,7 +1680,8 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
   function setCapMore(open) {
     $("capDetails").hidden = !open;
     $("capMore").setAttribute("aria-expanded", String(open));
-    $("capMoreHint").textContent = open ? "Hide \u2304" : "Collection, title, author \u203a";
+    $("capMoreHint").textContent = open ? "Hide" : "Collection, title, author";
+    $("capMore").classList.toggle("down", open);
     if (open) capColl.paint();
   }
   var capColl = collectionField("cap");
@@ -1732,7 +1814,7 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
       try { document.startViewTransition(swap); } catch (e) { swap(); }
     } else swap();
   }
-  $("backDeck").onclick = function () { go("deck"); var f = $("fab"); try { f.focus({ preventScroll: true }); } catch (e) {} };
+  $("backDeck").onclick = function () { go("deck"); try { $("menuBtn").focus({ preventScroll: true }); } catch (e) {} };
   // Screen check: the measurements that decide whether the app fills the display. Shown under
   // About so a layout change can be checked against real phone numbers, not an emulator.
   function screenCheck() {
@@ -1747,158 +1829,67 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
       " \u00b7 safe " + r(parseFloat(ps.paddingTop)) + "/" + r(parseFloat(ps.paddingBottom)) +
       " \u00b7 scroll " + r(window.scrollY);
   }
-  function openSettings() { paintCollCount(); screenCheck(); show("sheetSettings"); }
+  function openSettings() { paintSettings(); screenCheck(); show("sheetSettings"); }
+  // Settings controls (1.30.0): look, Show where it came from, rest after Not today, AI lines on or off.
+  function paintSettings() {
+    var n = restDays();
+    paintCollCount();
+    $("whereToggle").setAttribute("aria-checked", String(showWhere()));
+    $("aiToggle").setAttribute("aria-checked", String(!prefs.ai_off));
+    $("restOut").textContent = n + (n === 1 ? " day" : " days");
+    $("restDown").disabled = n <= C.REST_MIN; $("restUp").disabled = n >= C.REST_MAX;
+    $("howRest").textContent = "Not today sets a principle aside for " + n + (n === 1 ? " day" : " days") + " and raises its weight, up to four times as likely as a new one. When it returns, at " +
+      C.DAY_START_HOUR + ":00 AM, it comes up first, once, most avoided first; then it rejoins the deck. A new rest length applies from the next Not today. Still working on it, after at least 8 seconds on the page, lowers that weight by one step. Living it moves the principle to your record.";
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".seg [data-look]"), function (b) {
+    b.onclick = function () { prefs.look = b.getAttribute("data-look"); savePrefs(); applyLook(); };
+  });
+  $("whereToggle").onclick = function () { prefs.show_where = !showWhere(); savePrefs(); paintSettings(); if (onCard()) renderDeck(); };
+  function setRest(n) { prefs.rest_days = C.restDays(n); savePrefs(); paintSettings(); }
+  $("restDown").onclick = function () { setRest(restDays() - 1); };
+  $("restUp").onclick = function () { setRest(restDays() + 1); };
+  $("aiToggle").onclick = function () { prefs.ai_off = !prefs.ai_off; savePrefs(); applyKey(); paintSettings(); };
 
-  // ---------- the corner button and its ring (1.29.0) ----------
-  // The one control on the screen, after Edition's corner button. Tap + and a ring of controls opens around it;
-  // or hold + and slide your thumb to one and let go. Inner arc: the three moves for the principle on screen,
-  // from straight left (Not today, like the swipe) to straight up (Still working on it, like the swipe).
-  // Outer arc: Settings, the Ledger (or the deck), Edit and Capture. Both arcs run from just above straight left
-  // of + to straight up, where a right thumb reaches. The ring is modal: the app behind is inert, focus moves to
-  // the first control, Tab stays inside the ring and +, and Escape or a tap outside closes it.
-  // The corner dims after IDLE_MS without a touch or key, and wakes on the next one.
-  var RING_HOLD_MS = 400, RING_R = [128, 214], RING_FROM = 196, IDLE_MS = 4000;
-  var ICON_PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
-  var ICON_LEDGER = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>';
-  var ICON_DECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg>';
-  var ICON_SET = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>';
-  var ringOpen = false, ringList = [], ringEl = $("ring"), fab = $("fab"), corner = $("corner"), appEl = document.querySelector(".app");
+  // ---------- menu (1.30.0) ----------
+  // Everything that is not one of the three moves: a frosted panel under the button at the top right. It is a
+  // <dialog> shown with showModal(), so the page behind is inert and focus stays inside; Escape or a tap
+  // outside closes it. Edit is listed only while a principle is on screen.
+  var menu = $("menu"), menuBtn = $("menuBtn");
   function onCard() { var t = $("v-ledger").hidden && current && thoughts[current]; return t && t.status === "active" && $("card") ? t : null; }
-  function ringItems() {
-    var t = onCard(), deck = $("v-ledger").hidden;
-    var outer = [
-      { id: "settings", label: "Settings", icon: ICON_SET, run: openSettings },
-      deck ? { id: "ledger", label: "Ledger", icon: ICON_LEDGER, run: function () { go("ledger"); } }
-           : { id: "deck", label: "Deck", icon: ICON_DECK, primary: true, run: function () { go("deck"); } },
-      { id: "capture", label: "Capture", icon: ICON_PLUS, primary: deck && !t, run: openCapture }
-    ];
-    if (t) outer.splice(2, 0, { id: "edit", label: "Edit", icon: ICON_EDIT, run: function () { openEdit(t); } });
-    if (!t) return [outer];
-    return [[
-      { id: "skip", label: "Not today", icon: ICON_SKIP, run: function () { act("skip"); } },
-      { id: "shed", label: "Living it", icon: ICON_SHED, primary: true, run: function () { act("shed"); } },
-      { id: "keep", label: "Working on it", icon: ICON_UP, run: function () { act("keep"); } }
-    ], outer];
+  function openMenu() {
+    if (openSheet || menu.open) return;
+    var deck = $("v-ledger").hidden;
+    $("mEdit").hidden = !onCard();
+    $("mLedger").innerHTML = deck ? "Ledger<span>Your record</span>" : "Deck<span>Today</span>";
+    $("mColl").textContent = C.collections(all()).length;
+    if (menu.showModal) menu.showModal(); else menu.setAttribute("open", "");
+    menuBtn.setAttribute("aria-expanded", "true");
   }
-  function openRing(live) {
-    if (openSheet) return;
-    if (ringOpen) closeRing(true);
-    var r = fab.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    var arcs = ringItems(), html = '<div class="ring-bg glass' + (arcs.length > 1 ? " wide" : "") + '" style="left:' + cx + "px;top:" + cy + 'px"></div>';
-    ringList = [];
-    arcs.forEach(function (list, ai) {
-      list.forEach(function (it, k) {
-        var deg = RING_FROM + (list.length === 1 ? 270 - RING_FROM : (270 - RING_FROM) * k / (list.length - 1));
-        var a = deg * Math.PI / 180, rad = RING_R[ai];
-        // Inner arc: labels sit inside the arc, toward +, where there is room. Outer arc: under each control.
-        var lab = ai === 0
-          ? '<span class="in" style="left:calc(50% + ' + (-Math.cos(a) * 46).toFixed(1) + "px);top:calc(50% + " + (-Math.sin(a) * 46).toFixed(1) + 'px)">' + esc(it.label) + "</span>"
-          : "<span>" + esc(it.label) + "</span>";
-        html += '<button type="button" class="ri' + (it.primary ? " primary" : "") + '" id="r-' + it.id + '" data-r="' + it.id + '" style="left:' + (cx + rad * Math.cos(a)).toFixed(1) + "px;top:" + (cy + rad * Math.sin(a)).toFixed(1) + 'px">' + it.icon + lab + "</button>";
-        ringList.push(it);
-      });
-    });
-    ringEl.innerHTML = html; ringEl.hidden = false; ringEl.setAttribute("data-live", live ? "1" : "0");
-    ringOpen = true;
-    fab.setAttribute("aria-expanded", "true"); fab.setAttribute("aria-label", "Close menu");
-    corner.classList.add("open"); corner.classList.remove("asleep");
-    appEl.inert = true;
-    pop.classList.add("high"); // an Undo toast moves up out of the ring's way
-    if (!live) { var f = ringEl.querySelector(".ri"); if (f) { try { f.focus({ preventScroll: true }); } catch (e) {} } }
-    requestAnimationFrame(function () { if (ringOpen) ringEl.classList.add("on"); });
-  }
-  function closeRing(now) {
-    if (!ringOpen) return;
-    ringOpen = false;
-    ringEl.classList.remove("on"); ringEl.removeAttribute("data-live");
-    var done = function () { if (!ringOpen) { ringEl.hidden = true; ringEl.innerHTML = ""; } };
-    if (now || REDUCED.matches) done(); else setTimeout(done, 150);
-    fab.setAttribute("aria-expanded", "false"); fab.setAttribute("aria-label", "Menu");
-    corner.classList.remove("open");
-    appEl.inert = false;
-    pop.classList.remove("high");
-    wakeCorner();
-  }
-  // Run a control: close the ring, put focus on + (so a sheet it opens hands focus back there), then act.
-  function runRing(id) {
-    var it = ringList.filter(function (x) { return x.id === id; })[0];
-    closeRing(true);
-    try { fab.focus({ preventScroll: true }); } catch (e) {}
-    if (it) it.run();
-  }
-  ringEl.addEventListener("click", function (e) {
-    var b = e.target.closest(".ri");
-    if (b) { e.stopPropagation(); runRing(b.getAttribute("data-r")); return; }
-    if (e.target === ringEl) { closeRing(); try { fab.focus({ preventScroll: true }); } catch (_) {} }
-  });
-  // While the thumb is down after a hold: light the control nearest it.
-  function pickRing(x, y) {
-    var best = null, gap = 44;
-    Array.prototype.forEach.call(ringEl.querySelectorAll(".ri"), function (b) {
-      var r = b.getBoundingClientRect(), d = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2));
-      if (d < gap) { gap = d; best = b; }
-    });
-    Array.prototype.forEach.call(ringEl.querySelectorAll(".ri"), function (b) { b.classList.toggle("on", b === best); });
-    return best;
-  }
-  var hold = { timer: 0, x: 0, y: 0, opened: false };
-  fab.addEventListener("pointerdown", function (e) {
-    if (e.button > 0) return;
-    hold.opened = false; hold.x = e.clientX; hold.y = e.clientY;
-    clearTimeout(hold.timer);
-    if (!ringOpen) hold.timer = setTimeout(function () { hold.timer = 0; hold.opened = true; openRing(true); }, RING_HOLD_MS);
-  });
-  // After a hold, the click that follows is not a toggle.
-  fab.addEventListener("click", function () {
-    clearTimeout(hold.timer); hold.timer = 0;
-    if (hold.opened) { hold.opened = false; return; }
-    if (ringOpen) closeRing(); else openRing(false);
-  });
-  fab.addEventListener("contextmenu", function (e) { e.preventDefault(); });
-  window.addEventListener("pointermove", function (e) {
-    if (!ringOpen) {
-      if (hold.timer && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > 12) { clearTimeout(hold.timer); hold.timer = 0; }
+  function closeMenu() { if (menu.open) { if (menu.close) menu.close(); else menu.removeAttribute("open"); } }
+  menu.addEventListener("close", function () { menuBtn.setAttribute("aria-expanded", "false"); resetScroll(); });
+  menu.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-m]");
+    if (!b) {
+      var r = menu.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeMenu();
       return;
     }
-    if (ringEl.getAttribute("data-live") === "1") pickRing(e.clientX, e.clientY);
+    var m = b.getAttribute("data-m"), t = onCard();
+    closeMenu();
+    try { menuBtn.focus({ preventScroll: true }); } catch (_) {}
+    if (m === "capture") openCapture();
+    else if (m === "edit" && t) openEdit(t);
+    else if (m === "ledger") go($("v-ledger").hidden ? "ledger" : "deck");
+    else if (m === "collections") openCollections("menu");
+    else if (m === "settings") openSettings();
   });
-  function holdUp() {
-    clearTimeout(hold.timer); hold.timer = 0;
-    if (!ringOpen || ringEl.getAttribute("data-live") !== "1") return;
-    ringEl.setAttribute("data-live", "0");
-    var sel = ringEl.querySelector(".ri.on");
-    if (sel) runRing(sel.getAttribute("data-r"));
-    else { var f = ringEl.querySelector(".ri"); if (f) { try { f.focus({ preventScroll: true }); } catch (e) {} } } // let go without choosing: the ring stays open to tap
-  }
-  window.addEventListener("pointerup", holdUp); window.addEventListener("pointercancel", holdUp);
+  menuBtn.addEventListener("click", function () { if (menu.open) closeMenu(); else openMenu(); });
 
-  // Dim the corner after a few idle seconds; any touch or key wakes it.
-  var idleTimer = 0;
-  function wakeCorner() {
-    corner.classList.remove("asleep");
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(function () { if (!ringOpen) corner.classList.add("asleep"); }, IDLE_MS);
-  }
-  window.addEventListener("pointerdown", wakeCorner, true);
-
-  // Keyboard. In the ring: Escape closes it and Tab cycles through its controls and +. On the deck, with no sheet
-  // open and no field in use: the arrow keys are the three moves (left Not today, up Still working on it, right
-  // Living it), E edits. Anywhere: N captures, L switches between the deck and the Ledger, comma opens Settings,
-  // and Escape on the Ledger goes back to the deck.
+  // Keyboard. On the deck, with no sheet or menu open and no field in use: the arrow keys are the three moves
+  // (left Not today, up Still working on it, right Living it), E edits. Anywhere: N captures, L switches
+  // between the deck and the Ledger, M opens the menu, comma opens Settings, and Escape on the Ledger goes back.
   document.addEventListener("keydown", function (e) {
-    wakeCorner();
-    if (ringOpen) {
-      if (e.key === "Escape") { e.preventDefault(); closeRing(); try { fab.focus({ preventScroll: true }); } catch (_) {} return; }
-      if (e.key === "Tab") {
-        var list = Array.prototype.slice.call(ringEl.querySelectorAll(".ri")).concat([fab]);
-        var i = list.indexOf(document.activeElement);
-        e.preventDefault();
-        var n = i < 0 ? 0 : (i + (e.shiftKey ? -1 : 1) + list.length) % list.length;
-        try { list[n].focus({ preventScroll: true }); } catch (_) {}
-      }
-      return;
-    }
-    if (openSheet || isTyping(document.activeElement) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (openSheet || menu.open || isTyping(document.activeElement) || e.metaKey || e.ctrlKey || e.altKey) return;
     var k = e.key, t = onCard(), done = true;
     if (t && k === "ArrowLeft") act("skip");
     else if (t && k === "ArrowUp") act("keep");
@@ -1906,12 +1897,12 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
     else if (t && (k === "e" || k === "E")) openEdit(t);
     else if (k === "n" || k === "N" || k === "+") openCapture();
     else if (k === "l" || k === "L") go($("v-ledger").hidden ? "ledger" : "deck");
+    else if (k === "m" || k === "M") openMenu();
     else if (k === ",") openSettings();
     else if (k === "Escape" && !$("v-ledger").hidden) go("deck");
     else done = false;
     if (done) e.preventDefault();
   });
-  wakeCorner();
 
   // Show a short message for 1.8 seconds, or for UNDO_MS with an Undo button when onUndo is given.
   // The visible toast is a manual popover (top layer, above an open sheet) where supported; the
@@ -1921,7 +1912,7 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
   function popHide() { if (HAS_POP) { try { pop.hidePopover(); } catch (e) {} } else pop.hidden = true; }
   if (!HAS_POP) pop.hidden = true;
   function toast(msg, onUndo) {
-    pop.innerHTML = '<div class="toast"><span aria-hidden="true">' + esc(msg) + "</span>" + (onUndo ? '<button type="button" id="toastUndo">Undo</button>' : "") + "</div>";
+    pop.innerHTML = '<div class="toast frost"><span aria-hidden="true">' + esc(msg) + "</span>" + (onUndo ? '<button type="button" id="toastUndo">Undo</button>' : "") + "</div>";
     $("toastHost").textContent = msg + (onUndo ? " Undo is available for 5 seconds." : "");
     popShow();
     clearTimeout(toastTimer);
@@ -1931,29 +1922,40 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
 
   // ---------- boot ----------
   // Startup: load saved data, apply the theme, show the first thought.
-  $("todayLbl").textContent = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
-  thoughts = lsGet(LS, {}); activity = lsGet(LSA, {}); prefs = Object.assign({ skin: "auto" }, lsGet(LSP, {}));
+  // The day and the date, as on the approved board: "Saturday," over "17 October".
+  function paintDate() {
+    var d = new Date();
+    $("todayLbl").innerHTML = esc(d.toLocaleDateString("en-US", { weekday: "long" })) + ",<span>" + esc(d.getDate() + " " + d.toLocaleDateString("en-US", { month: "long" })) + "</span>";
+  }
+  paintDate();
+  thoughts = lsGet(LS, {}); activity = lsGet(LSA, {}); prefs = Object.assign({ look: "matte" }, lsGet(LSP, {}));
+  delete prefs.skin; // the 1.29.0 theme choice; 1.30.0 has two looks
   prefs.deck_coll = C.deckFilter(all(), prefs.deck_coll);
-  applySkin();
+  applyLook();
   resetScroll();
-  $("versionText").textContent = "Version " + C.VERSION + " · built " + fmtDate(C.BUILT + "T12:00:00");
+  $("versionText").textContent = "Version " + C.VERSION + ", built " + fmtDate(C.BUILT + "T12:00:00") + ".";
+  $("mVer").textContent = C.VERSION;
   showNext();
 
   // ---------- API key ----------
   // API key handling. Stored only in this browser's localStorage. Saving a key switches
   // model lines on immediately; removing it switches back to built-in lines.
   var savedKey = ""; try { savedKey = localStorage.getItem(LSK) || ""; } catch (e) {}
-  sample = makeSampler(savedKey); setAiStatus();
-  if (savedKey) { $("apiKey").value = savedKey; if (current) requestLine(thoughts[current]); }
+  // AI lines on or off (Settings): off uses the built-in questions even with a key saved.
+  function applyKey() {
+    sample = prefs.ai_off ? null : makeSampler(savedKey); setAiStatus();
+    if (current && thoughts[current] && thoughts[current].status === "active") requestLine(thoughts[current]);
+  }
+  sample = prefs.ai_off ? null : makeSampler(savedKey); setAiStatus();
+  if (savedKey) { $("apiKey").value = savedKey; if (current && sample) requestLine(thoughts[current]); }
   $("saveKey").onclick = function () {
     var k = $("apiKey").value.trim(); if (!k) return;
     try { localStorage.setItem(LSK, k); } catch (e) {}
-    sample = makeSampler(k); setAiStatus(); toast("Key saved");
-    if (current && thoughts[current]) requestLine(thoughts[current]);
+    savedKey = k; applyKey(); toast("Key saved");
   };
   $("clearKey").onclick = function () {
     try { localStorage.removeItem(LSK); } catch (e) {}
-    $("apiKey").value = ""; sample = null; setAiStatus(); toast("Key removed");
+    $("apiKey").value = ""; savedKey = ""; applyKey(); toast("Key removed");
   };
   // Test key: one tiny request with the key in the field (or the saved key), then a plain
   // explanation of the result. Maps Anthropic's status codes to the usual fixes.
@@ -1977,7 +1979,6 @@ textarea.big { font-family:var(--f-display); font-size:var(--d-sm); line-height:
     var t0 = Date.now();
     makeSampler(k)("Reply with the single word: working").then(function (res) {
       out.textContent = "Key works. " + MODEL + " replied \u201c" + (res.text || "").trim() + "\u201d in " + (Date.now() - t0) + " ms.";
-      if (!sample) { sample = makeSampler(k); }
       setAiStatus();
     }).catch(function (e) {
       out.textContent = explainError(e) + (e && e.status && e.message ? " Details: " + e.message : "");

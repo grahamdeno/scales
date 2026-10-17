@@ -5,42 +5,49 @@ A small phone app for turning the principles you collect into how you actually l
 You write down a principle you want to live by ("the hard conversation is usually shorter than the dread before it"), or load a starter deck. Scales keeps putting it in front of you. Each time, you mark it Still working on it, Not today, or Living it. Once you act on it without being reminded, it moves to your Living it record with a line on where it showed up.
 
 <p>
-  <img src="docs/deck-return.png" width="260" alt="Deck view in the Return theme">
-  <img src="docs/ledger.png" width="260" alt="Ledger view showing lived count and history">
-  <img src="docs/deck-linen.png" width="260" alt="Deck view in the Linen theme">
+  <img src="docs/deck.png" width="260" alt="Deck view in the Matte look">
+  <img src="docs/ledger.png" width="260" alt="Ledger view with the Living it gauge, capsules and 12 week grid">
+  <img src="docs/deck-light.png" width="260" alt="Deck view in the Light look">
 </p>
 
 ## How it works
 
 **The deck.** One principle on screen at a time. Three moves:
 
-| Move | Gesture | What happens |
+| Move | Gesture or key | What happens |
 |---|---|---|
-| Not today | swipe left | Its count goes up by 1. The principle comes back more often. |
+| Not today | swipe left | Its count goes up by 1. The principle rests, then comes back more often. |
 | Still working on it | swipe up | Counts as an inspection. If you stayed on the card at least 8 seconds, the not today count drops by 1. |
 | Living it | swipe right | Opens a short form for where it showed up, then moves the principle to your record. |
 
-The same three moves are in the ring behind the **+** in the corner, and on the arrow keys (left, up, right). The ring also holds Capture, Edit, the Ledger and Settings: tap +, or hold it and slide to one and let go. With a keyboard, N captures, E edits, L switches between the deck and the Ledger, and comma opens Settings.
+The same three moves are three keys under the principle, always on screen, and the arrow keys (left, up, right). Swipe anywhere on the deck; the key for the move you are heading toward presses in as you drag. Everything else (Capture, Edit, the Ledger, Collections, Settings) is in the menu at the top right. With a keyboard, N captures, E edits, L switches between the deck and the Ledger, M opens the menu, and comma opens Settings.
 
-**Editing.** Choose Edit in the + ring (or press E), or Edit on any Ledger row, to change a principle's wording or its details: collection, title, author and where it came from. Its counts, dates and weight are kept. Changing the wording of a principle still in the deck gets it a fresh AI line; changing only details keeps the line it has. A lived principle keeps its Living it date, evidence and last line either way. Principles can be up to 1,500 characters, long enough for a short poem. The Capture sheet has the same details under More details, collapsed by default.
+**Editing.** Press and hold the principle, choose Edit this principle in the menu (or press E), or Edit on any Ledger row, to change a principle's wording or its details: collection, title, author and where it came from. Its counts, dates and weight are kept. Changing the wording of a principle still in the deck gets it a fresh AI line; changing only details keeps the line it has. A lived principle keeps its Living it date, evidence and last line either way. Principles can be up to 1,500 characters, long enough for a short poem. The Capture sheet has the same details under More details, collapsed by default.
 
-**Card label.** The top of each card shows the collection (or "Principle" when there is none) and, on a second line, where the principle came from, when that is set.
+**Where it came from.** Under each principle: its collection, where it came from, its author, and how often it has been set aside. Settings > Look > Show where it came from turns off the collection, origin and author.
 
 **Collections.** A collection groups principles, such as Poems or Stoic. Typing a collection that matches an existing one apart from capitalization saves it under the existing spelling, so collections don't split. Settings > Manage collections lists every collection with its count; tap one to rename it, merge it into another by renaming it to that name, or remove it. Only the collection changes; everything else on each principle is kept.
 
-**Rest and the front of the stack.** Not today sets a principle aside for four days, so a reflex skip each morning can't become a habit. A Scales day runs from 4:00 AM to 4:00 AM, so a late-night session counts as the day it started in. On the morning it returns, every principle set aside since its last turn comes up first, once each: most avoided first, then the one waiting longest. After its turn it rejoins the weighted draw. If everything is resting, the deck says Nothing left today and when the next principle returns, with Show anyway to bring resting principles back until the day ends. Show on a Ledger row opens that principle on the deck, even while it rests.
+**Rest and the front of the stack.** Not today sets a principle aside for four days by default, so a reflex skip each morning can't become a habit. Settings > Deck > Rest after Not today changes it, from 1 to 7 days, starting with the next Not today. A Scales day runs from 4:00 AM to 4:00 AM, so a late-night session counts as the day it started in. On the morning it returns, every principle set aside since its last turn comes up first, once each: most avoided first, then the one waiting longest. After its turn it rejoins the weighted draw. If everything is resting, the deck says Nothing left today and when the next principle returns, with Show anyway to bring resting principles back until the day ends. Show on a Ledger row opens that principle on the deck, even while it rests.
 
 **Weighting.** What you set aside comes back more often. A principle's chance of showing up is `1 + 0.5 x not today count`, capped at 4x. A short cooldown keeps the same principle from repeating back to back.
 
-**Pushing back.** The Ledger's In deck list puts the principles you set aside most at the top, so resistance is visible instead of hidden. (Until 1.26.0 this was a strip under the deck buttons; it moved so the card can use the whole screen.)
+**Pushing back.** The Ledger shows the three principles you set aside most as tiles; tap one to open it on the deck. The In deck list is sorted the same way, so resistance is visible instead of hidden.
 
-**Undo and the first card.** Not today, Still working on it, Living it and Delete each show a toast with Undo for 5 seconds that puts everything back, counts, rest days, the activity grid and the Ledger included. The first card anyone sees shows a short demo of the three swipes (a static list with reduced motion); it is dismissed by a tap or the first real swipe and does not come back. The + in the corner opens the ring, where Capture is.
+**Undo and the first card.** Not today, Still working on it, Living it and Delete each show a toast with Undo for 5 seconds that puts everything back, counts, rest days, the activity grid and the Ledger included. The first card anyone sees shows the three moves in a small panel; it is dismissed by Got it, a tap outside it, or the first real move, and does not come back.
 
 **Starter decks.** Stoic, Leadership, Athletic mindset and Self-overcoming sets, loaded from Settings or the empty deck, so a new deck has something in it. Every starter principle fills every field (collection, title, author, origin, tags, link and citation) as a worked example. Original lines are credited to Scales and cite their deck. The lines by Epictetus and Nietzsche use the exact wording of a named public-domain translation (Elizabeth Carter, George Long, Thomas Common), cite the work and section, and link to that chapter. Loading a deck again adds nothing new; it fills any empty fields on starter principles already in the deck without overwriting your own values.
 
-**The ledger.** How many principles you live, share of the deck lived and resisting, average days to live one, each principle's history, and a 12 week activity grid. The Living it list is the record: each principle in full, the last model line it received, and where it showed up, editable later. The Living it and evidence sheets show that last line too, so it is in view while you write.
+**The ledger.** A gauge of how many principles you live; capsules for Living it as a share of every principle, and how many in the deck are resting and pushing back; the Pushing back tiles; a 12 week grid of days (brighter on busier days, brass on days you marked Living it); and each principle's history. The Living it list is the record: each principle in full, the last model line it received, and where it showed up, editable later. The Living it and evidence sheets show that last line too, so it is in view while you write.
 
-**The line under each principle.** A short line, 25 words or fewer, drawn from the words of the principle itself and written in the spirit of Jung and Nietzsche: avoidance is treated as the shadow protecting comfort, fear or self-image, and the line speaks for the person you are becoming rather than your comfort today. It holds the standard. No praise, no pep talk, and no grace for the gap between the principle and your conduct. It presses harder the more a principle has been set aside: fresh ones are asked what they demand, set-aside ones what was chosen instead, and the most avoided are confronted with what the avoidance protects. Lines that slip into a gentle, permission-giving tone are rejected and asked for again. Built-in questions are used by default. If you add your own Anthropic API key in Settings, a new consideration is written for each showing by a small, fast model. Only the principle text, its not today count and days in the deck are sent.
+**The line under each principle.** A short line, 25 words or fewer, drawn from the words of the principle itself and written in the spirit of Jung and Nietzsche: avoidance is treated as the shadow protecting comfort, fear or self-image, and the line speaks for the person you are becoming rather than your comfort today. It holds the standard. No praise, no pep talk, and no grace for the gap between the principle and your conduct. It presses harder the more a principle has been set aside: fresh ones are asked what they demand, set-aside ones what was chosen instead, and the most avoided are confronted with what the avoidance protects. Lines that slip into a gentle, permission-giving tone are rejected and asked for again. Built-in questions are used by default. If you add your own Anthropic API key in Settings, a new consideration is written for each showing by a small, fast model. Only the principle text, its not today count and days in the deck are sent. Settings > AI lines can switch model lines off while keeping the key.
+
+**Keep an AI line.** Sometimes the line says it better than you did. Tap **Keep** on an AI line (on the deck, or Keep line in the Living it record) and choose:
+
+- **Add as a new principle.** It goes into the same collection beside the original, with fresh counts, cited as "Kept from an AI line" with the date and linked to the original. No author is set.
+- **Replace my wording.** It works like Edit: counts, dates and status stay, and only the words change. The earlier wording is saved and shown in the Ledger.
+
+Either one can be undone from the toast. Built-in questions have no Keep, since they are the same for every principle.
 
 ## Origin
 
@@ -68,9 +75,9 @@ So use a key made only for Scales, and in the Anthropic Console give its workspa
 2. Share > Add to Home Screen.
 3. Open it from the home screen icon. It runs full screen and works offline.
 
-Optional: Settings (slider icon) > AI line > paste an Anthropic API key > Save key. See [About the API key](#about-the-api-key) first.
+Optional: menu (top right) > Settings > AI lines > paste an Anthropic API key > Save key. See [About the API key](#about-the-api-key) first.
 
-To check the key, tap **Test key** under AI line. It sends one tiny request and reports the result in plain terms: working, key not recognized, no credit on the account, rate or spend limit reached, or no connection.
+To check the key, tap **Test key** under AI lines. It sends one tiny request and reports the result in plain terms: working, key not recognized, no credit on the account, rate or spend limit reached, or no connection.
 
 ## Your data
 
@@ -78,13 +85,13 @@ To check the key, tap **Test key** under AI line. It sends one tiny request and 
 - **Import / Export CSV** (Settings): columns `text,title,author,creationDate,tags,collection,link,citation`, which matches common highlight and quote exports. Export adds `scales_*` columns (status, skips, reflects, shed date, evidence, last model line) so a re-import keeps progress. Import leaves out principles already in the deck. Internal field names (`shed`, `skips`) are unchanged so older exports still import.
 - Deleting the home screen icon deletes the data. Back up first.
 
-## Themes
+## The look
 
-**The layout (1.29.0): the Edition system.** Scales now follows the design language of Edition. Each theme is one quiet ground with warm ink and one accent; Auto dark is Edition's own near-black, off-white and copper, and Auto light is its paper counterpart. The principle is not a card: its words sit on the page, low on the screen where the thumb is, set in Instrument Serif, with the collection as a small mono kicker above, the title and author in the accent below, and the AI line as an aside with a short rule on its left. The top line is one row of mono labels: the date, and how many principles you weighed today and how many are in the deck. There is no tab bar and no button row. One corner button holds everything else; it dims after a few idle seconds and wakes on the next touch. As you swipe, the words lean a little and a soft light of the outcome color rises from the edge you are heading toward, with a small outlined stamp naming the move. The Ledger is a front page: a serif masthead, sections with serif heads, Edition's thin progress bars for Living it, Still working and Not today, and rows divided by hairlines. Sheets are solid, with 22px top corners and serif heads. Glass is used only on the corner button and its ring. Corners come from one token scale (`--r-*`): pills for chips, buttons and the toast, 12px fields, 14px panels, 22px sheets. Type is Instrument Serif for the principle and headings, Geist for reading and Geist Mono for labels, all self-hosted so they look the same offline.
+**Matte (1.30.0).** A matte, lightly grained ground in two looks, Matte (dark, the default) and Light, chosen in Settings > Look. Two materials sit on it: raised, for anything you press (the three keys, the collection keys, buttons), and pressed, for fields, wells, and the choice that is selected. Frosted glass is kept for what floats over the page: the AI line, the menu, sheets and the toast. Brass marks Living it and the one primary action on each sheet; a soft violet light sits behind the AI line, the one lit element on the page. One face, Geist, self-hosted so it looks the same offline.
 
-**The look (1.27.0, replaced by the layout above).** The card is the hero: a large rounded card with a deep, soft shadow that tilts as you drag it and glows green toward Living it, amber toward Still working on it and rose toward Not today. Let go early and it springs back; the next card rises into place, and Living it ends with a short burst of green. A floating frosted tab bar at the bottom holds Deck, a white + for Capture, and Ledger. When the deck has collections, pill chips above the card filter the deck to one collection (All shows everything); the choice is remembered, follows a rename, and falls back to All when the collection is gone. Long principles drop to the body size so they fit. The Ledger shows Living it, Still working and Not today as three glowing bars, every principle counted once. Behind it all, a slow gradient in the theme's colors drifts. With Reduce Motion on, the background holds still and the tilt, springs, burst and view transitions are left out.
+The principle is not on a card: its words sit on the page above the AI line and the three keys. As you swipe, the words lean a little, the key for the move presses in, and a small label names the move. Let go early and they spring back; Living it ends with a short ring of brass. With Reduce Motion on, the springs, the ring and the view transitions are left out.
 
-Six themes: Auto (follows the phone's light or dark setting), Moss, Linen, Ink, Dusk and Return. Return is drawn from the Scales icon. Each theme is a set of CSS custom properties, so adding one means adding one block of color values and one entry in the theme list.
+Earlier looks: 1.27.0 put the principle on a tilting card with a frosted tab bar; 1.28.0 and 1.29.0 followed a serif, front-page system with a single corner button and six color themes. 1.30.0 replaced both. A theme chosen under 1.29.0 is dropped, and the app opens in Matte.
 
 ## Project layout
 
@@ -92,7 +99,7 @@ Six themes: Auto (follows the phone's light or dark setting), Moss, Linen, Ink, 
 index.html              the app: markup, styles, UI script
 core.js                 pure logic: weighting, selection, answer checks, version
 sw.js                   service worker: offline shell, network first
-fonts/                  Instrument Serif, Geist and Geist Mono (woff2, latin) and their license (OFL)
+fonts/                  Geist (woff2, latin) and its license (OFL)
 manifest.webmanifest    home screen name, colors, icons
 icons/                  app icon, maskable icon, favicons, source SVG
 tests/                  node:test suite for core.js and release wiring

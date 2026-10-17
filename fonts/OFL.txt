@@ -1,13 +1,9 @@
-Fonts bundled with Scales, each under the SIL Open Font License, Version 1.1 (the license text follows).
+Font bundled with Scales, under the SIL Open Font License, Version 1.1 (the license text follows).
 
-instrument-serif-latin.woff2  Instrument Serif, Regular
-  Copyright 2022 The Instrument Serif Project Authors (https://github.com/Instrument/instrument-serif)
 geist-latin.woff2             Geist (variable weight)
   Copyright 2024 The Geist Project Authors (https://github.com/vercel/geist-font)
-geist-mono-latin.woff2        Geist Mono (variable weight)
-  Copyright 2024 The Geist Project Authors (https://github.com/vercel/geist-font)
 
-The files are the Latin subsets published by Fontsource (https://fontsource.org).
+The file is the Latin subset published by Fontsource (https://fontsource.org).
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:

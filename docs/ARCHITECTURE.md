@@ -1,6 +1,6 @@
 # Scales architecture
 
-Scales is a single page app with no build step and no backend. Everything the app does happens on the phone. The only outside services are GitHub Pages (hosting) and, if a key is saved, the Anthropic API. The type faces (Instrument Serif, Geist and Geist Mono) ship in `fonts/`.
+Scales is a single page app with no build step and no backend. Everything the app does happens on the phone. The only outside services are GitHub Pages (hosting) and, if a key is saved, the Anthropic API. The type face (Geist) ships in `fonts/`.
 
 The user-facing names (principle, Not today, Still working on it, Living it) differ from some internal names, which were kept so stored data and exports stay compatible:
 
@@ -29,10 +29,10 @@ flowchart TB
 
         subgraph ui["Screens"]
             direction LR
-            header["Top line and corner<br/>date, today count / + ring: moves, Capture, Edit, Ledger, Settings"]
-            deck["Deck view<br/>collection chips, the principle on the page, swipes and arrow keys, first-swipe coach"]
-            ledger["Ledger view (front page)<br/>masthead, progress bars, In deck / Living it, 12 week grid"]
-            sheets["Sheets (modal dialog)<br/>Capture, Living it, Evidence, Settings"]
+            header["Top and menu<br/>day and date / menu: Capture, Edit, Ledger, Collections, Settings"]
+            deck["Deck view<br/>collection keys, the principle on the page, AI line with Keep, three keys, swipes, first-swipe tip"]
+            ledger["Ledger view<br/>gauge, capsules, Pushing back tiles, 12 week grid, In deck / Living it"]
+            sheets["Sheets (modal dialog)<br/>Capture, Edit, Living it, Evidence, Keep, Collections, Settings"]
         end
 
         subgraph logic["App script (index.html) and core.js"]
@@ -77,7 +77,7 @@ flowchart TB
 stateDiagram-v2
     [*] --> Active: Capture sheet or starter deck<br/>all counts start at 0
     Active --> Resting: Not today<br/>count +1, weight up, owed a turn at the front
-    Resting --> Active: 4:00 AM four days later<br/>leads once, most avoided first
+    Resting --> Active: 4:00 AM after the rest (4 days by default)<br/>leads once, most avoided first
     Active --> Active: Still working on it<br/>inspections +1, count -1 after 8s on card
     Active --> Nudge: 3 in a row
     Nudge --> Active: Not yet<br/>streak reset
@@ -87,6 +87,8 @@ stateDiagram-v2
     LivingSheet --> Lived: I live this now<br/>optional evidence line
     Active --> Active: Edit wording<br/>history kept, AI line rewritten
     Active --> Active: Edit details<br/>history and AI line kept
+    Active --> Active: Keep an AI line, replace<br/>earlier wording saved
+    Active --> Active: Keep an AI line, add<br/>new principle beside it
     Lived --> Lived: Add or edit evidence in Ledger
     Lived --> Lived: Edit wording<br/>record kept
     Lived --> [*]: Delete in Ledger
@@ -127,9 +129,9 @@ sequenceDiagram
 
 | Key | Holds |
 |---|---|
-| `scales.thoughts.v1` | Every principle by id: text, collection, title, author, origin, dates, status, counts, recent lines, evidence |
+| `scales.thoughts.v1` | Every principle by id: text, collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai` |
 | `scales.activity.v1` | Per day counts of inspections and Living it, last 120 days |
-| `scales.prefs.v1` | Theme choice |
+| `scales.prefs.v1` | Look, rest length, Show where it came from, AI lines on or off, the collection key, Show anyway's day, first-swipe tip seen |
 | `scales.apikey.v1` | Anthropic API key, only if saved |
 
 ## Key numbers
@@ -139,7 +141,8 @@ sequenceDiagram
 | Weight | 1 + 0.5 per Not today | Avoided principles come back more often |
 | Weight cap | 4x | One principle cannot take over the deck |
 | Day boundary | 4:00 AM local | A late-night session counts as the day it started in |
-| Rest after Not today | 4 days (`REST_DAYS`) | Long enough that a reflex skip each morning cannot become a habit; was 1 day in 1.24.0 |
+| Rest after Not today | 4 days (`REST_DAYS`), 1 to 7 in Settings (`restDays`) | Long enough that a reflex skip each morning cannot become a habit; was 1 day in 1.24.0 |
+| Press and hold to edit | 550 ms | Longer than a tap, shorter than a deliberate wait |
 | Front of the stack | once per Not today | Most avoided first, then longest waiting since last shown |
 | Cooldown | last 3 shown (last 1 in a deck of 3 or fewer) | No back to back repeats |
 | Dwell check | 8 seconds | A quick swipe up does not erase a Not today |
@@ -160,4 +163,18 @@ sequenceDiagram
 
 ## Tests
 
-`node --test` runs `tests/core.test.js` with no dependencies. It covers weighting, the selection cooldown, answer cleanup and checks (including the short-principle case that once discarded every model line), and the version and offline-cache wiring. GitHub Actions runs the same command on every push to `main`.
+`node --test` runs `tests/core.test.js` with no dependencies. It covers weighting, the selection cooldown, answer cleanup and checks (including the short-principle case that once discarded every model line), rest and the front of the stack, undo, collections, keeping an AI line, the page wiring for the Matte design, and the version and offline-cache wiring. GitHub Actions runs the same command on every push to `main`.
+
+## Design system (1.30.0, Matte)
+
+Colors are custom properties on `:root`, with a second set under `:root[data-look="light"]`: `--paper` (ground), `--deep` (wells), `--rise` (the lit side of a raised surface), `--ink`, `--muted`, `--faint`, `--brass` (Living it and the primary action), `--violet` (the light behind the AI line), and `--hi` / `--lo` (the highlight and shadow that make the materials).
+
+| Class | Material | Used for |
+|---|---|---|
+| `.raised` | highlight up-left, shadow down-right | keys, collection keys, buttons, panels, list rows |
+| `.pressed`, `.raised[aria-pressed="true"]`, `.raised.down` | inner shadow | fields, wells, the selected choice, a key while you swipe toward it |
+| `.glass` | frosted, blurred | the AI line, the first-swipe tip, AI lines in the Ledger |
+| `.frost` | frosted ground | the menu, the toast (sheets use the same treatment) |
+| `.primary` | brass | one per sheet |
+
+Without backdrop blur (`@supports not`), glass and frost fall back to solid surfaces.

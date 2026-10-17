@@ -4,10 +4,10 @@
 // so updates show up the next time the app opens.
 
 // Bump this name whenever cached files change so phones drop the old copy.
-const CACHE = "scales-v1.29.0";
+const CACHE = "scales-v1.30.0";
 
 // Files needed to open the app offline.
-const SHELL = ["./", "index.html", "core.js", "fonts/instrument-serif-latin.woff2", "fonts/geist-latin.woff2", "fonts/geist-mono-latin.woff2", "manifest.webmanifest", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/favicon-32.png", "icons/favicon-64.png"];
+const SHELL = ["./", "index.html", "core.js", "fonts/geist-latin.woff2", "manifest.webmanifest", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/favicon-32.png", "icons/favicon-64.png"];
 
 // Install: cache the shell and take over right away instead of waiting for old tabs to close.
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });

@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.29.0";
+  var VERSION = "1.30.0";
   var BUILT = "2026-10-17";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -240,7 +240,10 @@ var ScalesCore = (function () {
   //                 session still belongs to the day it started in.
   // REST_DAYS       how long Not today sets a principle aside. Four days, so a reflex skip
   //                 each morning cannot turn into a daily habit (1.25.0; was one day in 1.24.0).
-  var DAY_START_HOUR = 4, REST_DAYS = 4;
+  // REST_MIN/MAX   the range offered in Settings (1.30.0). REST_DAYS stays the default.
+  var DAY_START_HOUR = 4, REST_DAYS = 4, REST_MIN = 1, REST_MAX = 7;
+  // A saved rest length, kept inside the range; anything unreadable falls back to the default.
+  function restDays(n) { n = parseInt(n, 10); return isNaN(n) ? REST_DAYS : Math.min(REST_MAX, Math.max(REST_MIN, n)); }
 
   // The Scales day for a moment, as local YYYY-MM-DD. Shifting the clock back by the start
   // hour with calendar arithmetic keeps daylight saving changes on the right day.
@@ -257,11 +260,12 @@ var ScalesCore = (function () {
   function isResting(t, today) { return !!t.rest_until && today < t.rest_until; }
 
   // Not today: count it, rest it, and give it one turn at the front once it returns.
-  function applySkip(t, today) {
+  // days is the rest length from Settings; left out, it is REST_DAYS.
+  function applySkip(t, today, days) {
     t.skip_count = (t.skip_count || 0) + 1;
     t.lifetime_skips = (t.lifetime_skips || 0) + 1;
     t.consecutive_reflects = 0;
-    t.rest_until = addDays(today, REST_DAYS);
+    t.rest_until = addDays(today, restDays(days == null ? REST_DAYS : days));
     t.lead_due = true;
     return t;
   }
@@ -370,17 +374,51 @@ var ScalesCore = (function () {
     return { live: n.live, work: n.work, skip: n.skip, total: total, pct: pct };
   }
 
+  // ---------- keep an AI line (1.30.0) ----------
+  // A model line can be better worded than the principle it was written for. It can be kept
+  // as a new principle beside the original, or replace the original's wording.
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function shortDate(d) { return MONTHS[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear(); }
+
+  // Add: a new principle in the same collection, citing the line it came from and linked to
+  // the original by kept_from. Counts start at zero; no author is set, since the words came
+  // from the model. Returns { principle } (without an id) or { reason, conflict }.
+  function keepAsNew(list, t, line, now) {
+    var text = String(line || "").trim();
+    if (!text) return { reason: "empty" };
+    if (text.length > MAX_TEXT) return { reason: "too long" };
+    var key = normText(text);
+    for (var i = 0; i < list.length; i++) if (normText(list[i].text) === key) return { reason: "duplicate", conflict: list[i] };
+    return { principle: { text: text, collection: String(t.collection || "").trim(), title: "", author: "", origin: "", tags: "", link: "",
+      citation: "Kept from an AI line on " + shortDate(now), kept_from: t.id, kept_at: now.toISOString(),
+      created_at: now.toISOString(), status: "active", skip_count: 0, lifetime_skips: 0, reflect_count: 0,
+      consecutive_reflects: 0, recent_lines: [] } };
+  }
+
+  // Replace: the line becomes the principle's wording, as an edit would make it. Counts, dates,
+  // status and evidence stay; the earlier wording is saved in earlier (last five) so the Ledger
+  // can show it. Returns { principle } or { reason, conflict }.
+  function keepReplace(list, t, line, now) {
+    var r = checkEdit(list, t, { text: line });
+    if (!r.ok) return { reason: r.reason, conflict: r.conflict };
+    t.earlier = (t.earlier || []).concat([{ text: t.text, until: now.toISOString() }]).slice(-5);
+    applyEdit(t, { text: line }, list);
+    t.worded_from_ai = now.toISOString();
+    return { principle: t };
+  }
+
   return { VERSION: VERSION, BUILT: BUILT, CAP: CAP, MAX_WORDS: MAX_WORDS, MAX_TEXT: MAX_TEXT,
     tier: tier, weight: weight, words: words, pickFrom: pickFrom, clean: clean, fit: fit, vet: vet,
     LIMITS: LIMITS, ORIGINS: ORIGINS, normText: normText, collections: collections, canonCollection: canonCollection,
     editValues: editValues, checkEdit: checkEdit, applyEdit: applyEdit, label: label,
     checkRename: checkRename, renameCollection: renameCollection, removeCollection: removeCollection,
     STARTER_FIELDS: STARTER_FIELDS, loadStarter: loadStarter,
-    DAY_START_HOUR: DAY_START_HOUR, REST_DAYS: REST_DAYS, dayOf: dayOf, addDays: addDays, isResting: isResting,
+    DAY_START_HOUR: DAY_START_HOUR, REST_DAYS: REST_DAYS, REST_MIN: REST_MIN, REST_MAX: REST_MAX, restDays: restDays, dayOf: dayOf, addDays: addDays, isResting: isResting,
     applySkip: applySkip, nextReturn: nextReturn, frontQueue: frontQueue, nextCard: nextCard, markShown: markShown,
     undoPoint: undoPoint, applyUndo: applyUndo,
     inCollection: inCollection, deckCollections: deckCollections, deckFilter: deckFilter, outcomeMix: outcomeMix,
-    SWIPE: SWIPE, swipeIntent: swipeIntent };
+    SWIPE: SWIPE, swipeIntent: swipeIntent,
+    shortDate: shortDate, keepAsNew: keepAsNew, keepReplace: keepReplace };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = ScalesCore;
