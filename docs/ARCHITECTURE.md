@@ -1,6 +1,6 @@
 # Scales architecture
 
-Scales is a single page app with no build step and no backend. Everything the app does happens on the phone. The only outside services are GitHub Pages (hosting), Google Fonts, and, if a key is saved, the Anthropic API.
+Scales is a single page app with no build step and no backend. Everything the app does happens on the phone. The only outside services are GitHub Pages (hosting) and, if a key is saved, the Anthropic API. The type face (Inter) ships in `fonts/`.
 
 The user-facing names (principle, Not today, Still working on it, Living it) differ from some internal names, which were kept so stored data and exports stay compatible:
 
@@ -29,8 +29,8 @@ flowchart TB
 
         subgraph ui["Screens"]
             direction LR
-            header["Top bar and tab bar<br/>date, Settings / Deck, +, Ledger"]
-            deck["Deck view<br/>collection chips, card, buttons, first-swipe coach"]
+            header["Top and tab bar<br/>date, today count, Settings / Deck, +, Ledger"]
+            deck["Deck view (dark panel)<br/>Today, collection chips, card, buttons, first-swipe coach"]
             ledger["Ledger view<br/>totals, glowing bars, In deck / Living it, 12 week grid"]
             sheets["Sheets (modal dialog)<br/>Capture, Living it, Evidence, Settings"]
         end
@@ -46,19 +46,17 @@ flowchart TB
         subgraph device["On-device storage"]
             direction LR
             ls[("localStorage<br/>principles, activity,<br/>prefs, API key")]
-            cache[("Cache Storage<br/>app shell, fonts")]
+            cache[("Cache Storage<br/>app shell, Inter font")]
         end
 
         sw["Service worker"]
     end
 
-    fonts["Google Fonts"]
     api["Anthropic API<br/>Messages endpoint"]
     files["Files / iCloud Drive<br/>JSON backup, CSV"]
 
     host -- "first visit and updates" --> sw
     sw <--> cache
-    sw -.->|network first| fonts
 
     deck --> engine
     sheets --> engine
