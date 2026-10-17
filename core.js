@@ -11,8 +11,8 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.25.0";
-  var BUILT = "2026-10-13";
+  var VERSION = "1.26.0";
+  var BUILT = "2026-10-16";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
   // MAX_WORDS  longest consideration the app will show. Long enough for one complete
@@ -300,6 +300,18 @@ var ScalesCore = (function () {
     return t;
   }
 
+  // Undo (1.26.0). undoPoint copies everything a move or a delete can change: every principle
+  // (the move itself, plus the next card's turn at the front being used up when it is shown),
+  // the activity grid, the card history and the card on screen. applyUndo hands back fresh
+  // copies, so the same point can be applied again and later changes never leak into it.
+  function copy(x) { return x == null ? x : JSON.parse(JSON.stringify(x)); }
+  function undoPoint(thoughts, activity, history, current) {
+    return { thoughts: copy(thoughts || {}), activity: copy(activity || {}), history: copy(history || []), current: current || null };
+  }
+  function applyUndo(point) {
+    return { thoughts: copy(point.thoughts), activity: copy(point.activity), history: copy(point.history), current: point.current };
+  }
+
   return { VERSION: VERSION, BUILT: BUILT, CAP: CAP, MAX_WORDS: MAX_WORDS, MAX_TEXT: MAX_TEXT,
     tier: tier, weight: weight, words: words, pickFrom: pickFrom, clean: clean, fit: fit, vet: vet,
     LIMITS: LIMITS, ORIGINS: ORIGINS, normText: normText, collections: collections, canonCollection: canonCollection,
@@ -307,7 +319,8 @@ var ScalesCore = (function () {
     checkRename: checkRename, renameCollection: renameCollection, removeCollection: removeCollection,
     STARTER_FIELDS: STARTER_FIELDS, loadStarter: loadStarter,
     DAY_START_HOUR: DAY_START_HOUR, REST_DAYS: REST_DAYS, dayOf: dayOf, addDays: addDays, isResting: isResting,
-    applySkip: applySkip, nextReturn: nextReturn, frontQueue: frontQueue, nextCard: nextCard, markShown: markShown };
+    applySkip: applySkip, nextReturn: nextReturn, frontQueue: frontQueue, nextCard: nextCard, markShown: markShown,
+    undoPoint: undoPoint, applyUndo: applyUndo };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = ScalesCore;

@@ -30,9 +30,9 @@ flowchart TB
         subgraph ui["Screens"]
             direction LR
             header["Header<br/>date, Ledger, Settings"]
-            deck["Deck view<br/>card, buttons, Pushing back strip"]
+            deck["Deck view<br/>card, buttons, add button, first-swipe coach"]
             ledger["Ledger view<br/>totals, rings, In deck / Living it, 12 week grid"]
-            sheets["Sheets<br/>Capture, Living it, Evidence, Settings"]
+            sheets["Sheets (modal dialog)<br/>Capture, Living it, Evidence, Settings"]
         end
 
         subgraph logic["App script (index.html) and core.js"]

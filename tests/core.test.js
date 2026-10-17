@@ -320,7 +320,7 @@ test("page offsets from the keyboard and scroll memory are reset in script (1.22
   const html = read("index.html");
   assert.doesNotMatch(html, /scrollIntoView/, "scrolling an element into view also scrolls the page");
   assert.match(html, /window\.history\.scrollRestoration = "manual"/, "must use window.history; the app's own history array hides it");
-  assert.match(html, /function hide\(\)[^\n]*resetScroll\(\)/);
+  assert.match(html, /function closeSheet\(restore\) \{[\s\S]{0,400}resetScroll\(\)/, "closing a sheet resets the page offset");
   assert.match(html, /addEventListener\("focusout"/);
 });
 
@@ -414,4 +414,82 @@ test("Nothing left today names the earliest return; existing rests keep their da
   assert.equal(C.nextReturn(list, "2026-10-13"), "2026-10-14", "a rest set under 1.24.0 is kept");
   assert.equal(C.nextReturn([card("x")], "2026-10-13"), "");
   assert.doesNotMatch(read("index.html"), /resting until " \+ C\.DAY_START_HOUR/, "copy must not promise 4:00 AM tonight");
+});
+
+// ---------- undo (1.26.0) ----------
+const deckOf = (...ts) => Object.fromEntries(ts.map((t) => [t.id, t]));
+const full = (id, extra = {}) => Object.assign({ id, text: "Principle " + id, status: "active", skip_count: 0, lifetime_skips: 0,
+  reflect_count: 0, consecutive_reflects: 0, recent_lines: [], created_at: "2026-10-01T12:00:00.000Z" }, extra);
+
+test("undo after Not today restores counts, rest, the turn at the front, activity and history", () => {
+  const thoughts = deckOf(full("a", { skip_count: 1, lifetime_skips: 2, consecutive_reflects: 2 }), full("b", { lead_due: true }));
+  const activity = { "2026-10-16": { i: 3, s: 0 } }, history = ["b", "a"];
+  const before = JSON.parse(JSON.stringify({ thoughts, activity, history }));
+  const u = C.undoPoint(thoughts, activity, history, "a");
+  C.applySkip(thoughts.a, "2026-10-16");
+  activity["2026-10-16"].i++;
+  C.markShown(thoughts.b, new Date(2026, 9, 16, 9), true); history.push("b"); // the next card comes up
+  const r = C.applyUndo(u);
+  assert.deepEqual({ thoughts: r.thoughts, activity: r.activity, history: r.history }, before);
+  assert.equal(r.current, "a");
+  assert.equal(r.thoughts.a.rest_until, undefined);
+  assert.equal(r.thoughts.b.lead_due, true, "the next card keeps its turn at the front");
+});
+
+test("undo after Still working on it restores the reflect counts and skip step", () => {
+  const thoughts = deckOf(full("a", { skip_count: 2, reflect_count: 4 }));
+  const u = C.undoPoint(thoughts, {}, ["a"], "a");
+  thoughts.a.reflect_count++; thoughts.a.consecutive_reflects++; thoughts.a.skip_count--;
+  const r = C.applyUndo(u);
+  assert.deepEqual([r.thoughts.a.reflect_count, r.thoughts.a.consecutive_reflects, r.thoughts.a.skip_count], [4, 0, 2]);
+});
+
+test("undo after Living it returns the principle to the deck and clears the record", () => {
+  const thoughts = deckOf(full("a"));
+  const activity = {};
+  const u = C.undoPoint(thoughts, activity, ["a"], "a");
+  Object.assign(thoughts.a, { status: "shed", shed_at: "2026-10-16T12:00:00.000Z", evidence: "Did it." });
+  activity["2026-10-16"] = { i: 0, s: 1 };
+  const r = C.applyUndo(u);
+  assert.equal(r.thoughts.a.status, "active");
+  assert.equal(r.thoughts.a.shed_at, undefined);
+  assert.equal(r.thoughts.a.evidence, undefined);
+  assert.deepEqual(r.activity, {});
+});
+
+test("undo after Delete brings the principle back with its history", () => {
+  const thoughts = deckOf(full("a", { skip_count: 3, recent_lines: ["x"] }), full("b"));
+  const u = C.undoPoint(thoughts, {}, ["a", "b"], "b");
+  delete thoughts.a;
+  const r = C.applyUndo(u);
+  assert.deepEqual(Object.keys(r.thoughts).sort(), ["a", "b"]);
+  assert.deepEqual(r.thoughts.a.recent_lines, ["x"]);
+  assert.equal(r.current, "b");
+});
+
+test("an undo point is a copy: later changes do not leak in, and applying it twice is safe", () => {
+  const thoughts = deckOf(full("a"));
+  const u = C.undoPoint(thoughts, {}, [], null);
+  thoughts.a.text = "changed";
+  const r1 = C.applyUndo(u);
+  r1.thoughts.a.skip_count = 9;
+  const r2 = C.applyUndo(u);
+  assert.equal(r2.thoughts.a.text, "Principle a");
+  assert.equal(r2.thoughts.a.skip_count, 0);
+  assert.equal(r2.current, null);
+});
+
+test("the page wires sheets as modal dialogs, Undo, the coach and the add button (1.26.0)", () => {
+  const html = read("index.html");
+  assert.equal((html.match(/<dialog class="sheet glass"/g) || []).length, 7, "every sheet is a <dialog>");
+  assert.doesNotMatch(html, /<section class="sheet/, "no sheet left as a hidden section");
+  assert.match(html, /\.showModal\(\)/);
+  for (const id of (html.match(/aria-labelledby="(sheet\w+Title)"/g) || []).map((m) => m.slice(17, -1))) {
+    assert.match(html, new RegExp('id="' + id + '"'), id + " labels its sheet");
+  }
+  assert.match(html, /id="fab"[^>]*aria-label="Capture a principle"/);
+  assert.match(html, /id="toastHost"[^>]*aria-live="polite"/);
+  assert.match(html, /prefs\.coach_seen/);
+  assert.doesNotMatch(html, /stripHtml|id="addChip"/, "the Pushing back strip is gone from the deck");
+  assert.doesNotMatch(html, /Tap again to delete/, "Delete uses Undo, not a second tap");
 });
