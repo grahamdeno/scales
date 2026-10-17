@@ -29,9 +29,9 @@ flowchart TB
 
         subgraph ui["Screens"]
             direction LR
-            header["Header<br/>date, Ledger, Settings"]
-            deck["Deck view<br/>card, buttons, add button, first-swipe coach"]
-            ledger["Ledger view<br/>totals, rings, In deck / Living it, 12 week grid"]
+            header["Top bar and tab bar<br/>date, Settings / Deck, +, Ledger"]
+            deck["Deck view<br/>collection chips, card, buttons, first-swipe coach"]
+            ledger["Ledger view<br/>totals, glowing bars, In deck / Living it, 12 week grid"]
             sheets["Sheets (modal dialog)<br/>Capture, Living it, Evidence, Settings"]
         end
 
