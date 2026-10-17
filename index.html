@@ -208,31 +208,8 @@ header.top { flex:none; display:flex; align-items:flex-start; justify-content:sp
 #v-ledger::-webkit-scrollbar { display:none; }
 #v-ledger > * { flex-shrink:0; }
 .ptitle { margin:4px 0 0; font-size:var(--d-md); font-weight:520; letter-spacing:-.02em; line-height:1.1; }
-.gaugeRow { margin-top:18px; display:grid; grid-template-columns:1.1fr 1fr; gap:14px; }
-.gauge { border-radius:26px; padding:14px; display:grid; place-items:center; }
-.ring { width:150px; height:150px; border-radius:50%; position:relative; display:grid; place-items:center; }
-.ring svg { position:absolute; inset:7px; width:136px; height:136px; }
-.ring circle.arc { filter:drop-shadow(0 0 8px color-mix(in srgb, var(--brass) 55%, transparent)); }
-@media (prefers-reduced-motion: no-preference) { .ring circle.arc { transition:stroke-dashoffset .7s var(--ease-out); } }
-.ring .mid { width:78px; height:78px; border-radius:50%; display:grid; place-content:center; text-align:center; background:linear-gradient(150deg, var(--rise), var(--paper)); box-shadow:-4px -4px 10px var(--hi), 5px 6px 12px var(--lo); }
-.ring .mid b { font-size:26px; font-weight:560; line-height:1; font-variant-numeric:tabular-nums; }
-.ring .mid span { font-size:11.5px; color:var(--muted); }
-.caps { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; align-content:center; }
-.cap { display:grid; justify-items:center; gap:6px; font-size:12px; color:var(--muted); }
-.cap b { color:var(--ink); font-size:var(--t-sm); font-weight:560; font-variant-numeric:tabular-nums; }
-.tube { width:34px; height:118px; border-radius:17px; position:relative; overflow:hidden; }
-.tube i { position:absolute; left:6px; right:6px; bottom:6px; border-radius:12px; height:var(--p, 0%); max-height:calc(100% - 12px); }
-.tube i.on { min-height:12px; }
-@media (prefers-reduced-motion: no-preference) { .tube i { transition:height .6s var(--ease-out); } }
-.tube .live { background:linear-gradient(var(--brass-hi), var(--brass)); box-shadow:0 0 14px -2px color-mix(in srgb, var(--brass) 45%, transparent); }
-.tube .rest { background:linear-gradient(color-mix(in srgb, var(--violet) 70%, white), var(--violet)); }
-.tube .push { background:linear-gradient(color-mix(in srgb, var(--muted) 40%, white), var(--muted)); }
 .sec2 { margin:24px 0 0; display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-size:var(--t-md); font-weight:550; }
 .sec2 span { font-size:var(--t-xs); color:var(--faint); font-weight:400; }
-.pb { margin-top:12px; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; }
-.pbc { border-radius:18px; padding:12px; min-height:104px; display:flex; flex-direction:column; justify-content:space-between; gap:8px; text-align:left; color:var(--ink); }
-.pbc b { font-size:22px; color:var(--brass); font-weight:560; font-variant-numeric:tabular-nums; }
-.pbc span { font-size:var(--t-xs); line-height:1.3; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .grid12 { margin-top:12px; border-radius:18px; padding:12px; display:grid; grid-template-columns:repeat(14, minmax(0,1fr)); gap:6px; }
 .grid12 i { aspect-ratio:1; border-radius:50%; background:color-mix(in srgb, var(--ink) 8%, transparent); }
 .grid12 i.on { background:color-mix(in srgb, var(--ink) 26%, transparent); }
@@ -255,8 +232,6 @@ header.top { flex:none; display:flex; align-items:flex-start; justify-content:sp
 .ev { margin-top:10px; font-size:var(--t-sm); line-height:1.4; padding-left:10px; border-left:2px solid var(--brass); opacity:.9; }
 .was { margin-top:8px; font-size:var(--t-xs); line-height:1.4; color:var(--muted); }
 .kfrom { color:var(--brass); }
-.tube.h { width:auto; height:12px; border-radius:6px; margin-top:12px; }
-.tube.h i { left:3px; top:3px; bottom:3px; right:auto; height:auto; max-height:none; min-height:0; width:var(--p, 0%); border-radius:4px; background:linear-gradient(90deg, color-mix(in srgb, var(--muted) 70%, transparent), var(--ink)); }
 .acts-row { display:flex; justify-content:flex-end; gap:2px; margin:4px -8px 0 0; }
 .acts-row button { min-height:44px; min-width:44px; padding:0 8px; font-size:var(--t-sm); color:var(--muted); }
 
@@ -339,6 +314,58 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
 .talkbar { display:flex; gap:10px; align-items:flex-end; }
 .talkbar textarea { min-height:52px; max-height:30vh; }
 .talkbar .primary { width:auto; flex:none; padding:0 18px; }
+/* A day that ends (1.32.0). */
+.dots { display:flex; gap:7px; align-items:center; min-height:48px; margin:0; font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.dots i { width:8px; height:8px; border-radius:50%; background:color-mix(in srgb, var(--ink) 16%, transparent); }
+.dots i.on { background:var(--brass); box-shadow:0 0 6px var(--brass); }
+.dots span { margin-left:6px; }
+.done, .focuswrap, .ask { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; justify-content:flex-end; padding-top:12px; scrollbar-width:none; }
+.done::-webkit-scrollbar, .focuswrap::-webkit-scrollbar, .ask::-webkit-scrollbar { display:none; }
+.done > *, .ask > * { flex:none; }
+.done h1 { margin:0; font-size:var(--d-lg); line-height:1.07; letter-spacing:-.028em; font-weight:520; }
+.note.big { font-size:var(--t-md); margin-top:8px; }
+.done .choice { margin-top:12px; }
+.done .primary { margin-top:18px; }
+.optp { font-weight:500 !important; font-size:15px !important; }
+.linkbtn { align-self:center; min-height:44px; padding:0 14px; margin-top:6px; font-size:var(--t-sm); color:var(--muted); }
+.focus { padding:18px; border-radius:24px; }
+.focus .k, .ask .k { font-size:13px; color:var(--brass); font-weight:560; }
+.focus .p { margin-top:10px; font-size:28px; line-height:1.1; letter-spacing:-.025em; font-weight:520; overflow-wrap:anywhere; white-space:pre-line; }
+.focus .p.mid { font-size:22px; } .focus .p.long { font-size:17px; line-height:1.4; font-weight:450; }
+.focus .n { margin-top:12px; font-size:var(--t-sm); color:var(--muted); }
+.focus .n.faint { color:var(--faint); margin-top:6px; }
+.ask .thought { margin-top:6px; flex:none; overflow:visible; }
+.three { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-top:14px; }
+.three .key { height:76px; }
+.three .key.live svg.i { stroke:var(--brass); }
+.quote.dim { font-size:17px; color:var(--muted); }
+.weekrow { display:grid; grid-template-columns:repeat(7, 1fr); gap:8px; padding:12px; border-radius:18px; }
+.weekrow div { display:grid; justify-items:center; gap:6px; font-size:11.5px; color:var(--muted); }
+.weekrow i { width:20px; height:20px; border-radius:50%; background:color-mix(in srgb, var(--ink) 10%, transparent); }
+.weekrow i.on { background:color-mix(in srgb, var(--ink) 40%, transparent); }
+.weekrow i.lv { background:var(--brass); box-shadow:0 0 8px var(--brass); }
+.summary { margin:12px 0 0; font-size:17px; line-height:1.42; color:var(--muted); }
+.summary b { color:var(--ink); font-weight:550; } .summary b.br { color:var(--brass); }
+#openWeek > span:first-child { display:block; color:var(--ink); font-size:var(--t-md); }
+.crow small { display:block; margin-top:3px; font-size:var(--t-xs); color:var(--muted); font-weight:400; }
+.lrow2 { display:flex; justify-content:space-between; align-items:center; gap:12px; width:100%; min-height:56px; padding:14px 2px; border-bottom:1px solid var(--line); text-align:left; color:var(--ink); }
+.lrow2 > span { min-width:0; }
+.lrow2 .lt { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.lrow2 small { display:block; margin-top:4px; font-size:var(--t-xs); color:var(--muted); }
+.lrow2 svg.i { width:16px; height:16px; color:var(--faint); }
+#ledgerList { margin-top:6px; }
+.tl { display:grid; }
+.tl div { display:grid; grid-template-columns:16px 1fr auto; gap:10px; align-items:start; padding:9px 0; font-size:14px; line-height:1.4; border-bottom:1px solid var(--line); overflow-wrap:anywhere; }
+.tl div:last-child { border-bottom:0; }
+.tl i { width:8px; height:8px; border-radius:50%; margin-top:6px; background:var(--muted); }
+.tl i.b { background:var(--brass); } .tl i.v { background:var(--violet); }
+.tl span { color:var(--muted); font-size:var(--t-xs); white-space:nowrap; }
+.acts3 { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+.acts3 .btn3d { padding:0 8px; font-size:14px; }
+.btn3d.danger { color:var(--danger); }
+.steps { display:grid; gap:10px; font-size:14px; line-height:1.4; }
+.steps div { display:grid; grid-template-columns:26px 1fr; gap:8px; align-items:start; }
+.steps b { width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-size:12px; color:var(--onBrass); background:var(--brass); }
 /* Collections. */
 .coll-list { display:grid; gap:12px; }
 .crow { display:flex; justify-content:space-between; align-items:center; gap:10px; min-height:52px; padding:0 16px; border-radius:var(--r-m); font-size:var(--t-md); font-weight:500; text-align:left; color:var(--ink); }
@@ -417,33 +444,16 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
 <!-- Ledger view: where you stand, what is pushing back, the last 12 weeks, and the list. Filled by renderLedger(). -->
   <section class="view" id="v-ledger" aria-label="Ledger" hidden>
     <h2 class="ptitle">Ledger</h2>
-    <div class="gaugeRow">
-      <div class="gauge raised">
-        <div class="ring pressed" id="gauge" role="img" aria-label="">
-          <svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--brass-hi)"/><stop offset="1" stop-color="var(--brass)"/></linearGradient></defs>
-            <circle class="arc" id="gaugeArc" cx="60" cy="60" r="44" fill="none" stroke="url(#gg)" stroke-width="16" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="276.5" transform="rotate(-90 60 60)"/></svg>
-          <div class="mid"><b id="lShed">0</b><span>living</span></div>
-        </div>
-      </div>
-      <!-- Three capsules: Living it as a share of every principle, then how many in the deck are resting and pushing back. -->
-      <div class="caps" id="caps" role="img" aria-label="">
-        <div class="cap" aria-hidden="true"><div class="tube pressed"><i class="live" id="capLive"></i></div><span>Living</span><b id="pLive">0%</b></div>
-        <div class="cap" aria-hidden="true"><div class="tube pressed"><i class="rest" id="capRest"></i></div><span>Resting</span><b id="pRest">0</b></div>
-        <div class="cap" aria-hidden="true"><div class="tube pressed"><i class="push" id="capPush"></i></div><span>Pushing</span><b id="pPush">0</b></div>
-      </div>
-    </div>
-    <div id="pbWrap">
-      <h3 class="sec2">Pushing back<span>Set aside most</span></h3>
-      <div class="pb" id="pb"></div>
-    </div>
+    <p class="summary" id="lSummary"></p>
+    <button type="button" class="crow raised" id="openWeek" style="margin-top:16px"><span>Your week<small>The last seven days, and one voice on them</small></span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></button>
     <h3 class="sec2">Last 12 weeks<span>Each dot is a day</span></h3>
     <div class="grid12 pressed" id="cal" role="img" aria-label="Days weighed over the last 12 weeks"></div>
-    <div class="gkey"><span><i style="background:color-mix(in srgb, var(--ink) 40%, transparent)"></i>weighed</span><span><i style="background:var(--brass)"></i>living it</span></div>
+    <div class="gkey"><span><i style="background:color-mix(in srgb, var(--ink) 40%, transparent)"></i>weighed</span><span><i style="background:var(--brass)"></i>caught it or living it</span></div>
     <div class="seg2 pressed" role="group" aria-label="List">
       <button type="button" id="segDeck" aria-pressed="true">In deck</button>
       <button type="button" id="segShed" aria-pressed="false">Living it</button>
     </div>
-    <div class="list" id="ledgerList"></div>
+    <div id="ledgerList"></div>
   </section>
   </main>
 </div>
@@ -452,6 +462,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
 <dialog class="menu frost" id="menu" aria-label="Menu">
   <button type="button" data-m="capture">Capture<span>New principle</span></button>
   <button type="button" data-m="edit" id="mEdit">Edit this principle</button>
+  <button type="button" data-m="caught" id="mCaught">Caught it<span>Lived it today</span></button>
   <hr>
   <button type="button" data-m="ledger" id="mLedger">Ledger<span>Your record</span></button>
   <button type="button" data-m="collections">Collections<span id="mColl">0</span></button>
@@ -505,7 +516,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     <textarea id="evidenceInput" rows="3" maxlength="280" placeholder="One line on when you lived it."></textarea>
   </div>
   <div class="stats">
-    <div class="stat pressed"><b id="sReflect">0</b><span>Worked on</span></div>
+    <div class="stat pressed"><b id="sReflect">0</b><span>Tested</span></div>
     <div class="stat pressed"><b id="sSkips" class="br">0</b><span>Set aside</span></div>
     <div class="stat pressed"><b id="sDays">0</b><span>Days in deck</span></div>
   </div>
@@ -552,6 +563,61 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     <textarea id="talkInput" rows="1" maxlength="600" placeholder="Push back, or ask why" aria-label="Your reply"></textarea>
     <button class="primary" type="submit" id="talkSend" disabled>Send</button>
   </form>
+</dialog>
+
+<!-- Caught it: when you lived a principle without the app. -->
+<dialog class="sheet" id="sheetCaught" aria-modal="true" aria-labelledby="sheetCaughtTitle">
+  <div class="grabber" aria-hidden="true"></div>
+  <h2><span id="sheetCaughtTitle">Caught it</span> <button type="button" data-close>Cancel</button></h2>
+  <div class="quote" id="caughtText"></div>
+  <div class="group" id="caughtStep1">
+    <label for="caughtInput">Where did it show up?</label>
+    <textarea id="caughtInput" rows="3" maxlength="280" placeholder="One line on when you lived it without the app."></textarea>
+    <button class="primary" type="button" id="caughtSave" style="margin-top:8px">Save</button>
+  </div>
+  <div class="group" id="caughtStep2" hidden>
+    <div class="notice pressed" id="caughtNotice"></div>
+    <div class="sd"><button type="button" class="btn3d raised" id="caughtNotYet">Not yet</button><button type="button" class="primary" id="caughtLive">Living it</button></div>
+  </div>
+</dialog>
+
+<!-- Testing it, every third time: the smallest act today. -->
+<dialog class="sheet" id="sheetAct" aria-modal="true" aria-labelledby="sheetActTitle">
+  <div class="grabber" aria-hidden="true"></div>
+  <h2><span id="sheetActTitle">Testing it</span> <button type="button" data-close>Skip</button></h2>
+  <div class="quote dim" id="actText"></div>
+  <div class="group">
+    <label for="actInput">What is the smallest act today?</label>
+    <textarea id="actInput" rows="2" maxlength="200" placeholder="Leave the phone in the kitchen tonight."></textarea>
+  </div>
+  <p class="note">Asked every third time you choose Testing it. It shows up in this evening’s check-in when this is today’s focus.</p>
+  <button class="primary" type="button" id="actSave" disabled>Save</button>
+</dialog>
+
+<!-- Your week: the last seven Scales days. -->
+<dialog class="sheet tall" id="sheetWeek" aria-modal="true" aria-labelledby="sheetWeekTitle">
+  <div class="grabber" aria-hidden="true"></div>
+  <h2><span id="sheetWeekTitle">Your week</span> <button type="button" data-close>Done</button></h2>
+  <p class="note" id="weekRange" style="margin-top:-8px"></p>
+  <div class="stats"><div class="stat pressed"><b id="wWeighed">0</b><span>Weighed</span></div><div class="stat pressed"><b id="wCaught" class="br">0</b><span>Caught it</span></div><div class="stat pressed"><b id="wLiving">0</b><span>Now living</span></div></div>
+  <div class="weekrow pressed" id="weekRow" role="img"></div>
+  <div class="group" id="weekPushWrap"><h3 class="sec2" style="margin-top:4px">Pushed back most<span id="weekPushN"></span></h3><button type="button" class="crow raised" id="weekPush" style="font-weight:500;white-space:normal"></button></div>
+  <div class="glass" id="weekLine" hidden></div>
+  <button type="button" class="btn3d raised" id="weekAsk" hidden></button>
+  <div class="sheet-foot"><button class="primary" type="button" id="weekStart">Start the week</button></div>
+</dialog>
+
+<!-- A principle in full, from the Ledger: its history and everything you can do with it. -->
+<dialog class="sheet tall" id="sheetRow" aria-modal="true" aria-labelledby="sheetRowTitle">
+  <div class="grabber" aria-hidden="true"></div>
+  <h2><span id="sheetRowTitle">Principle</span> <button type="button" data-close>Done</button></h2>
+  <div class="quote" id="rowText"></div>
+  <div class="where" id="rowWhere" style="margin-top:-6px"></div>
+  <div class="glass" id="rowLine" hidden></div>
+  <div class="ev" id="rowEv" hidden></div>
+  <div id="rowHist"></div>
+  <div class="tl" id="rowTl"></div>
+  <div class="acts3" id="rowActs"></div>
 </dialog>
 
 <!-- Collections sheet: every collection with its count. Tap one to rename, merge or remove it. -->
@@ -621,7 +687,18 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   <div class="panel raised">
     <div class="setrow"><span id="restLbl">Rest after Not today<small>It comes up first when it returns</small></span>
       <div class="stepper" role="group" aria-labelledby="restLbl"><button type="button" class="raised" id="restDown" aria-label="One day less">&minus;</button><output id="restOut" aria-live="polite">4 days</output><button type="button" class="raised" id="restUp" aria-label="One day more">+</button></div></div>
+    <div class="setrow"><span id="setLbl">Today’s set<small>Then Done for today, and today’s focus</small></span>
+      <div class="stepper" role="group" aria-labelledby="setLbl"><button type="button" class="raised" id="setDown" aria-label="One fewer">&minus;</button><output id="setOut" aria-live="polite">5</output><button type="button" class="raised" id="setUp" aria-label="One more">+</button></div></div>
     <button type="button" class="setrow" id="openCollections" style="width:100%;text-align:left;color:inherit"><span>Manage collections<small>Rename, merge or remove</small></span><span class="status" style="display:flex;align-items:center;gap:6px;font-size:14px"><span id="collCount">0</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px"><path d="M9 6l6 6-6 6"/></svg></span></button>
+  </div>
+
+  <h3 class="sec2">Daily reminder</h3>
+  <div class="panel raised">
+    <div class="setrow stack">
+      <p class="note">Scales has no server, so it cannot send notifications. An iPhone automation can open it for you instead. Set it up once, for the morning set and again for the evening check-in.</p>
+      <div class="steps"><div><b>1</b><span>Tap Copy link.</span></div><div><b>2</b><span>In Shortcuts: Automation, New Automation, Time of Day. Pick a time, then Run Immediately.</span></div><div><b>3</b><span>Add the Open URLs action and paste the link. Repeat for the evening, after 6 PM.</span></div></div>
+      <div class="btnrow"><button class="btn3d sm raised" type="button" id="copyLink">Copy link</button><button class="btn3d sm raised" type="button" id="openShortcuts">Open Shortcuts</button></div>
+    </div>
   </div>
 
   <h3 class="sec2">AI lines</h3>
@@ -666,7 +743,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   </div>
 
   <h3 class="sec2">How it works</h3>
-  <p class="note">Swipe left for Not today, up for Still working on it, right for Living it, or press the three keys. Press and hold a principle to edit it. After a move, Weigh in under the keys asks today's voice for a perspective on it, and Talk it through lets you answer back. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
+  <p class="note">Swipe left for Not today, up for Testing it, right for Living it, or press the three keys. Press and hold a principle to edit it. After a move, Weigh in under the keys asks today's voice for a perspective on it, and Talk it through lets you answer back. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
   <p class="note" id="howRest"></p>
 
   <h3 class="sec2">About</h3>
@@ -691,8 +768,8 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   "use strict";
   // ---------- tuning ----------
   // Selection, weighting and answer checks live in core.js so they can be tested.
-  // DWELL_SEC  seconds on a card before Still working on it can undo a Not today
-  // NUDGE_AT   Still working on it in a row before the app asks 'Have you lived this yet?'
+  // DWELL_SEC  seconds on a card before Testing it can undo a Not today
+  // NUDGE_AT   Testing it in a row before the app asks 'Have you lived this yet?'
   var C = ScalesCore, CAP = C.CAP, MAX_WORDS = C.MAX_WORDS, DWELL_SEC = 8, NUDGE_AT = 3;
   var tier = C.tier, weight = C.weight, words = C.words, clean = C.clean, fit = C.fit, vet = C.vet;
   // Built-in considerations, grouped by how much a thought has been skipped
@@ -757,10 +834,11 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     lsSet(LS, thoughts);
   }
   // Count today's action for the ledger grid and drop days older than 120.
+  // Keyed by Scales day (4:00 AM to 4:00 AM). c counts Caught it.
   function logActivity(kind) {
-    var k = dayKey();
+    var k = today();
     var d = activity[k] || { i: 0, s: 0 };
-    if (kind === "shed") d.s++; else d.i++;
+    if (kind === "shed") d.s++; else if (kind === "caught") d.c = (d.c || 0) + 1; else d.i++;
     activity[k] = d;
     var cutoff = dayKey(new Date(Date.now() - 120 * 86400000));
     Object.keys(activity).forEach(function (x) { if (x < cutoff) delete activity[x]; });
@@ -866,7 +944,11 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   try { if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual"; } catch (e) {}
   // A new Scales day may have started while the app was in the background; if the deck was
   // showing Nothing left today, look again.
-  document.addEventListener("visibilitychange", function () { if (document.visibilityState !== "visible") return; paintDate(); if (!current && activeList().length) showNext(); });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible") return;
+    paintDate(); checkinLater = false;
+    if (!current && activeList().length) showNext(); else if ($("v-ledger").hidden && !openSheet) renderDeck();
+  });
   window.addEventListener("pageshow", resetScroll);
   window.addEventListener("load", resetScroll);
   function isTyping(el) { return !!el && (el.tagName === "TEXTAREA" || (el.tagName === "INPUT" && el.type !== "file")); }
@@ -945,6 +1027,8 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   // through core.js deckFilter, so a collection that was renamed away or emptied falls back to all.
   function deckColl() { return C.deckFilter(all(), prefs.deck_coll); }
   function deckList() { var c = deckColl(); return activeList().filter(function (t) { return C.inCollection(t, c); }); }
+  // Whether the deck has a principle to show now.
+  function nextUp() { var t = thoughts[current]; return !!(t && t.status === "active"); }
   function pickNext() { return C.nextCard(deckList(), history, today(), showAnyway()).card; }
 
   // Put a thought on screen, start the dwell timer, and ask for its line.
@@ -1083,7 +1167,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   // skip:  raise skip count, reset the reflect streak
   // keep:  count a reflect; lower skip count by 1 only if the card was read for DWELL_SEC
   // shed:  open the shed sheet to record evidence before retiring the thought
-  // Not today and Still working on it can be undone from the toast for UNDO_MS (see undoable).
+  // Not today and Testing it can be undone from the toast for UNDO_MS (see undoable).
   function act(kind) {
     var t = thoughts[current]; if (!t) return;
     var dwell = (Date.now() - shownAt) / 1000;
@@ -1091,7 +1175,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     if (kind === "skip") {
       // Not today: counted, rested until the next day, and owed one turn at the front.
       var u = undoPoint();
-      C.applySkip(t, today(), restDays()); noteMove(t, "skip");
+      C.applySkip(t, today(), restDays()); C.noteSkipDay(t, today()); noteMove(t, "skip"); noteDay(t, "skip");
       save(t); logActivity("skip"); flyOut("left");
       undoable("Not today. " + backText(t.rest_until), u); return;
     }
@@ -1099,9 +1183,13 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
       var k = undoPoint();
       t.reflect_count++; t.consecutive_reflects++;
       if (dwell >= DWELL_SEC && t.skip_count > 0) t.skip_count--;
-      noteMove(t, "keep");
+      noteMove(t, "keep"); noteDay(t, "keep");
+      prefs.tests = (prefs.tests || 0) + 1; savePrefs();
       save(t); logActivity("keep"); flyOut("up");
-      undoable("Still working on it.", k); return;
+      undoable("Testing it.", k);
+      // Every third Testing it: the smallest act today, once the next card is in place.
+      if (C.askAct(prefs.tests)) setTimeout(function () { openAct(thoughts[t.id]); }, 450);
+      return;
     }
     if (kind === "shed") openShed(t);
   }
@@ -1112,12 +1200,18 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   // activity grid and the Ledger all go back, and the card returns to the screen. Only the latest
   // move can be undone; any other message replaces the toast and drops the undo.
   var UNDO_MS = 5000;
-  function undoPoint() { return C.undoPoint(thoughts, activity, history, current); }
+  // The day's set and the Testing it count go back too.
+  function undoPoint() {
+    var p = C.undoPoint(thoughts, activity, history, current);
+    refreshDay(); p.day = JSON.parse(JSON.stringify(day)); p.tests = prefs.tests || 0;
+    return p;
+  }
   function undoable(msg, point) {
     toast(msg, function () {
       var r = C.applyUndo(point);
       lastMove = null; // the move is undone, so there is nothing to weigh
       thoughts = r.thoughts; activity = r.activity; history = r.history; queued = null;
+      if (point.day) { day = JSON.parse(JSON.stringify(point.day)); prefs.tests = point.tests; saveDay(); }
       lsSet(LS, thoughts); lsSet(LSA, activity);
       var t = r.current && thoughts[r.current];
       if (t && t.status === "active") { current = t.id; currentLead = null; }
@@ -1170,7 +1264,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     var t = shedTarget; if (!t) return;
     var u = undoPoint();
     t.status = "shed"; t.shed_at = new Date().toISOString(); t.evidence = $("evidenceInput").value.trim();
-    noteMove(t, "shed");
+    noteMove(t, "shed"); noteDay(t, "shed");
     save(t); logActivity("shed"); shedDone = true; hide(); burst(); flyOut("right");
     undoable("Living it. Moved to your record.", u);
   });
@@ -1231,15 +1325,26 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   function keysHtml() {
     return '<div class="moves" id="keys" role="group" aria-label="Moves">' +
       '<button type="button" class="key raised" id="kSkip" data-move="skip">' + ICON_SKIP + "<span>Not today</span></button>" +
-      '<button type="button" class="key raised" id="kKeep" data-move="keep">' + ICON_UP + "<span>Working on it</span></button>" +
+      '<button type="button" class="key raised" id="kKeep" data-move="keep">' + ICON_UP + "<span>Testing it</span></button>" +
       '<button type="button" class="key raised live" id="kShed" data-move="shed">' + ICON_SHED + "<span>Living it</span></button></div>";
   }
-  function footHtml(left) { return '<div class="foot"><span>' + left + '</span><span id="deckN"></span></div>'; }
+  function footHtml(left) {
+    // After Keep going, the footer offers the way back to today's focus.
+    if (!left && day && day.more && day.focus && thoughts[day.focus]) left = '<button type="button" class="linkbtn" id="backFocus" style="margin:-12px 0;padding:0;align-self:auto">Today’s focus</button>';
+    return '<div class="foot"><span>' + left + '</span><span id="deckN"></span></div>';
+  }
   function emptyHtml(title, text, acts, left) {
     return '<div class="empty"><h1>' + title + "</h1><p>" + text + '</p><div class="acts">' + acts + "</div></div>" + footHtml(footLeft(left || ""));
   }
   function renderDeck() {
     var v = $("v-deck");
+    refreshDay();
+    var phase = C.dayPhase(day, setSize());
+    paintTop(phase);
+    // The evening check-in comes first, then Done for today and today's focus.
+    if (!checkinLater && C.checkinDue(day, new Date()) && renderCheckin()) return;
+    if (phase === "focus") { renderFocus(); return; }
+    if (phase === "done" || (phase === "set" && day.moved.length && !nextUp())) { renderDone(phase === "set" ? "Nothing else is due today. " + C.daySummary(day) : ""); return; }
     var t = thoughts[current];
     var enter = entering; entering = false;
     var coll = deckColl();
@@ -1289,10 +1394,10 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
         whereHtml(t) +
         '<div class="lineWrap"><div class="glass"><p class="ai-p" id="aiLine"></p>' +
           '<div class="ai-row"><small id="aiSrc">Considered for you</small><button type="button" class="keep raised" id="keepBtn" hidden>' + ICON_KEEP + "Keep</button></div></div></div>" +
-        '<span class="sr" id="cardHow">Swipe left for Not today, up for Still working on it, right for Living it, or use the three keys. Press and hold to edit.</span>' +
+        '<span class="sr" id="cardHow">Swipe left for Not today, up for Testing it, right for Living it, or use the three keys. Press and hold to edit.</span>' +
       "</article>" +
       '<div class="swipetag raised skip" id="tagSkip" aria-hidden="true">' + ICON_SKIP + "Not today</div>" +
-      '<div class="swipetag raised keep" id="tagKeep" aria-hidden="true">' + ICON_UP + "Working on it</div>" +
+      '<div class="swipetag raised keep" id="tagKeep" aria-hidden="true">' + ICON_UP + "Testing it</div>" +
       '<div class="swipetag raised shed" id="tagShed" aria-hidden="true">' + ICON_SHED + "Living it</div>" +
       (nudge ? '<div class="banner raised"><span class="t">Have you lived this yet?</span><button type="button" id="nudgeNo">Not yet</button><button type="button" class="yes" id="nudgeYes">Living it</button></div>' : "") +
       keysHtml() + footHtml(footLeft(left)) +
@@ -1324,7 +1429,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     return '<div class="coach" id="coach" role="group" aria-label="How to use the deck"><div class="glass">' +
       "<h2>Three moves</h2>" +
       "<ul><li>" + ICON_SKIP + "<span><b>Not today</b>: swipe left. Rests it for " + n + (n === 1 ? " day" : " days") + ".</span></li>" +
-      "<li>" + ICON_UP + "<span><b>Working on it</b>: swipe up.</span></li>" +
+      "<li>" + ICON_UP + "<span><b>Testing it</b>: swipe up.</span></li>" +
       "<li>" + ICON_SHED + "<span><b>Living it</b>: swipe right.</span></li></ul>" +
       '<p class="tapnote">Or press the keys below. Press and hold a principle to edit it. Everything else is in the menu at the top right.</p>' +
       '<div class="row"><button type="button" class="btn3d sm raised" id="coachOk">Got it</button></div></div></div>';
@@ -1334,7 +1439,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   // ---------- swipe, and press and hold ----------
   // Pointer events on the whole deck view (touch and mouse), bound once. The words follow the finger with a
   // slight lean; the key for the move you are heading toward (core.js swipeIntent) presses in and its label
-  // fades in. Past 90px it commits: left = Not today, right = Living it, up = Still working on it. Anything
+  // fades in. Past 90px it commits: left = Not today, right = Living it, up = Testing it. Anything
   // shorter springs back. Holding still on the words for HOLD_MS opens Edit instead.
   var HOLD_MS = 550;
   (function bindSwipe() {
@@ -1458,7 +1563,10 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     var v = todayVoice();
     return '<button type="button" class="weighbtn raised" id="weighBtn">' + ICON_VOICE + "Weigh in<span>" + esc(v.short) + " on " + esc(C.MOVES[lastMove.move]) + "</span></button>";
   }
-  $("v-deck").addEventListener("click", function (e) { if (e.target.closest("#weighBtn")) openWeigh(); });
+  $("v-deck").addEventListener("click", function (e) {
+    if (e.target.closest("#weighBtn")) openWeigh();
+    else if (e.target.closest("#backFocus")) { day.more = false; saveDay(); renderDeck(); }
+  });
 
   var wT = null, wAt = null, wBusy = false, wFromLedger = false;
   function wTalk() { var t = thoughts[wT]; return t && (t.talks || []).filter(function (x) { return x.at === wAt; })[0]; }
@@ -1605,6 +1713,227 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   // Redraw only the deck when voices change while it shows, so Weigh in appears or goes.
   function renderDeckFoot() { if ($("v-ledger").hidden && !openSheet) renderDeck(); }
 
+  // ---------- a day that ends (1.32.0) ----------
+  // Today's set (core.js dayPhase): the deck closes after the number of moves chosen in Settings, asks which
+  // principle you will act on today, and carries it as today's focus. From 6 PM the deck opens on the
+  // evening check-in for that focus. Every third Testing it asks for the smallest act today.
+  var day = null, checkinLater = false;
+  function setSize() { return C.setSize(prefs.set_size); }
+  function refreshDay() { day = C.dayState(day || prefs.day, today()); }
+  function saveDay() { prefs.day = day; savePrefs(); }
+  function noteDay(t, move) { refreshDay(); C.noteDayMove(day, t.id, move); saveDay(); }
+  // The top of the deck: progress dots while the set is under way, the day and date otherwise.
+  function paintTop(phase) {
+    var el = $("todayLbl");
+    if (phase === "set" && day.moved.length < setSize()) {
+      var n = setSize(), done = day.moved.length, dots = "";
+      for (var i = 0; i < Math.min(n, 12); i++) dots += '<i class="' + (i < done ? "on" : "") + '"></i>';
+      el.className = "dots"; el.innerHTML = dots + "<span>" + (done + 1) + " of " + n + " today</span>";
+      el.setAttribute("aria-label", done + " of " + n + " weighed today");
+    } else { el.className = "date"; el.removeAttribute("aria-label"); paintDate(); }
+  }
+  // Done for today: how the set went, then today's focus.
+  var focusPick = null;
+  function renderDone(note) {
+    var v = $("v-deck"), choices = C.focusChoices(day, thoughts).slice(0, 6);
+    if (!focusPick || !choices.some(function (c) { return c.t.id === focusPick; })) focusPick = choices.length ? choices[0].t.id : null;
+    v.innerHTML = '<div class="done">' +
+      "<h1>Done for today.</h1>" + '<p class="note big">' + esc(note || C.daySummary(day)) + "</p>" +
+      (choices.length ? '<h3 class="sec2">Which one will you act on today?</h3><div class="choice" id="focusPick" role="radiogroup" aria-label="Today’s focus">' +
+        choices.map(function (c) {
+          return '<button type="button" class="opt raised" data-focus="' + c.t.id + '" role="radio" aria-checked="' + (c.t.id === focusPick) + '" aria-pressed="' + (c.t.id === focusPick) + '"><i class="radio" aria-hidden="true"></i><span><b class="optp">' + esc(clip(c.t.text, 120)) + "</b></span></button>";
+        }).join("") + '</div><button type="button" class="primary" id="focusSet">Make it today’s focus</button>' : "") +
+      '<button type="button" class="linkbtn" id="keepGoing">Keep going instead</button></div>' + footHtml(footLeft(""));
+    if ($("focusPick")) $("focusPick").onclick = function (e) { var b = e.target.closest("[data-focus]"); if (b) { focusPick = b.getAttribute("data-focus"); renderDeck(); } };
+    if ($("focusSet")) $("focusSet").onclick = function () { day.focus = focusPick; day.closed = true; saveDay(); toast("Today’s focus set. Check in after 6 PM."); renderDeck(); };
+    $("keepGoing").onclick = keepGoing;
+    paintStat();
+  }
+  function keepGoing() { day.more = true; saveDay(); if (!current || !thoughts[current] || thoughts[current].status !== "active") showNext(); else renderDeck(); }
+  // Today's focus, after the set.
+  function renderFocus() {
+    var v = $("v-deck"), t = thoughts[day.focus];
+    if (!t) { day.closed = false; day.focus = null; saveDay(); renderDone(); return; }
+    var act = C.actToday(t, day.day);
+    v.innerHTML = '<div class="focuswrap"><div class="focus raised"><div class="k">Today’s focus</div><div class="p' + sizeClass(t.text) + '">' + esc(t.text) + "</div>" +
+      (act ? '<div class="n">Smallest act: ' + esc(act) + "</div>" : "") + '<div class="n faint">Check in after 6 PM.</div></div>' +
+      '<div class="sd" style="margin-top:20px"><button type="button" class="btn3d raised" id="keepGoing">Keep going</button><button type="button" class="btn3d raised" id="focusCaught">Caught it</button></div></div>' +
+      footHtml(footLeft("Done for today"));
+    $("keepGoing").onclick = keepGoing;
+    $("focusCaught").onclick = function () { openCaught(t, false); };
+    paintStat();
+  }
+  // The evening check-in.
+  function renderCheckin() {
+    var v = $("v-deck"), t = thoughts[day.focus]; if (!t) return false;
+    var act = C.actToday(t, day.day);
+    v.innerHTML = '<div class="ask"><div class="k">Today’s focus</div><div class="thought' + sizeClass(t.text) + '"><span>' + esc(t.text) + "</span></div>" +
+      (act ? '<p class="note big">Smallest act: ' + esc(act) + "</p>" : "") +
+      '<h3 class="sec2">Did you live it today?</h3><div class="three" id="checkin">' +
+      '<button type="button" class="key raised" data-ci="no">' + ICON_SKIP + "<span>Not today</span></button>" +
+      '<button type="button" class="key raised" data-ci="partly">' + ICON_UP + "<span>Partly</span></button>" +
+      '<button type="button" class="key raised live" data-ci="yes">' + ICON_SHED + "<span>Yes</span></button></div>" +
+      '<button type="button" class="linkbtn" id="ciLater">Later</button></div>' + footHtml("");
+    $("checkin").onclick = function (e) {
+      var b = e.target.closest("[data-ci]"); if (!b) return;
+      var r = b.getAttribute("data-ci");
+      if (r === "yes") { openCaught(t, true); return; }
+      t.checkins = (t.checkins || []).concat([{ day: day.day, result: r }]).slice(-30); save(t);
+      day.checkin = r; saveDay();
+      toast(r === "partly" ? "Partly. It stays in the deck; tomorrow is another set." : "Noted. Tomorrow is another set.");
+      renderDeck();
+    };
+    $("ciLater").onclick = function () { checkinLater = true; renderDeck(); };
+    paintStat();
+    return true;
+  }
+
+  // Caught it: when you lived a principle without the app. From the check-in, the menu, or the Ledger.
+  var caughtT = null, caughtFromCheckin = false;
+  function openCaught(t, fromCheckin) {
+    if (!t) return;
+    caughtT = t; caughtFromCheckin = !!fromCheckin;
+    $("caughtText").textContent = t.text;
+    $("caughtInput").value = "";
+    $("caughtStep1").hidden = false; $("caughtStep2").hidden = true;
+    show("sheetCaught");
+    setTimeout(function () { $("caughtInput").focus(); }, 60);
+  }
+  $("caughtSave").onclick = function () {
+    var t = caughtT; if (!t) return;
+    var u = undoPoint();
+    C.addCatch(t, today(), $("caughtInput").value); save(t); logActivity("caught");
+    if (caughtFromCheckin) {
+      t.checkins = (t.checkins || []).concat([{ day: today(), result: "yes" }]).slice(-30); save(t);
+      refreshDay(); day.checkin = "yes"; saveDay();
+    }
+    if (C.suggestLiving(t, today())) {
+      var n = C.catchCount(t, today());
+      $("caughtNotice").innerHTML = "<b>" + (n === 3 ? "Third" : n + "th") + " time in " + C.CATCH_WINDOW + " days.</b> You have caught yourself living this " + n + " times without the app. Ready to call it Living it?";
+      $("caughtStep1").hidden = true; $("caughtStep2").hidden = false;
+      renderDeck(); if (!$("v-ledger").hidden) renderLedger();
+      return;
+    }
+    hide(); undoable("Caught it. Logged in the Ledger.", u);
+    renderDeck(); if (!$("v-ledger").hidden) renderLedger();
+  };
+  $("caughtNotYet").onclick = function () { hide(); toast("Caught it. Logged in the Ledger."); };
+  $("caughtLive").onclick = function () {
+    var t = caughtT; if (!t) return;
+    var last = (t.caught || [])[(t.caught || []).length - 1];
+    openShed(t);
+    if (last && last.text) $("evidenceInput").value = last.text;
+  };
+
+  // Testing it, every third time: the smallest act today.
+  var actT = null;
+  function openAct(t) {
+    if (!t || openSheet) return;
+    actT = t;
+    $("actText").textContent = t.text;
+    $("actInput").value = C.actToday(t, today());
+    show("sheetAct");
+    setTimeout(function () { $("actInput").focus(); }, 60);
+  }
+  $("actInput").addEventListener("input", function () { $("actSave").disabled = !$("actInput").value.trim(); });
+  $("actSave").onclick = function () {
+    var t = actT; if (!t || !$("actInput").value.trim()) return;
+    C.addAct(t, today(), $("actInput").value); save(t); hide();
+    toast(day && day.focus === t.id ? "Saved. It shows in this evening’s check-in." : "Saved.");
+    if (!$("v-ledger").hidden) renderLedger(); else if (day && (day.closed)) renderDeck();
+  };
+
+  // ---------- your week ----------
+  // A calm review of the last seven Scales days. Opens itself on Sunday, once; the Ledger has it any day.
+  function openWeek() {
+    var w = C.weekStats(all(), activity, today());
+    var f = function (d) { var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", { month: "long", day: "numeric" }); };
+    $("weekRange").textContent = f(w.from) + " to " + f(w.to);
+    $("wWeighed").textContent = w.weighed; $("wCaught").textContent = w.caught; $("wLiving").textContent = w.living;
+    $("weekRow").innerHTML = w.days.map(function (d) {
+      var p = d.day.split("-"), dt = new Date(+p[0], +p[1] - 1, +p[2]);
+      return '<div><i class="' + d.kind + '"></i>' + dt.toLocaleDateString("en-US", { weekday: "narrow" }) + "</div>";
+    }).join("");
+    $("weekRow").setAttribute("aria-label", w.days.filter(function (d) { return d.weighed || d.caught; }).length + " of 7 days active");
+    $("weekPushWrap").hidden = !w.pushed;
+    if (w.pushed) { $("weekPushN").textContent = "Set aside " + times(w.pushedTimes); $("weekPush").textContent = w.pushed.text; $("weekPush").setAttribute("data-show", w.pushed.id); }
+    var wl = prefs.week_line && prefs.week_line.day === today() ? prefs.week_line : null, v = todayVoice();
+    $("weekLine").hidden = !wl;
+    if (wl) $("weekLine").innerHTML = "<p>" + esc(wl.text) + '</p><div class="vlabel"><span>' + esc(wl.label) + "</span></div>";
+    $("weekAsk").hidden = !!wl || !sample || !v;
+    if (v) $("weekAsk").innerHTML = ICON_VOICE + " " + esc(v.short) + " on your week";
+    weekStatsNow = w;
+    show("sheetWeek");
+  }
+  var weekStatsNow = null;
+  $("weekAsk").onclick = function () {
+    var v = todayVoice(), w = weekStatsNow; if (!v || !w || !sample) return;
+    $("weekAsk").disabled = true; $("weekAsk").textContent = "Considering…";
+    var tries = 0;
+    function attempt() {
+      return sample(C.weekPrompt(v, w)).then(function (res) {
+        var r = vet(res && res.text, { text: w.pushed ? w.pushed.text : "" });
+        return r.line || (++tries < 3 ? attempt() : null);
+      });
+    }
+    attempt().then(function (line) {
+      $("weekAsk").disabled = false;
+      if (!line) { $("weekAsk").textContent = "No usable answer. Try again"; return; }
+      prefs.week_line = { day: today(), text: line, label: C.voiceLabel(v) }; savePrefs();
+      $("weekLine").hidden = false; $("weekLine").innerHTML = "<p>" + esc(line) + '</p><div class="vlabel"><span>' + esc(C.voiceLabel(v)) + "</span></div>";
+      $("weekAsk").hidden = true;
+    }, function () { $("weekAsk").disabled = false; $("weekAsk").textContent = "No connection. Try again"; });
+  };
+  $("weekPush").onclick = function () { var t = thoughts[$("weekPush").getAttribute("data-show")]; if (!t) return; hide(); if (!C.inCollection(t, deckColl())) { prefs.deck_coll = ""; savePrefs(); } day.more = true; saveDay(); go("deck"); showThought(t); };
+  $("weekStart").onclick = hide;
+
+  // ---------- a principle in full (the Ledger row) ----------
+  var rowT = null;
+  var TL_DOT = { caught: "b", lived: "b", talk: "v", act: "b" };
+  function openRow(t) {
+    if (!t) return;
+    rowT = t;
+    var lived = t.status === "shed", l = lastLine(t), parts = [];
+    if (String(t.collection || "").trim()) parts.push("<b>" + esc(t.collection) + "</b>");
+    if (t.origin) parts.push("<span>" + esc(t.origin) + "</span>");
+    if (t.author) parts.push("<span>" + esc(t.author) + "</span>");
+    parts.push("<span>Since " + esc(fmtDate(t.created_at)) + "</span>");
+    $("rowText").textContent = t.text;
+    $("rowWhere").innerHTML = parts.join("");
+    $("rowLine").hidden = !l; $("rowLine").innerHTML = l ? "<p>" + esc(l) + "</p>" : "";
+    $("rowEv").hidden = !(lived && t.evidence); $("rowEv").textContent = t.evidence || "";
+    $("rowHist").innerHTML = historyHtml(t);
+    var f = function (d) { if (!d) return ""; var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+    $("rowTl").innerHTML = C.timeline(t).slice(0, 30).map(function (e) {
+      return '<div><i class="' + (TL_DOT[e.kind] || "") + '"></i>' + esc(clip(e.text, 120)) + "<span>" + esc(f(e.at)) + "</span></div>";
+    }).join("");
+    var b = [];
+    if (!lived) b.push('<button type="button" class="btn3d raised" data-r="show">Show</button>', '<button type="button" class="btn3d raised" data-r="caught">Caught it</button>');
+    b.push('<button type="button" class="btn3d raised" data-r="edit">Edit</button>');
+    if (lived) b.push('<button type="button" class="btn3d raised" data-r="ev">' + (t.evidence ? "Evidence" : "Add evidence") + "</button>");
+    if (l) b.push('<button type="button" class="btn3d raised" data-r="keep">Keep line</button>');
+    if ((t.talks || []).some(function (x) { return x.line; })) b.push('<button type="button" class="btn3d raised" data-r="talk">Talk</button>');
+    b.push('<button type="button" class="btn3d raised danger" data-r="del">Delete</button>');
+    $("rowActs").innerHTML = b.join("");
+    show("sheetRow");
+  }
+  $("rowActs").onclick = function (e) {
+    var b = e.target.closest("[data-r]"), t = rowT; if (!b || !t) return;
+    var r = b.getAttribute("data-r");
+    if (r === "show") { hide(); if (!C.inCollection(t, deckColl())) { prefs.deck_coll = ""; savePrefs(); } refreshDay(); if (day.closed || C.dayPhase(day, setSize()) === "done") { day.more = true; saveDay(); } go("deck"); showThought(t); }
+    else if (r === "caught") openCaught(t, false);
+    else if (r === "edit") openEdit(t);
+    else if (r === "ev") openEvidence(t);
+    else if (r === "keep") openKeep(t, lastLine(t));
+    else if (r === "talk") openTalks(t);
+    else if (r === "del") {
+      var u = undoPoint(), id = t.id;
+      if (current === id) current = null;
+      if (lastMove && lastMove.id === id) lastMove = null;
+      remove(id); hide(); renderLedger(); undoable("Deleted.", u);
+    }
+  };
+
   // ---------- evidence sheet ----------
   // Add or edit the evidence line on a lived principle. An empty save clears it.
   var evTarget = null;
@@ -1660,7 +1989,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
       : "Your counts, dates and weight stay. Changing the wording rewrites the AI line; changing details keeps it.";
     $("editKept").innerHTML = (lived
       ? ["Lived " + fmtDate(t.shed_at), t.evidence ? "Where it showed up" : "", lastLine(t) ? "Last AI line" : "", t.lifetime_skips + " not today"]
-      : ["Not today " + t.skip_count, "Worked on " + t.reflect_count, "Since " + fmtDate(t.created_at), "Weight " + weight(t).toFixed(1)]
+      : ["Not today " + t.skip_count, "Tested " + t.reflect_count, "Since " + fmtDate(t.created_at), "Weight " + weight(t).toFixed(1)]
     ).filter(Boolean).map(function (x) { return '<span class="pressed">' + esc(x) + "</span>"; }).join("");
     $("editInput").value = t.text;
     $("editCollection").value = t.collection || "";
@@ -1783,111 +2112,67 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   $("renameCancel").onclick = openCollections;
 
   // ---------- render: ledger ----------
-  // Ledger (1.30.0). A ring gauge of how many principles you live, three capsules (Living it as a share of
-  // every principle, then resting and pushing back in the deck), the three most set aside as tiles that open
-  // on the deck, a 12 week grid of dots, and the In deck / Living it list. Delete is undone from the toast.
-  var listMode = "deck", GAUGE_LEN = 276.5;
+  // Ledger (1.32.0): a record, not a scorecard. One sentence on where you stand, Your week, the 12 week grid,
+  // and the In deck / Living it list. Each row opens the principle in full (openRow), where its actions are.
+  var listMode = "deck";
   function weekdayOf(day, opts) { var p = day.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", opts || { weekday: "short" }); }
-  // Notes under a principle's words: kept from an AI line, and the wording it had before.
+  // Notes kept for the Living it record and the row's small line.
   function historyHtml(t) {
     var h = "";
     if (t.kept_from && t.kept_at) h += '<div class="was kfrom">Kept from an AI line on ' + esc(fmtDate(t.kept_at)) + "</div>";
     if (t.worded_from_ai) h += '<div class="was kfrom">Wording kept from an AI line on ' + esc(fmtDate(t.worded_from_ai)) + "</div>";
     var e = t.earlier && t.earlier.length ? t.earlier[t.earlier.length - 1] : null;
     if (e) h += '<div class="was">Earlier wording: ' + esc(clip(e.text, 160)) + "</div>";
-    var tk = (t.talks || []).filter(function (x) { return x.line; });
-    if (tk.length) { var lt = tk[tk.length - 1]; h += '<div class="was">' + (tk.length === 1 ? "Weighed in by " : tk.length + " weigh-ins, last by ") + esc(voiceById(lt.voice, lt).short) + " on " + esc(fmtDate(lt.at)) + "</div>"; }
     return h;
   }
-  function talksBtn(t) { return (t.talks || []).some(function (x) { return x.line; }) ? '<button type="button" data-talk="' + t.id + '">Talk</button>' : ""; }
+  // The small line under a row: what is true of the principle now.
+  function rowState(t, td) {
+    var p = [];
+    if (t.status === "shed") {
+      var span = Math.max(1, Math.round((new Date(t.shed_at) - new Date(t.created_at)) / 86400000));
+      p.push("Lived " + fmtDate(t.shed_at) + ", after " + span + (span === 1 ? " day" : " days"));
+    } else {
+      if (C.isResting(t, td)) p.push("Resting until " + weekdayOf(t.rest_until));
+      else if (t.skip_count > 0) p.push("Set aside " + times(t.skip_count));
+      var c = C.catchCount(t, td);
+      if (c) p.push("caught " + times(c));
+      if (!p.length) p.push(t.reflect_count ? "Tested " + times(t.reflect_count) : "New");
+    }
+    var tk = (t.talks || []).filter(function (x) { return x.line; });
+    if (tk.length) p.push("talked with " + voiceById(tk[tk.length - 1].voice, tk[tk.length - 1]).short);
+    var s = p.join(", ");
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
   function renderLedger() {
     var items = all(), td = today();
     var act_ = items.filter(function (t) { return t.status === "active"; }).sort(function (a, b) { return weight(b) - weight(a) || b.lifetime_skips - a.lifetime_skips; });
     var shed = items.filter(function (t) { return t.status === "shed"; }).sort(function (a, b) { return (b.shed_at || "").localeCompare(a.shed_at || ""); });
     var resting = act_.filter(function (t) { return C.isResting(t, td); }).length;
-    var pushing = act_.filter(function (t) { return t.skip_count > 0; });
-    // Gauge: principles lived, out of every principle.
-    var frac = items.length ? shed.length / items.length : 0;
-    $("gaugeArc").setAttribute("stroke-dashoffset", (GAUGE_LEN * (1 - frac)).toFixed(1));
-    $("gaugeArc").style.visibility = shed.length ? "" : "hidden";
-    $("lShed").textContent = shed.length;
-    $("gauge").setAttribute("aria-label", shed.length + " living it, of " + items.length + (items.length === 1 ? " principle" : " principles"));
-    // Capsules.
-    var mx = C.outcomeMix(items);
-    var cap = function (id, pct) { var el = $(id); el.style.setProperty("--p", pct + "%"); el.classList.toggle("on", pct > 0); };
-    cap("capLive", mx.pct.live); $("pLive").textContent = mx.pct.live + "%";
-    cap("capRest", act_.length ? Math.round(resting * 100 / act_.length) : 0); $("pRest").textContent = resting;
-    cap("capPush", act_.length ? Math.round(pushing.length * 100 / act_.length) : 0); $("pPush").textContent = pushing.length;
-    $("caps").setAttribute("aria-label", "Living it " + mx.pct.live + "% of every principle. In the deck, " + resting + " resting and " + pushing.length + " pushing back.");
-    // Pushing back: the three set aside most. Tapping one opens it on the deck.
-    var top = pushing.slice().sort(function (a, b) { return b.skip_count - a.skip_count || b.lifetime_skips - a.lifetime_skips; }).slice(0, 3);
-    $("pbWrap").hidden = !top.length;
-    $("pb").innerHTML = top.map(function (t) {
-      return '<button type="button" class="pbc raised" data-show="' + t.id + '" aria-label="Set aside ' + times(t.skip_count) + ": " + esc(clip(t.text, 80)) + '. Show on the deck."><b>' + t.skip_count + "</b><span>" + esc(t.text) + "</span></button>";
-    }).join("");
-
+    var wk = C.weekStats(items, activity, td);
+    $("lSummary").innerHTML = "<b>" + shed.length + " living it</b>, " + act_.length + " in the deck" + (resting ? ", " + resting + " of them resting" : "") + "." +
+      (wk.caught ? ' <b class="br">' + wk.caught + " caught</b> this week." : "");
+    paintStat();
     $("segDeck").setAttribute("aria-pressed", String(listMode === "deck"));
     $("segShed").setAttribute("aria-pressed", String(listMode === "shed"));
     $("segDeck").classList.toggle("raised", listMode === "deck");
     $("segShed").classList.toggle("raised", listMode === "shed");
-    var L = $("ledgerList");
-    if (listMode === "deck") {
-      L.innerHTML = act_.length ? act_.map(function (t) {
-        var pct = Math.max(3, (weight(t) - 1) / (CAP - 1) * 100);
-        var state = C.isResting(t, td) ? "resting until " + weekdayOf(t.rest_until)
-          : t.skip_count > 0 ? "set aside " + times(t.skip_count)
-          : (t.reflect_count || t.lifetime_skips) ? "worked on " + times(t.reflect_count || 0) : "new";
-        return '<div class="lrow raised"><div class="lt">' + esc(t.text) + "</div>" + historyHtml(t) +
-          '<div class="lm"><span>' + esc(String(t.collection || "").trim() || "No collection") + "</span><span>" + esc(state) + "</span></div>" +
-          '<div class="tube h pressed" aria-hidden="true"><i style="--p:' + pct.toFixed(0) + '%"></i></div><span class="sr">Weight ' + weight(t).toFixed(1) + " of 4.</span>" +
-          '<div class="acts-row">' + talksBtn(t) + '<button type="button" data-show="' + t.id + '">Show</button><button type="button" data-edit="' + t.id + '">Edit</button><button type="button" data-del="' + t.id + '">Delete</button></div></div>';
-      }).join("") : '<p class="none">Nothing in the deck.</p>';
-    } else {
-      // The Living it record: each principle you now live, its last AI line, and where it showed up.
-      // Evidence can be added or edited later, since the proof often comes after the decision.
-      L.innerHTML = shed.length ? shed.map(function (t) {
-        var span = Math.max(1, Math.round((new Date(t.shed_at) - new Date(t.created_at)) / 86400000));
-        var l = lastLine(t);
-        return '<div class="lrow raised"><div class="lt">' + esc(t.text) + "</div>" +
-          (l ? '<div class="glass"><p>' + esc(l) + "</p></div>" : "") +
-          (t.evidence ? '<div class="ev">' + esc(t.evidence) + "</div>" : "") + historyHtml(t) +
-          '<div class="lm"><span>Lived ' + esc(fmtDate(t.shed_at)) + ", after " + span + (span === 1 ? " day" : " days") + "</span><span>" + (t.lifetime_skips ? "set aside " + times(t.lifetime_skips) : "") + "</span></div>" +
-          '<div class="acts-row">' + talksBtn(t) + (l ? '<button type="button" data-keep="' + t.id + '">Keep line</button>' : "") +
-          '<button type="button" data-edit="' + t.id + '">Edit</button><button type="button" data-ev="' + t.id + '">' + (t.evidence ? "Evidence" : "Add evidence") + '</button><button type="button" data-del="' + t.id + '">Delete</button></div></div>';
-      }).join("") : '<p class="none">Nothing here yet. A principle moves here once you live it without prompting.</p>';
-    }
+    var list = listMode === "deck" ? act_ : shed;
+    $("ledgerList").innerHTML = list.length ? list.map(function (t) {
+      return '<button type="button" class="lrow2" data-row="' + t.id + '"><span><span class="lt">' + esc(t.text) + "</span><small>" + esc(rowState(t, td)) + "</small></span>" + ICON_NEXT + "</button>";
+    }).join("") : '<p class="none" style="padding-top:14px">' + (listMode === "deck" ? "Nothing in the deck." : "Nothing here yet. A principle moves here once you live it without prompting.") + "</p>";
 
     var cells = [], now = new Date();
     for (var i = 83; i >= 0; i--) {
       var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
       var a = activity[dayKey(d)], n = a ? (a.i || 0) : 0;
-      var cls = a && a.s ? "lv" : n >= 3 ? "on2" : n ? "on" : "";
+      var cls = a && (a.s || a.c) ? "lv" : n >= 3 ? "on2" : n ? "on" : "";
       if (i === 0) cls += " today";
       cells.push('<i class="' + cls + '" title="' + d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + '"></i>');
     }
     $("cal").innerHTML = cells.join("");
   }
-  // Row and tile actions, bound once on the Ledger.
-  $("v-ledger").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-show], [data-edit], [data-ev], [data-del], [data-keep], [data-talk]"); if (!b) return;
-    var id = b.getAttribute("data-show") || b.getAttribute("data-edit") || b.getAttribute("data-ev") || b.getAttribute("data-del") || b.getAttribute("data-keep") || b.getAttribute("data-talk");
-    var t = thoughts[id]; if (!t) return;
-    if (b.hasAttribute("data-show")) {
-      // A principle outside the chosen collection clears the collection key, so the row matches the deck.
-      if (!C.inCollection(t, deckColl())) { prefs.deck_coll = ""; savePrefs(); }
-      go("deck"); showThought(t);
-    } else if (b.hasAttribute("data-edit")) openEdit(t);
-    else if (b.hasAttribute("data-ev")) openEvidence(t);
-    else if (b.hasAttribute("data-keep")) openKeep(t, lastLine(t));
-    else if (b.hasAttribute("data-talk")) openTalks(t);
-    else {
-      // Delete is one tap; the toast offers Undo for 5 seconds instead of asking first.
-      var u = undoPoint();
-      if (current === id) current = null;
-      if (lastMove && lastMove.id === id) lastMove = null;
-      remove(id); renderLedger(); undoable("Deleted.", u);
-    }
-  });
+  $("ledgerList").addEventListener("click", function (e) { var b = e.target.closest("[data-row]"); if (b) openRow(thoughts[b.getAttribute("data-row")]); });
+  $("openWeek").onclick = openWeek;
   $("segDeck").onclick = function () { listMode = "deck"; renderLedger(); };
   $("segShed").onclick = function () { listMode = "shed"; renderLedger(); };
 
@@ -2057,8 +2342,9 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     $("aiToggle").setAttribute("aria-checked", String(!prefs.ai_off));
     $("restOut").textContent = n + (n === 1 ? " day" : " days");
     $("restDown").disabled = n <= C.REST_MIN; $("restUp").disabled = n >= C.REST_MAX;
+    var z = setSize(); $("setOut").textContent = z; $("setDown").disabled = z <= C.SET_MIN; $("setUp").disabled = z >= C.SET_MAX;
     $("howRest").textContent = "Not today sets a principle aside for " + n + (n === 1 ? " day" : " days") + " and raises its weight, up to four times as likely as a new one. When it returns, at " +
-      C.DAY_START_HOUR + ":00 AM, it comes up first, once, most avoided first; then it rejoins the deck. A new rest length applies from the next Not today. Still working on it, after at least 8 seconds on the page, lowers that weight by one step. Living it moves the principle to your record.";
+      C.DAY_START_HOUR + ":00 AM, it comes up first, once, most avoided first; then it rejoins the deck. A new rest length applies from the next Not today. Testing it, after at least 8 seconds on the page, lowers that weight by one step. Living it moves the principle to your record.";
   }
   Array.prototype.forEach.call(document.querySelectorAll(".seg [data-look]"), function (b) {
     b.onclick = function () { prefs.look = b.getAttribute("data-look"); savePrefs(); applyLook(); };
@@ -2067,6 +2353,17 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   function setRest(n) { prefs.rest_days = C.restDays(n); savePrefs(); paintSettings(); }
   $("restDown").onclick = function () { setRest(restDays() - 1); };
   $("restUp").onclick = function () { setRest(restDays() + 1); };
+  // Today's set size: a change applies at once; a set already finished stays finished.
+  function setSet(n) { prefs.set_size = C.setSize(n); savePrefs(); paintSettings(); }
+  $("setDown").onclick = function () { setSet(setSize() - 1); };
+  $("setUp").onclick = function () { setSet(setSize() + 1); };
+  // Daily reminder: the app's own address for an iPhone Shortcuts automation.
+  $("copyLink").onclick = function () {
+    var url = location.origin + location.pathname;
+    var done = function () { toast("Link copied: " + url); };
+    try { navigator.clipboard.writeText(url).then(done, function () { toast(url); }); } catch (e) { toast(url); }
+  };
+  $("openShortcuts").onclick = function () { location.href = "shortcuts://"; };
   $("aiToggle").onclick = function () { prefs.ai_off = !prefs.ai_off; savePrefs(); applyKey(); paintSettings(); };
 
   // ---------- menu (1.30.0) ----------
@@ -2079,6 +2376,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     if (openSheet || menu.open) return;
     var deck = $("v-ledger").hidden;
     $("mEdit").hidden = !onCard();
+    $("mCaught").hidden = !onCard();
     $("mLedger").innerHTML = deck ? "Ledger<span>Your record</span>" : "Deck<span>Today</span>";
     $("mColl").textContent = C.collections(all()).length;
     if (menu.showModal) menu.showModal(); else menu.setAttribute("open", "");
@@ -2098,6 +2396,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     try { menuBtn.focus({ preventScroll: true }); } catch (_) {}
     if (m === "capture") openCapture();
     else if (m === "edit" && t) openEdit(t);
+    else if (m === "caught" && t) openCaught(t, false);
     else if (m === "ledger") go($("v-ledger").hidden ? "ledger" : "deck");
     else if (m === "collections") openCollections("menu");
     else if (m === "settings") openSettings();
@@ -2105,7 +2404,7 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
   menuBtn.addEventListener("click", function () { if (menu.open) closeMenu(); else openMenu(); });
 
   // Keyboard. On the deck, with no sheet or menu open and no field in use: the arrow keys are the three moves
-  // (left Not today, up Still working on it, right Living it), E edits. Anywhere: N captures, L switches
+  // (left Not today, up Testing it, right Living it), E edits. Anywhere: N captures, L switches
   // between the deck and the Ledger, M opens the menu, comma opens Settings, and Escape on the Ledger goes back.
   document.addEventListener("keydown", function (e) {
     if (openSheet || menu.open || isTyping(document.activeElement) || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -2334,6 +2633,13 @@ textarea.big { font-size:21px; line-height:1.25; letter-spacing:-.015em; font-we
     }).catch(function () { toast("Could not read that CSV"); });
     e.target.value = "";
   };
+
+  // ---------- your week, on Sunday ----------
+  // The review opens itself once on Sunday, when there was something to review.
+  (function () {
+    var td = today(), w = C.weekStats(all(), activity, td);
+    if (C.isReviewDay(td) && prefs.week_seen !== td && (w.weighed || w.caught)) { prefs.week_seen = td; savePrefs(); setTimeout(openWeek, 400); }
+  })();
 
   // ---------- offline ----------
   // Register the service worker (sw.js) so the app opens offline.

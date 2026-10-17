@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.31.0";
+  var VERSION = "1.32.0";
   var BUILT = "2026-10-17";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -354,7 +354,7 @@ var ScalesCore = (function () {
   }
 
   // Ledger bars (1.27.0): every principle counted once. Living it = lived; Not today = still in the
-  // deck and currently set aside more than worked through (skip_count above 0); Still working = the
+  // deck and currently set aside more than worked through (skip_count above 0); Testing it = the
   // rest of the deck. Percentages are whole numbers that add up to 100 (largest remainder), or all 0
   // for an empty deck.
   function outcomeMix(list) {
@@ -423,7 +423,7 @@ var ScalesCore = (function () {
     { id: "goggins", name: "David Goggins", short: "Goggins", living: true, lens: "callousing the mind, accountability, refusing excuses, and doing the hard thing when you do not want to" }
   ];
   var TALK_MAX = 6, REPLY_WORDS = 70;
-  var MOVES = { skip: "Not today", keep: "Still working on it", shed: "Living it" };
+  var MOVES = { skip: "Not today", keep: "Testing it", shed: "Living it" };
 
   // Every voice on offer: the built-in ones, then names the user added ({ name, first }).
   function allVoices(custom) {
@@ -455,7 +455,7 @@ var ScalesCore = (function () {
   // One line weighing the move just made on principle t.
   function weighPrompt(v, t, move, daysIn) {
     return "You give the user a perspective from " + v.name + " on a move they just made in Scales, an app for living by chosen principles.\n" +
-      "In Scales, Not today sets a principle aside, Still working on it keeps it in practice, and Living it says they now act on it without prompting.\n" +
+      "In Scales, Not today sets a principle aside, Testing it keeps it in practice in daily life, and Living it says they now act on it without prompting.\n" +
       (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "Draw on what " + v.name + " is known to think and value.\n") +
       voiceRule(v) + "\n" +
       "Weigh the move itself: was it honest, evasive, earned, premature? Hold the standard; no flattery, no permission to wait.\n" +
@@ -493,6 +493,122 @@ var ScalesCore = (function () {
   // Save a weigh-in on principle t, newest last, keeping the last five.
   function addTalk(t, talk) { t.talks = (t.talks || []).concat([talk]).slice(-5); return talk; }
 
+  // ---------- a day that ends (1.32.0) ----------
+  // Today's set: a number of principles you choose (SET_MIN to SET_MAX, SET_DEFAULT to start). Once that
+  // many moves are made, the deck closes with Done for today and asks which one you will act on: today's
+  // focus. The day's state lives in one small object, reset when a new Scales day starts.
+  var SET_MIN = 1, SET_MAX = 20, SET_DEFAULT = 5, CHECKIN_HOUR = 18, CATCH_WINDOW = 30, CATCH_SUGGEST = 3, ACT_EVERY = 3;
+  function setSize(n) { n = parseInt(n, 10); return isNaN(n) ? SET_DEFAULT : Math.min(SET_MAX, Math.max(SET_MIN, n)); }
+  function freshDay(day) { return { day: day, moved: [], focus: null, closed: false, more: false, checkin: null }; }
+  // The saved state if it is today's, otherwise a fresh day.
+  function dayState(saved, day) { return saved && saved.day === day ? saved : freshDay(day); }
+  // Record a move in today's set. moved keeps the order; a principle moved twice counts twice.
+  function noteDayMove(state, id, move) { state.moved.push({ id: id, move: move }); return state; }
+  // Where the day stands: "set" (still weighing), "done" (set finished, focus not chosen),
+  // "focus" (focus chosen, deck closed), or "more" (kept going after Done for today).
+  function dayPhase(state, size) {
+    if (state.more) return "more";
+    if (state.closed) return "focus";
+    return state.moved.length >= setSize(size) ? "done" : "set";
+  }
+  // The principles to choose today's focus from: the ones moved today, newest first, once each,
+  // leaving out any that no longer exist.
+  function focusChoices(state, byId) {
+    var seen = {}, out = [];
+    for (var i = state.moved.length - 1; i >= 0; i--) {
+      var m = state.moved[i], t = byId[m.id];
+      if (t && !seen[m.id]) { seen[m.id] = 1; out.push({ t: t, move: m.move }); }
+    }
+    return out;
+  }
+  // One line on how the set went: "Two testing it, two set aside, one living it."
+  var NUM = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+  function daySummary(state) {
+    var n = { skip: 0, keep: 0, shed: 0 };
+    state.moved.forEach(function (m) { if (n[m.move] != null) n[m.move]++; });
+    var w = function (k) { return k <= 10 ? NUM[k] : String(k); };
+    var parts = [];
+    if (n.keep) parts.push(w(n.keep) + " testing it");
+    if (n.skip) parts.push(w(n.skip) + " set aside");
+    if (n.shed) parts.push(w(n.shed) + " living it");
+    if (!parts.length) return "";
+    var s = parts.length > 1 ? parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1] : parts[0];
+    return s.charAt(0).toUpperCase() + s.slice(1) + ".";
+  }
+  // The evening check-in on today's focus: due from CHECKIN_HOUR until the Scales day ends, once.
+  function checkinDue(state, now) {
+    if (!state || !state.focus || state.checkin) return false;
+    if (dayOf(now) !== state.day) return false;
+    var h = now.getHours();
+    return h >= CHECKIN_HOUR || h < DAY_START_HOUR;
+  }
+  // Testing it asks for the smallest act every ACT_EVERY times (counted across the deck).
+  function askAct(count) { return count > 0 && count % ACT_EVERY === 0; }
+  // The smallest act written for t today, or "".
+  function actToday(t, day) { var a = (t.acts || []).filter(function (x) { return x.day === day; }); return a.length ? a[a.length - 1].text : ""; }
+  function addAct(t, day, text) { t.acts = (t.acts || []).concat([{ day: day, text: String(text || "").trim().slice(0, 200) }]).slice(-10); return t; }
+
+  // ---------- caught it ----------
+  // Real-life evidence for a principle still in the deck: a one-line note of when you lived it
+  // without the app. CATCH_SUGGEST catches within CATCH_WINDOW days suggest it may be Living it.
+  function addCatch(t, day, text) { t.caught = (t.caught || []).concat([{ day: day, text: String(text || "").trim().slice(0, 280) }]).slice(-30); return t; }
+  function catchCount(t, today, windowDays) {
+    var from = addDays(today, -((windowDays || CATCH_WINDOW) - 1));
+    return (t.caught || []).filter(function (c) { return c.day >= from && c.day <= today; }).length;
+  }
+  function suggestLiving(t, today) { return t.status === "active" && catchCount(t, today) >= CATCH_SUGGEST; }
+  // Days a principle was set aside, kept for the weekly review (last 20).
+  function noteSkipDay(t, day) { t.skips_on = (t.skips_on || []).concat([day]).slice(-20); return t; }
+
+  // ---------- your week ----------
+  // The seven Scales days ending today, oldest first.
+  function weekDays(today) { var out = []; for (var i = 6; i >= 0; i--) out.push(addDays(today, -i)); return out; }
+  function weekday(day) { var p = day.split("-"); return new Date(+p[0], +p[1] - 1, +p[2], 12).getDay(); }
+  // The review opens itself on Sundays, once a week.
+  function isReviewDay(day) { return weekday(day) === 0; }
+  // Counts for the week from the activity log ({ i, s, c } per day) and the principles.
+  function weekStats(list, activity, today) {
+    var days = weekDays(today), from = days[0];
+    var per = days.map(function (d) {
+      var a = activity[d] || {}, w = (a.i || 0) + (a.s || 0), c = a.c || 0;
+      return { day: d, weighed: w, caught: c, kind: (a.s || c) ? "lv" : w ? "on" : "" };
+    });
+    var living = list.filter(function (t) { return t.status === "shed" && t.shed_at && dayOf(new Date(t.shed_at)) >= from && dayOf(new Date(t.shed_at)) <= today; }).length;
+    var pushed = null, most = 0;
+    list.forEach(function (t) {
+      if (t.status !== "active") return;
+      var n = (t.skips_on || []).filter(function (d) { return d >= from && d <= today; }).length;
+      if (n > most || (n === most && n && pushed && (t.skip_count || 0) > (pushed.skip_count || 0))) { most = n; pushed = t; }
+    });
+    return { from: from, to: today, days: per, living: living, pushed: pushed, pushedTimes: most,
+      weighed: per.reduce(function (a, d) { return a + d.weighed; }, 0), caught: per.reduce(function (a, d) { return a + d.caught; }, 0) };
+  }
+  function weekPrompt(v, w) {
+    return "You give the user a perspective from " + v.name + " on their week in Scales, an app for living by chosen principles.\n" +
+      (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "") +
+      (v.living ? "Write in the third person about how " + v.name + " would see this week. Never write as " + v.short + " speaking, and never invent a quotation." :
+        "Speak in the first person as " + v.name + " would. Do not quote; say it fresh, in plain modern English.") + "\n" +
+      "Hold the standard; no flattery, no permission to wait. Point at the one thing that matters most for the coming week.\n" +
+      "Rules:\n- " + MAX_WORDS + " words or fewer.\n- One or two sentences. No exclamation marks, quotation marks, emoji, em-dashes or lists.\nReturn only the line.\n\n" +
+      "Principles weighed: " + w.weighed + "\nTimes caught living a principle without the app: " + w.caught + "\nNewly living: " + w.living +
+      (w.pushed ? "\nPushed back most, set aside " + w.pushedTimes + " times: " + w.pushed.text : "");
+  }
+
+  // ---------- a principle's history, for the Ledger ----------
+  // Everything that happened to t, newest first: { at (YYYY-MM-DD), kind, text }.
+  function timeline(t) {
+    var ev = [], d = function (iso) { return iso ? dayOf(new Date(iso)) : ""; };
+    if (t.created_at) ev.push({ at: d(t.created_at), kind: "start", text: t.kept_from ? "Kept from an AI line" : "Captured" });
+    (t.skips_on || []).forEach(function (x) { ev.push({ at: x, kind: "skip", text: "Set aside" }); });
+    (t.acts || []).forEach(function (x) { ev.push({ at: x.day, kind: "act", text: "Smallest act: " + x.text }); });
+    (t.caught || []).forEach(function (x) { ev.push({ at: x.day, kind: "caught", text: "Caught it" + (x.text ? ": " + x.text : "") }); });
+    (t.talks || []).forEach(function (x) { if (x.line) ev.push({ at: x.day || d(x.at), kind: "talk", text: "Weighed in by " + (x.voice_name || "a thinker") + " on " + (MOVES[x.move] || x.move) }); });
+    (t.earlier || []).forEach(function (x) { ev.push({ at: d(x.until), kind: "edit", text: "Wording changed" }); });
+    if (t.status === "shed" && t.shed_at) ev.push({ at: d(t.shed_at), kind: "lived", text: "Living it" + (t.evidence ? ": " + t.evidence : "") });
+    var order = { start: 0, edit: 1, skip: 2, act: 3, talk: 4, caught: 5, lived: 6 };
+    return ev.sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : order[b.kind] - order[a.kind]; });
+  }
+
   return { VERSION: VERSION, BUILT: BUILT, CAP: CAP, MAX_WORDS: MAX_WORDS, MAX_TEXT: MAX_TEXT,
     tier: tier, weight: weight, words: words, pickFrom: pickFrom, clean: clean, fit: fit, vet: vet,
     LIMITS: LIMITS, ORIGINS: ORIGINS, normText: normText, collections: collections, canonCollection: canonCollection,
@@ -507,7 +623,12 @@ var ScalesCore = (function () {
     shortDate: shortDate, keepAsNew: keepAsNew, keepReplace: keepReplace,
     VOICES: VOICES, TALK_MAX: TALK_MAX, REPLY_WORDS: REPLY_WORDS, MOVES: MOVES, allVoices: allVoices, chosenVoices: chosenVoices,
     voiceOfDay: voiceOfDay, voiceLabel: voiceLabel, weighPrompt: weighPrompt, talkRequest: talkRequest, vetReply: vetReply,
-    talkLeft: talkLeft, addTalk: addTalk };
+    talkLeft: talkLeft, addTalk: addTalk,
+    SET_MIN: SET_MIN, SET_MAX: SET_MAX, SET_DEFAULT: SET_DEFAULT, CHECKIN_HOUR: CHECKIN_HOUR, CATCH_WINDOW: CATCH_WINDOW, CATCH_SUGGEST: CATCH_SUGGEST, ACT_EVERY: ACT_EVERY,
+    setSize: setSize, freshDay: freshDay, dayState: dayState, noteDayMove: noteDayMove, dayPhase: dayPhase, focusChoices: focusChoices,
+    daySummary: daySummary, checkinDue: checkinDue, askAct: askAct, actToday: actToday, addAct: addAct,
+    addCatch: addCatch, catchCount: catchCount, suggestLiving: suggestLiving, noteSkipDay: noteSkipDay,
+    weekDays: weekDays, isReviewDay: isReviewDay, weekStats: weekStats, weekPrompt: weekPrompt, timeline: timeline };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = ScalesCore;

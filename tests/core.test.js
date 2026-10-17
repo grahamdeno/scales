@@ -481,7 +481,7 @@ test("an undo point is a copy: later changes do not leak in, and applying it twi
 
 test("the page wires sheets as modal dialogs, Undo and the coach (1.26.0)", () => {
   const html = read("index.html");
-  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 9, "every sheet is a <dialog>");
+  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 13, "every sheet is a <dialog>");
   assert.doesNotMatch(html, /<section class="sheet/, "no sheet left as a hidden section");
   assert.match(html, /\.showModal\(\)/);
   for (const id of (html.match(/aria-labelledby="(sheet\w+Title)"/g) || []).map((m) => m.slice(17, -1))) {
@@ -631,7 +631,7 @@ test("the Keep sheet offers add or replace, and both can be undone", () => {
   assert.match(html, /undoable\("Added to "/);
   assert.match(html, /undoable\("Wording replaced\. Earlier wording kept\.", u\)/);
   assert.match(html, /var k = \$\("keepBtn"\); if \(k\) k\.hidden = !l\.ai;/, "Keep shows only on model lines");
-  assert.match(html, /data-keep="/, "Keep is offered on the Living it record too");
+  assert.match(html, /data-r="keep">Keep line/, "Keep is offered on the Ledger record too");
   assert.match(html, /Earlier wording: /, "the Ledger shows the wording a principle had");
   assert.match(html, /Kept from an AI line on /);
 });
@@ -698,13 +698,14 @@ test("the principle sits on the page, not on a card, with where it came from und
   assert.match(html, /sample = prefs\.ai_off \? null : makeSampler\(savedKey\)/, "AI lines off uses the built-in questions");
 });
 
-test("the Ledger: gauge, capsules, pushing back tiles, the 12 week grid and the list (1.30.0)", () => {
+test("the Ledger is a record: a summary, Your week, the grid, plain rows that open in full (1.32.0)", () => {
   const html = read("index.html");
-  for (const id of ["gauge", "gaugeArc", "caps", "capLive", "capRest", "capPush", "pb", "cal", "segDeck", "segShed", "ledgerList"]) assert.match(html, new RegExp('id="' + id + '"'), id);
-  assert.match(html, /C\.outcomeMix\(items\)/);
-  assert.match(html, /class="pbc raised" data-show="/, "a pushing back tile opens the principle on the deck");
-  assert.match(html, /var cls = a && a\.s \? "lv" : n >= 3 \? "on2" : n \? "on" : "";/);
-  assert.match(html, /\$\("v-ledger"\)\.addEventListener\("click"/);
+  for (const id of ["lSummary", "openWeek", "cal", "segDeck", "segShed", "ledgerList", "sheetRow", "rowTl", "rowActs", "rowHist"]) assert.match(html, new RegExp('id="' + id + '"'), id);
+  assert.doesNotMatch(html, /id="gauge"|id="caps"|class="pbc/, "the gauge, capsules and tiles are gone");
+  assert.match(html, /class="lrow2" data-row="/);
+  assert.match(html, /C\.timeline\(t\)/);
+  for (const r of ["show", "caught", "edit", "ev", "keep", "talk", "del"]) assert.match(html, new RegExp('data-r="' + r + '"'), r + " action");
+  assert.match(html, /var cls = a && \(a\.s \|\| a\.c\) \? "lv" : n >= 3 \? "on2" : n \? "on" : "";/);
 });
 
 test("the top: the day and date on the deck, the way back on the Ledger", () => {
@@ -806,8 +807,107 @@ test("the page offers Weigh in only after a move, with a key, and keeps talks in
   assert.match(html, /if \(!wTalk\(\)\.line\) askLine\(\);/, "the line is asked for only when Weigh in is tapped");
   assert.match(html, /C\.voiceLabel\(v\)/, "every line carries its label");
   assert.match(html, /openKeep\(t, k\.line\)/, "Keep works on these lines");
-  assert.match(html, /data-talk="/);
+  assert.match(html, /data-r="talk">Talk/);
   assert.match(html, /undoable\("Talk deleted\.", u\)/);
   assert.match(html, /id="voiceList"/);
   assert.match(html, /JSON\.stringify\(Object\.assign\(\{ model: MODEL, max_tokens: 1024 \}, req\)\)/, "one request path for lines and talks");
+});
+
+// ---------- 1.32.0: a day that ends, the evening check-in, Caught it, your week ----------
+test("the middle move is Testing it everywhere on screen", () => {
+  const html = read("index.html");
+  assert.doesNotMatch(html, /Still working on it|Working on it/);
+  assert.match(html, /<span>Testing it<\/span>/);
+  assert.equal(C.MOVES.keep, "Testing it");
+});
+
+test("today's set: a size you choose, then done, then focus or more (1.32.0)", () => {
+  assert.deepEqual([C.SET_MIN, C.SET_MAX, C.SET_DEFAULT], [1, 20, 5]);
+  assert.equal(C.setSize(undefined), 5); assert.equal(C.setSize(0), 1); assert.equal(C.setSize(99), 20); assert.equal(C.setSize("3"), 3);
+  const s = C.freshDay("2026-10-17");
+  assert.equal(C.dayPhase(s, 2), "set");
+  C.noteDayMove(s, "a", "keep"); C.noteDayMove(s, "b", "skip");
+  assert.equal(C.dayPhase(s, 2), "done");
+  assert.equal(C.dayPhase(s, 3), "set", "a bigger set reopens the day");
+  s.closed = true; assert.equal(C.dayPhase(s, 2), "focus");
+  s.more = true; assert.equal(C.dayPhase(s, 2), "more");
+  assert.equal(C.dayState(s, "2026-10-17"), s);
+  assert.deepEqual(C.dayState(s, "2026-10-18"), C.freshDay("2026-10-18"), "a new Scales day starts fresh");
+});
+
+test("focus choices are today's principles, newest first, once each; the summary reads as a sentence", () => {
+  const s = C.freshDay("2026-10-17");
+  [["a", "keep"], ["b", "skip"], ["a", "keep"], ["gone", "skip"], ["c", "shed"]].forEach(([id, m]) => C.noteDayMove(s, id, m));
+  assert.deepEqual(C.focusChoices(s, { a: { id: "a" }, b: { id: "b" }, c: { id: "c" } }).map((x) => x.t.id), ["c", "a", "b"]);
+  assert.equal(C.daySummary(s), "Two testing it, two set aside and one living it.");
+  assert.equal(C.daySummary(C.freshDay("x")), "");
+  assert.doesNotMatch(C.daySummary(s), /—/);
+});
+
+test("the evening check-in is due from 6 PM until the Scales day ends, once, with a focus", () => {
+  const s = Object.assign(C.freshDay("2026-10-17"), { focus: "a", closed: true });
+  assert.equal(C.checkinDue(s, new Date(2026, 9, 17, 17, 59)), false);
+  assert.equal(C.checkinDue(s, new Date(2026, 9, 17, 18, 0)), true);
+  assert.equal(C.checkinDue(s, new Date(2026, 9, 18, 2, 0)), true, "after midnight still belongs to the day");
+  assert.equal(C.checkinDue(s, new Date(2026, 9, 18, 4, 0)), false, "a new day");
+  assert.equal(C.checkinDue(Object.assign({}, s, { checkin: "yes" }), new Date(2026, 9, 17, 20)), false);
+  assert.equal(C.checkinDue(C.freshDay("2026-10-17"), new Date(2026, 9, 17, 20)), false, "no focus, no check-in");
+});
+
+test("Testing it asks for the smallest act every third time; acts are kept by day", () => {
+  assert.deepEqual([1, 2, 3, 4, 5, 6].map(C.askAct), [false, false, true, false, false, true]);
+  assert.equal(C.askAct(0), false);
+  const t = {};
+  C.addAct(t, "2026-10-16", "old"); C.addAct(t, "2026-10-17", "  Phone in the kitchen  ");
+  assert.equal(C.actToday(t, "2026-10-17"), "Phone in the kitchen");
+  assert.equal(C.actToday(t, "2026-10-18"), "");
+});
+
+test("Caught it: three catches in 30 days suggest Living it, for deck principles only", () => {
+  const t = { status: "active" };
+  C.addCatch(t, "2026-09-10", "too old");
+  C.addCatch(t, "2026-10-01", "one"); C.addCatch(t, "2026-10-10", "two");
+  assert.equal(C.catchCount(t, "2026-10-17"), 2);
+  assert.equal(C.suggestLiving(t, "2026-10-17"), false);
+  C.addCatch(t, "2026-10-17", "three");
+  assert.equal(C.suggestLiving(t, "2026-10-17"), true);
+  assert.equal(C.suggestLiving(Object.assign({}, t, { status: "shed" }), "2026-10-17"), false);
+});
+
+test("your week: seven days, counts from the activity log, and what pushed back most", () => {
+  assert.deepEqual(C.weekDays("2026-10-18"), ["2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16", "2026-10-17", "2026-10-18"]);
+  assert.equal(C.isReviewDay("2026-10-18"), true); assert.equal(C.isReviewDay("2026-10-17"), false);
+  const activity = { "2026-10-11": { i: 9 }, "2026-10-12": { i: 3, s: 0, c: 1 }, "2026-10-15": { i: 2, s: 1 }, "2026-10-18": { i: 1 } };
+  const list = [
+    { id: "a", status: "active", text: "A", skip_count: 2, skips_on: ["2026-10-13", "2026-10-16"] },
+    { id: "b", status: "active", text: "B", skip_count: 5, skips_on: ["2026-10-01"] },
+    { id: "c", status: "shed", text: "C", shed_at: new Date(2026, 9, 15, 12).toISOString() }];
+  const w = C.weekStats(list, activity, "2026-10-18");
+  assert.deepEqual([w.weighed, w.caught, w.living], [7, 1, 1]);
+  assert.equal(w.pushed.id, "a"); assert.equal(w.pushedTimes, 2);
+  assert.deepEqual(w.days.map((d) => d.kind), ["lv", "", "", "lv", "", "", "on"]);
+  const p = C.weekPrompt(C.VOICES[1], w);
+  assert.match(p, /first person as Friedrich Nietzsche/); assert.match(p, /Pushed back most, set aside 2 times: A/);
+});
+
+test("a principle's timeline lists what happened, newest first", () => {
+  const t = { created_at: new Date(2026, 8, 20, 12).toISOString(), skips_on: ["2026-10-14"], caught: [{ day: "2026-10-17", text: "Phone stayed in the kitchen" }],
+    acts: [{ day: "2026-10-16", text: "Leave the phone" }], talks: [{ at: new Date(2026, 9, 17, 9).toISOString(), day: "2026-10-17", voice_name: "David Goggins", move: "skip", line: "x" }] };
+  const tl = C.timeline(t);
+  assert.equal(tl[tl.length - 1].text, "Captured");
+  assert.equal(tl[0].kind, "caught"); assert.equal(tl[1].kind, "talk");
+  assert.match(tl[1].text, /Weighed in by David Goggins on Not today/);
+  assert.deepEqual(tl.map((e) => e.at), ["2026-10-17", "2026-10-17", "2026-10-16", "2026-10-14", "2026-09-20"]);
+});
+
+test("the page wires the day: moves counted, undo restores the day, check-in first, week on Sunday", () => {
+  const html = read("index.html");
+  for (const m of ['noteDay(t, "skip")', 'noteDay(t, "keep")', 'noteDay(t, "shed")']) assert.ok(html.includes(m), m);
+  assert.match(html, /p\.day = JSON\.parse\(JSON\.stringify\(day\)\)/, "the undo point holds the day");
+  assert.match(html, /if \(point\.day\) \{ day = JSON\.parse/);
+  assert.match(html, /C\.checkinDue\(day, new Date\(\)\) && renderCheckin\(\)\) return;/);
+  assert.match(html, /if \(C\.askAct\(prefs\.tests\)\)/);
+  assert.match(html, /C\.isReviewDay\(td\) && prefs\.week_seen !== td/);
+  for (const id of ["sheetCaught", "sheetAct", "sheetWeek", "setOut", "copyLink", "openShortcuts", "mCaught"]) assert.match(html, new RegExp('id="' + id + '"'), id);
+  assert.match(html, /if \(kind === "shed"\) d\.s\+\+; else if \(kind === "caught"\) d\.c = \(d\.c \|\| 0\) \+ 1; else d\.i\+\+;/);
 });

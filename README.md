@@ -2,7 +2,7 @@
 
 A small phone app for turning the principles you collect into how you actually live.
 
-You write down a principle you want to live by ("the hard conversation is usually shorter than the dread before it"), or load a starter deck. Scales keeps putting it in front of you. Each time, you mark it Still working on it, Not today, or Living it. Once you act on it without being reminded, it moves to your Living it record with a line on where it showed up.
+You write down a principle you want to live by ("the hard conversation is usually shorter than the dread before it"), or load a starter deck. Scales keeps putting it in front of you. Each time, you mark it Testing it, Not today, or Living it. Once you act on it without being reminded, it moves to your Living it record with a line on where it showed up.
 
 <p>
   <img src="docs/deck.png" width="260" alt="Deck view in the Matte look">
@@ -17,7 +17,7 @@ You write down a principle you want to live by ("the hard conversation is usuall
 | Move | Gesture or key | What happens |
 |---|---|---|
 | Not today | swipe left | Its count goes up by 1. The principle rests, then comes back more often. |
-| Still working on it | swipe up | Counts as an inspection. If you stayed on the card at least 8 seconds, the not today count drops by 1. |
+| Testing it | swipe up | Counts as an inspection. If you stayed on the card at least 8 seconds, the not today count drops by 1. |
 | Living it | swipe right | Opens a short form for where it showed up, then moves the principle to your record. |
 
 The same three moves are three keys under the principle, always on screen, and the arrow keys (left, up, right). Swipe anywhere on the deck; the key for the move you are heading toward presses in as you drag. Everything else (Capture, Edit, the Ledger, Collections, Settings) is in the menu at the top right. With a keyboard, N captures, E edits, L switches between the deck and the Ledger, M opens the menu, and comma opens Settings.
@@ -30,15 +30,23 @@ The same three moves are three keys under the principle, always on screen, and t
 
 **Rest and the front of the stack.** Not today sets a principle aside for four days by default, so a reflex skip each morning can't become a habit. Settings > Deck > Rest after Not today changes it, from 1 to 7 days, starting with the next Not today. A Scales day runs from 4:00 AM to 4:00 AM, so a late-night session counts as the day it started in. On the morning it returns, every principle set aside since its last turn comes up first, once each: most avoided first, then the one waiting longest. After its turn it rejoins the weighted draw. If everything is resting, the deck says Nothing left today and when the next principle returns, with Show anyway to bring resting principles back until the day ends. Show on a Ledger row opens that principle on the deck, even while it rests.
 
+**Today's set and today's focus.** Each day starts with a set of principles, five by default (Settings > Deck > Today's set, 1 to 20); dots at the top show how far along you are. When the set is done, the deck says Done for today, sums up how it went, and asks which one you will act on today. That one becomes **today's focus** and stays on screen. Keep going opens the deck again if you want more. Every third time you choose Testing it, Scales asks for the smallest act you can take today, and that act appears with today's focus.
+
+**Evening check-in and Caught it.** From 6 PM until the day ends at 4:00 AM, Scales opens on one question about today's focus: did you live it today? Not today, Partly, or Yes. Yes asks where it showed up and logs it as **Caught it**, real-life evidence that you lived the principle without the app. You can also log a catch any time from the menu (Caught it) or from a principle in the Ledger. Three catches within 30 days ask whether you are ready to call it Living it.
+
+**Your week.** On Sunday, Scales opens a short review of the last seven days: how many principles you weighed, how many times you caught yourself, what you now live, and what pushed back most, with one voice weighing in on the week if you ask. It is in the Ledger any day.
+
+**Daily reminder.** Scales has no server, so it cannot send notifications. Settings > Daily reminder walks through an iPhone Shortcuts automation that opens Scales at a time you choose, once for the morning set and once for the evening check-in.
+
 **Weighting.** What you set aside comes back more often. A principle's chance of showing up is `1 + 0.5 x not today count`, capped at 4x. A short cooldown keeps the same principle from repeating back to back.
 
-**Pushing back.** The Ledger shows the three principles you set aside most as tiles; tap one to open it on the deck. The In deck list is sorted the same way, so resistance is visible instead of hidden.
+**Pushing back.** The In deck list puts the principles you set aside most at the top, and Your week names the one that pushed back most, so resistance is visible instead of hidden.
 
-**Undo and the first card.** Not today, Still working on it, Living it and Delete each show a toast with Undo for 5 seconds that puts everything back, counts, rest days, the activity grid and the Ledger included. The first card anyone sees shows the three moves in a small panel; it is dismissed by Got it, a tap outside it, or the first real move, and does not come back.
+**Undo and the first card.** Not today, Testing it, Living it and Delete each show a toast with Undo for 5 seconds that puts everything back, counts, rest days, the activity grid and the Ledger included. The first card anyone sees shows the three moves in a small panel; it is dismissed by Got it, a tap outside it, or the first real move, and does not come back.
 
 **Starter decks.** Stoic, Leadership, Athletic mindset and Self-overcoming sets, loaded from Settings or the empty deck, so a new deck has something in it. Every starter principle fills every field (collection, title, author, origin, tags, link and citation) as a worked example. Original lines are credited to Scales and cite their deck. The lines by Epictetus and Nietzsche use the exact wording of a named public-domain translation (Elizabeth Carter, George Long, Thomas Common), cite the work and section, and link to that chapter. Loading a deck again adds nothing new; it fills any empty fields on starter principles already in the deck without overwriting your own values.
 
-**The ledger.** A gauge of how many principles you live; capsules for Living it as a share of every principle, and how many in the deck are resting and pushing back; the Pushing back tiles; a 12 week grid of days (brighter on busier days, brass on days you marked Living it); and each principle's history. The Living it list is the record: each principle in full, the last model line it received, and where it showed up, editable later. The Living it and evidence sheets show that last line too, so it is in view while you write.
+**The ledger.** A record, not a scorecard: one sentence on where you stand, Your week, a 12 week grid of days (brighter on busier days, brass on days you caught yourself or marked Living it), and the In deck and Living it lists. Tap a principle for its history (set aside, smallest acts, catches, talks, wording changes, Living it) and everything you can do with it. The Living it list is the record: each principle in full, the last model line it received, and where it showed up, editable later. The Living it and evidence sheets show that last line too, so it is in view while you write.
 
 **The line under each principle.** A short line, 25 words or fewer, drawn from the words of the principle itself and written in the spirit of Jung and Nietzsche: avoidance is treated as the shadow protecting comfort, fear or self-image, and the line speaks for the person you are becoming rather than your comfort today. It holds the standard. No praise, no pep talk, and no grace for the gap between the principle and your conduct. It presses harder the more a principle has been set aside: fresh ones are asked what they demand, set-aside ones what was chosen instead, and the most avoided are confronted with what the avoidance protects. Lines that slip into a gentle, permission-giving tone are rejected and asked for again. Built-in questions are used by default. If you add your own Anthropic API key in Settings, a new consideration is written for each showing by a small, fast model. Only the principle text, its not today count and days in the deck are sent. Settings > AI lines can switch model lines off while keeping the key.
 
@@ -122,7 +130,7 @@ No build step and no runtime dependencies. The type face is served from `fonts/`
 - **Network first service worker.** Updates show up the next time the app opens; the cache only covers being offline. API calls are never cached.
 - **Built-in questions as the floor.** The app is fully usable with no key and no connection. With a key, the next card's line is fetched while the current card is read, and a built-in line is shown only if the model cannot supply a valid one (25 words or fewer after trimming to whole sentences, no exclamation mark, not a restatement of a long principle).
 - **Not today cap at 4x.** Without a cap, one avoided principle would take over the deck.
-- **Dwell check on Still working on it.** A quick swipe up should not erase a Not today. Eight seconds on the card is the bar.
+- **Dwell check on Testing it.** A quick swipe up should not erase a Not today. Eight seconds on the card is the bar.
 
 ## Run it locally
 
@@ -162,7 +170,7 @@ Every release, patches included, gets a new version number. GitHub Actions adds 
 ## Roadmap
 
 - iOS home screen widget showing the current principle
-- Action Button shortcut for Not today and Still working on it
+- Action Button shortcut for Not today and Testing it
 - Whoop recovery as context for when to show the harder principles (kept on device, never sent to the model)
 
 ## License

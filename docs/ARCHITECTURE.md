@@ -2,13 +2,13 @@
 
 Scales is a single page app with no build step and no backend. Everything the app does happens on the phone. The only outside services are GitHub Pages (hosting) and, if a key is saved, the Anthropic API. The type face (Geist) ships in `fonts/`.
 
-The user-facing names (principle, Not today, Still working on it, Living it) differ from some internal names, which were kept so stored data and exports stay compatible:
+The user-facing names (principle, Not today, Testing it, Living it) differ from some internal names, which were kept so stored data and exports stay compatible:
 
 | On screen | In code and storage |
 |---|---|
 | Principle | thought (`thoughts`, `scales.thoughts.v1`) |
 | Not today | skip (`skip_count`, `lifetime_skips`) |
-| Still working on it | keep / reflect (`reflect_count`) |
+| Testing it | keep / reflect (`reflect_count`) |
 | Living it | shed (`status: "shed"`, `shed_at`, `evidence`) |
 
 ## Where everything sits
@@ -78,7 +78,7 @@ stateDiagram-v2
     [*] --> Active: Capture sheet or starter deck<br/>all counts start at 0
     Active --> Resting: Not today<br/>count +1, weight up, owed a turn at the front
     Resting --> Active: 4:00 AM after the rest (4 days by default)<br/>leads once, most avoided first
-    Active --> Active: Still working on it<br/>inspections +1, count -1 after 8s on card
+    Active --> Active: Testing it<br/>inspections +1, count -1 after 8s on card
     Active --> Nudge: 3 in a row
     Nudge --> Active: Not yet<br/>streak reset
     Active --> LivingSheet: Swipe right / Living it
@@ -129,9 +129,9 @@ sequenceDiagram
 
 | Key | Holds |
 |---|---|
-| `scales.thoughts.v1` | Every principle by id: text, collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai`; `talks` (last five weigh-ins, each with its voice, move, line and replies) |
-| `scales.activity.v1` | Per day counts of inspections and Living it, last 120 days |
-| `scales.prefs.v1` | Look, rest length, Show where it came from, AI lines on or off, chosen voices and names added, the collection key, Show anyway's day, first-swipe tip seen |
+| `scales.thoughts.v1` | Every principle by id: text, collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai`; `talks` (last five weigh-ins, each with its voice, move, line and replies); `acts` (smallest acts by day), `caught` (Caught it by day), `checkins`, `skips_on` (days set aside, for the weekly review) |
+| `scales.activity.v1` | Per Scales day counts: `i` weighed, `s` Living it, `c` Caught it; last 120 days |
+| `scales.prefs.v1` | Today's set (`day`: moves, focus, check-in), set size, the Testing it count, the week's review state, look, rest length, Show where it came from, AI lines on or off, chosen voices and names added, the collection key, Show anyway's day, first-swipe tip seen |
 | `scales.apikey.v1` | Anthropic API key, only if saved |
 
 ## Key numbers
@@ -143,12 +143,16 @@ sequenceDiagram
 | Day boundary | 4:00 AM local | A late-night session counts as the day it started in |
 | Rest after Not today | 4 days (`REST_DAYS`), 1 to 7 in Settings (`restDays`) | Long enough that a reflex skip each morning cannot become a habit; was 1 day in 1.24.0 |
 | Talk it through | 6 replies, 70 words each | A reflection, not a chat |
+| Today's set | 5 by default, 1 to 20 | Long enough to think, short enough to finish |
+| Evening check-in | from 6 PM until 4:00 AM | After the day's chances to act |
+| Smallest act | every third Testing it | Often enough to matter, rare enough not to nag |
+| Caught it suggests Living it | 3 catches in 30 days | A pattern, not a single good day |
 | Voices | one per Scales day, in turn | Each voice gets its day; the order is the list order |
 | Press and hold to edit | 550 ms | Longer than a tap, shorter than a deliberate wait |
 | Front of the stack | once per Not today | Most avoided first, then longest waiting since last shown |
 | Cooldown | last 3 shown (last 1 in a deck of 3 or fewer) | No back to back repeats |
 | Dwell check | 8 seconds | A quick swipe up does not erase a Not today |
-| Nudge | 3 Still working on it in a row | Prompts the Living it question |
+| Nudge | 3 Testing it in a row | Prompts the Living it question |
 | Line length | 25 words | Room for one complete consideration, still readable at a glance |
 | Model output budget | 1024 tokens | The model may reason before answering, and reasoning counts against the budget |
 | Swipe threshold | 90 px | Short drags spring back |
