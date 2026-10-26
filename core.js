@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.37.0";
+  var VERSION = "1.38.0";
   var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -359,7 +359,7 @@ var ScalesCore = (function () {
   // the top before release is Living it at any point; holding the full HOLD_FULL is Testing it;
   // letting go in between is Not today. ms is how long the ring was held, dy the vertical offset
   // in pixels (negative going up). progress (0 to 1) drives the ring and how many words are inked.
-  var HOLD_FULL = 2400, HOLD_TAP = 300, HOLD_LIFT = 70;
+  var HOLD_FULL = 2400, HOLD_TAP = 600, HOLD_LIFT = 70; // HOLD_TAP 300 before 1.38.0
   function holdOutcome(ms, dy) {
     ms = Math.max(0, +ms || 0); dy = +dy || 0;
     var progress = Math.min(1, ms / HOLD_FULL);
