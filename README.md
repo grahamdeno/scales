@@ -115,6 +115,7 @@ To check the key, tap **Test key** under AI key. It sends one tiny request and r
 - **Back up / Restore** (Settings): a JSON file of the whole deck. Keep it in iCloud Drive. Restore merges, it does not overwrite.
 - **Import / Export CSV** (Settings): columns `text,title,author,creationDate,tags,collection,link,citation`, which matches common highlight and quote exports. Export adds `scales_*` columns (status, skips, reflects, shed date, evidence, last model line) so a re-import keeps progress. Import leaves out principles already in the deck. Internal field names (`shed`, `skips`) are unchanged so older exports still import.
 - Deleting the home screen icon deletes the data. Back up first.
+- **Backup reminders** (as in The Road): once the deck has a principle, Done for today and the Ledger ask for a backup when there has never been one or the last is more than a week old. Not now waits two days. Settings shows when the last backup was. A cancelled share sheet does not count.
 - Updates: opening Scales loads the newest release. If it was only resumed from the background, a bar says Scales was updated and stays until you tap Reload.
 
 ## The look
