@@ -2572,13 +2572,18 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   function popShow() { if (HAS_POP) { try { if (pop.matches(":popover-open")) pop.hidePopover(); pop.showPopover(); } catch (e) {} } else pop.hidden = false; }
   function popHide() { if (HAS_POP) { try { pop.hidePopover(); } catch (e) {} } else pop.hidden = true; }
   if (!HAS_POP) pop.hidden = true;
-  function toast(msg, onUndo) {
-    pop.innerHTML = '<div class="toast frost"><span aria-hidden="true">' + esc(msg) + "</span>" + (onUndo ? '<button type="button" id="toastUndo">Undo</button>' : "") + "</div>";
-    $("toastHost").textContent = msg + (onUndo ? " Undo is available for 5 seconds." : "");
+  // stay (1.34.2): an action other than Undo, { label, fn }, and the bar stays until it is tapped. Used for Reload.
+  var staying = false;
+  function toast(msg, onUndo, stay) {
+    if (staying && !stay) return; // the update notice is not replaced by a passing message
+    var label = stay ? stay.label : "Undo";
+    pop.innerHTML = '<div class="toast frost"><span aria-hidden="true">' + esc(msg) + "</span>" + (onUndo || stay ? '<button type="button" id="toastUndo">' + esc(label) + "</button>" : "") + "</div>";
+    $("toastHost").textContent = msg + (onUndo ? " Undo is available for 5 seconds." : stay ? " " + label + " button available." : "");
     popShow();
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { popHide(); pop.innerHTML = ""; $("toastHost").textContent = ""; }, onUndo ? UNDO_MS : 1800);
-    if (onUndo) $("toastUndo").onclick = function () { clearTimeout(toastTimer); popHide(); onUndo(); };
+    staying = !!stay;
+    if (!stay) toastTimer = setTimeout(function () { popHide(); pop.innerHTML = ""; $("toastHost").textContent = ""; }, onUndo ? UNDO_MS : 1800);
+    if (onUndo || stay) $("toastUndo").onclick = function () { clearTimeout(toastTimer); staying = false; popHide(); (stay ? stay.fn : onUndo)(); };
   }
 
   // ---------- boot ----------
@@ -2786,8 +2791,22 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
 
   // ---------- offline ----------
   // Register the service worker (sw.js) so the app opens offline.
+  // Updates (1.34.2). A launch always loads the newest release (sw.js is network first), but an app that is only
+  // resumed from the background keeps running the copy it opened with. Coming back to it checks for a release;
+  // when a new service worker takes over, a bar says so and stays until Reload is tapped.
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+    var hadWorker = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (hadWorker) toast("Scales was updated.", null, { label: "Reload", fn: function () { location.reload(); } });
+      hadWorker = true;
+    });
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").then(function (reg) {
+        document.addEventListener("visibilitychange", function () {
+          if (document.visibilityState === "visible" && reg && reg.update) reg.update().catch(function () {});
+        });
+      }).catch(function () {});
+    });
   }
 })();
 </script>

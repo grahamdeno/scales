@@ -992,3 +992,14 @@ test("long principles wrap normally and fold on push and reflect (1.34.1)", () =
   assert.match(c, /\.thought\.small\.fold \{[^}]*-webkit-line-clamp:4;/);
   assert.match(html, /var fold = phase !== "rest" && sizeClass\(t\.text\) !== "";/);
 });
+
+test("an update shows a bar with Reload that stays until tapped (1.34.2)", () => {
+  const html = read("index.html"), sw = read("sw.js");
+  assert.match(html, /navigator\.serviceWorker\.addEventListener\("controllerchange"/);
+  assert.match(html, /if \(hadWorker\) toast\("Scales was updated\.", null, \{ label: "Reload", fn: function \(\) \{ location\.reload\(\); \} \}\);/);
+  assert.match(html, /document\.visibilityState === "visible" && reg && reg\.update\) reg\.update\(\)/, "coming back to the app checks for a release");
+  assert.match(html, /if \(!stay\) toastTimer = setTimeout/, "the update bar does not time out");
+  assert.match(html, /if \(staying && !stay\) return;/, "a passing message does not replace it");
+  assert.match(sw, /self\.skipWaiting\(\)/);
+  assert.match(sw, /self\.clients\.claim\(\)/, "the new worker takes over, which fires controllerchange");
+});
