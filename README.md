@@ -13,7 +13,7 @@ You write down a principle you want to live by ("the hard conversation is usuall
 
 ## How it works
 
-**The deck.** Quiet until asked. At rest the screen holds one principle and a ring. Press and hold anywhere on the bottom of the screen: after half a second your three choices open above your thumb, Living it, Sit with it and Skip. Slide onto one and let go, or let go and tap one. Letting go never chooses by itself; slide off the list or tap outside it to close it. Today's set is a thin line along the top edge; there is no date. Messages sit at the top of the screen, clear of the hold area.
+**The deck.** Quiet until asked. At rest the screen holds one principle and a ring. Press and hold anywhere on the bottom of the screen: after half a second your three choices open above your thumb, Living it, Sit with it and Skip. Slide onto one and let go, or let go and tap one. Letting go never chooses by itself; slide off the list or tap outside it to close it. Today's set is a thin line along the top edge; there is no date. Messages sit at the bottom of the screen, near your thumb.
 
 | Move | Choose | What happens |
 |---|---|---|

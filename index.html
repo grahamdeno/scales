@@ -475,16 +475,17 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
 .steps div { display:grid; grid-template-columns:26px 1fr; gap:8px; align-items:start; }
 .steps b { width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font-size:11px; font-weight:600; color:var(--onBrass); background:var(--ink); }
 
-/* Toast: a plain bar along the top (1.36.0), clear of the hold area at the bottom. #toastPop is a manual popover so it sits in the top layer,
+/* Toast: a plain bar along the bottom, near the thumb (back from the top in 1.41.0; the hold menu opens
+   above it, so it no longer gets in the way). #toastPop is a manual popover so it sits in the top layer,
    above an open sheet. Screen readers hear the message from the #toastHost live region instead. */
-#toastPop { position:fixed; inset:calc(env(safe-area-inset-top, 0px) + 10px) max(var(--gutter), calc((100vw - 560px) / 2 + var(--gutter))) auto; margin:0; width:auto;
+#toastPop { position:fixed; inset:auto max(var(--gutter), calc((100vw - 560px) / 2 + var(--gutter))) max(8px, calc(env(safe-area-inset-bottom, 0px) - 8px)); margin:0; width:auto;
   border:0; padding:0; background:transparent; overflow:visible; z-index:40; color:inherit; }
 .toast { display:flex; align-items:center; justify-content:space-between; gap:6px; min-height:48px; padding:0 4px 0 16px; font-size:var(--t-sm); color:var(--onBrass); background:var(--ink) !important; border:0 !important; }
 .toast:not(:has(button)) { padding-right:16px; }
 .toast > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .toast button { flex:none; color:var(--onBrass); font-weight:600; font-size:var(--t-sm); min-height:44px; min-width:44px; padding:0 14px; text-decoration:underline; text-underline-offset:4px; }
 @media (prefers-reduced-motion: no-preference) { .toast { animation:toastin .22s var(--ease-out); } }
-@keyframes toastin { from { opacity:0; transform:translateY(-8px); } }
+@keyframes toastin { from { opacity:0; transform:translateY(8px); } }
 
 /* View Transitions between the deck and the Ledger, where supported. Script skips this with reduced motion. */
 .view { view-transition-name:main-view; }
