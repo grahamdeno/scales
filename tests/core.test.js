@@ -985,3 +985,10 @@ test("two kept lines: reused until a test or a wording change; pushback sharpens
   assert.deepEqual(t.lines, {}, "Testing it spends both");
   assert.equal(C.REFLECT_SEC, 8);
 });
+
+test("long principles wrap normally and fold on push and reflect (1.34.1)", () => {
+  const c = css(), html = read("index.html");
+  assert.match(c, /\.thought\.mid, \.thought\.long, \.thought\.small \{ text-wrap:wrap; \}/, "no line balancing on long text, which Safari set one word per line");
+  assert.match(c, /\.thought\.small\.fold \{[^}]*-webkit-line-clamp:4;/);
+  assert.match(html, /var fold = phase !== "rest" && sizeClass\(t\.text\) !== "";/);
+});

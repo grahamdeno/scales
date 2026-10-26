@@ -120,15 +120,25 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .thought.small { font-size:clamp(24px, 7.4vw, 30px); line-height:1.08; letter-spacing:-.025em; }
 .thought.small.mid { font-size:22px; line-height:1.15; }
 .thought.small.long { font-size:16px; line-height:1.4; }
+/* Each word is its own inline span (wordsHtml). Line balancing is kept for short principles only: Safari
+   applied it to long ones word by word and set one word per line (1.34.1). */
+.thought .w { display:inline; }
+.thought.mid, .thought.long, .thought.small { text-wrap:wrap; }
+/* On push and reflect the line is the subject, so a long principle folds to four lines; tap to open it. */
+.thought.small.fold { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4; overflow:hidden; cursor:pointer; }
+.foldhint { margin-top:-14px; font-size:var(--t-xs); color:var(--faint); }
 .where { flex:none; margin-top:16px; display:flex; flex-wrap:wrap; gap:4px 14px; font-size:var(--t-sm); color:var(--muted); }
 .where b { color:var(--ink); font-weight:500; }
 /* Push and reflect: a small-caps phase name at the top, the principle and its line in the middle. */
 .card.push, .card.reflect { justify-content:flex-start; padding-top:0; }
 .phase { flex:none; display:flex; justify-content:space-between; align-items:center; min-height:44px; font-size:var(--t-xs); font-weight:500; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
 .phase button { min-height:44px; min-width:44px; margin-right:-6px; font-size:var(--t-sm); font-weight:400; letter-spacing:0; text-transform:none; color:var(--muted); text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px; }
-.card .mid { flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; justify-content:center; gap:22px; padding:8px 0; scrollbar-width:none; }
+.card .mid { flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:22px; padding:8px 0; scrollbar-width:none; }
 .card .mid::-webkit-scrollbar { display:none; }
-.card .mid > * { flex:none; }
+.card .mid > * { flex:0 0 auto; width:100%; min-width:0; }
+/* Centered with auto margins, not justify-content, so a tall column scrolls from its top in Safari. */
+.card .mid > :first-child { margin-top:auto; }
+.card .mid > :last-child { margin-bottom:auto; }
 .aside { font-size:13px; color:var(--faint); margin-top:-10px; }
 /* The AI line: the subject of the push and reflect screens. */
 .lineWrap { position:relative; flex:none; padding-top:20px; border-top:1px solid var(--line); -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
@@ -1450,7 +1460,9 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       return;
     }
     var nudge = t.consecutive_reflects >= NUDGE_AT, coachOn = !prefs.coach_seen && phase === "rest";
-    var words = '<div class="thought ink' + sizeClass(t.text) + (phase === "rest" ? "" : " small") + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + wordsHtml(t.text) + "</div>";
+    var fold = phase !== "rest" && sizeClass(t.text) !== "";
+    var words = '<div class="thought ink' + sizeClass(t.text) + (phase === "rest" ? "" : " small") + (fold ? " fold" : "") + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + wordsHtml(t.text) + "</div>" +
+      (fold ? '<small class="foldhint" id="foldHint" aria-hidden="true">Tap to read it all</small>' : "");
     var line = '<div class="lineWrap"><p class="ai-p" id="aiLine"></p><small class="ai-src" id="aiSrc"></small></div>';
     var how = '<span class="sr" id="cardHow">Use the Not today, Testing it and Living it buttons, or hold the ring. Press and hold the principle to edit it.</span>';
     if (phase === "reflect") {
@@ -1498,6 +1510,11 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       f.innerHTML = '<div class="bar"><i style="animation-duration:' + (C.REFLECT_SEC * 1000) + 'ms;animation-delay:-' + (C.REFLECT_SEC * 1000 - left) + 'ms"></i></div><span>Sit with it. Next appears in a moment.</span>';
     }
   }
+  // A folded principle opens in place on a tap.
+  $("v-deck").addEventListener("click", function (e) {
+    var w = e.target.closest("#words.fold"); if (!w) return;
+    w.classList.remove("fold"); var h = $("foldHint"); if (h) h.remove();
+  });
   // The buttons do what the ring does.
   $("v-deck").addEventListener("click", function (e) {
     var k = e.target.closest("[data-move]"); if (!k || !onCard()) return;
