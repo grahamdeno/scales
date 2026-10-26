@@ -719,8 +719,8 @@ test("at rest only the principle and the ring; lines appear on push and reflect 
   assert.match(html, /\{ id: "lived", name: "Lived",/);
   assert.match(html, /var tab = prefs\.ledger_tab && byGroup\[prefs\.ledger_tab\] \? prefs\.ledger_tab : "avoiding";/, "opens on Avoiding");
   assert.match(html, /'<div class="lrows" style="--fw:' \+ g\.fw \+ '">'/);
-  assert.match(rule(c, ".lrow2 .lt"), /-webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:17px;/, "two lines per principle");
-  assert.match(c, /\.lrow2\.resting \{ opacity:\.45; \}/, "resting is a shade, not a label");
+  assert.match(rule(c, ".lrow2 .lt"), /-webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:1rem;/, "two lines per principle");
+  assert.match(html, /return C\.isResting\(t, td\) \? f \+ "\\nresting" : f;/, "resting is said in words, not only by dimming");
   assert.match(html, /C\.timeline\(t\)/);
   for (const r of ["show", "caught", "edit", "ev", "keep", "talk", "del"]) assert.match(html, new RegExp('data-r="' + r + '"'), r + " action");
   assert.match(html, /var cls = a && \(a\.s \|\| a\.c\) \? "lv" : n >= 3 \? "on2" : n \? "on" : "";/);
@@ -752,7 +752,7 @@ test("touch targets: a hold area, not a small ring; buttons a thumb can hit (1.3
   const html = read("index.html");
   assert.match(html, /class="btn3d" id="reflUndo">Undo<\/button><button type="button" class="primary" id="reflNext">Next principle/, "Undo sits beside Next");
   assert.match(html, /id="setBar" role="progressbar"/, "today's set is a line at the top, not the date");
-  assert.match(html, /el\.textContent = deckColl\(\) \|\| "";/);
+  assert.match(html, /el\.innerHTML = dc \? esc\(dc\) : '<span class="sr">Scales<\/span>';/, "the deck heading is never empty");
 });
 // ---------- 1.31.0: a thinker weighs in, and Talk it through ----------
 test("the voices: eight built in, living ones in the third person, added names living by default (Story 12)", () => {
@@ -999,7 +999,7 @@ test("an update shows a bar with Reload that stays until tapped (1.34.2)", () =>
   assert.match(html, /navigator\.serviceWorker\.addEventListener\("controllerchange"/);
   assert.match(html, /if \(hadWorker\) toast\("Scales was updated\.", null, \{ label: "Reload", fn: function \(\) \{ location\.reload\(\); \} \}\);/);
   assert.match(html, /document\.visibilityState === "visible" && reg && reg\.update\) reg\.update\(\)/, "coming back to the app checks for a release");
-  assert.match(html, /if \(!stay\) toastTimer = setTimeout/, "the update bar does not time out");
+  assert.match(html, /if \(!stay && !onUndo\) toastTimer = setTimeout/, "the update bar and Undo do not time out");
   assert.match(html, /if \(staying && !stay\) return;/, "a passing message does not replace it");
   assert.match(sw, /self\.skipWaiting\(\)/);
   assert.match(sw, /self\.clients\.claim\(\)/, "the new worker takes over, which fires controllerchange");
@@ -1181,4 +1181,19 @@ test("Later is offered on the skip screen and is not a skip (1.42.0)", () => {
   assert.match(html, /fromLater = true; act\("keep"\);/, "it comes back straight to Sit with it");
   assert.match(html, /\(fromLater \? "Saved from earlier" : "Sitting with it"\)/);
   assert.match(html, /if \(t\.later_blocked\) t\.later_blocked = false;/, "sitting with it for the full time lifts the block");
+});
+
+// ---------- 1.45.0: readability and accessibility ----------
+test("text follows the iPhone text size; contrast passes; Undo waits; buttons instead of hold (1.45.0)", () => {
+  const html = read("index.html"), c = css();
+  assert.match(html, /@supports \(font: -apple-system-body\) \{ html \{ font: -apple-system-body; \} \}/);
+  assert.equal((html.match(/font-size:\s*[\d.]+px/g) || []).length, 1, "no fixed pixel text sizes except the root fallback");
+  assert.match(c, /font-size:max\(16px, 0\.9412rem\)/, "fields never drop below 16px, so iOS does not zoom");
+  assert.match(c, /--rest:#64635F;/, "the White look's step-back grey passes 4.5:1");
+  assert.match(c, /:focus-visible \{ outline:2px solid var\(--ink\);/);
+  assert.match(html, /function dropUndo\(\)/);
+  for (const f of ["act(kind)", "requestSkip()", "saveLater()"]) assert.match(html, new RegExp("function " + f.replace(/[()]/g, "\\$&") + " \\{\\s*dropUndo\\(\\);"), f + " drops the last Undo");
+  assert.match(html, /Undo is available until your next move\./);
+  assert.match(html, /if \(tapMoves\(\)\) return '<div class="tapmoves" id="keys"/);
+  assert.match(html, /id="tapToggle" role="switch"/);
 });
