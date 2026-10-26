@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.33.0";
+  var VERSION = "1.34.0";
   var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -372,6 +372,28 @@ var ScalesCore = (function () {
   // so the words lighten as the avoidance is worked off.
   function inkWeight(t) { return 400 + Math.min(Math.max(+(t && t.skip_count) || 0, 0), 4) * 125; }
 
+  // Two lines per principle (1.34.0), kept on it in t.lines and reused every time it comes up:
+  //   push     shown when you let go early, to make you think twice about Not today
+  //   reflect  shown after you hold through, to sit with while Testing it
+  // A kept line is fresh while it was written for the current wording. A push line written before
+  // the principle reached Avoiding (three or more Not today) is refreshed once when it gets there,
+  // so the pushback sharpens instead of repeating. Testing it spends both lines (spendLines): the
+  // next time the principle comes up, new ones are written. Only model lines are kept.
+  function lineFresh(t, kind) {
+    var l = t && t.lines && t.lines[kind];
+    if (!l || !l.text || l.of !== t.text) return false;
+    if (kind === "push" && (+t.skip_count || 0) >= 3 && (+l.skips || 0) < 3) return false;
+    return true;
+  }
+  function keepLine(t, kind, text) {
+    t.lines = t.lines || {};
+    t.lines[kind] = { text: text, of: t.text, skips: +t.skip_count || 0 };
+    return t.lines[kind];
+  }
+  function spendLines(t) { if (t) t.lines = {}; }
+  // Seconds on the reflect screen before Next appears and the Testing it lowers the Not today count.
+  var REFLECT_SEC = 8;
+
   // Ledger groups (1.33.0), for a principle still in the deck:
   //   avoiding      set aside three or more times and not yet worked back down
   //   nearly        no Not today left and either caught in the last 30 days, tested twice running,
@@ -652,6 +674,7 @@ var ScalesCore = (function () {
     inCollection: inCollection, deckCollections: deckCollections, deckFilter: deckFilter, outcomeMix: outcomeMix,
     SWIPE: SWIPE, swipeIntent: swipeIntent,
     HOLD_FULL: HOLD_FULL, HOLD_TAP: HOLD_TAP, HOLD_LIFT: HOLD_LIFT, holdOutcome: holdOutcome, inkWeight: inkWeight, ledgerGroup: ledgerGroup,
+    lineFresh: lineFresh, keepLine: keepLine, spendLines: spendLines, REFLECT_SEC: REFLECT_SEC,
     shortDate: shortDate, keepAsNew: keepAsNew, keepReplace: keepReplace,
     VOICES: VOICES, TALK_MAX: TALK_MAX, REPLY_WORDS: REPLY_WORDS, MOVES: MOVES, allVoices: allVoices, chosenVoices: chosenVoices,
     voiceOfDay: voiceOfDay, voiceLabel: voiceLabel, weighPrompt: weighPrompt, talkRequest: talkRequest, vetReply: vetReply,

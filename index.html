@@ -23,14 +23,14 @@ img { max-width: 100%; }
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <style>
-/* Layout (1.33.0): Black and White.
+/* Layout (1.34.0): Black and White, quiet until asked.
    Two flat matte surfaces, Black (the default) and White, with a faint grain. No raised keys, glass,
    shadows or rounded panels: the type carries the page. One face, Geist, at one type scale; a
    principle's weight comes from its record (core.js inkWeight), heavier the more it has been set aside.
    Lines are hairlines in --line. The one filled control per sheet (.primary) is solid ink.
-   The deck has one gesture: hold the ring. The words ink in as you hold; let go early for Not today,
-   hold through for Testing it, lift for Living it. The three outcomes are also plain buttons under the
-   ring. Everything else is in the menu at the top right. */
+   The deck is quiet until asked (1.34.0): at rest, the principle and the ring. Hold the ring and the words
+   ink in; let go early for a push to reconsider, hold through to sit with a question, lift for Living it.
+   Everything else is in the menu at the top right. */
 
 /* Black (default). */
 :root {
@@ -100,12 +100,6 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .view[hidden] { display:none !important; }
 
 /* ---------- Deck ---------- */
-/* Collections: one row of plain words that scrolls sideways; the chosen one is underlined. */
-.chips-row { position:relative; z-index:2; flex:none; display:flex; gap:20px; overflow-x:auto; margin:6px calc(-1 * var(--gutter)) 0; padding:0 var(--gutter); scrollbar-width:none; scroll-padding-inline:var(--gutter); }
-.chips-row::-webkit-scrollbar { display:none; }
-.chip { position:relative; flex:none; height:40px; padding:0; border:0 !important; background:none !important; font-size:var(--t-sm); color:var(--muted); white-space:nowrap; touch-action:manipulation; }
-.chip[aria-pressed="true"] { color:var(--ink); box-shadow:inset 0 -1px 0 var(--ink); }
-.chip small { font-size:var(--t-xs); color:var(--faint); margin-left:5px; font-variant-numeric:tabular-nums; }
 /* The principle, on the page. Its words are spans that ink in as the ring is held (paintHold). */
 .card { position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:center; padding:16px 0 8px; -webkit-touch-callout:none;
   user-select:none; -webkit-user-select:none; transition:transform .25s ease, opacity .25s ease; will-change:transform; }
@@ -118,14 +112,37 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .thought::-webkit-scrollbar { display:none; }
 .thought.mid { font-size:var(--d-mid); line-height:1.1; letter-spacing:-.02em; }
 .thought.long { font-size:19px; line-height:1.4; letter-spacing:-.005em; text-wrap:pretty; }
-/* At rest the words sit a step back; held, each one inks in turn. */
-.thought.ink .w { color:var(--rest); transition:color .18s ease; }
-.thought.ink .w.in { color:var(--ink); }
+/* At rest the words are in full ink. Held, they step back and ink in again one by one. On the push screen
+   the principle sits a step back from the line. */
+.thought.ink .w { color:var(--ink); transition:color .18s ease; }
+.thought.ink.holding .w, .card.push .thought.ink .w { color:var(--rest); }
+.thought.ink.holding .w.in { color:var(--ink); }
+.thought.small { font-size:clamp(24px, 7.4vw, 30px); line-height:1.08; letter-spacing:-.025em; }
+.thought.small.mid { font-size:22px; line-height:1.15; }
+.thought.small.long { font-size:16px; line-height:1.4; }
 .where { flex:none; margin-top:16px; display:flex; flex-wrap:wrap; gap:4px 14px; font-size:var(--t-sm); color:var(--muted); }
 .where b { color:var(--ink); font-weight:500; }
-/* The AI line: plain text under the principle, a step quieter. */
-.lineWrap { position:relative; flex:none; margin-top:22px; padding-top:16px; border-top:1px solid var(--line); }
-.ai-p { margin:0; font-size:var(--t-md); line-height:1.45; color:var(--muted); transition:opacity .3s; }
+/* Push and reflect: a small-caps phase name at the top, the principle and its line in the middle. */
+.card.push, .card.reflect { justify-content:flex-start; padding-top:0; }
+.phase { flex:none; display:flex; justify-content:space-between; align-items:center; min-height:44px; font-size:var(--t-xs); font-weight:500; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
+.phase button { min-height:44px; min-width:44px; margin-right:-6px; font-size:var(--t-sm); font-weight:400; letter-spacing:0; text-transform:none; color:var(--muted); text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px; }
+.card .mid { flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; justify-content:center; gap:22px; padding:8px 0; scrollbar-width:none; }
+.card .mid::-webkit-scrollbar { display:none; }
+.card .mid > * { flex:none; }
+.aside { font-size:13px; color:var(--faint); margin-top:-10px; }
+/* The AI line: the subject of the push and reflect screens. */
+.lineWrap { position:relative; flex:none; padding-top:20px; border-top:1px solid var(--line); -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
+.ai-p { margin:0; font-size:22px; line-height:1.3; letter-spacing:-.01em; font-weight:450; color:var(--ink); transition:opacity .3s; }
+.ai-src { display:block; margin-top:10px; font-size:var(--t-xs); color:var(--faint); }
+.talkrow { border-top:1px solid var(--line) !important; }
+.reflfoot { flex:none; display:flex; flex-direction:column; gap:12px; padding:14px 0 max(24px, env(safe-area-inset-bottom, 0px)); min-height:102px; justify-content:flex-end; }
+.reflfoot span { font-size:13px; color:var(--muted); }
+.reflfoot .bar { position:relative; height:1px; background:var(--line); overflow:hidden; }
+.reflfoot .bar i { position:absolute; inset:0; background:var(--ink); transform-origin:0 50%; animation:fill linear both; }
+@keyframes fill { from { transform:scaleX(0); } }
+.holdlbl { margin:0; min-height:21px; font-size:var(--t-sm); color:var(--muted); text-align:center; }
+.setaside { min-height:44px; padding:0 12px; font-size:var(--t-sm); font-weight:500; color:var(--ink); text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px; }
+.date .coll, .dots .coll { margin-left:10px; color:var(--ink); }
 .ai-p.pending { opacity:.5; }
 .ai-row { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:4px; min-height:40px; }
 .ai-row small { font-size:var(--t-xs); color:var(--faint); }
@@ -138,7 +155,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .banner button { min-height:40px; font-size:var(--t-sm); font-weight:500; color:var(--muted); white-space:nowrap; }
 .banner .yes { color:var(--ink); }
 /* Hold: the ring, then the three outcomes as plain buttons. */
-.hold { flex:none; display:flex; flex-direction:column; align-items:center; gap:18px; margin-top:20px; }
+.hold { flex:none; display:flex; flex-direction:column; align-items:center; gap:12px; margin-top:16px; padding-bottom:max(28px, env(safe-area-inset-bottom, 0px)); }
 .ring { position:relative; width:96px; height:96px; display:grid; place-items:center; touch-action:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; cursor:pointer; }
 .ring svg { width:96px; height:96px; transform:rotate(-90deg); }
 .ring .track { fill:none; stroke:var(--line); stroke-width:1; }
@@ -147,6 +164,8 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .ring.held i { transform:scale(.6); }
 .ring.lift i { transform:translateY(-14px) scale(.7); }
 .moves { width:100%; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
+/* The move buttons are for VoiceOver and the keyboard: out of sight until one of them has focus. */
+.moves.sr:focus-within { position:static; width:100%; height:auto; overflow:visible; clip:auto; white-space:normal; }
 .key { min-height:48px; padding:4px 0; display:flex; flex-direction:column; justify-content:center; gap:1px; font-size:var(--t-sm); line-height:1.3; color:var(--muted); text-align:left; touch-action:manipulation; border:0 !important; background:none !important; transition:color .12s ease; }
 .key span { font-size:var(--t-xs); color:var(--faint); }
 .key b { font-weight:500; }
@@ -413,7 +432,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
 @keyframes vt-in { from { opacity:0; transform:translateX(24px); } }
 @keyframes vt-out-back { to { opacity:0; transform:translateX(18px); } }
 @keyframes vt-in-back { from { opacity:0; transform:translateX(-24px); } }
-@media (prefers-reduced-motion: reduce) { .card, .card.spring, .ai-p, .raised, .toggle i, .key, .ring i, .thought.ink .w { transition:none; } }
+@media (prefers-reduced-motion: reduce) { .card, .card.spring, .ai-p, .raised, .toggle i, .key, .ring i, .thought.ink .w { transition:none; } .reflfoot .bar { display:none; } }
 </style>
 </head>
 <body>
@@ -456,6 +475,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   <button type="button" data-m="edit" id="mEdit">Edit this principle</button>
   <button type="button" data-m="caught" id="mCaught">Caught it<span>Lived it today</span></button>
   <hr>
+  <button type="button" data-m="focus" id="mFocus">Show<span id="mFocusVal">All</span></button>
   <button type="button" data-m="ledger" id="mLedger">Ledger<span>Your record</span></button>
   <button type="button" data-m="collections">Collections<span id="mColl">0</span></button>
   <hr>
@@ -612,6 +632,14 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   <div class="acts3" id="rowActs"></div>
 </dialog>
 
+<!-- Show: which collection the deck draws from. -->
+<dialog class="sheet" id="sheetFocus" aria-modal="true" aria-labelledby="sheetFocusTitle">
+  <div class="grabber" aria-hidden="true"></div>
+  <h2><span id="sheetFocusTitle">Show</span> <button type="button" data-close>Done</button></h2>
+  <p class="note">Draw today’s principles from one collection, or from all of them.</p>
+  <div class="coll-list" id="focusList"></div>
+</dialog>
+
 <!-- Collections sheet: every collection with its count. Tap one to rename, merge or remove it. -->
 <dialog class="sheet tall" id="sheetCollections" aria-modal="true" aria-labelledby="sheetCollectionsTitle">
   <div class="grabber" aria-hidden="true"></div>
@@ -671,7 +699,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   <div class="panel raised">
     <div class="setrow"><span id="lookLbl">Surface</span>
       <div class="seg pressed" role="group" aria-labelledby="lookLbl"><button type="button" data-look="matte" aria-pressed="true">Black</button><button type="button" data-look="light" aria-pressed="false">White</button></div></div>
-    <div class="setrow"><span id="whereLbl">Show where it came from<small>Collection and origin under each principle</small></span>
+    <div class="setrow"><span id="whereLbl">Show where it came from<small>Collection, origin and author while you test a principle</small></span>
       <button type="button" class="toggle" id="whereToggle" role="switch" aria-checked="true" aria-labelledby="whereLbl"><i></i></button></div>
   </div>
 
@@ -736,7 +764,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   </div>
 
   <h3 class="sec2">How it works</h3>
-  <p class="note">Hold the ring under a principle. The words ink in as you hold. Let go early for Not today, hold until the ring closes for Testing it, or slide up while holding for Living it. A quick tap does nothing. The three words under the ring do the same moves with one tap. Press and hold the principle itself to edit it. The heavier a principle is set, the more often you have set it aside. After a move, Weigh in under the ring asks today's voice for a perspective on it, and Talk it through lets you answer back. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
+  <p class="note">Hold the ring under a principle. The words ink in as you hold. Let go early and the app pushes back once with a line to reconsider: hold again to stay with it, or set it aside. Hold until the ring closes to test it: you get a question to sit with, Talk it through with today's voice, and Next after eight seconds, when the test lowers its Not today count. Slide up while holding when you are living it. A quick tap does nothing. Press and hold the principle to edit it, or a written line to keep it. The heavier a principle is set, the more often you have set it aside. Show, in the menu, draws the deck from one collection. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
   <p class="note" id="howRest"></p>
 
   <h3 class="sec2">About</h3>
@@ -761,9 +789,8 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   "use strict";
   // ---------- tuning ----------
   // Selection, weighting and answer checks live in core.js so they can be tested.
-  // DWELL_SEC  seconds on a card before Testing it can undo a Not today
   // NUDGE_AT   Testing it in a row before the app asks 'Have you lived this yet?'
-  var C = ScalesCore, CAP = C.CAP, MAX_WORDS = C.MAX_WORDS, DWELL_SEC = 8, NUDGE_AT = 3;
+  var C = ScalesCore, CAP = C.CAP, MAX_WORDS = C.MAX_WORDS, NUDGE_AT = 3;
   var tier = C.tier, weight = C.weight, words = C.words, clean = C.clean, fit = C.fit, vet = C.vet;
   // Built-in considerations, grouped by how much a thought has been skipped
   // (0 = never, 1 = once or twice, 3 = three or more). Used when there is no API key,
@@ -780,6 +807,14 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
         "You keep setting this aside. What part of you profits from that?",
         "How long will you keep negotiating with something you already know is true?"]
   };
+  // Built-in reflections, shown after a hold through when there is no model line. Questions to sit with,
+  // not pushback: each opens the principle up and points at the next few hours.
+  var REFLECT_FALLBACK = [
+    "Where in the next few hours will this be tested, and who will you be when it is?",
+    "What would change today if this were already true of you?",
+    "The person who already lives this: what are they doing in the next hour that you are not?",
+    "What is the smallest act today that would make this true, and what stands in its way?"
+  ];
   // The angle the model takes for each skip tier. Same tiers as FALLBACK.
   // The line serves the person the user is becoming, not their comfort today, and
   // presses harder the more a principle has been set aside.
@@ -955,10 +990,9 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   // history  last 20 thoughts shown, used for the repeat cooldown
   // current  id of the thought on screen
   // shownAt  when it appeared, for the dwell check
-  // lineFor  the line currently shown under each thought
   // aiSeq    request counter so a slow answer for an old card is ignored
   // sample   function that calls the model, or null when there is no key
-  var history = [], current = null, shownAt = 0, lineFor = {}, aiSeq = 0, sample = null;
+  var history = [], current = null, shownAt = 0, aiSeq = 0, sample = null;
   var LSK = "scales.apikey.v1", MODEL = "claude-haiku-5-5";
   // Returns a function that sends one prompt to the Anthropic Messages API and resolves
   // to { text }. The special header allows a direct call from the browser; the key never
@@ -1026,6 +1060,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
 
   // Put a thought on screen, start the dwell timer, and ask for its line.
   function showThought(t) {
+    clearTimeout(reflectT); phase = "rest";
     current = t ? t.id : null;
     currentLead = null;
     if (t) {
@@ -1045,25 +1080,32 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     showThought(q && q.status === "active" && q.id !== current && C.inCollection(q, deckColl()) ? q : pickNext());
   }
 
-  // ---------- consideration line ----------
-  // A built-in line for this tier, avoiding the last few shown for this thought.
-  function fallbackLine(t) {
-    var arr = FALLBACK[tier(t.skip_count)], used = t.recent_lines || [];
+  // ---------- the two lines (1.34.0) ----------
+  // Each principle keeps a push line (shown when you let go early) and a reflect line (shown after you
+  // hold through) in t.lines, reused every time it comes up (core.js lineFresh, keepLine, spendLines).
+  // At rest nothing is shown; both lines are fetched in the background for the principle on screen and
+  // the one queued next, so they are ready the moment they are needed. Without a key, or when the
+  // model cannot supply a usable line, a built-in line is shown and nothing is kept.
+  function fallbackLine(t, kind) {
+    var arr = kind === "reflect" ? REFLECT_FALLBACK : FALLBACK[tier(t.skip_count)], used = t.recent_lines || [];
     var opts = arr.filter(function (l) { return used.indexOf(l) < 0; });
     if (!opts.length) opts = arr;
     return opts[Math.floor(Math.random() * opts.length)];
   }
-  // The prompt for the model. Only the thought text, skip count and days in deck are sent.
+  // The prompt for the model. Only the principle text, its Not today count and days in deck are sent.
   // Recent lines are included so the model does not repeat itself.
-  function buildPrompt(t) {
+  function buildPrompt(t, kind) {
     var recent = (t.recent_lines || []).slice(-3);
+    var angle = kind === "reflect"
+      ? "the user has chosen to stay with this principle now. Give one question to sit with for a minute: open the principle up and point at what living it would demand of them in the next few hours"
+      : ANGLE[tier(t.skip_count)] + ". The user is about to set this principle aside for today; make them think twice before they do";
     return "You write one line shown beneath a principle the user has chosen to live by, in an app for self-overcoming.\n" +
       "Speak as a Jungian analyst and a Nietzschean teacher would. You serve the person the user is becoming, not their comfort today.\n" +
       "Resistance is the shadow speaking: avoidance usually protects comfort, fear, pride, or a flattering self-image. Name it.\n" +
       "Hold the standard. The user wants discipline, not grace: never excuse, soften, or give permission for the gap between this principle and their conduct.\n" +
       "Work from the words of the principle itself, and make the cost of not living it fall where it belongs, on their future self.\n" +
       "Rules:\n- " + MAX_WORDS + " words or fewer. Count them.\n" +
-      "- Angle: " + ANGLE[tier(t.skip_count)] + "\n" +
+      "- Angle: " + angle + "\n" +
       "- A single sharp question or statement. Confront without contempt: no insults, no attacks on their worth.\n" +
       "- No praise, reassurance, self-compassion language, rest or gentleness talk, or permission to wait.\n" +
       "- No cliches or motivational slogans. Plain, precise, serious language, closer to a philosopher than a coach.\n" +
@@ -1073,20 +1115,19 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       "Return only the line.\n\n" +
       "Principle: " + t.text + "\nTimes set aside: " + t.skip_count + "\nDays in deck: " + days(t.created_at);
   }
-  // ready     model lines fetched ahead of time, by thought id, with the text they were written for
-  // inflight  open model requests by thought id, so a card and its prefetch share one request
-  // queued    id of the thought picked to come next, whose line is being fetched now
-  var ready = {}, inflight = {}, queued = null;
-  // Ask the model for one thought's line (two retries if the answer fails vet).
-  // Resolves to { text, of } or null. Never rejects; failures are reported in Settings.
-  function fetchLine(t) {
-    // Keyed by id and wording, so a request made before an edit is never reused after it.
-    var key = t.id + "\n" + t.text;
+  // inflight  open model requests by principle, kind and wording, so the screen and a background fetch share one
+  // queued    id of the principle picked to come next, whose lines are being fetched now
+  // shown     the line on screen now: { kind, text, ai, pending }
+  var inflight = {}, queued = null, shown = null;
+  // Ask the model for one line (two retries if the answer fails vet). Resolves to { text, of } or null.
+  // Never rejects; failures are reported in Settings.
+  function fetchLine(t, kind) {
+    var key = t.id + "\n" + kind + "\n" + t.text;
     if (inflight[key]) return inflight[key];
     var lastReason = "", of = t.text;
     function attempt(n) {
       if (!sample) return Promise.resolve(null);
-      return sample(buildPrompt(t)).then(function (res) {
+      return sample(buildPrompt(t, kind)).then(function (res) {
         var v = vet(res && res.text, t);
         if (v.line) return v.line;
         lastReason = v.reason + (res && res.stop ? ", stop: " + res.stop : "");
@@ -1097,6 +1138,9 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       delete inflight[key];
       if (!s) { $("aiText").textContent = "AI lines: on, but the last answer was not usable (" + lastReason + "). Built-in line shown."; return null; }
       setAiStatus();
+      // Keep it on the principle, if the wording has not changed while it was being written.
+      var live = thoughts[t.id];
+      if (live && live.text === of) { C.keepLine(live, kind, s); save(live); }
       return { text: s, of: of };
     }, function (e) {
       delete inflight[key];
@@ -1109,61 +1153,59 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     inflight[key] = p;
     return p;
   }
-  // Put a model line on the current card and record it so future prompts avoid its wording.
-  function showModelLine(t, s) {
-    lineFor[t.id] = { text: s, ai: true };
-    var live = thoughts[t.id];
-    if (live) { live.recent_lines = (live.recent_lines || []).concat([s]).slice(-3); save(live); }
-    paintLine();
+  // Fetch whichever of a principle's two lines is missing or stale.
+  function ensureLines(t) {
+    if (!sample || !t || t.status !== "active") return;
+    ["push", "reflect"].forEach(function (k) { if (!C.lineFresh(t, k)) fetchLine(t, k); });
   }
-  // Pick the next thought now and fetch its line while the current card is being read,
-  // so the next card opens with its line already in place.
+  // Pick the next principle now and fetch its lines while this one is on screen.
   function prefetchNext() {
-    if (!sample) return;
     var n = pickNext();
     queued = n ? n.id : null;
-    if (!n || n.id === current || ready[n.id]) return;
-    fetchLine(n).then(function (r) { if (r) ready[n.id] = r; });
+    if (n && n.id !== current) ensureLines(n);
   }
-  // Without a key: built-in line straight away.
-  // With a key: use a prefetched line if one is ready for this exact text. Otherwise show
-  // a quiet placeholder until the model answers, and fall back to a built-in line only if
-  // it cannot supply one. An answer that arrives after the card has moved on is kept in
-  // ready for the next time that thought comes up.
-  function requestLine(t) {
+  // At rest: get both lines ready for the principle on screen and the one after it.
+  function requestLine(t) { shown = null; ensureLines(t); prefetchNext(); }
+  // Put one of the two lines on screen: the kept line, or a placeholder while it is written, or a built-in one.
+  function showLine(t, kind) {
     var seq = ++aiSeq;
-    if (!sample) { lineFor[t.id] = { text: fallbackLine(t), ai: false }; paintLine(); return; }
-    var r = ready[t.id]; delete ready[t.id];
-    if (r && r.of === t.text) { showModelLine(t, r.text); prefetchNext(); return; }
-    lineFor[t.id] = { text: "Considering\u2026", ai: false, pending: true };
-    paintLine();
-    fetchLine(t).then(function (r) {
-      if (seq !== aiSeq || current !== t.id) { if (r) ready[t.id] = r; return; }
-      delete ready[t.id];
-      if (r) showModelLine(t, r.text);
-      else { lineFor[t.id] = { text: fallbackLine(t), ai: false }; paintLine(); }
+    function put(text, ai) {
+      shown = { kind: kind, text: text, ai: ai };
+      if (ai) { t.recent_lines = (t.recent_lines || []).concat([text]).slice(-3); save(t); }
+      paintLine();
+    }
+    if (C.lineFresh(t, kind)) { put(t.lines[kind].text, true); return; }
+    if (!sample) { put(fallbackLine(t, kind), false); return; }
+    shown = { kind: kind, text: "Considering\u2026", ai: false, pending: true }; paintLine();
+    fetchLine(t, kind).then(function (r) {
+      if (seq !== aiSeq || current !== t.id || !shown || shown.kind !== kind) return;
+      if (r) put(r.text, true); else put(fallbackLine(t, kind), false);
     });
-    prefetchNext();
   }
-  // Draw the current card's line. 'pending' dims the placeholder while a model line is on the way.
+  // Draw the line on screen. 'pending' dims the placeholder while a model line is on the way.
   function paintLine() {
-    var el = $("aiLine"); if (!el || !current) return;
-    var l = lineFor[current]; if (!l) return;
+    var el = $("aiLine"); if (!el) return;
+    var l = shown; if (!l) { el.textContent = ""; return; }
     el.textContent = l.text;
     el.classList.toggle("pending", !!l.pending);
-    var k = $("keepBtn"); if (k) k.hidden = !l.ai;
-    var src = $("aiSrc"); if (src) src.textContent = l.pending ? "Considering" : l.ai ? "Considered for you" : "A question to sit with";
+    var src = $("aiSrc"); if (src) src.textContent = l.pending ? "Considering" : l.ai ? "Considered for you. Press and hold to keep it." : "A question to sit with";
   }
 
   // ---------- actions ----------
+  // The deck is quiet until asked (1.34.0). phase is where the principle on screen stands:
+  //   rest     the principle and the ring, nothing else
+  //   push     after letting go early: the push line, and the ring again. Holding again stays with it;
+  //            letting go early a second time, or Set aside anyway, is Not today. No second pushback.
+  //   reflect  after holding through: the reflect line, where it came from, Talk it through. Next
+  //            appears after REFLECT_SEC; at that point a Testing it lowers the Not today count by 1.
+  var phase = "rest", reflectT = 0, reflectAt = 0, reflectDone = false, reflectLighter = false, reflectUndo = null, pendingAct = false;
   // The three moves.
   // skip:  raise skip count, reset the reflect streak
-  // keep:  count a reflect; lower skip count by 1 only if the card was read for DWELL_SEC
+  // keep:  count a reflect and open the reflect screen; the skip count drops after REFLECT_SEC there
   // shed:  open the shed sheet to record evidence before retiring the thought
-  // Not today and Testing it can be undone from the toast for UNDO_MS (see undoable).
+  // Not today can be undone from the toast for UNDO_MS, Testing it from Undo on the reflect screen.
   function act(kind) {
     var t = thoughts[current]; if (!t) return;
-    var dwell = (Date.now() - shownAt) / 1000;
     coachSeen();
     if (kind === "skip") {
       // Not today: counted, rested until the next day, and owed one turn at the front.
@@ -1173,18 +1215,40 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       undoable("Not today. " + backText(t.rest_until), u); return;
     }
     if (kind === "keep") {
-      var k = undoPoint();
+      if (phase === "reflect") return;
+      reflectUndo = undoPoint();
       t.reflect_count++; t.consecutive_reflects++;
-      if (dwell >= DWELL_SEC && t.skip_count > 0) t.skip_count--;
       noteMove(t, "keep"); noteDay(t, "keep");
       prefs.tests = (prefs.tests || 0) + 1; savePrefs();
-      save(t); logActivity("keep"); flyOut("up");
-      undoable("Testing it.", k);
-      // Every third Testing it: the smallest act today, once the next card is in place.
-      if (C.askAct(prefs.tests)) setTimeout(function () { openAct(thoughts[t.id]); }, 450);
+      save(t); logActivity("keep");
+      // Every third Testing it: the smallest act today, asked when you move on.
+      pendingAct = C.askAct(prefs.tests);
+      phase = "reflect"; reflectAt = Date.now(); reflectDone = false; reflectLighter = false;
+      clearTimeout(reflectT); reflectT = setTimeout(finishReflect, C.REFLECT_SEC * 1000);
+      renderDeck(); showLine(t, "reflect");
       return;
     }
     if (kind === "shed") openShed(t);
+  }
+  // Not today from the ring, a button or the left arrow: the first time it shows the push line instead.
+  function requestSkip() {
+    var t = onCard(); if (!t || phase === "reflect") return;
+    if (phase === "push") { act("skip"); return; }
+    coachSeen(); phase = "push"; renderDeck(); showLine(t, "push");
+  }
+  // After REFLECT_SEC on the reflect screen: the test counts against Not today, and Next appears.
+  function finishReflect() {
+    var t = thoughts[current]; if (phase !== "reflect" || !t) return;
+    if (t.skip_count > 0) { t.skip_count--; reflectLighter = true; save(t); }
+    reflectDone = true; paintReflectFoot();
+  }
+  // Next principle: the lines this one had are spent, so new ones are written next time it comes up.
+  function nextFromReflect() {
+    var t = thoughts[current], ask = pendingAct;
+    clearTimeout(reflectT); pendingAct = false; reflectUndo = null;
+    if (t) { C.spendLines(t); save(t); }
+    phase = "rest"; entering = true; showNext();
+    if (ask && t) setTimeout(function () { openAct(thoughts[t.id]); }, 450);
   }
 
   // ---------- undo ----------
@@ -1199,8 +1263,9 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     refreshDay(); p.day = JSON.parse(JSON.stringify(day)); p.tests = prefs.tests || 0;
     return p;
   }
-  function undoable(msg, point) {
-    toast(msg, function () {
+  function undoable(msg, point) { toast(msg, function () { restore(point); toast("Undone."); }); }
+  function restore(point) {
+      clearTimeout(reflectT); phase = "rest"; reflectUndo = null; pendingAct = false;
       var r = C.applyUndo(point);
       lastMove = null; // the move is undone, so there is nothing to weigh
       thoughts = r.thoughts; activity = r.activity; history = r.history; queued = null;
@@ -1211,8 +1276,6 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       if (!$("v-ledger").hidden) renderLedger();
       else if (t && t.status === "active") { shownAt = Date.now(); renderDeck(); requestLine(t); }
       else if (!current || !thoughts[current]) showNext(); else renderDeck();
-      toast("Undone.");
-    });
   }
   // Animate the card off screen in the swipe direction, then show the next one.
   function flyOut(dir) {
@@ -1280,28 +1343,24 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     b.style.left = (r.left + r.width / 2) + "px"; b.style.top = (r.top + r.height * 0.6) + "px";
     document.body.appendChild(b); setTimeout(function () { b.remove(); }, 800);
   }
-  // Collection keys: All plus each collection still in the deck, with counts. Not drawn when there are none.
-  function chipsHtml() {
-    var cs = C.deckCollections(all()); if (!cs.length) return "";
-    var on = deckColl();
-    return '<div class="chips-row" role="group" aria-label="Show collection" id="chips">' +
-      '<button type="button" class="chip raised" data-coll="" aria-pressed="' + String(!on) + '">All<small>' + activeList().length + "</small></button>" +
-      cs.map(function (c) { return '<button type="button" class="chip raised" data-coll="' + esc(c.name) + '" aria-pressed="' + String(on === c.name) + '">' + esc(c.name) + "<small>" + c.count + "</small></button>"; }).join("") + "</div>";
-  }
-  function bindChips() {
-    var row = $("chips"); if (!row) return;
-    row.onclick = function (e) {
-      var b = e.target.closest("[data-coll]"); if (!b) return;
-      var c = b.getAttribute("data-coll"); if (c === deckColl()) return;
-      prefs.deck_coll = c; savePrefs(); queued = null;
-      var t = thoughts[current];
-      if (t && t.status === "active" && C.inCollection(t, c)) renderDeck(); else { entering = true; showNext(); }
-      var nb = document.querySelector('#chips [data-coll="' + (window.CSS && CSS.escape ? CSS.escape(c) : c) + '"]');
-      if (nb) { try { nb.focus({ preventScroll: true }); } catch (_) {} }
+  // Show (1.34.0): which collection today's principles are drawn from, chosen from the menu. The chosen one
+  // is named at the top of the deck; "" means all. The collection itself is kept on each principle.
+  function openFocus() {
+    var cs = C.deckCollections(all()), on = deckColl();
+    var row = function (name, label, n) {
+      return '<button type="button" class="crow" data-coll="' + esc(name) + '" aria-pressed="' + String(on === name) + '"><b>' + esc(label) + "</b><span>" + n + (on === name ? " · showing" : "") + "</span></button>";
     };
-    var sel = row.querySelector('[aria-pressed="true"]');
-    if (sel && sel.offsetLeft + sel.offsetWidth > row.clientWidth) row.scrollLeft = sel.offsetLeft - 14;
+    $("focusList").innerHTML = row("", "All", activeList().length) + cs.map(function (c) { return row(c.name, c.name, c.count); }).join("");
+    show("sheetFocus");
   }
+  $("focusList").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-coll]"); if (!b) return;
+    var c = b.getAttribute("data-coll"); hide();
+    if (c === deckColl()) return;
+    prefs.deck_coll = c; savePrefs(); queued = null;
+    var t = thoughts[current];
+    if (t && t.status === "active" && C.inCollection(t, c) && phase === "rest") renderDeck(); else if (phase === "rest") { entering = true; showNext(); } else renderDeck();
+  });
   var entering = false;
   function times(n) { return n === 1 ? "once" : n === 2 ? "twice" : n + " times"; }
   // Under the words: collection, origin and author (when Show where it came from is on), and how often it was set aside.
@@ -1312,19 +1371,20 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       if (t.origin) p.push("<span>" + esc(t.origin) + "</span>");
       if (t.author) p.push("<span>" + esc(t.author) + "</span>");
     }
-    if (t.skip_count > 0) p.push("<span>Set aside " + times(t.skip_count) + (t.skip_count > 1 ? ", heavier each time" : "") + "</span>");
     return p.length ? '<div class="where">' + p.join("") + "</div>" : "";
   }
-  // The ring and the three outcomes under it (1.33.0). The ring is held with the pointer (bindHold);
-  // it is hidden from assistive tech because the three buttons under it do the same moves with one tap.
+  // The ring (1.34.0), held with the pointer (bindHold). Under it, one quiet label: what letting go would do
+  // right now while you hold, or a short caption otherwise. The three moves are also buttons, kept for
+  // VoiceOver and the keyboard; they show only when one of them has focus.
   var RING_R = 46, RING_C = 2 * Math.PI * RING_R;
-  function holdHtml() {
+  function holdHtml(caption, extra) {
     return '<div class="hold"><div class="ring" id="holdRing" aria-hidden="true"><svg viewBox="0 0 96 96"><circle class="track" cx="48" cy="48" r="' + RING_R + '"></circle>' +
       '<circle class="arc" id="holdArc" cx="48" cy="48" r="' + RING_R + '" stroke-dasharray="' + RING_C.toFixed(1) + '" stroke-dashoffset="' + RING_C.toFixed(1) + '"></circle></svg><i></i></div>' +
-      '<div class="moves" id="keys" role="group" aria-label="Moves">' +
-      '<button type="button" class="key" id="kSkip" data-move="skip"><span>Let go early</span><b>Not today</b></button>' +
-      '<button type="button" class="key" id="kKeep" data-move="keep"><span>Hold through</span><b>Testing it</b></button>' +
-      '<button type="button" class="key" id="kShed" data-move="shed"><span>Hold and lift</span><b>Living it</b></button></div></div>';
+      '<p class="holdlbl" id="holdLbl" data-rest="' + esc(caption || "") + '" aria-hidden="true">' + esc(caption || "") + "</p>" +
+      '<div class="moves sr" id="keys" role="group" aria-label="Moves">' +
+      '<button type="button" class="key" id="kSkip" data-move="skip"><b>' + (phase === "push" ? "Set aside" : "Not today") + "</b></button>" +
+      '<button type="button" class="key" id="kKeep" data-move="keep"><b>Testing it</b></button>' +
+      '<button type="button" class="key" id="kShed" data-move="shed"><b>Living it</b></button></div>' + (extra || "") + "</div>";
   }
   // The principle's words, one span each, so the hold can ink them in turn. Spaces and line breaks stay as they are.
   function wordsHtml(text) {
@@ -1341,23 +1401,25 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   function renderDeck() {
     var v = $("v-deck");
     refreshDay();
-    var phase = C.dayPhase(day, setSize());
-    paintTop(phase);
+    var dp = C.dayPhase(day, setSize());
+    paintTop(dp);
+    // A principle mid-push or mid-reflect stays on screen until you move on, even if that move ended the set.
+    var mid = phase !== "rest" && nextUp();
     // The evening check-in comes first, then Done for today and today's focus.
-    if (!checkinLater && C.checkinDue(day, new Date()) && renderCheckin()) return;
-    if (phase === "focus") { renderFocus(); return; }
-    if (phase === "done" || (phase === "set" && day.moved.length && !nextUp())) { renderDone(phase === "set" ? "Nothing else is due today. " + C.daySummary(day) : ""); return; }
+    if (!mid && !checkinLater && C.checkinDue(day, new Date()) && renderCheckin()) return;
+    if (!mid && dp === "focus") { renderFocus(); return; }
+    if (!mid && (dp === "done" || (dp === "set" && day.moved.length && !nextUp()))) { renderDone(dp === "set" ? "Nothing else is due today. " + C.daySummary(day) : ""); return; }
     var t = thoughts[current];
     var enter = entering; entering = false;
     var coll = deckColl();
     if (!t && coll) {
       // The chosen collection has nothing to show right now.
       var inC = deckList(), nr = inC.filter(function (x) { return C.isResting(x, today()); }).length;
-      v.innerHTML = chipsHtml() + emptyHtml("Nothing left in " + esc(coll) + " today.",
+      v.innerHTML = emptyHtml("Nothing left in " + esc(coll) + " today.",
         nr ? nr + (nr === 1 ? " principle is" : " principles are") + " resting. The next returns " + returnText(C.nextReturn(inC, today())) + "." : "Every principle here is resting or lived.",
         '<button type="button" class="btn3d raised" id="showAll">Show all collections</button>' +
         (nr ? '<button type="button" class="btn3d raised" id="showAnyway">Show anyway</button>' : ""), nr ? nr + " resting" : "");
-      bindChips(); paintStat();
+      paintStat();
       $("showAll").onclick = function () { prefs.deck_coll = ""; savePrefs(); showNext(); };
       if (nr) $("showAnyway").onclick = function () { prefs.anyway_day = today(); savePrefs(); showNext(); };
       return;
@@ -1365,14 +1427,14 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     if (!t && activeList().length) {
       // Everything in the deck is resting after Not today.
       var n = activeList().filter(function (x) { return C.isResting(x, today()); }).length;
-      v.innerHTML = chipsHtml() + emptyHtml("Nothing left today.",
+      v.innerHTML = emptyHtml("Nothing left today.",
         (n === activeList().length ? "Every principle is resting." : n + (n === 1 ? " principle is" : " principles are") + " resting.") +
         " The next one returns " + returnText(C.nextReturn(activeList(), today())) + ", and the most avoided come up first.",
         '<button type="button" class="btn3d raised" id="showAnyway">Show anyway</button>' +
         '<button type="button" class="btn3d raised" id="emptyAdd">Capture</button>', n + " resting");
       $("showAnyway").onclick = function () { prefs.anyway_day = today(); savePrefs(); showNext(); };
       $("emptyAdd").onclick = openCapture;
-      bindChips(); paintStat();
+      paintStat();
       return;
     }
     if (!t) {
@@ -1387,37 +1449,60 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       paintStat();
       return;
     }
-    var nudge = t.consecutive_reflects >= NUDGE_AT, coachOn = !prefs.coach_seen;
-    var left = currentLead === t.id ? '<span class="first">First today</span>'
-      : "Captured " + fmtDate(t.created_at) + ", inspected " + (t.reflect_count === 1 ? "once" : t.reflect_count + " times");
-    v.innerHTML = chipsHtml() +
-      '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current principle" aria-describedby="cardHow">' +
-        '<div class="thought ink' + sizeClass(t.text) + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + wordsHtml(t.text) + "</div>" +
-        whereHtml(t) +
-        '<div class="lineWrap"><div class="glass"><p class="ai-p" id="aiLine"></p>' +
-          '<div class="ai-row"><small id="aiSrc">Considered for you</small><button type="button" class="keep" id="keepBtn" hidden>Keep line</button></div></div></div>' +
-        '<span class="sr" id="cardHow">Choose Not today, Testing it or Living it with the three buttons under the principle. Press and hold the principle to edit it.</span>' +
-      "</article>" +
-      (nudge ? '<div class="banner"><span class="t">Have you lived this yet?</span><button type="button" id="nudgeNo">Not yet</button><button type="button" class="yes" id="nudgeYes">Living it</button></div>' : "") +
-      holdHtml() + footHtml(footLeft(left)) +
-      (coachOn ? coachHtml() : "");
-    if (nudge) {
-      $("nudgeYes").onclick = function () { act("shed"); };
-      $("nudgeNo").onclick = function () { t.consecutive_reflects = 0; save(t); renderDeck(); paintLine(); };
+    var nudge = t.consecutive_reflects >= NUDGE_AT, coachOn = !prefs.coach_seen && phase === "rest";
+    var words = '<div class="thought ink' + sizeClass(t.text) + (phase === "rest" ? "" : " small") + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + wordsHtml(t.text) + "</div>";
+    var line = '<div class="lineWrap"><p class="ai-p" id="aiLine"></p><small class="ai-src" id="aiSrc"></small></div>';
+    var how = '<span class="sr" id="cardHow">Use the Not today, Testing it and Living it buttons, or hold the ring. Press and hold the principle to edit it.</span>';
+    if (phase === "reflect") {
+      v.innerHTML = '<article class="card reflect" id="card" aria-label="Testing it" aria-describedby="cardHow">' +
+        '<div class="phase"><span>Testing it</span><button type="button" id="reflUndo">Undo</button></div>' +
+        '<div class="mid">' + words + line + whereHtml(t) +
+          (canWeigh() ? '<button type="button" class="crow talkrow" id="talkRow"><span>Talk it through with ' + esc(todayVoice().short) + "<small>Today’s voice</small></span>" + ICON_NEXT + "</button>" : "") +
+          (nudge ? '<div class="banner"><span class="t">Have you lived this yet?</span><button type="button" id="nudgeNo">Not yet</button><button type="button" class="yes" id="nudgeYes">Living it</button></div>' : "") +
+        "</div>" + how + "</article>" +
+        '<div class="reflfoot" id="reflFoot" aria-live="polite"></div>';
+      $("reflUndo").onclick = function () { var p = reflectUndo; if (p) { restore(p); toast("Undone."); } };
+      if ($("talkRow")) $("talkRow").onclick = openWeigh;
+      if (nudge) {
+        $("nudgeYes").onclick = function () { act("shed"); };
+        $("nudgeNo").onclick = function () { t.consecutive_reflects = 0; save(t); renderDeck(); paintLine(); };
+      }
+      paintReflectFoot(); paintLine();
+      return;
     }
+    if (phase === "push") {
+      v.innerHTML = '<article class="card push" id="card" aria-label="Before you set it aside" aria-describedby="cardHow">' +
+        '<div class="phase"><span>Before you set it aside</span></div>' +
+        '<div class="mid">' + words + line + (t.skip_count > 0 ? '<small class="aside">Set aside ' + times(t.skip_count) + "</small>" : "") + "</div>" + how + "</article>" +
+        holdHtml("Hold again to stay with it", '<button type="button" class="setaside" id="setAside">Set aside anyway</button>');
+      $("setAside").onclick = function () { act("skip"); };
+      paintLine();
+      return;
+    }
+    v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current principle" aria-describedby="cardHow">' + words + how + "</article>" +
+      holdHtml("") + (coachOn ? coachHtml() : "");
     if (coachOn) {
       $("coachOk").onclick = function () { coachSeen(); };
       $("coach").onclick = function (e) { if (e.target === $("coach")) coachSeen(); };
     }
-    $("keepBtn").onclick = function () { var l = lineFor[t.id]; if (l && l.ai) openKeep(t, l.text); };
-    bindChips();
-    paintStat();
-    paintLine();
   }
-  // The three keys do what the swipes do.
+  // The reflect screen's foot: a thin line filling for REFLECT_SEC, then Next.
+  function paintReflectFoot() {
+    var f = $("reflFoot"); if (!f) return;
+    if (reflectDone) {
+      f.innerHTML = '<span>' + (reflectLighter ? "Counted. One lighter." : "Counted.") + '</span><button type="button" class="primary" id="reflNext">Next principle</button>';
+      $("reflNext").onclick = nextFromReflect;
+      var w = $("words"), t = thoughts[current]; if (w && t) w.style.fontWeight = C.inkWeight(t);
+    } else {
+      var left = Math.max(0, C.REFLECT_SEC * 1000 - (Date.now() - reflectAt));
+      f.innerHTML = '<div class="bar"><i style="animation-duration:' + (C.REFLECT_SEC * 1000) + 'ms;animation-delay:-' + (C.REFLECT_SEC * 1000 - left) + 'ms"></i></div><span>Sit with it. Next appears in a moment.</span>';
+    }
+  }
+  // The buttons do what the ring does.
   $("v-deck").addEventListener("click", function (e) {
     var k = e.target.closest("[data-move]"); if (!k || !onCard()) return;
-    act(k.getAttribute("data-move"));
+    var m = k.getAttribute("data-move");
+    if (m === "skip") requestSkip(); else act(m);
   });
 
   // ---------- first-swipe tip ----------
@@ -1427,28 +1512,30 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     var n = restDays();
     return '<div class="coach" id="coach" role="group" aria-label="How to use the deck"><div class="glass">' +
       "<h2>Hold the ring</h2>" +
-      "<ul><li><b>Let go early</b> for Not today. It rests " + n + (n === 1 ? " day" : " days") + " and comes back heavier.</li>" +
-      "<li><b>Hold until it closes</b> for Testing it.</li>" +
-      "<li><b>Slide up while holding</b> for Living it.</li></ul>" +
-      '<p class="tapnote">A quick tap does nothing. The words under the ring do the same with one tap. Press and hold the principle to edit it.</p>' +
+      "<ul><li><b>Let go early</b> to set it aside. You get one push to reconsider first; it then rests " + n + (n === 1 ? " day" : " days") + " and comes back heavier.</li>" +
+      "<li><b>Hold until it closes</b> to test it. You get a question to sit with, and Next after a few seconds.</li>" +
+      "<li><b>Slide up while holding</b> when you are living it.</li></ul>" +
+      '<p class="tapnote">A quick tap does nothing. Press and hold the principle to edit it. Everything else is in the menu.</p>' +
       '<div class="row"><button type="button" class="btn3d sm" id="coachOk">Got it</button></div></div></div>';
   }
   function coachSeen() { if (prefs.coach_seen) return; prefs.coach_seen = true; savePrefs(); var c = $("coach"); if (c) c.remove(); }
 
-  // ---------- hold, and press and hold to edit ----------
-  // Pointer events on the deck view (touch and mouse), bound once. Holding the ring (#holdRing) fills it
-  // and inks the principle's words in turn; core.js holdOutcome reads the release: a tap does nothing,
-  // letting go early is Not today, holding through is Testing it, sliding up HOLD_LIFT px is Living it.
-  // The outcome the release would give is underlined under the ring as you hold. Holding still on the
-  // words themselves for HOLD_MS opens Edit instead.
+  // ---------- hold, and press and hold ----------
+  // Pointer events on the deck view (touch and mouse), bound once. Holding the ring (#holdRing) fills it;
+  // the principle's words dim and ink back in turn. core.js holdOutcome reads the release: a tap does
+  // nothing, letting go early is Not today (the push screen first, see requestSkip), holding through is
+  // Testing it, sliding up HOLD_LIFT px is Living it. The label under the ring says what letting go now
+  // would do. Holding still for HOLD_MS on the words opens Edit; on a model line, it opens Keep.
   var HOLD_MS = 550;
+  var LET_GO = { skip: "Let go now: Not today", keep: "Let go now: Testing it", shed: "Let go now: Living it" };
   (function bindHold() {
     var deck = $("v-deck"), ring = null, t0 = 0, sy = 0, dy = 0, raf = 0, mode = "", holdT = 0, sx = 0;
     function paintHold(p, move) {
-      var arc = $("holdArc"), ws = document.querySelectorAll("#words .w"), n = Math.round(p * ws.length);
+      var arc = $("holdArc"), w = $("words"), ws = document.querySelectorAll("#words .w"), n = Math.round(p * ws.length), lbl = $("holdLbl");
       if (arc) arc.setAttribute("stroke-dashoffset", (RING_C * (1 - p)).toFixed(1));
+      if (w) w.classList.toggle("holding", !!move);
       for (var i = 0; i < ws.length; i++) ws[i].classList.toggle("in", i < n);
-      ["skip", "keep", "shed"].forEach(function (k) { var b = document.querySelector('#keys [data-move="' + k + '"]'); if (b) b.classList.toggle("on", k === move); });
+      if (lbl) lbl.textContent = move ? (move === "skip" && phase === "push" ? "Let go now: set it aside" : LET_GO[move]) : lbl.getAttribute("data-rest");
       if (ring) { ring.classList.toggle("held", p > 0); ring.classList.toggle("lift", move === "shed"); }
     }
     function frame() {
@@ -1468,13 +1555,19 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
         var c = $("card"); if (c) c.classList.remove("spring", "enter");
         coachSeen(); frame(); return;
       }
-      if (!e.target.closest("#words")) return;
-      mode = "edit"; sx = e.clientX; sy = e.clientY;
+      var press = e.target.closest("#words") ? "edit" : (e.target.closest("#aiLine") && shown && shown.ai) ? "keep" : "";
+      if (!press) return;
+      mode = press; sx = e.clientX; sy = e.clientY;
       clearTimeout(holdT);
-      holdT = setTimeout(function () { if (mode !== "edit") return; mode = ""; var t = onCard(); if (t) { coachSeen(); openEdit(t); } }, HOLD_MS);
+      holdT = setTimeout(function () {
+        var m = mode; if (m !== "edit" && m !== "keep") return; mode = "";
+        var t = onCard(); if (!t) return;
+        coachSeen();
+        if (m === "edit") openEdit(t); else if (shown && shown.ai) openKeep(t, shown.text);
+      }, HOLD_MS);
     });
     deck.addEventListener("pointermove", function (e) {
-      if (mode === "edit" && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) { mode = ""; clearTimeout(holdT); return; }
+      if ((mode === "edit" || mode === "keep") && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) { mode = ""; clearTimeout(holdT); return; }
       if (mode !== "ring") return;
       dy = e.clientY - sy;
       var c = $("card"); if (c) { c.classList.add("dragging"); c.style.transform = "translateY(" + Math.max(Math.min(dy, 0), -C.HOLD_LIFT) * 0.4 + "px)"; }
@@ -1491,7 +1584,8 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
         return;
       }
       ring = null;
-      if (o.move === "shed") { paintHold(0, ""); if (c) c.style.transform = ""; act("shed"); }
+      if (o.move === "skip") { reset(); requestSkip(); }
+      else if (o.move === "shed") { paintHold(0, ""); if (c) c.style.transform = ""; act("shed"); }
       else act(o.move);
     }
     deck.addEventListener("pointerup", end); deck.addEventListener("pointercancel", end);
@@ -1541,7 +1635,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       paintStat();
     } else {
       var q = C.keepReplace(all(), t, keepLine, now); if (!q.principle) return;
-      delete ready[t.id]; save(t);
+      save(t);
       hide(); undoable("Wording replaced. Earlier wording kept.", u);
       if (t.id === current) { renderDeck(); requestLine(t); }
     }
@@ -1739,6 +1833,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       el.className = "dots"; el.innerHTML = dots + "<span>" + (done + 1) + " of " + n + " today</span>";
       el.setAttribute("aria-label", done + " of " + n + " weighed today");
     } else { el.className = "date"; el.removeAttribute("aria-label"); paintDate(); }
+    var c = deckColl(); if (c) el.insertAdjacentHTML("beforeend", '<span class="coll">' + esc(c) + "</span>");
   }
   // Done for today: how the set went, then today's focus.
   var focusPick = null;
@@ -2044,7 +2139,6 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     var before = t.text;
     C.applyEdit(t, editValues(), all());
     var reworded = t.text !== before;
-    if (reworded) delete ready[t.id];
     save(t); editTarget = null; hide(); toast("Saved. History kept.");
     // A new wording needs a new line; a detail-only edit keeps the line on screen.
     if (t.id === current) { renderDeck(); if (reworded) requestLine(t); }
@@ -2408,6 +2502,8 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     $("mCaught").hidden = !onCard();
     $("mLedger").innerHTML = deck ? "Ledger<span>Your record</span>" : "Deck<span>Today</span>";
     $("mColl").textContent = C.collections(all()).length;
+    $("mFocusVal").textContent = deckColl() || "All";
+    $("mFocus").hidden = !C.deckCollections(all()).length;
     if (menu.showModal) menu.showModal(); else menu.setAttribute("open", "");
     menuBtn.setAttribute("aria-expanded", "true");
   }
@@ -2428,6 +2524,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     else if (m === "caught" && t) openCaught(t, false);
     else if (m === "ledger") go($("v-ledger").hidden ? "ledger" : "deck");
     else if (m === "collections") openCollections("menu");
+    else if (m === "focus") openFocus();
     else if (m === "settings") openSettings();
   });
   menuBtn.addEventListener("click", function () { if (menu.open) closeMenu(); else openMenu(); });
@@ -2438,7 +2535,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   document.addEventListener("keydown", function (e) {
     if (openSheet || menu.open || isTyping(document.activeElement) || e.metaKey || e.ctrlKey || e.altKey) return;
     var k = e.key, t = onCard(), done = true;
-    if (t && k === "ArrowLeft") act("skip");
+    if (t && k === "ArrowLeft") requestSkip();
     else if (t && k === "ArrowUp") act("keep");
     else if (t && k === "ArrowRight") act("shed");
     else if (t && (k === "e" || k === "E")) openEdit(t);

@@ -5,30 +5,35 @@ A small phone app for turning the principles you collect into how you actually l
 You write down a principle you want to live by ("the hard conversation is usually shorter than the dread before it"), or load a starter deck. Scales keeps putting it in front of you. Each time, you mark it Testing it, Not today, or Living it. Once you act on it without being reminded, it moves to your Living it record with a line on where it showed up.
 
 <p>
-  <img src="docs/deck.png" width="260" alt="Deck view in the Black look: a principle set heavy, the hold ring and the three moves">
-  <img src="docs/ledger.png" width="260" alt="Ledger view: the weight key and principles grouped as Avoiding, Working on and Nearly lived">
-  <img src="docs/deck-light.png" width="260" alt="Deck view in the White look, mid-hold, with the first words inked">
+  <img src="docs/deck.png" width="200" alt="The deck at rest: one principle and the ring">
+  <img src="docs/deck-push.png" width="200" alt="After letting go early: a line pushing back, and the ring again">
+  <img src="docs/deck-reflect.png" width="200" alt="After holding through: a question to sit with, then Next principle">
+  <img src="docs/ledger.png" width="200" alt="Ledger view: the weight key and principles grouped as Avoiding, Working on and Nearly lived">
 </p>
 
 ## How it works
 
-**The deck.** One principle on screen at a time. Three moves:
+**The deck.** Quiet until asked. At rest the screen holds one principle and a ring, nothing else. Hold the ring and the words step back and ink in again one by one; the line under the ring says what letting go would do right now.
 
 | Move | Hold the ring | What happens |
 |---|---|---|
-| Not today | let go early | Its count goes up by 1. The principle rests, then comes back more often, and is set heavier. |
-| Testing it | hold until the ring closes (about 2.4 seconds) | Counts as an inspection. If you stayed on the principle at least 8 seconds, the not today count drops by 1. |
+| Not today | let go early | The app pushes back once: a line to make you think twice, and the ring again. Hold again to stay with it. Let go early a second time, or tap Set aside anyway, and it is set aside: its count goes up by 1, it rests, then comes back more often and set heavier. |
+| Testing it | hold until the ring closes (about 2.4 seconds) | A question to sit with, where the principle came from, and Talk it through with today's voice. After 8 seconds the test counts against Not today (the count drops by 1) and Next principle appears. Nothing moves on by itself. |
 | Living it | slide up while holding | Opens a short form for where it showed up, then moves the principle to your record. |
 
-As you hold, the principle's words ink in one by one and the move your release would make is underlined under the ring. A quick tap does nothing, so a stray touch never rests a principle. The same three moves are three plain buttons under the ring, and the arrow keys (left, up, right). Everything else (Capture, Edit, the Ledger, Collections, Settings) is in the menu at the top right. With a keyboard, N captures, E edits, L switches between the deck and the Ledger, M opens the menu, and comma opens Settings.
+A quick tap on the ring does nothing, so a stray touch never rests a principle. The three moves are also buttons for VoiceOver and the keyboard, and the arrow keys (left, up, right). Everything else (Capture, Edit, Show, the Ledger, Collections, Settings) is in the menu at the top right. With a keyboard, N captures, E edits, L switches between the deck and the Ledger, M opens the menu, and comma opens Settings.
+
+**The two lines.** Each principle keeps two written lines: one that pushes back when you let go early, and one to reflect on after you hold through. Both are written in the background while the principle is on screen, so they are ready when needed, and kept on the principle. Coming back to it after a Not today shows the same lines again; a principle that reaches three Not today gets its pushback rewritten once, sharper. Moving on from a Testing it spends both, so the next time it comes up it gets new ones. Changing the wording does the same. Press and hold a written line to keep it as a principle of its own.
+
+**Show.** The deck draws from every collection by default. Show, in the menu, draws it from one; the chosen collection is named at the top of the deck.
 
 **Editing.** Press and hold the principle, choose Edit this principle in the menu (or press E), or Edit on any Ledger row, to change a principle's wording or its details: collection, title, author and where it came from. Its counts, dates and weight are kept. Changing the wording of a principle still in the deck gets it a fresh AI line; changing only details keeps the line it has. A lived principle keeps its Living it date, evidence and last line either way. Principles can be up to 1,500 characters, long enough for a short poem. The Capture sheet has the same details under More details, collapsed by default.
 
 **Weight.** A principle is set heavier each time you set it aside: a new one is regular weight, and four or more Not today make it the boldest the type goes. Testing it brings the count down, so the words lighten as the avoidance is worked off.
 
-**Where it came from.** Under each principle: its collection, where it came from, its author, and how often it has been set aside. Settings > Look > Show where it came from turns off the collection, origin and author.
+**Where it came from.** While you test a principle: its collection, where it came from and its author. Settings > Look > Show where it came from turns these off.
 
-**Collections.** A collection groups principles, such as Poems or Stoic. Typing a collection that matches an existing one apart from capitalization saves it under the existing spelling, so collections don't split. Settings > Manage collections lists every collection with its count; tap one to rename it, merge it into another by renaming it to that name, or remove it. Only the collection changes; everything else on each principle is kept.
+**Collections.** A collection groups principles, such as Poems or Stoic, and Show uses them to focus the deck. Typing a collection that matches an existing one apart from capitalization saves it under the existing spelling, so collections don't split. Settings > Manage collections lists every collection with its count; tap one to rename it, merge it into another by renaming it to that name, or remove it. Only the collection changes; everything else on each principle is kept.
 
 **Rest and the front of the stack.** Not today sets a principle aside for four days by default, so a reflex skip each morning can't become a habit. Settings > Deck > Rest after Not today changes it, from 1 to 7 days, starting with the next Not today. A Scales day runs from 4:00 AM to 4:00 AM, so a late-night session counts as the day it started in. On the morning it returns, every principle set aside since its last turn comes up first, once each: most avoided first, then the one waiting longest. After its turn it rejoins the weighted draw. If everything is resting, the deck says Nothing left today and when the next principle returns, with Show anyway to bring resting principles back until the day ends. Show on a Ledger row opens that principle on the deck, even while it rests.
 
@@ -105,7 +110,7 @@ To check the key, tap **Test key** under AI lines. It sends one tiny request and
 
 **Black and White (1.33.0).** Two flat matte surfaces, Black (the default) and White, chosen in Settings > Look, with a faint grain. No cards, raised keys, glass, shadows or rounded panels: the type carries the page, and lines are hairlines. The one filled control on each sheet is solid ink. One face, Geist, self-hosted so it looks the same offline, set at the weight each principle has earned.
 
-The deck has one gesture, the hold. The principle sits on the page at its weight with the AI line under it, and the ring sits below. Living it ends with a thin ring of ink that opens from the words. With Reduce Motion on, the ink, the springs, the ring and the view transitions are left out.
+The deck has one gesture, the hold, and shows only what the moment needs: the principle and the ring at rest, the pushback after letting go early, the reflection after holding through (1.34.0). Living it ends with a thin ring of ink that opens from the words. With Reduce Motion on, the ink, the springs, the ring and the view transitions are left out.
 
 Earlier looks: 1.27.0 put the principle on a tilting card with a frosted tab bar; 1.28.0 and 1.29.0 followed a serif, front-page system with six color themes; 1.30.0 to 1.32.1 were Matte, with raised keys, frosted glass and swipes. 1.33.0 replaced them. A look chosen before keeps working: Matte opens as Black and Light as White.
 
@@ -132,7 +137,9 @@ No build step and no runtime dependencies. The type face is served from `fonts/`
 - **Network first service worker.** Updates show up the next time the app opens; the cache only covers being offline. API calls are never cached.
 - **Built-in questions as the floor.** The app is fully usable with no key and no connection. With a key, the next card's line is fetched while the current card is read, and a built-in line is shown only if the model cannot supply a valid one (25 words or fewer after trimming to whole sentences, no exclamation mark, not a restatement of a long principle).
 - **Not today cap at 4x.** Without a cap, one avoided principle would take over the deck.
-- **Dwell check on Testing it.** A quick hold should not erase a Not today. Eight seconds on the principle is the bar.
+- **Eight seconds before Next.** A quick test should not erase a Not today. The reflect screen holds Next back for eight seconds, and only then does the test lower the count.
+- **One pushback, not two.** Letting go early a second time sets the principle aside. A second warning would nag.
+- **Lines reused, not rewritten.** The same pushback each time is cheaper and honest about the record; it is rewritten once at three Not today so it does not go stale, and both lines are rewritten after a test.
 - **A tap is not a move.** A press shorter than 0.3 seconds on the ring does nothing, because Not today rests a principle for days.
 
 ## Run it locally

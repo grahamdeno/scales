@@ -30,7 +30,7 @@ flowchart TB
         subgraph ui["Screens"]
             direction LR
             header["Top and menu<br/>day and date / menu: Capture, Edit, Ledger, Collections, Settings"]
-            deck["Deck view<br/>collection keys, the principle at its weight, AI line with Keep, the hold ring and three move buttons, first-use tip"]
+            deck["Deck view<br/>at rest the principle at its weight and the hold ring; push and reflect screens with the line, Talk it through and Next; first-use tip"]
             ledger["Ledger view<br/>gauge, capsules, Pushing back tiles, 12 week grid, In deck / Living it"]
             sheets["Sheets (modal dialog)<br/>Capture, Edit, Living it, Evidence, Keep, Collections, Settings"]
         end
@@ -76,9 +76,12 @@ flowchart TB
 ```mermaid
 stateDiagram-v2
     [*] --> Active: Capture sheet or starter deck<br/>all counts start at 0
-    Active --> Resting: Not today<br/>count +1, weight up, owed a turn at the front
+    Active --> Push: Let go early<br/>push line, ring again
+    Push --> Active: Hold through<br/>Testing it
+    Push --> Resting: Let go early again or Set aside anyway<br/>count +1, weight up, owed a turn at the front
     Resting --> Active: 4:00 AM after the rest (4 days by default)<br/>leads once, most avoided first
-    Active --> Active: Testing it<br/>inspections +1, count -1 after 8s on card
+    Active --> Reflect: Hold through / Testing it<br/>inspections +1
+    Reflect --> Active: Next, after 8s<br/>count -1 at 8s, lines spent
     Active --> Nudge: 3 in a row
     Nudge --> Active: Not yet<br/>streak reset
     Active --> LivingSheet: Hold and lift / Living it
@@ -95,7 +98,7 @@ stateDiagram-v2
     Active --> [*]: Delete in Ledger
 ```
 
-## One card on screen
+## One principle on screen
 
 ```mermaid
 sequenceDiagram
@@ -106,30 +109,28 @@ sequenceDiagram
     participant A as Anthropic API
 
     D->>D: show queued principle, or pickFrom() weighted with cooldown
+    D-->>U: the principle and the ring, nothing else
     D->>L: requestLine(principle)
-    alt no API key
-        L-->>U: built-in line at once
-    else line already prefetched for this exact text
-        L-->>U: model line at once
-    else not ready yet
-        L-->>U: "Considering..." placeholder
-        L->>A: prompt with principle text, not today count, days in deck
-        A-->>L: short line
-        L->>L: clean(), fit() to 25 words, vet() (no exclamation, no echo of long text), up to 3 tries
-        L-->>U: model line, or a built-in line if none was usable
+    L->>A: write the push and reflect lines if missing or stale (lineFresh), and the next principle's
+    A-->>L: short lines, vetted, kept on the principle (keepLine)
+    U->>D: hold the ring and let go
+    alt let go early
+        D-->>U: push screen: push line, ring again (built-in line if none kept and no key)
+        U->>D: hold through, or let go early again / Set aside anyway
+    else hold through
+        D-->>U: reflect screen: reflect line, Talk it through; Next after 8s
+        U->>D: Next
+        D->>S: count -1 at 8s, lines spent (spendLines)
     end
-    L->>S: remember shown line to avoid repeats
-    L->>A: prefetch the line for the next queued principle
-    U->>D: hold the ring: let go early, hold through, or lift
     D->>S: save counts, log today's activity
-    D->>D: flyOut() then show the queued principle
+    D->>D: show the queued principle
 ```
 
 ## Storage keys
 
 | Key | Holds |
 |---|---|
-| `scales.thoughts.v1` | Every principle by id: text, collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai`; `talks` (last five weigh-ins, each with its voice, move, line and replies); `acts` (smallest acts by day), `caught` (Caught it by day), `checkins`, `skips_on` (days set aside, for the weekly review) |
+| `scales.thoughts.v1` | Every principle by id: text, `lines` (push and reflect, each with the wording and Not today count it was written for), collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai`; `talks` (last five weigh-ins, each with its voice, move, line and replies); `acts` (smallest acts by day), `caught` (Caught it by day), `checkins`, `skips_on` (days set aside, for the weekly review) |
 | `scales.activity.v1` | Per Scales day counts: `i` weighed, `s` Living it, `c` Caught it; last 120 days |
 | `scales.prefs.v1` | Today's set (`day`: moves, focus, check-in), set size, the Testing it count, the week's review state, look, rest length, Show where it came from, AI lines on or off, chosen voices and names added, the collection key, Show anyway's day, first-use tip seen |
 | `scales.apikey.v1` | Anthropic API key, only if saved |
@@ -151,7 +152,9 @@ sequenceDiagram
 | Press and hold to edit | 550 ms | Longer than a tap, shorter than a deliberate wait |
 | Front of the stack | once per Not today | Most avoided first, then longest waiting since last shown |
 | Cooldown | last 3 shown (last 1 in a deck of 3 or fewer) | No back to back repeats |
-| Dwell check | 8 seconds | A quick Testing it does not erase a Not today |
+| Reflect (`REFLECT_SEC`) | 8 seconds before Next | A quick Testing it does not erase a Not today; the wait is visible as a filling line |
+| Pushback | once per showing | A second early release sets it aside; a second warning would nag |
+| Lines (`lineFresh`) | kept per principle, rewritten after a test, a wording change, or once at 3 Not today | Reused for cost and consistency, refreshed so the pushback does not go stale |
 | Nudge | 3 Testing it in a row | Prompts the Living it question |
 | Line length | 25 words | Room for one complete consideration, still readable at a glance |
 | Model output budget | 1024 tokens | The model may reason before answering, and reasoning counts against the budget |
@@ -175,7 +178,7 @@ sequenceDiagram
 
 `node --test` runs `tests/core.test.js` with no dependencies. It covers weighting, the selection cooldown, answer cleanup and checks (including the short-principle case that once discarded every model line), rest and the front of the stack, undo, collections, keeping an AI line, the hold and Ledger groups, the page wiring for the Black and White design, and the version and offline-cache wiring. GitHub Actions runs the same command on every push to `main`.
 
-## Design system (1.33.0, Black and White)
+## Design system (1.33.0, Black and White; quiet deck 1.34.0)
 
 Colors are custom properties on `:root`, with a second set under `:root[data-look="light"]` (stored as `look: "light"`, shown as White; the default is shown as Black): `--paper` (ground), `--deep` (a field or the selected choice), `--ink`, `--muted`, `--faint`, `--rest` (words not yet inked), `--line` (hairlines), `--danger`. `--brass`, `--violet` and `--onBrass` remain as aliases of ink and paper so older markup reads correctly. Corners are square (`--r-*` are 0). There are no shadows, gradients or backdrop blur.
 
@@ -187,4 +190,4 @@ Colors are custom properties on `:root`, with a second set under `:root[data-loo
 | `.frost` | ground with a hairline | the menu |
 | `.primary` | solid ink | one per sheet |
 
-The deck's words are one `<span class="w">` each (`wordsHtml`), so the hold can ink them in turn (`.thought.ink .w.in`). The ring (`#holdRing`) is pointer only and hidden from assistive tech; the three buttons under it (`data-move`) are the accessible path and do the same moves with one tap.
+The deck's words are one `<span class="w">` each (`wordsHtml`), so the hold can ink them in turn (`.thought.ink .w.in`). The ring (`#holdRing`) is pointer only and hidden from assistive tech; the three buttons (`data-move`, visually hidden until focused) are the accessible path. The deck has three stages (`phase`): rest, push and reflect; a principle mid-push or mid-reflect stays on screen even when that move ended the day's set.

@@ -481,7 +481,7 @@ test("an undo point is a copy: later changes do not leak in, and applying it twi
 
 test("the page wires sheets as modal dialogs, Undo and the coach (1.26.0)", () => {
   const html = read("index.html");
-  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 13, "every sheet is a <dialog>");
+  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 14, "every sheet is a <dialog>");
   assert.doesNotMatch(html, /<section class="sheet/, "no sheet left as a hidden section");
   assert.match(html, /\.showModal\(\)/);
   for (const id of (html.match(/aria-labelledby="(sheet\w+Title)"/g) || []).map((m) => m.slice(17, -1))) {
@@ -564,7 +564,7 @@ test("swipeIntent keeps the commit rules and reads the direction for the glow", 
 });
 
 // ---------- 1.30.0: Matte, the menu, and keeping an AI line ----------
-const css = () => { const html = read("index.html"), i = html.indexOf("<style>\n/* Layout (1.33.0)"); assert.ok(i >= 0, "Black and White style block"); return html.slice(i, html.indexOf("</style>", i)); };
+const css = () => { const html = read("index.html"), i = html.indexOf("<style>\n/* Layout (1.34.0)"); assert.ok(i >= 0, "Black and White style block"); return html.slice(i, html.indexOf("</style>", i)); };
 const rule = (c, sel) => { const i = c.indexOf("\n" + sel + " {"); assert.ok(i >= 0, sel + " rule"); return c.slice(i, c.indexOf("}", i)); };
 
 test("rest after Not today is a setting from 1 to 7 days, 4 by default (1.30.0)", () => {
@@ -630,29 +630,38 @@ test("the Keep sheet offers add or replace, and both can be undone", () => {
   assert.match(html, /C\.keepReplace\(all\(\), t, keepLine, now\)/);
   assert.match(html, /undoable\("Added to "/);
   assert.match(html, /undoable\("Wording replaced\. Earlier wording kept\.", u\)/);
-  assert.match(html, /var k = \$\("keepBtn"\); if \(k\) k\.hidden = !l\.ai;/, "Keep shows only on model lines");
+  assert.match(html, /e\.target\.closest\("#aiLine"\) && shown && shown\.ai\) \? "keep"/, "Keep is offered only on model lines, by pressing and holding the line");
   assert.match(html, /data-r="keep">Keep line/, "Keep is offered on the Ledger record too");
   assert.match(html, /Earlier wording: /, "the Ledger shows the wording a principle had");
   assert.match(html, /Kept from an AI line on /);
 });
 
-test("the three moves: hold the ring, three plain buttons, arrow keys; press and hold the words edits (1.33.0)", () => {
+test("the three moves: hold the ring, buttons for VoiceOver and keys; Not today pushes back once (1.34.0)", () => {
   const html = read("index.html");
   for (const m of ["skip", "keep", "shed"]) assert.match(html, new RegExp('data-move="' + m + '"'), m + " button");
-  assert.match(html, /act\(k\.getAttribute\("data-move"\)\)/);
-  assert.match(html, /k === "ArrowLeft"\) act\("skip"\)/);
+  assert.match(html, /class="moves sr" id="keys"/, "the buttons are for VoiceOver and the keyboard");
+  assert.match(html, /if \(m === "skip"\) requestSkip\(\); else act\(m\);/);
+  assert.match(html, /k === "ArrowLeft"\) requestSkip\(\)/);
   assert.match(html, /k === "ArrowUp"\) act\("keep"\)/);
   assert.match(html, /k === "ArrowRight"\) act\("shed"\)/);
   assert.match(html, /if \(openSheet \|\| menu\.open \|\| isTyping\(document\.activeElement\)/, "shortcuts never fire while typing, in a sheet or in the menu");
   assert.match(html, /var HOLD_MS = 550;/);
-  assert.match(html, /if \(t\) \{ coachSeen\(\); openEdit\(t\); \}/);
+  assert.match(html, /if \(m === "edit"\) openEdit\(t\); else if \(shown && shown\.ai\) openKeep\(t, shown\.text\);/);
   assert.match(html, /id="holdRing" aria-hidden="true"/, "the ring is pointer only; the buttons are the accessible path");
   assert.match(html, /var o = C\.holdOutcome\(Date\.now\(\) - t0, dy\)/, "the release is read by core.js");
   assert.match(html, /toast\("Hold the ring\. Let go early for Not today\."\)/, "a tap explains itself and moves nothing");
+  // Push: the first Not today shows the line; the second, or Set aside anyway, commits. No second pushback.
+  assert.match(html, /if \(phase === "push"\) \{ act\("skip"\); return; \}/);
+  assert.match(html, /coachSeen\(\); phase = "push"; renderDeck\(\); showLine\(t, "push"\);/);
+  assert.match(html, /\$\("setAside"\)\.onclick = function \(\) \{ act\("skip"\); \};/);
+  // Reflect: Next only after REFLECT_SEC, and only then does the test lower the Not today count.
+  assert.match(html, /reflectT = setTimeout\(finishReflect, C\.REFLECT_SEC \* 1000\)/);
+  assert.match(html, /if \(t\.skip_count > 0\) \{ t\.skip_count--; reflectLighter = true; save\(t\); \}/);
+  assert.match(html, /id="reflNext">Next principle</);
+  assert.match(html, /if \(t\) \{ C\.spendLines\(t\); save\(t\); \}/, "moving on from a test spends the lines");
+  assert.doesNotMatch(html, /dwell >= DWELL_SEC/, "the old dwell check is replaced by the reflect screen");
   assert.match(html, /aria-describedby="cardHow"/);
-  assert.doesNotMatch(html, /id="tagSkip"|C\.swipeIntent\(/, "the swipes are gone from the deck");
-});
-test("everything else is in a modal menu at the top right (1.30.0)", () => {
+});test("everything else is in a modal menu at the top right (1.30.0)", () => {
   const html = read("index.html");
   assert.match(html, /<header class="top">[\s\S]*id="todayLbl"[\s\S]*id="backDeck"[^>]*hidden[\s\S]*id="menuBtn"[^>]*aria-haspopup="dialog"[^>]*aria-expanded="false"[^>]*aria-controls="menu"[\s\S]*<\/header>/);
   assert.match(html, /<dialog class="menu frost" id="menu"/);
@@ -685,22 +694,28 @@ test("Black and White: one face, two flat looks, no shadows, glass or rounded pa
   assert.match(html, /function applyLook\(\)/);
   assert.match(html, /\.seg \[data-look\]/);
 });
-test("the principle sits on the page at its weight, its words inked as the ring is held (1.33.0)", () => {
+test("at rest only the principle and the ring; lines appear on push and reflect (1.34.0)", () => {
   const c = css(), html = read("index.html");
   const card = rule(c, ".card");
   assert.doesNotMatch(card, /background|box-shadow|border-radius|border:/, "no card chrome");
   assert.match(html, /id="words" style="font-weight:' \+ C\.inkWeight\(t\)/, "weight from the record");
   assert.match(html, /function wordsHtml\(text\)/);
-  assert.match(c, /\.thought\.ink \.w \{ color:var\(--rest\);/);
-  assert.match(c, /\.thought\.ink \.w\.in \{ color:var\(--ink\); \}/);
+  assert.match(c, /\.thought\.ink \.w \{ color:var\(--ink\);/, "full ink at rest");
+  assert.match(c, /\.thought\.ink\.holding \.w\.in \{ color:var\(--ink\); \}/);
+  const rest = html.slice(html.indexOf("    v.innerHTML = '<article class=\"card' + (enter"), html.indexOf("  // The reflect screen's foot"));
+  assert.doesNotMatch(rest, /aiLine|whereHtml|chipsHtml|footHtml/, "nothing but the principle and the ring at rest");
+  assert.doesNotMatch(html, /id="chips"|class="chips-row"/, "collections are off the home screen");
+  assert.match(html, /data-m="focus" id="mFocus">Show/, "Show is in the menu");
+  assert.match(html, /<dialog class="sheet" id="sheetFocus"/);
   assert.match(html, /function whereHtml\(t\)/);
   assert.match(html, /if \(showWhere\(\)\) \{/);
   assert.match(html, /function showWhere\(\) \{ return prefs\.show_where !== false; \}/, "on by default");
   assert.match(html, /id="whereToggle" role="switch"/);
   assert.match(html, /id="aiToggle" role="switch"/);
   assert.match(html, /sample = prefs\.ai_off \? null : makeSampler\(savedKey\)/, "AI lines off uses the built-in questions");
-});
-test("the Ledger: a key, three weight groups, Lived folded away, Your week and the grid (1.33.0)", () => {
+  assert.match(html, /\["push", "reflect"\]\.forEach\(function \(k\) \{ if \(!C\.lineFresh\(t, k\)\) fetchLine\(t, k\); \}\);/, "both lines fetched ahead, only when missing or stale");
+  assert.match(html, /if \(live && live\.text === of\) \{ C\.keepLine\(live, kind, s\); save\(live\); \}/, "a written line is kept on the principle");
+});test("the Ledger: a key, three weight groups, Lived folded away, Your week and the grid (1.33.0)", () => {
   const html = read("index.html");
   for (const id of ["lSummary", "openWeek", "cal", "ledgerList", "sheetRow", "rowTl", "rowActs", "rowHist"]) assert.match(html, new RegExp('id="' + id + '"'), id);
   assert.doesNotMatch(html, /id="gauge"|id="caps"|class="pbc|id="segDeck"|id="segShed"/, "the gauge, tiles and list switch are gone");
@@ -734,7 +749,6 @@ test("touch targets: the ring, the move buttons, chips and menu rows are at leas
   assert.match(rule(c, ".iconbtn"), /width:44px; height:44px;/);
   assert.match(rule(c, ".ring"), /width:96px; height:96px;/);
   assert.match(rule(c, ".key"), /min-height:48px;/);
-  assert.match(rule(c, ".chip"), /height:40px;/);
   assert.match(rule(c, ".menu button"), /min-height:48px;/);
   assert.match(rule(c, ".lrow2"), /min-height:48px;/);
 });
@@ -910,7 +924,7 @@ test("the page wires the day: moves counted, undo restores the day, check-in fir
   assert.match(html, /p\.day = JSON\.parse\(JSON\.stringify\(day\)\)/, "the undo point holds the day");
   assert.match(html, /if \(point\.day\) \{ day = JSON\.parse/);
   assert.match(html, /C\.checkinDue\(day, new Date\(\)\) && renderCheckin\(\)\) return;/);
-  assert.match(html, /if \(C\.askAct\(prefs\.tests\)\)/);
+  assert.match(html, /pendingAct = C\.askAct\(prefs\.tests\);/, "the smallest act is asked when you move on from the reflect screen");
   assert.match(html, /C\.isReviewDay\(td\) && prefs\.week_seen !== td/);
   for (const id of ["sheetCaught", "sheetAct", "sheetWeek", "setOut", "openShortcuts", "mCaught"]) assert.match(html, new RegExp('id="' + id + '"'), id);
   assert.match(html, /if \(kind === "shed"\) d\.s\+\+; else if \(kind === "caught"\) d\.c = \(d\.c \|\| 0\) \+ 1; else d\.i\+\+;/);
@@ -947,4 +961,27 @@ test("ledgerGroup: avoiding at three Not today, nearly lived once worked clear a
   assert.equal(C.ledgerGroup(A("a", { reflect_count: 2, consecutive_reflects: 2 }), td), "nearly");
   assert.equal(C.ledgerGroup(A("a", { caught: [{ day: "2026-10-20", text: "" }] }), td), "nearly");
   assert.equal(C.ledgerGroup(A("a", { skip_count: 1, caught: [{ day: "2026-10-20", text: "" }] }), td), "working", "an open Not today keeps it in progress");
+});
+
+// ---------- 1.34.0: quiet until asked ----------
+test("two kept lines: reused until a test or a wording change; pushback sharpens once at Avoiding", () => {
+  const t = A("a", { text: "Do the hard thing first.", skip_count: 1 });
+  assert.equal(C.lineFresh(t, "push"), false, "nothing kept yet");
+  C.keepLine(t, "push", "What does this skip cost?"); C.keepLine(t, "reflect", "What is the next hour for?");
+  assert.equal(C.lineFresh(t, "push"), true);
+  assert.equal(C.lineFresh(t, "reflect"), true);
+  t.skip_count = 2;
+  assert.equal(C.lineFresh(t, "push"), true, "another Not today reuses the line");
+  t.skip_count = 3;
+  assert.equal(C.lineFresh(t, "push"), false, "entering Avoiding refreshes the pushback once");
+  assert.equal(C.lineFresh(t, "reflect"), true, "the reflection is unaffected");
+  C.keepLine(t, "push", "Sharper.");
+  t.skip_count = 5;
+  assert.equal(C.lineFresh(t, "push"), true, "and only once");
+  t.text = "Do the hard thing first, every day.";
+  assert.equal(C.lineFresh(t, "reflect"), false, "a wording change writes new lines");
+  t.text = "Do the hard thing first.";
+  C.spendLines(t);
+  assert.deepEqual(t.lines, {}, "Testing it spends both");
+  assert.equal(C.REFLECT_SEC, 8);
 });
