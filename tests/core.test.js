@@ -640,7 +640,7 @@ test("the three moves: hold the ring, buttons for VoiceOver and keys; Not today 
   const html = read("index.html");
   for (const m of ["skip", "keep", "shed"]) assert.match(html, new RegExp('data-move="' + m + '"'), m + " button");
   assert.match(html, /class="moves sr" id="keys"/, "the buttons are for VoiceOver and the keyboard");
-  assert.match(html, /if \(m === "skip"\) requestSkip\(\); else if \(m === "later"\) saveLater\(\); else act\(m\);/);
+  assert.match(html, /if \(m === "skip"\) requestSkip\(\); else if \(m === "later"\) saveLater\(\); else if \(m === "peek"\) togglePeek\(\); else act\(m\);/);
   assert.match(html, /k === "ArrowLeft"\) requestSkip\(\)/);
   assert.match(html, /k === "ArrowUp"\) act\("keep"\)/);
   assert.match(html, /k === "ArrowRight"\) act\("shed"\)/);
@@ -650,7 +650,7 @@ test("the three moves: hold the ring, buttons for VoiceOver and keys; Not today 
   assert.match(html, /id="holdRing" aria-hidden="true"/, "the ring is pointer only; the buttons are the accessible path");
   assert.match(html, /var r = e\.target\.closest\("#holdZone"\);\s*if \(r && !e\.target\.closest\("button"\)\)/, "the whole hold area starts a hold, not just the ring");
   // Push: the first Not today shows the line; the second, or Set aside anyway, commits. No second pushback.
-  assert.match(html, /if \(phase === "push"\) \{ act\("skip"\); return; \}/);
+  assert.match(html, /if \(phase === "push" \|\| peeked\(\)\) \{ act\("skip"\); return; \}/);
   assert.match(html, /coachSeen\(\); phase = "push"; renderDeck\(\); showLine\(t, "push"\);/);
   // Reflect: Next only after REFLECT_SEC, and only then does the test lower the Not today count.
   assert.match(html, /reflectT = setTimeout\(finishReflect, C\.REFLECT_SEC \* 1000\)/);
@@ -1307,4 +1307,13 @@ test("Capture and Edit are lifted above the keyboard like the reply sheet", () =
   assert.match(html, /d\.id === "sheetReply" \|\| d\.classList\.contains\("writesheet"\)/);
   assert.match(html, /show\("sheetCapture", fitReply\); fitReply\(\);/);
   assert.match(html, /show\("sheetEdit", fitReply\); fitReply\(\);/);
+});
+
+// ---------- 1.53.0: tap to see the line ----------
+test("a tap shows the line; once read, Skip commits and Later is offered", () => {
+  const html = read("index.html");
+  assert.match(html, /if \(phase === "push" \|\| peeked\(\)\) \{ act\("skip"\); return; \}/);
+  assert.match(html, /var push = phase === "push" \|\| peeked\(\)/);
+  assert.match(html, /if \(peeked\(\)\) showLine\(t, "push"\)/);
+  assert.match(html, /data-move="peek"/);
 });

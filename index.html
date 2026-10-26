@@ -887,7 +887,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   </div>
 
   <h4 class="sec3">How it works</h4>
-  <p class="note">Press and hold anywhere on the bottom of the screen. After half a second your three choices open: Living it, Sit with it and Skip. Slide onto one and let go, or let go and tap one. Letting go never chooses by itself: slide off the list or tap outside it to close it. Skip asks you once first, with a line to reconsider. Sit with it shows a real quote from today’s voice and Talk it through, and Next after eight seconds lowers the skip count. Press and hold the principle to edit it, or a line or quote to keep it. The heavier a principle is set, the more often you have skipped it. Show, in the menu, draws the deck from one collection. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
+  <p class="note">Press and hold anywhere on the bottom of the screen. After half a second your three choices open: Living it, Sit with it and Skip. Slide onto one and let go, or let go and tap one. Letting go never chooses by itself: slide off the list or tap outside it to close it. Tap the principle to see its line; then Skip rests it straight away, and Later is offered. Without the tap, Skip asks you once first, with that line. Sit with it shows a real quote from today’s voice and Talk it through, and Next after eight seconds lowers the skip count. Press and hold the principle to edit it, or a line or quote to keep it. The heavier a principle is set, the more often you have skipped it. Show, in the menu, draws the deck from one collection. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
   <p class="note" id="howRest"></p>
 
   <h4 class="sec3">About</h4>
@@ -1480,8 +1480,20 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function requestSkip() {
     dropUndo();
     var t = onCard(); if (!t || phase === "reflect") return;
-    if (phase === "push") { act("skip"); return; }
+    if (phase === "push" || peeked()) { act("skip"); return; }
     coachSeen(); phase = "push"; renderDeck(); showLine(t, "push");
+  }
+  // Tap to see the line (1.53.0): a tap on the principle at rest shows the line Skip would show, and changes
+  // nothing else. Once it has been read, Skip in the choices rests the principle straight away (the pushback
+  // has been seen) and Later joins the choices. A principle skipped without tapping still asks first.
+  var peekId = null;
+  function peeked() { return phase === "rest" && !!current && peekId === current; }
+  function togglePeek() {
+    var t = onCard(); if (!t || phase !== "rest") return;
+    coachSeen();
+    peekId = peeked() ? null : t.id;
+    renderDeck();
+    if (peeked()) showLine(t, "push");
   }
   // Later (1.42.0): not a skip. It waits until this evening, then opens straight to Sit with it.
   var fromLater = false;
@@ -1640,7 +1652,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // alone. The three moves are also buttons for VoiceOver and the keyboard (#keys, shown on focus).
   var RING_R = 46, RING_C = 2 * Math.PI * RING_R;
   function holdHtml(caption) {
-    var push = phase === "push", n = restDays();
+    var push = phase === "push" || peeked(), n = restDays();
     var rows = [
       ["shed", "Living it", "I act on it now"],
       ["keep", "Sit with it", "A quote, then Next"],
@@ -1661,6 +1673,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       '<circle class="arc" id="holdArc" cx="48" cy="48" r="' + RING_R + '" stroke-dasharray="' + RING_C.toFixed(1) + '" stroke-dashoffset="' + RING_C.toFixed(1) + '"></circle></svg><i></i></div>' +
       '<p class="holdlbl" id="holdLbl" data-rest="' + esc(caption || "") + '" aria-hidden="true">' + esc(caption || "") + "</p>" +
       '<div class="moves sr" id="keys" role="group" aria-label="Moves">' +
+      (phase === "rest" ? '<button type="button" class="key" id="kPeek" data-move="peek"><b>' + (push ? "Hide the line" : "Show the line") + "</b></button>" : "") +
       '<button type="button" class="key" id="kSkip" data-move="skip"><b>' + (push ? "Skip it" : "Skip") + "</b></button>" +
       '<button type="button" class="key" id="kKeep" data-move="keep"><b>Sit with it</b></button>' +
       (push && C.canLater(all(), cur) ? '<button type="button" class="key" id="kLater" data-move="later"><b>Later</b></button>' : "") +
@@ -1747,7 +1760,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       (fold ? '<small class="foldhint" id="foldHint" aria-hidden="true">Tap to read it all</small>' : "");
     var line = '<div class="lineWrap"><p class="ai-p" id="aiLine"></p><small class="ai-src" id="aiSrc"></small>' +
       '<div class="replies" id="replies"></div></div>';
-    var how = '<span class="sr" id="cardHow">Use the Skip, Sit with it and Living it buttons, or press and hold the bottom of the screen to open them. Press and hold the principle to edit it.</span>';
+    var how = '<span class="sr" id="cardHow">Use the Skip, Sit with it and Living it buttons, or press and hold the bottom of the screen to open them. Tap the principle to see its line. Press and hold the principle to edit it.</span>';
     if (phase === "reflect") {
       v.innerHTML = '<article class="card reflect" id="card" aria-label="Sit with it" aria-describedby="cardHow">' +
         '<div class="phase"><span>' + (fromLater ? "Saved from earlier" : "Sitting with it") + "</span></div>" +
@@ -1769,6 +1782,14 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         '<div class="phase"><span>Skip this one?</span></div>' +
         '<div class="mid">' + words + line + (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") + "</div>" + how + "</article>" +
         holdHtml("Press and hold to choose");
+      paintLine();
+      return;
+    }
+    if (peeked()) {
+      v.innerHTML = '<article class="card peek" id="card" aria-label="Current principle, with its line" aria-describedby="cardHow">' +
+        '<div class="mid">' + words.replace('id="words"', 'id="words"').replace('class="thought plain', 'class="thought plain small') + line +
+        (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") + "</div>" + how + "</article>" +
+        holdHtml(restCaption());
       paintLine();
       return;
     }
@@ -1797,11 +1818,18 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var w = e.target.closest("#words.fold"); if (!w) return;
     w.classList.remove("fold"); var h = $("foldHint"); if (h) h.remove();
   });
+  // A tap on the principle at rest shows its line; a second tap hides it. Taps on the line (Reply), its
+  // links and buttons keep their own meaning, and the release of a press and hold (Edit) is not a tap.
+  $("v-deck").addEventListener("click", function (e) {
+    if (openSheet || phase !== "rest" || choicesOpen) return;
+    if (!e.target.closest("#card") || e.target.closest(".lineWrap, a, button, #coach")) return;
+    togglePeek();
+  });
   // The buttons do what the ring does.
   $("v-deck").addEventListener("click", function (e) {
     var k = e.target.closest("[data-move]"); if (!k || !onCard()) return;
     var m = k.getAttribute("data-move");
-    if (m === "skip") requestSkip(); else if (m === "later") saveLater(); else act(m);
+    if (m === "skip") requestSkip(); else if (m === "later") saveLater(); else if (m === "peek") togglePeek(); else act(m);
   });
 
   // ---------- first-swipe tip ----------
@@ -1814,7 +1842,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       "<ul><li>Your three choices open: <b>Living it</b>, <b>Sit with it</b> and <b>Skip</b>.</li>" +
       "<li><b>Slide onto one and let go</b>, or let go and tap one.</li>" +
       "<li><b>Letting go never chooses by itself.</b> Slide off the list, or tap outside it, to close it.</li></ul>" +
-      '<p class="tapnote">Skip asks you once before it rests the principle for ' + n + (n === 1 ? " day" : " days") + '. Press and hold the principle to edit it. Everything else is in the menu.</p>' +
+      '<p class="tapnote">Skip asks you once before it rests the principle for ' + n + (n === 1 ? " day" : " days") + '. Tap the principle to see its line. Press and hold it to edit it. Everything else is in the menu.</p>' +
       '<div class="row"><button type="button" class="btn3d" id="coachOk">Got it</button></div></div></div>';
   }
   function coachSeen() { if (prefs.coach_seen) return; prefs.coach_seen = true; savePrefs(); var c = $("coach"); if (c) c.remove(); }
@@ -2181,7 +2209,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     } else {
       v.innerHTML = '<div class="welcome"><h1>Press and hold</h1>' +
         "<p>Press and hold the bottom of the screen and your three choices open: <b>Living it</b>, <b>Sit with it</b> and <b>Skip</b>. Slide onto one, or let go and tap one.</p>" +
-        "<p>Letting go never chooses by itself. Skip asks once before it rests a principle.</p>" +
+        "<p>Letting go never chooses by itself. Tap the principle to see the line Scales has for it.</p>" +
         '<div class="widewrap"><button type="button" class="primary" id="wDone">Got it</button></div></div>';
       $("wDone").onclick = function () { prefs.onboarded = true; prefs.welcoming = false; prefs.coach_seen = true; savePrefs(); showNext(); };
     }
