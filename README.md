@@ -31,7 +31,9 @@ A quick tap on the ring does nothing, so a stray touch never rests a principle. 
 
 **Reply to the line.** On the skip screen and the sit-with screen, tap Reply, or the line or quote itself, to answer it. A sheet slides up with the line pinned at the top and moves up with the keyboard, so nothing covers what you type; Done is in the title row. The reply is kept with the line it answered and shows under the line next time. Replying never makes or changes a choice: the choice you were making is still waiting when the sheet closes. In the Ledger, each principle's history shows its thread, line and reply, by date.
 
-**Later.** On the skip screen, Later is for a principle that deserves more time than you have right now. It is not a skip: no count, no weight, no rest. It waits until after 6 PM that day, then comes back first, straight to Sit with it, headed Saved from earlier. Up to three can wait at once, and a principle that came back from Later is not offered Later again until you have sat with it for the full eight seconds.
+**Tap to see the line.** At rest, tap the principle to see the line Skip would show, and tap again to hide it. Nothing is chosen or counted. Once it has been read, Skip in the choices rests the principle straight away and Later is offered beside it. Skip without the tap still asks first, with the line.
+
+**Later.** On the skip screen, or after tapping to see the line, Later is for a principle that deserves more time than you have right now. It is not a skip: no count, no weight, no rest. It waits until after 6 PM that day, then comes back first, straight to Sit with it, headed Saved from earlier. Up to three can wait at once, and a principle that came back from Later is not offered Later again until you have sat with it for the full eight seconds.
 
 **Readable and reachable.** Text follows the iPhone's text size (Settings > Display & Brightness > Text Size). Undo stays until your next move. Settings > Deck > Buttons instead of press and hold puts Skip, Sit with it and Living it on the main screen as plain buttons, for anyone who cannot press and hold.
 
