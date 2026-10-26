@@ -130,7 +130,7 @@ sequenceDiagram
 
 | Key | Holds |
 |---|---|
-| `scales.thoughts.v1` | Every principle by id: text, `lines` (push and reflect, each with the wording and Skip count it was written for), collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai`; `talks` (last five weigh-ins, each with its voice, move, line and replies); `acts` (smallest acts by day), `caught` (Caught it by day), `checkins`, `skips_on` (days set aside, for the weekly review) |
+| `scales.thoughts.v1` | Every principle by id: text, `lines` (push and reflect, each with the wording and Skip count it was written for), collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai`; `notes` (thoughts when skipping, each with the line that prompted it, last 20), `talks` (last five weigh-ins, each with its voice, move, line and replies); `acts` (smallest acts by day), `caught` (Caught it by day), `checkins`, `skips_on` (days set aside, for the weekly review) |
 | `scales.activity.v1` | Per Scales day counts: `i` weighed, `s` Living it, `c` Caught it; last 120 days |
 | `scales.prefs.v1` | Today's set (`day`: moves, focus, check-in), set size, the Sit with it count, the week's review state, look, rest length, Show where it came from, AI lines on or off, chosen voices and names added, the collection key, Show anyway's day, first-use tip seen |
 | `scales.apikey.v1` | Anthropic API key, only if saved |

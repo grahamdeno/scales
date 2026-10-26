@@ -646,7 +646,8 @@ test("the three moves: hold the ring, buttons for VoiceOver and keys; Not today 
   assert.match(html, /k === "ArrowRight"\) act\("shed"\)/);
   assert.match(html, /if \(openSheet \|\| menu\.open \|\| isTyping\(document\.activeElement\)/, "shortcuts never fire while typing, in a sheet or in the menu");
   assert.match(html, /var HOLD_MS = 550;/);
-  assert.match(html, /if \(m === "edit"\) openEdit\(t\); else if \(shown && shown\.ai\) openKeep\(t, shown\.text, shown\.quote \? \{ author: shown\.author, src: shown\.src \} : null\);/);
+  assert.match(html, /if \(m === "edit"\) openEdit\(t\);/);
+  assert.match(html, /else if \(shown && shown\.ai\) openKeep\(t, shown\.text, shown\.quote \? \{ author: shown\.author, src: shown\.src \} : null\);/);
   assert.match(html, /id="holdRing" aria-hidden="true"/, "the ring is pointer only; the buttons are the accessible path");
   assert.match(html, /var r = e\.target\.closest\("#holdZone"\);\s*if \(r && !e\.target\.closest\("button"\)\)/, "the whole hold area starts a hold, not just the ring");
   assert.match(html, /var o = C\.holdOutcome\(Date\.now\(\) - t0, dy\)/, "the release is read by core.js");
@@ -1105,4 +1106,37 @@ test("a quote's source: its work, a book within a work, or its citation under a 
   ].join("\n"));
   assert.equal(q[0].src, "Memories, Dreams, Reflections (1962), p. 153", "a decade section gives way to the citation; the original-language line is skipped");
   assert.equal(q[1].src, "Meditations, Book II");
+});
+
+// ---------- 1.37.0: a thought when skipping ----------
+test("addNote keeps one line with the line that prompted it; empty notes are not kept", () => {
+  const t = A("a");
+  assert.equal(C.addNote(t, "   ", "Line", "2026-10-26"), null);
+  assert.equal(t.notes, undefined);
+  const n = C.addNote(t, "  It  is about pride,\n not time. ", "What is in the way today?", "2026-10-26", "2026-10-26T10:00:00.000Z");
+  assert.deepEqual(n, { day: "2026-10-26", at: "2026-10-26T10:00:00.000Z", text: "It is about pride, not time.", line: "What is in the way today?" });
+  assert.equal(C.addNote(t, "x".repeat(300), "", "2026-10-27").text.length, C.NOTE_MAX);
+  for (let i = 0; i < 25; i++) C.addNote(t, "n" + i, "", "2026-10-28");
+  assert.equal(t.notes.length, 20, "the last 20 are kept");
+  assert.equal(C.lastNote(t).text, "n24");
+  assert.equal(C.lastNote(A("b")), null);
+});
+
+test("a skip with a thought reads so in the timeline", () => {
+  const t = A("a", { created_at: "2026-10-01T12:00:00.000Z", skips_on: ["2026-10-20", "2026-10-26"] });
+  C.addNote(t, "Pride, not time.", "Line", "2026-10-26");
+  const tl = C.timeline(t);
+  assert.equal(tl.find((e) => e.at === "2026-10-26").text, "Skipped, with a thought: Pride, not time.");
+  assert.equal(tl.find((e) => e.at === "2026-10-20").text, "Skipped");
+});
+
+test("the pushback asks what came up; the thought is kept with its line and comes back (1.37.0)", () => {
+  const html = read("index.html");
+  assert.match(html, /<label for="pushNote">What came up\? <span>Optional, kept with this line<\/span><\/label><textarea id="pushNote"/);
+  assert.match(html, /noted = phase === "push" && ne && C\.addNote\(t, ne\.value, shown && !shown\.pending \? shown\.text : "", today\(\)\)/);
+  assert.match(html, /C\.applySkip\(t, today\(\), restDays\(\)\)/, "a thought does not change the skip");
+  assert.match(html, /<span>Last time you wrote<\/span>/, "shown under the line the next time you skip");
+  assert.match(html, /'<div class="mid">' \+ words \+ line \+ notesHtml\(t\) \+ whereHtml\(t\)/, "and under the quote when you sit with it");
+  assert.match(html, /openKeep\(t, nn\.text, \{ note: true \}\)/, "press and hold a thought to keep it as a principle");
+  assert.match(html, /id="rowNotes"/);
 });
