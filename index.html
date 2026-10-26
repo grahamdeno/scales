@@ -115,7 +115,8 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 /* At rest the words are in full ink. Held, they step back and ink in again one by one. On the push screen
    the principle sits a step back from the line. */
 .thought.ink .w { color:var(--ink); transition:color .18s ease; }
-.thought.ink.holding .w, .card.push .thought.ink .w { color:var(--rest); }
+.thought.ink.holding .w, .card.push .thought.ink .w, .card.push .thought.plain { color:var(--rest); }
+.card.push .thought.plain.holding { color:var(--ink); }
 .thought.ink.holding .w.in { color:var(--ink); }
 .thought.small { font-size:clamp(24px, 7.4vw, 30px); line-height:1.08; letter-spacing:-.025em; }
 .thought.small.mid { font-size:22px; line-height:1.15; }
@@ -1460,8 +1461,12 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       return;
     }
     var nudge = t.consecutive_reflects >= NUDGE_AT, coachOn = !prefs.coach_seen && phase === "rest";
+    // At rest the words are one span each so the hold can ink them. On push and reflect the principle is plain
+    // text: Safari laid the spans out one word per line there (1.34.3).
     var fold = phase !== "rest" && sizeClass(t.text) !== "";
-    var words = '<div class="thought ink' + sizeClass(t.text) + (phase === "rest" ? "" : " small") + (fold ? " fold" : "") + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + wordsHtml(t.text) + "</div>" +
+    var words = (phase === "rest"
+        ? '<div class="thought ink' + sizeClass(t.text) + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + wordsHtml(t.text) + "</div>"
+        : '<div class="thought plain' + sizeClass(t.text) + " small" + (fold ? " fold" : "") + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + esc(t.text) + "</div>") +
       (fold ? '<small class="foldhint" id="foldHint" aria-hidden="true">Tap to read it all</small>' : "");
     var line = '<div class="lineWrap"><p class="ai-p" id="aiLine"></p><small class="ai-src" id="aiSrc"></small></div>';
     var how = '<span class="sr" id="cardHow">Use the Not today, Testing it and Living it buttons, or hold the ring. Press and hold the principle to edit it.</span>';

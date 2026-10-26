@@ -1003,3 +1003,8 @@ test("an update shows a bar with Reload that stays until tapped (1.34.2)", () =>
   assert.match(sw, /self\.skipWaiting\(\)/);
   assert.match(sw, /self\.clients\.claim\(\)/, "the new worker takes over, which fires controllerchange");
 });
+
+test("push and reflect show the principle as plain text, not word spans (1.34.3)", () => {
+  const html = read("index.html");
+  assert.match(html, /'<div class="thought plain' \+ sizeClass\(t\.text\) \+ " small"[^\n]*esc\(t\.text\)/);
+});
