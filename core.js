@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.36.0";
+  var VERSION = "1.39.0";
   var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -360,6 +360,9 @@ var ScalesCore = (function () {
   // letting go in between is Not today. ms is how long the ring was held, dy the vertical offset
   // in pixels (negative going up). progress (0 to 1) drives the ring and how many words are inked.
   var HOLD_FULL = 2400, HOLD_TAP = 300, HOLD_LIFT = 70;
+  // The hold menu (1.39.0): how long the press takes before the three choices open. The release no longer
+  // decides anything; holdOutcome is kept for reference and its tests.
+  var HOLD_REVEAL = 500;
   function holdOutcome(ms, dy) {
     ms = Math.max(0, +ms || 0); dy = +dy || 0;
     var progress = Math.min(1, ms / HOLD_FULL);
@@ -769,7 +772,7 @@ var ScalesCore = (function () {
     undoPoint: undoPoint, applyUndo: applyUndo,
     inCollection: inCollection, deckCollections: deckCollections, deckFilter: deckFilter, outcomeMix: outcomeMix,
     SWIPE: SWIPE, swipeIntent: swipeIntent,
-    HOLD_FULL: HOLD_FULL, HOLD_TAP: HOLD_TAP, HOLD_LIFT: HOLD_LIFT, holdOutcome: holdOutcome, inkWeight: inkWeight, ledgerGroup: ledgerGroup,
+    HOLD_FULL: HOLD_FULL, HOLD_TAP: HOLD_TAP, HOLD_LIFT: HOLD_LIFT, HOLD_REVEAL: HOLD_REVEAL, holdOutcome: holdOutcome, inkWeight: inkWeight, ledgerGroup: ledgerGroup,
     lineFresh: lineFresh, keepLine: keepLine, spendLines: spendLines, REFLECT_SEC: REFLECT_SEC,
     WQ_PAGE: WQ_PAGE, wqPage: wqPage, wqUrl: wqUrl, wqClean: wqClean, parseQuotes: parseQuotes, rankQuotes: rankQuotes, quotePrompt: quotePrompt, readPick: readPick,
     shortDate: shortDate, keepAsNew: keepAsNew, keepReplace: keepReplace,

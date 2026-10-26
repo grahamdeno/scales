@@ -173,15 +173,21 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .hold { position:relative; flex:none; height:clamp(230px, 33dvh, 300px); margin:0 calc(-1 * var(--gutter)); padding:0 var(--gutter) max(20px, env(safe-area-inset-bottom, 0px));
   display:flex; flex-direction:column; align-items:center; justify-content:center; touch-action:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; cursor:pointer; }
 .card.push ~ .hold { height:clamp(200px, 27dvh, 250px); }
-.hl { position:absolute; font-size:var(--t-md); color:var(--faint); opacity:0; transition:opacity .15s ease; pointer-events:none; white-space:nowrap; }
-.hold.holding .hl { opacity:1; }
-.hl.on { color:var(--ink); font-weight:500; text-decoration:underline; text-underline-offset:5px; text-decoration-thickness:1px; }
-.hl-up { top:12px; left:0; right:0; text-align:center; }
-.hl-left { left:var(--gutter); top:50%; transform:translateY(-50%); margin-top:-10px; }
-.hl-down { bottom:max(36px, calc(env(safe-area-inset-bottom, 0px) + 16px)); left:0; right:0; text-align:center; }
-.hold .holdlbl { position:absolute; bottom:max(36px, calc(env(safe-area-inset-bottom, 0px) + 16px)); left:0; right:0; margin:0; font-size:var(--t-md); color:var(--muted); }
-.hold.holding .holdlbl { opacity:0; }
-.ring .tick { stroke:var(--ink); stroke-width:1.5; }
+.hold .holdlbl { margin:14px 0 0; font-size:var(--t-md); color:var(--muted); text-align:center; }
+/* The choices (1.39.0): a panel of three full-width rows that opens above the thumb. The row under the
+   finger fills with ink. The principle steps back while they are open. */
+.picks { position:absolute; z-index:4; left:calc(var(--gutter) - 8px); right:calc(var(--gutter) - 8px); bottom:calc(50% + 64px);
+  display:flex; flex-direction:column; background:var(--deep); border:1px solid var(--line); }
+.picks[hidden] { display:none; }
+@media (prefers-reduced-motion: no-preference) { .picks:not([hidden]) { animation:choicesin .16s var(--ease-out); transform-origin:50% 100%; } }
+@keyframes choicesin { from { opacity:0; transform:translateY(8px) scale(.98); } }
+.pickrow { display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:60px; padding:0 20px; text-align:left; font-size:18px; font-weight:500; color:var(--ink); }
+.pickrow + .pickrow { border-top:1px solid var(--line); }
+.pickrow small { font-size:13px; font-weight:400; color:var(--faint); }
+.pickrow.on { background:var(--ink); color:var(--onBrass); }
+.pickrow.on small { color:var(--rest); }
+#v-deck.choosing .card { opacity:.3; transition:opacity .15s ease; }
+.hold.open .ring { transform:scale(.7); transition:transform .15s var(--ease-out); }
 /* Wide, thumb-sized buttons (1.36.0): nothing smaller than 48px to aim at. */
 .btn3d.wide { width:100%; min-height:56px; }
 .widewrap { flex:none; padding:0 0 max(16px, env(safe-area-inset-bottom, 0px)); margin-top:-8px; }
@@ -801,7 +807,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   </div>
 
   <h3 class="sec2">How it works</h3>
-  <p class="note">Press and hold anywhere on the bottom of the screen. The ring fills, the principle darkens, and the choices show where your thumb would go. Let go early to skip: the app pushes back once with a line to reconsider; hold again to sit with it instead, or tap Skip it. Hold until the ring closes to sit with it: a real quote from today's voice, Talk it through with that voice, and Next after eight seconds, when it lowers the skip count. Slide up while holding when you are living it. A quick tap does nothing. Press and hold the principle to edit it, or a line or quote to keep it. The heavier a principle is set, the more often you have skipped it. Show, in the menu, draws the deck from one collection. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
+  <p class="note">Press and hold anywhere on the bottom of the screen. After half a second your three choices open: Living it, Sit with it and Skip. Slide onto one and let go, or let go and tap one. Letting go never chooses by itself: slide off the list or tap outside it to close it. Skip asks you once first, with a line to reconsider. Sit with it shows a real quote from today's voice, Talk it through with that voice, and Next after eight seconds, when it lowers the skip count. Press and hold the principle to edit it, or a line or quote to keep it. The heavier a principle is set, the more often you have skipped it. Show, in the menu, draws the deck from one collection. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
   <p class="note" id="howRest"></p>
 
   <h3 class="sec2">About</h3>
@@ -1461,29 +1467,31 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     }
     return p.length ? '<div class="where">' + p.join("") + "</div>" : "";
   }
-  // The hold area (1.36.0): the whole bottom of the screen, not just the ring. Press anywhere in it and hold;
-  // the ring shows how far along you are, and the three choices appear where the thumb would take them:
-  // Skip beside the ring (let go now), Living it above (slide up), Sit with it below (when the ring closes).
-  // At rest one word says what to do, until the hold has been used HOLD_LEARNED times. The three moves
-  // are also buttons, kept for VoiceOver and the keyboard; they show only when one of them has focus.
-  var RING_R = 46, RING_C = 2 * Math.PI * RING_R, HOLD_LEARNED = 20;
-  function holdHtml(caption, extra) {
-    var skip = phase === "push" ? "Skip it" : "Skip";
+  // The hold area (1.39.0): the bottom of the screen. Press and hold anywhere in it; the ring fills for
+  // HOLD_REVEAL, then the three choices open above the thumb as a menu. Slide onto one and let go, or let
+  // go and tap one. Letting go after sliding off the list cancels; nothing is ever chosen by letting go
+  // alone. The three moves are also buttons for VoiceOver and the keyboard (#keys, shown on focus).
+  var RING_R = 46, RING_C = 2 * Math.PI * RING_R;
+  function holdHtml(caption) {
+    var push = phase === "push", n = restDays();
+    var rows = [
+      ["shed", "Living it", "I act on it now"],
+      ["keep", "Sit with it", "A quote, then Next"],
+      ["skip", push ? "Skip it" : "Skip", push ? "Rests " + n + (n === 1 ? " day" : " days") : "Asks first"]
+    ];
     return '<div class="hold" id="holdZone">' +
-      '<span class="hl hl-up" id="hlUp" aria-hidden="true">↑ Living it</span>' +
-      '<span class="hl hl-left" id="hlLeft" aria-hidden="true">' + skip + "</span>" +
+      '<div class="picks" id="choices" role="menu" aria-label="Choose" hidden>' + rows.map(function (r) {
+        return '<button type="button" class="pickrow" role="menuitem" data-pick="' + r[0] + '"><span>' + r[1] + "</span><small>" + r[2] + "</small></button>";
+      }).join("") + "</div>" +
       '<div class="ring" id="holdRing" aria-hidden="true"><svg viewBox="0 0 96 96"><circle class="track" cx="48" cy="48" r="' + RING_R + '"></circle>' +
-      '<circle class="arc" id="holdArc" cx="48" cy="48" r="' + RING_R + '" stroke-dasharray="' + RING_C.toFixed(1) + '" stroke-dashoffset="' + RING_C.toFixed(1) + '"></circle>' +
-      '<line class="tick" x1="90" y1="48" x2="96" y2="48"></line></svg><i></i></div>' +
-      '<span class="hl hl-down" id="hlDown" aria-hidden="true">Sit with it when the ring closes</span>' +
-      '<p class="holdlbl" id="holdLbl" aria-hidden="true">' + esc(caption || "") + "</p>" +
+      '<circle class="arc" id="holdArc" cx="48" cy="48" r="' + RING_R + '" stroke-dasharray="' + RING_C.toFixed(1) + '" stroke-dashoffset="' + RING_C.toFixed(1) + '"></circle></svg><i></i></div>' +
+      '<p class="holdlbl" id="holdLbl" data-rest="' + esc(caption || "") + '" aria-hidden="true">' + esc(caption || "") + "</p>" +
       '<div class="moves sr" id="keys" role="group" aria-label="Moves">' +
-      '<button type="button" class="key" id="kSkip" data-move="skip"><b>' + skip + "</b></button>" +
+      '<button type="button" class="key" id="kSkip" data-move="skip"><b>' + (push ? "Skip it" : "Skip") + "</b></button>" +
       '<button type="button" class="key" id="kKeep" data-move="keep"><b>Sit with it</b></button>' +
-      '<button type="button" class="key" id="kShed" data-move="shed"><b>Living it</b></button></div></div>' + (extra || "");
+      '<button type="button" class="key" id="kShed" data-move="shed"><b>Living it</b></button></div></div>';
   }
-  // The word under the ring at rest: Hold, until it has been learned.
-  function restCaption() { return (prefs.holds || 0) >= HOLD_LEARNED ? "" : "Hold"; }
+  function restCaption() { return "Press and hold"; }
 
   function footHtml(left) {
     // After Keep going, the footer offers the way back to today's focus.
@@ -1551,7 +1559,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     var words = '<div class="thought plain' + sizeClass(t.text) + (phase === "rest" ? "" : " small") + (fold ? " fold" : "") + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + esc(t.text) + "</div>" +
       (fold ? '<small class="foldhint" id="foldHint" aria-hidden="true">Tap to read it all</small>' : "");
     var line = '<div class="lineWrap"><p class="ai-p" id="aiLine"></p><small class="ai-src" id="aiSrc"></small></div>';
-    var how = '<span class="sr" id="cardHow">Use the Skip, Sit with it and Living it buttons, or press and hold the bottom of the screen. Press and hold the principle to edit it.</span>';
+    var how = '<span class="sr" id="cardHow">Use the Skip, Sit with it and Living it buttons, or press and hold the bottom of the screen to open them. Press and hold the principle to edit it.</span>';
     if (phase === "reflect") {
       v.innerHTML = '<article class="card reflect" id="card" aria-label="Testing it" aria-describedby="cardHow">' +
         '<div class="phase"><span>Sitting with it</span></div>' +
@@ -1572,8 +1580,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       v.innerHTML = '<article class="card push" id="card" aria-label="Skip this one?" aria-describedby="cardHow">' +
         '<div class="phase"><span>Skip this one?</span></div>' +
         '<div class="mid">' + words + line + (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") + "</div>" + how + "</article>" +
-        holdHtml("Hold to sit with it instead", '<div class="widewrap"><button type="button" class="btn3d wide" id="setAside">Skip it</button></div>');
-      $("setAside").onclick = function () { act("skip"); };
+        holdHtml("Press and hold to choose");
       paintLine();
       return;
     }
@@ -1616,47 +1623,67 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     var n = restDays();
     return '<div class="coach" id="coach" role="group" aria-label="How to use the deck"><div class="glass">' +
       "<h2>Press and hold the bottom of the screen</h2>" +
-      "<ul><li><b>Let go early</b> to skip. You get one push to reconsider first; then it rests " + n + (n === 1 ? " day" : " days") + " and comes back heavier.</li>" +
-      "<li><b>Hold until the ring closes</b> to sit with it: a quote from today’s voice, and Next after a few seconds.</li>" +
-      "<li><b>Slide up while holding</b> when you are living it.</li></ul>" +
-      '<p class="tapnote">The choices show up as you hold. A quick tap does nothing. Press and hold the principle to edit it. Everything else is in the menu.</p>' +
+      "<ul><li>Your three choices open: <b>Living it</b>, <b>Sit with it</b> and <b>Skip</b>.</li>" +
+      "<li><b>Slide onto one and let go</b>, or let go and tap one.</li>" +
+      "<li><b>Letting go never chooses by itself.</b> Slide off the list, or tap outside it, to close it.</li></ul>" +
+      '<p class="tapnote">Skip asks you once before it rests the principle for ' + n + (n === 1 ? " day" : " days") + '. Press and hold the principle to edit it. Everything else is in the menu.</p>' +
       '<div class="row"><button type="button" class="btn3d" id="coachOk">Got it</button></div></div></div>';
   }
   function coachSeen() { if (prefs.coach_seen) return; prefs.coach_seen = true; savePrefs(); var c = $("coach"); if (c) c.remove(); }
 
   // ---------- hold, and press and hold ----------
-  // Pointer events on the deck view (touch and mouse), bound once. Holding the ring (#holdRing) fills it;
-  // the principle's words dim and ink back in turn. core.js holdOutcome reads the release: a tap does
-  // nothing, letting go early is Not today (the push screen first, see requestSkip), holding through is
-  // Testing it, sliding up HOLD_LIFT px is Living it. The label under the ring says what letting go now
-  // would do. Holding still for HOLD_MS on the words opens Edit; on a model line, it opens Keep.
+  // Pointer events on the deck view (touch and mouse), bound once.
+  //   ring  pressed in the hold area: the ring fills for C.HOLD_REVEAL; letting go before then does nothing
+  //   drag  the choices are open and the finger is still down: the row under it is lit. Letting go on a
+  //         row chooses it; letting go off the list after touching it cancels; letting go without having
+  //         touched it leaves the choices open to tap
+  //   open  the choices are open with the finger up: tap one, or tap anywhere else to close them
+  // Holding still for HOLD_MS on the words opens Edit; on a model line or quote, it opens Keep.
   var HOLD_MS = 550;
+  var choicesOpen = false;
+  function closeChoices() {
+    choicesOpen = false;
+    var m = $("choices"), z = $("holdZone"), v = $("v-deck");
+    if (m) { m.hidden = true; Array.prototype.forEach.call(m.querySelectorAll(".pickrow"), function (b) { b.classList.remove("on"); }); }
+    if (z) z.classList.remove("open");
+    if (v) v.classList.remove("choosing");
+    var arc = $("holdArc"); if (arc) arc.setAttribute("stroke-dashoffset", RING_C.toFixed(1));
+    var l = $("holdLbl"); if (l) l.textContent = l.getAttribute("data-rest");
+  }
+  function openChoices() {
+    var m = $("choices"); if (!m) return;
+    choicesOpen = true; m.hidden = false;
+    $("holdZone").classList.add("open"); $("v-deck").classList.add("choosing");
+    var l = $("holdLbl"); if (l) l.textContent = "Slide onto one, or let go and tap";
+  }
+  function pick(move) {
+    closeChoices(); coachSeen();
+    prefs.holds = (prefs.holds || 0) + 1; savePrefs();
+    if (move === "skip") requestSkip(); else act(move);
+  }
   (function bindHold() {
-    var deck = $("v-deck"), ring = null, t0 = 0, sy = 0, dy = 0, raf = 0, mode = "", holdT = 0, sx = 0;
-    function paintHold(p, move) {
-      var arc = $("holdArc"), w = $("words"), zone = $("holdZone"), down = $("hlDown");
-      if (arc) arc.setAttribute("stroke-dashoffset", (RING_C * (1 - p)).toFixed(1));
-      if (w) w.style.color = move ? "color-mix(in srgb, var(--ink) " + Math.round(p * 100) + "%, var(--rest))" : "";
-      if (zone) zone.classList.toggle("holding", !!move);
-      [["hlLeft", "skip"], ["hlUp", "shed"], ["hlDown", "keep"]].forEach(function (x) { var el = $(x[0]); if (el) el.classList.toggle("on", move === x[1]); });
-      if (down) down.textContent = move === "keep" ? "Sit with it. Let go." : "Sit with it when the ring closes";
-      if (ring) { ring.classList.toggle("held", p > 0); ring.classList.toggle("lift", move === "shed"); }
-    }
+    var deck = $("v-deck"), t0 = 0, raf = 0, mode = "", holdT = 0, sx = 0, sy = 0, touched = false;
+    function rowAt(x, y) { var el = document.elementFromPoint(x, y); return el && el.closest ? el.closest("#choices .pickrow") : null; }
+    function light(row) { Array.prototype.forEach.call(document.querySelectorAll("#choices .pickrow"), function (b) { b.classList.toggle("on", b === row); }); }
     function frame() {
       if (mode !== "ring") return;
-      var o = C.holdOutcome(Date.now() - t0, dy);
-      paintHold(o.progress, o.move || "skip");
+      var p = Math.min(1, (Date.now() - t0) / C.HOLD_REVEAL), arc = $("holdArc");
+      if (arc) arc.setAttribute("stroke-dashoffset", (RING_C * (1 - p)).toFixed(1));
+      if (p >= 1) { mode = "drag"; touched = false; openChoices(); return; }
       raf = requestAnimationFrame(frame);
     }
-    function reset() { cancelAnimationFrame(raf); mode = ""; paintHold(0, ""); var c = $("card"); if (c) { c.classList.add("spring"); c.style.transform = ""; } ring = null; }
     deck.addEventListener("pointerdown", function (e) {
       if (e.button > 0 || !onCard()) return;
+      if (choicesOpen) {
+        // Open with the finger up: a tap on a row is handled by click; anywhere else closes the choices.
+        if (!e.target.closest("#choices")) { e.preventDefault(); closeChoices(); }
+        return;
+      }
       var r = e.target.closest("#holdZone");
       if (r && !e.target.closest("button")) {
         e.preventDefault();
-        ring = $("holdRing"); mode = "ring"; t0 = Date.now(); sy = e.clientY; dy = 0;
+        mode = "ring"; t0 = Date.now();
         try { deck.setPointerCapture(e.pointerId); } catch (_) {}
-        var c = $("card"); if (c) c.classList.remove("spring", "enter");
         coachSeen(); frame(); return;
       }
       var press = e.target.closest("#words") ? "edit" : (e.target.closest("#aiLine") && shown && shown.ai) ? "keep" : "";
@@ -1672,29 +1699,33 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     });
     deck.addEventListener("pointermove", function (e) {
       if ((mode === "edit" || mode === "keep") && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) { mode = ""; clearTimeout(holdT); return; }
-      if (mode !== "ring") return;
-      dy = e.clientY - sy;
-      var c = $("card"); if (c) { c.classList.add("dragging"); c.style.transform = "translateY(" + Math.max(Math.min(dy, 0), -C.HOLD_LIFT) * 0.4 + "px)"; }
+      if (mode !== "drag") return;
+      var row = rowAt(e.clientX, e.clientY);
+      if (row) touched = true;
+      light(row);
     });
     function end(e) {
       clearTimeout(holdT);
-      if (mode !== "ring") { mode = ""; return; }
-      var o = C.holdOutcome(Date.now() - t0, dy), c = $("card");
-      cancelAnimationFrame(raf); mode = "";
-      if (c) c.classList.remove("dragging");
-      if (e.type === "pointercancel" || !o.move) {
-        reset();
-        if (e.type !== "pointercancel") toast("Press and hold. Let go early to skip.");
+      var m = mode; mode = ""; cancelAnimationFrame(raf);
+      if (m === "ring") {
+        // Let go before the choices opened: nothing happens.
+        var arc = $("holdArc"); if (arc) arc.setAttribute("stroke-dashoffset", RING_C.toFixed(1));
         return;
       }
-      ring = null;
-      prefs.holds = (prefs.holds || 0) + 1; savePrefs();
-      if (o.move === "skip") { reset(); requestSkip(); }
-      else if (o.move === "shed") { paintHold(0, ""); if (c) c.style.transform = ""; act("shed"); }
-      else act(o.move);
+      if (m !== "drag") return;
+      if (e.type === "pointercancel") { closeChoices(); return; }
+      var row = rowAt(e.clientX, e.clientY);
+      if (row) { pick(row.getAttribute("data-pick")); return; }
+      if (touched) { closeChoices(); return; } // slid off the list: cancel
+      light(null); // never touched a row: stay open to tap
     }
     deck.addEventListener("pointerup", end); deck.addEventListener("pointercancel", end);
+    deck.addEventListener("click", function (e) {
+      var row = e.target.closest("#choices .pickrow");
+      if (row && choicesOpen) pick(row.getAttribute("data-pick"));
+    });
     deck.addEventListener("contextmenu", function (e) { if (e.target.closest("#card, #holdZone")) e.preventDefault(); });
+    document.addEventListener("keydown", function (e) { if (choicesOpen && e.key === "Escape") { e.preventDefault(); closeChoices(); } }, true);
   })();
 
   // ---------- keep an AI line (Story 10) ----------
