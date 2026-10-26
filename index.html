@@ -1528,7 +1528,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // move or a delete. Undo restores it whole, so counts, rest days, the turn at the front, the
   // activity grid and the Ledger all go back, and the card returns to the screen. Only the latest
   // move can be undone; any other message replaces the toast and drops the undo.
-  var UNDO_MS = 5000;
+  var UNDO_MS = 8000;
   // The day's set and the Testing it count go back too.
   function undoPoint() {
     var p = C.undoPoint(thoughts, activity, history, current);
@@ -2861,13 +2861,15 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (staying && !stay) return; // the update notice is not replaced by a passing message
     var label = stay ? stay.label : "Undo";
     pop.innerHTML = '<div class="toast frost"><span aria-hidden="true">' + esc(msg) + "</span>" + (onUndo || stay ? '<button type="button" id="toastUndo">' + esc(label) + "</button>" : "") + "</div>";
-    $("toastHost").textContent = msg + (onUndo ? " Undo is available until your next move." : stay ? " " + label + " button available." : "");
+    $("toastHost").textContent = msg + (onUndo ? " Undo is available for a few seconds." : stay ? " " + label + " button available." : "");
     popShow();
     clearTimeout(toastTimer);
     staying = !!stay;
-    // Undo (1.45.0) stays until your next move (dropUndo), so there is time to reach it with VoiceOver or a switch.
+    // Undo (1.54.0) goes after UNDO_MS, or at your next move (dropUndo). Reaching it with VoiceOver, a keyboard or a
+    // switch stops the clock, so it then stays until your next move.
     undoOpen = !!onUndo;
-    if (!stay && !onUndo) toastTimer = setTimeout(function () { popHide(); pop.innerHTML = ""; $("toastHost").textContent = ""; }, 1800);
+    if (!stay) toastTimer = setTimeout(function () { undoOpen = false; popHide(); pop.innerHTML = ""; $("toastHost").textContent = ""; }, onUndo ? UNDO_MS : 1800);
+    if (onUndo) $("toastUndo").addEventListener("focus", function () { clearTimeout(toastTimer); });
     if (onUndo || stay) $("toastUndo").onclick = function () { clearTimeout(toastTimer); staying = false; undoOpen = false; popHide(); (stay ? stay.fn : onUndo)(); };
   }
 
