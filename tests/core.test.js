@@ -1318,3 +1318,11 @@ test("a tap shows the line; once read, Skip commits and Later is offered", () =>
   assert.match(html, /if \(peeked\(\)\) showLine\(t, "push"\)/);
   assert.match(html, /data-move="peek"/);
 });
+
+// ---------- 1.55.0: sheet tops ----------
+test("sheets stop below the status bar fade and pin their title row", () => {
+  const html = read("index.html");
+  assert.match(html, /max-height:calc\(100% - env\(safe-area-inset-top, 0px\) - var\(--fade\)\)/);
+  assert.match(html, /dialog\.sheet > h2 \{ position:sticky;/);
+  assert.match(html, /getComputedStyle\(\$\("vhProbe"\)\)\.paddingTop/);
+});
