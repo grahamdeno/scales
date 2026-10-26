@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.34.4";
+  var VERSION = "1.35.0";
   var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -379,16 +379,112 @@ var ScalesCore = (function () {
   // the principle reached Avoiding (three or more Not today) is refreshed once when it gets there,
   // so the pushback sharpens instead of repeating. Testing it spends both lines (spendLines): the
   // next time the principle comes up, new ones are written. Only model lines are kept.
+  // A reflect line is a quote (1.35.0): { text, author, src, voice } or { none: true } when no quote fit,
+  // which is kept too so the search is not repeated.
   function lineFresh(t, kind) {
     var l = t && t.lines && t.lines[kind];
-    if (!l || !l.text || l.of !== t.text) return false;
+    if (!l || !(l.text || l.none) || l.of !== t.text) return false;
     if (kind === "push" && (+t.skip_count || 0) >= 3 && (+l.skips || 0) < 3) return false;
     return true;
   }
-  function keepLine(t, kind, text) {
+  function keepLine(t, kind, text, extra) {
     t.lines = t.lines || {};
-    t.lines[kind] = { text: text, of: t.text, skips: +t.skip_count || 0 };
-    return t.lines[kind];
+    var l = { text: text || "", of: t.text, skips: +t.skip_count || 0 };
+    if (extra) Object.keys(extra).forEach(function (k) { l[k] = extra[k]; });
+    t.lines[kind] = l;
+    return l;
+  }
+
+  // ---------- quotes (1.35.0) ----------
+  // After a hold through, the reflect screen shows a real quote from today's voice, taken from the sourced
+  // quotes on its Wikiquote page. The model only chooses among them; it never writes one.
+  var WQ_PAGE = { jung: "Carl Jung", nietzsche: "Friedrich Nietzsche", dostoevsky: "Fyodor Dostoevsky", epictetus: "Epictetus",
+    marcus: "Marcus Aurelius", perel: "Esther Perel", peterson: "Jordan Peterson", goggins: "David Goggins" };
+  function wqPage(voice) { return (voice && (WQ_PAGE[voice.id] || voice.name)) || ""; }
+  function wqUrl(page) {
+    return "https://en.wikiquote.org/w/api.php?action=parse&prop=wikitext&format=json&formatversion=2&redirects=1&origin=*&page=" + encodeURIComponent(String(page).replace(/ /g, "_"));
+  }
+  // Wikitext to plain text: links keep their label, templates, references, comments and markup go.
+  function wqClean(s) {
+    s = String(s || "");
+    s = s.replace(/<!--[\s\S]*?-->/g, "").replace(/<ref[^>]*\/>/gi, "").replace(/<ref[^>]*>[\s\S]*?<\/ref>/gi, "");
+    for (var i = 0; i < 4 && /\{\{[^{}]*\}\}/.test(s); i++) s = s.replace(/\{\{[^{}]*\}\}/g, "");
+    s = s.replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, "$1").replace(/\[https?:\/\/[^\s\]]+\s?([^\]]*)\]/g, "$1");
+    s = s.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, "").replace(/'{2,}/g, "");
+    s = s.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&mdash;/g, ",").replace(/&ndash;/g, "-");
+    return s.replace(/\s+/g, " ").trim();
+  }
+  // Sections that are not the person's own sourced words.
+  var WQ_SKIP = /disputed|misattribut|attributed|about |quotes about|see also|external|references|sources|further|notes|bibliography|criticism|^about$/i;
+  // Every sourced quote on a Wikiquote page: { q, src }. src is the work (the section it sits under) or,
+  // failing that, its citation line. Quotes from skipped sections, and very short or very long ones, are left out.
+  function parseQuotes(wikitext, max) {
+    var out = [], h2 = "", h3 = "", last = null, skip = false;
+    String(wikitext || "").split(/\n/).forEach(function (line) {
+      var m = line.match(/^(={2,6})\s*(.*?)\s*\1\s*$/);
+      if (m) {
+        var name = wqClean(m[2]);
+        if (m[1].length === 2) { h2 = name; h3 = ""; skip = WQ_SKIP.test(name); }
+        else if (m[1].length === 3) { h3 = name; skip = WQ_SKIP.test(h2) || WQ_SKIP.test(name); }
+        last = null; return;
+      }
+      if (skip) return;
+      if (/^\*[^*:]/.test(line)) {
+        var q = wqClean(line.replace(/^\*\s*/, ""));
+        last = null;
+        if (q.length < 25 || q.length > 420) return;
+        last = { q: q, h2: h2, h3: h3, cite: "" };
+        out.push(last);
+      } else if (last && /^\*\*/.test(line) && /''|\d/.test(line)) {
+        // A citation line names a work in italics or gives a year or page. Lines without either are
+        // usually the original-language text, which is skipped.
+        last.cite = wqClean(line.replace(/^\*+\s*/, ""));
+      }
+    });
+    return out.slice(0, max || 400).map(function (x) { return { q: x.q, src: quoteSource(x.h2, x.h3, x.cite) }; });
+  }
+  // Where a quote is from, in a few words. A section named for a work is used as it is ("Psychology and
+  // Alchemy"), a book within a work joins it ("Meditations, Book II"), and a section named for a time
+  // ("1910s", "Quotes") gives way to the quote's own citation line.
+  var GENERIC = /^(quotes|sourced|quotations|\d{4}s?|\d{4}\s*[-\u2013]\s*\d{2,4}|\d{1,2}(st|nd|rd|th) century|undated|other|miscellaneous|various)$/i;
+  function quoteSource(h2, h3, cite) {
+    var year = /\s*\(\d{4}[^)]*\)\s*$/;
+    var work = "";
+    if (h3 && /^(book|part|chapter|letter|section)\b/i.test(h3) && h2 && !GENERIC.test(h2)) work = h2.replace(year, "") + ", " + h3;
+    else if (h3 && !GENERIC.test(h3)) work = h3.replace(year, "");
+    else if (h2 && !GENERIC.test(h2)) work = h2.replace(year, "");
+    return (work || cite || "").slice(0, 90).replace(/[,;:\s]+$/, "");
+  }
+  // Rough topical overlap between a principle and a quote: shared word stems of four letters or more.
+  var STOP = " that this with from have they them their what when where which while your yours about would could should there these those been being into than then over only also just very more most such some like make made does done will shall must ever every never always other another because ";
+  function stems(s) {
+    var o = {};
+    String(s || "").toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).forEach(function (w) {
+      if (w.length < 4 || STOP.indexOf(" " + w + " ") >= 0) return;
+      o[w.slice(0, 5)] = 1;
+    });
+    return o;
+  }
+  // The quotes most likely to speak to a principle, best first: [{ i, score }], n of them at most.
+  function rankQuotes(text, quotes, n) {
+    var p = stems(text);
+    return (quotes || []).map(function (x, i) {
+      var q = stems(x.q), score = 0;
+      for (var k in q) if (p[k]) score++;
+      return { i: i, score: score };
+    }).sort(function (a, b) { return b.score - a.score || quotes[a.i].q.length - quotes[b.i].q.length; }).slice(0, n || 20);
+  }
+  // The prompt that asks the model to choose, and reading its answer: a number from the list, or 0 for none.
+  function quotePrompt(principle, voiceName, list) {
+    return "A user has written this principle to live by:\n" + principle + "\n\n" +
+      "Below are numbered quotes by " + voiceName + ". Choose the one quote that most directly speaks to this principle, so that reading it deepens, sharpens or challenges it. " +
+      "If none clearly speaks to it, answer 0. A loose or generic fit is a 0.\n" +
+      "Answer with the number only.\n\n" + list.map(function (q, i) { return (i + 1) + ". " + q.q; }).join("\n");
+  }
+  function readPick(answer, n) {
+    var m = String(answer || "").match(/\d+/); if (!m) return -1;
+    var k = parseInt(m[0], 10);
+    return k >= 1 && k <= n ? k - 1 : -1;
   }
   function spendLines(t) { if (t) t.lines = {}; }
   // Seconds on the reflect screen before Next appears and the Testing it lowers the Not today count.
@@ -675,6 +771,7 @@ var ScalesCore = (function () {
     SWIPE: SWIPE, swipeIntent: swipeIntent,
     HOLD_FULL: HOLD_FULL, HOLD_TAP: HOLD_TAP, HOLD_LIFT: HOLD_LIFT, holdOutcome: holdOutcome, inkWeight: inkWeight, ledgerGroup: ledgerGroup,
     lineFresh: lineFresh, keepLine: keepLine, spendLines: spendLines, REFLECT_SEC: REFLECT_SEC,
+    WQ_PAGE: WQ_PAGE, wqPage: wqPage, wqUrl: wqUrl, wqClean: wqClean, parseQuotes: parseQuotes, rankQuotes: rankQuotes, quotePrompt: quotePrompt, readPick: readPick,
     shortDate: shortDate, keepAsNew: keepAsNew, keepReplace: keepReplace,
     VOICES: VOICES, TALK_MAX: TALK_MAX, REPLY_WORDS: REPLY_WORDS, MOVES: MOVES, allVoices: allVoices, chosenVoices: chosenVoices,
     voiceOfDay: voiceOfDay, voiceLabel: voiceLabel, weighPrompt: weighPrompt, talkRequest: talkRequest, vetReply: vetReply,

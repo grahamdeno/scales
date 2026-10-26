@@ -1,6 +1,6 @@
 # Scales architecture
 
-Scales is a single page app with no build step and no backend. Everything the app does happens on the phone. The only outside services are GitHub Pages (hosting) and, if a key is saved, the Anthropic API. The type face (Geist) ships in `fonts/`.
+Scales is a single page app with no build step and no backend. Everything the app does happens on the phone. The only outside services are GitHub Pages (hosting), Wikiquote (the sourced quotes for each voice, by name only) and, if a key is saved, the Anthropic API. The type face (Geist) ships in `fonts/`.
 
 The user-facing names (principle, Not today, Testing it, Living it) differ from some internal names, which were kept so stored data and exports stay compatible:
 
@@ -134,6 +134,7 @@ sequenceDiagram
 | `scales.activity.v1` | Per Scales day counts: `i` weighed, `s` Living it, `c` Caught it; last 120 days |
 | `scales.prefs.v1` | Today's set (`day`: moves, focus, check-in), set size, the Testing it count, the week's review state, look, rest length, Show where it came from, AI lines on or off, chosen voices and names added, the collection key, Show anyway's day, first-use tip seen |
 | `scales.apikey.v1` | Anthropic API key, only if saved |
+| `scales.quotes.v1` | Each voice's sourced quotes from Wikiquote (`parseQuotes`), by page name, refreshed after 30 days |
 
 ## Key numbers
 
@@ -154,6 +155,7 @@ sequenceDiagram
 | Cooldown | last 3 shown (last 1 in a deck of 3 or fewer) | No back to back repeats |
 | Reflect (`REFLECT_SEC`) | 8 seconds before Next | A quick Testing it does not erase a Not today; the wait is visible as a filling line |
 | Pushback | once per showing | A second early release sets it aside; a second warning would nag |
+| Quote pick (`rankQuotes`, `quotePrompt`) | 20 candidates by shared word stems; the model answers a number or 0; without a key, the top one only with 2 or more shared stems | Real words only, and nothing rather than a loose fit |
 | Lines (`lineFresh`) | kept per principle, rewritten after a test, a wording change, or once at 3 Not today | Reused for cost and consistency, refreshed so the pushback does not go stale |
 | Nudge | 3 Testing it in a row | Prompts the Living it question |
 | Line length | 25 words | Room for one complete consideration, still readable at a glance |

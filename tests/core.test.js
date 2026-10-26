@@ -646,7 +646,7 @@ test("the three moves: hold the ring, buttons for VoiceOver and keys; Not today 
   assert.match(html, /k === "ArrowRight"\) act\("shed"\)/);
   assert.match(html, /if \(openSheet \|\| menu\.open \|\| isTyping\(document\.activeElement\)/, "shortcuts never fire while typing, in a sheet or in the menu");
   assert.match(html, /var HOLD_MS = 550;/);
-  assert.match(html, /if \(m === "edit"\) openEdit\(t\); else if \(shown && shown\.ai\) openKeep\(t, shown\.text\);/);
+  assert.match(html, /if \(m === "edit"\) openEdit\(t\); else if \(shown && shown\.ai\) openKeep\(t, shown\.text, shown\.quote \? \{ author: shown\.author, src: shown\.src \} : null\);/);
   assert.match(html, /id="holdRing" aria-hidden="true"/, "the ring is pointer only; the buttons are the accessible path");
   assert.match(html, /var o = C\.holdOutcome\(Date\.now\(\) - t0, dy\)/, "the release is read by core.js");
   assert.match(html, /toast\("Hold the ring\. Let go early for Not today\."\)/, "a tap explains itself and moves nothing");
@@ -712,7 +712,7 @@ test("at rest only the principle and the ring; lines appear on push and reflect 
   assert.match(html, /id="whereToggle" role="switch"/);
   assert.match(html, /id="aiToggle" role="switch"/);
   assert.match(html, /sample = prefs\.ai_off \? null : makeSampler\(savedKey\)/, "AI lines off uses the built-in questions");
-  assert.match(html, /\["push", "reflect"\]\.forEach\(function \(k\) \{ if \(!C\.lineFresh\(t, k\)\) fetchLine\(t, k\); \}\);/, "both lines fetched ahead, only when missing or stale");
+  assert.match(html, /if \(sample && !C\.lineFresh\(t, "push"\)\) fetchLine\(t, "push"\);\s*if \(!C\.lineFresh\(t, "reflect"\)\) fetchQuote\(t\);/, "the push line and the quote are fetched ahead, only when missing or stale");
   assert.match(html, /if \(live && live\.text === of\) \{ C\.keepLine\(live, kind, s\); save\(live\); \}/, "a written line is kept on the principle");
 });test("the Ledger: a key, three weight groups, Lived folded away, Your week and the grid (1.33.0)", () => {
   const html = read("index.html");
@@ -1005,4 +1005,97 @@ test("an update shows a bar with Reload that stays until tapped (1.34.2)", () =>
 test("push and reflect show the principle as plain text, not word spans (1.34.3)", () => {
   const html = read("index.html");
   assert.match(html, /var words = '<div class="thought plain' \+ sizeClass\(t\.text\)[^\n]*esc\(t\.text\) \+ "<\/div>"/);
+});
+
+// ---------- 1.35.0: a real quote on reflect, a plain push line ----------
+const WT = [
+  "Intro text",
+  "== Quotes ==",
+  "* Until you make the [[unconscious]] conscious, it will direct your life and you will call it '''fate'''.<ref>x</ref>",
+  "** ''Aion'' (1951)",
+  "=== Psychology and Alchemy (1944) ===",
+  "* People will do anything, no matter how absurd, in order to avoid facing their own [[Soul|souls]].{{citation needed}}",
+  "** p. 99",
+  "* Too short.",
+  "== Disputed ==",
+  "* Knowing your own darkness is the best method for dealing with the darknesses of other people.",
+  "== Misattributed ==",
+  "* Who looks outside, dreams; who looks inside, awakes. This line is long enough.",
+  "== Quotes about Jung ==",
+  "* He was a great man of the twentieth century and beyond, said someone."
+].join("\n");
+
+test("parseQuotes keeps sourced quotes with their work and leaves out disputed, misattributed and quotes about", () => {
+  const q = C.parseQuotes(WT);
+  assert.deepEqual(q.map((x) => x.q), [
+    "Until you make the unconscious conscious, it will direct your life and you will call it fate.",
+    "People will do anything, no matter how absurd, in order to avoid facing their own souls."
+  ]);
+  assert.equal(q[0].src, "Aion (1951)", "the citation when the section is just Quotes");
+  assert.equal(q[1].src, "Psychology and Alchemy", "the work it sits under, without the year");
+  assert.equal(C.parseQuotes("== Quotes ==\n* " + "x".repeat(500)).length, 0, "very long passages are left out");
+  assert.equal(C.parseQuotes("").length, 0);
+});
+
+test("wqClean strips links, templates, references and markup", () => {
+  assert.equal(C.wqClean("A [[b|c]] [[d]] '''e''' ''f''<ref name=x/>{{g|h}}<br/>i &amp; j"), "A c d e f i & j");
+  assert.equal(C.wqClean("See [https://example.com the page] now"), "See the page now");
+});
+
+test("rankQuotes puts the quotes sharing the most words with the principle first", () => {
+  const q = C.parseQuotes(WT);
+  const r = C.rankQuotes("Stop avoiding the hard conversation; facing it is the work of the soul", q, 5);
+  assert.equal(r[0].i, 1);
+  assert.ok(r[0].score >= 2);
+  assert.equal(C.rankQuotes("x", [], 5).length, 0);
+});
+
+test("the model only picks a number from the list, or none", () => {
+  const p = C.quotePrompt("Face your fears", "Carl Jung", [{ q: "One" }, { q: "Two" }]);
+  assert.match(p, /1\. One\n2\. Two$/);
+  assert.match(p, /If none clearly speaks to it, answer 0/);
+  assert.equal(C.readPick("2", 2), 1);
+  assert.equal(C.readPick("0", 2), -1);
+  assert.equal(C.readPick("Number 3", 2), -1, "out of range is none");
+  assert.equal(C.readPick("", 2), -1);
+  assert.equal(C.wqPage({ id: "jung", name: "Carl Jung" }), "Carl Jung");
+  assert.equal(C.wqPage({ id: "c1", name: "Viktor Frankl" }), "Viktor Frankl", "an added voice uses its name");
+  assert.match(C.wqUrl("Carl Jung"), /^https:\/\/en\.wikiquote\.org\/w\/api\.php\?action=parse&prop=wikitext&.*origin=\*&page=Carl_Jung$/);
+});
+
+test("a quote, or that none fit, is kept on the principle like a line", () => {
+  const t = A("a", { text: "Face it." });
+  C.keepLine(t, "reflect", "", { none: true, voice: "jung" });
+  assert.equal(C.lineFresh(t, "reflect"), true, "none fit is remembered, so the search is not repeated");
+  C.keepLine(t, "reflect", "Quote.", { quote: true, author: "Carl Jung", src: "Aion", voice: "jung" });
+  assert.deepEqual([t.lines.reflect.author, t.lines.reflect.src, t.lines.reflect.quote], ["Carl Jung", "Aion", true]);
+});
+
+test("the reflect screen shows the quote or nothing; the push line is plain (1.35.0)", () => {
+  const html = read("index.html");
+  assert.doesNotMatch(html, /REFLECT_FALLBACK/, "no built-in reflections: nothing shows when no quote fits");
+  assert.match(html, /if \(wrap\) wrap\.hidden = !!\(l && l\.none\);/);
+  assert.match(html, /l\.quote \? l\.author \+ \(l\.src \? ", " \+ l\.src : ""\)/, "the author and work under a quote");
+  assert.match(html, /sample\(C\.quotePrompt\(of, v\.name, list\)\)/);
+  assert.match(html, /ranked\[0\]\.score >= 2 \? 0 : -1/, "without a key, only a close match is shown");
+  assert.match(html, /Never invent anything about the user's day, schedule, hours, plans, people or circumstances\./);
+  assert.match(html, /No metaphors or imagery/);
+  assert.match(html, /r\.principle\.citation = "Quoted from Wikiquote";/, "a kept quote carries its author and work");
+  assert.match(html, /var LSQ = "scales\.quotes\.v1", QUOTE_DAYS = 30/);
+});
+
+test("a quote's source: its work, a book within a work, or its citation under a dated or generic section", () => {
+  const q = C.parseQuotes([
+    "== Quotes ==",
+    "=== 1910s ===",
+    "* The pendulum of the mind oscillates between sense and nonsense, not between right and wrong.",
+    "** Die Mutter des Lebens, original text without a work",
+    "** ''Memories, Dreams, Reflections'' (1962), p. 153",
+    "== Meditations ==",
+    "=== Book II ===",
+    "* Do every act of your life as though it were the very last act of your life.",
+    "** II, 5"
+  ].join("\n"));
+  assert.equal(q[0].src, "Memories, Dreams, Reflections (1962), p. 153", "a decade section gives way to the citation; the original-language line is skipped");
+  assert.equal(q[1].src, "Meditations, Book II");
 });

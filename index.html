@@ -141,6 +141,11 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .ai-p { margin:0; font-size:22px; line-height:1.3; letter-spacing:-.01em; font-weight:450; color:var(--ink); transition:opacity .3s; }
 .ai-src { display:block; margin-top:10px; font-size:var(--t-xs); color:var(--faint); }
 .talkrow { border-top:1px solid var(--line) !important; }
+.talkrow .tr { flex-direction:column; align-items:flex-start; gap:2px; }
+.talkrow .tr b { color:var(--ink); font-size:var(--t-md); font-weight:500; }
+.talkrow .tr small { margin:0; }
+.ai-p.quote { font-style:normal; }
+.lineWrap[hidden] { display:none; }
 .reflfoot { flex:none; display:flex; flex-direction:column; gap:12px; padding:14px 0 max(24px, env(safe-area-inset-bottom, 0px)); min-height:102px; justify-content:flex-end; }
 .reflfoot span { font-size:13px; color:var(--muted); }
 .reflfoot .bar { position:relative; height:1px; background:var(--line); overflow:hidden; }
@@ -737,7 +742,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       <div class="btnrow"><button class="btn3d sm raised" type="button" id="saveKey">Save key</button><button class="btn3d sm raised" type="button" id="testKey">Test key</button><button class="btn3d sm raised" type="button" id="clearKey">Remove</button></div>
       <p class="note" id="testResult" hidden></p>
       <p class="status" id="aiText">AI lines: built-in (no key)</p>
-      <p class="note">Only the principle text, its not today count and days in deck are sent, and only to Anthropic. Without a key, built-in lines are used.</p>
+      <p class="note">The line that pushes back when you let go early is written by AI. Only the principle text, its not today count and days in deck are sent, and only to Anthropic. Without a key, built-in questions are used.</p>
     </div>
   </div>
 
@@ -751,7 +756,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       <button class="btn3d sm raised" type="button" id="voiceAdd" disabled>Add</button>
     </div>
   </div>
-  <p class="note">One voice weighs in each day, in turn, changing at 4:00 AM. After a move, tap Weigh in under the keys. Lines are perspectives written by AI in the spirit of each thinker, never quotations. Living people are written about, not voiced. Needs an API key.</p>
+  <p class="note">One voice each day, in turn, changing at 4:00 AM. After you test a principle, Scales shows a real quote from that voice, taken from the sourced quotes on its Wikiquote page and chosen to fit the principle; when none fits, nothing is shown. Only the voice's name is sent to Wikiquote, and its quotes are kept on this phone for 30 days. Talk it through writes perspectives in the spirit of each thinker with AI, never quotations; living people are written about, not voiced, and it needs an API key.</p>
 
   <h3 class="sec2">Your data</h3>
   <div class="panel raised">
@@ -798,36 +803,24 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   // NUDGE_AT   Testing it in a row before the app asks 'Have you lived this yet?'
   var C = ScalesCore, CAP = C.CAP, MAX_WORDS = C.MAX_WORDS, NUDGE_AT = 3;
   var tier = C.tier, weight = C.weight, words = C.words, clean = C.clean, fit = C.fit, vet = C.vet;
-  // Built-in considerations, grouped by how much a thought has been skipped
-  // (0 = never, 1 = once or twice, 3 = three or more). Used when there is no API key,
-  // no connection, or the model's answer fails the checks in vet(). They cannot
-  // see the thought's text, so each one is a question that applies to any claim.
+  // Built-in push lines (1.35.0), shown when you let go early and there is no model line. Plain questions
+  // from the record, grouped by how much a principle has been set aside (0, 1 or 2, 3 or more).
   var FALLBACK = {
-    0: ["Who would you have to stop being to live this fully?",
-        "The person who already lives this: what are they doing today that you are not?",
-        "What does this demand of you that comfort keeps withholding?"],
-    1: ["What did you choose instead of this, and who will pay for it later?",
-        "Which comfort did you protect the last time you set this aside?",
-        "Your future self inherits today's choice. What are you handing them?"],
-    3: ["What is this avoidance protecting: your comfort, your fear, or your image of yourself?",
-        "You keep setting this aside. What part of you profits from that?",
-        "How long will you keep negotiating with something you already know is true?"]
+    0: ["What is in the way of this today?",
+        "Name the reason you are setting this down today.",
+        "What would doing this today take, instead of later?"],
+    1: ["You have set this aside before. What is different about today?",
+        "Is the reason the same as last time?",
+        "What did setting it aside last time get you?"],
+    3: ["You keep setting this aside. What is the avoidance protecting?",
+        "This is a pattern now. What would breaking it today take?",
+        "Set aside again and again. What do you think it will ask of you?"]
   };
-  // Built-in reflections, shown after a hold through when there is no model line. Questions to sit with,
-  // not pushback: each opens the principle up and points at the next few hours.
-  var REFLECT_FALLBACK = [
-    "Where in the next few hours will this be tested, and who will you be when it is?",
-    "What would change today if this were already true of you?",
-    "The person who already lives this: what are they doing in the next hour that you are not?",
-    "What is the smallest act today that would make this true, and what stands in its way?"
-  ];
-  // The angle the model takes for each skip tier. Same tiers as FALLBACK.
-  // The line serves the person the user is becoming, not their comfort today, and
-  // presses harder the more a principle has been set aside.
+  // What the model's push line does at each tier. Same tiers as FALLBACK.
   var ANGLE = {
-    0: "name what this principle demands that has not yet been given, or the smaller self that must be overcome to live it",
-    1: "name what was chosen instead of this principle, and what that choice costs the person the user is becoming",
-    3: "confront the avoidance directly: name the shadow it protects (comfort, fear, pride, a flattering self-image) and what the future self pays for it"
+    0: "ask plainly what is in the way of it today",
+    1: "say plainly that it has been set aside before, and ask what is different today",
+    3: "name the pattern plainly (it keeps being set aside) and ask what the avoidance is protecting"
   };
   // Small helpers used throughout.
   var $ = function (id) { return document.getElementById(id); };
@@ -1092,31 +1085,25 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   // At rest nothing is shown; both lines are fetched in the background for the principle on screen and
   // the one queued next, so they are ready the moment they are needed. Without a key, or when the
   // model cannot supply a usable line, a built-in line is shown and nothing is kept.
-  function fallbackLine(t, kind) {
-    var arr = kind === "reflect" ? REFLECT_FALLBACK : FALLBACK[tier(t.skip_count)], used = t.recent_lines || [];
+  function fallbackLine(t) {
+    var arr = FALLBACK[tier(t.skip_count)], used = t.recent_lines || [];
     var opts = arr.filter(function (l) { return used.indexOf(l) < 0; });
     if (!opts.length) opts = arr;
     return opts[Math.floor(Math.random() * opts.length)];
   }
-  // The prompt for the model. Only the principle text, its Not today count and days in deck are sent.
-  // Recent lines are included so the model does not repeat itself.
-  function buildPrompt(t, kind) {
+  // The push line's prompt (1.35.0). Only the principle text, its Not today count and days in deck are sent.
+  // Plain, from the user's own words and record: the earlier prompt invented details about their day and
+  // reached for metaphor, which read as coaching. Recent lines are included so it does not repeat itself.
+  function buildPrompt(t) {
     var recent = (t.recent_lines || []).slice(-3);
-    var angle = kind === "reflect"
-      ? "the user has chosen to stay with this principle now. Give one question to sit with for a minute: open the principle up and point at what living it would demand of them in the next few hours"
-      : ANGLE[tier(t.skip_count)] + ". The user is about to set this principle aside for today; make them think twice before they do";
-    return "You write one line shown beneath a principle the user has chosen to live by, in an app for self-overcoming.\n" +
-      "Speak as a Jungian analyst and a Nietzschean teacher would. You serve the person the user is becoming, not their comfort today.\n" +
-      "Resistance is the shadow speaking: avoidance usually protects comfort, fear, pride, or a flattering self-image. Name it.\n" +
-      "Hold the standard. The user wants discipline, not grace: never excuse, soften, or give permission for the gap between this principle and their conduct.\n" +
-      "Work from the words of the principle itself, and make the cost of not living it fall where it belongs, on their future self.\n" +
-      "Rules:\n- " + MAX_WORDS + " words or fewer. Count them.\n" +
-      "- Angle: " + angle + "\n" +
-      "- A single sharp question or statement. Confront without contempt: no insults, no attacks on their worth.\n" +
-      "- No praise, reassurance, self-compassion language, rest or gentleness talk, or permission to wait.\n" +
-      "- No cliches or motivational slogans. Plain, precise, serious language, closer to a philosopher than a coach.\n" +
-      "- Do not lecture or explain the philosophy, and do not name Jung or Nietzsche. Do not repeat the principle verbatim.\n" +
-      "- No exclamation marks, quotation marks, emoji, em-dashes, lists, or medical language.\n" +
+    return "You write one line shown when the user is about to set aside a principle they chose to live by.\n" +
+      "Rules:\n" +
+      "- One plain sentence or question, 20 words or fewer.\n" +
+      "- Angle: " + ANGLE[tier(t.skip_count)] + ".\n" +
+      "- Use only the words of the principle and the record below. Never invent anything about the user's day, schedule, hours, plans, people or circumstances.\n" +
+      "- No metaphors or imagery: no accounts, ledgers, debts, inheritance, shadows, or a future self as a person.\n" +
+      "- No praise, reassurance, permission, insults, slogans or motivational language. Direct and serious, like a frank friend who holds the standard.\n" +
+      "- Do not repeat the principle verbatim. No exclamation marks, quotation marks, emoji, em-dashes or lists.\n" +
       "- Do not reuse the wording of these recent lines: " + (recent.length ? recent.join(" | ") : "none") + "\n" +
       "Return only the line.\n\n" +
       "Principle: " + t.text + "\nTimes set aside: " + t.skip_count + "\nDays in deck: " + days(t.created_at);
@@ -1133,7 +1120,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     var lastReason = "", of = t.text;
     function attempt(n) {
       if (!sample) return Promise.resolve(null);
-      return sample(buildPrompt(t, kind)).then(function (res) {
+      return sample(buildPrompt(t)).then(function (res) {
         var v = vet(res && res.text, t);
         if (v.line) return v.line;
         lastReason = v.reason + (res && res.stop ? ", stop: " + res.stop : "");
@@ -1159,10 +1146,58 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     inflight[key] = p;
     return p;
   }
-  // Fetch whichever of a principle's two lines is missing or stale.
+  // Fetch whichever of a principle's two lines is missing or stale: the push line from the model, the
+  // reflect quote from Wikiquote.
   function ensureLines(t) {
-    if (!sample || !t || t.status !== "active") return;
-    ["push", "reflect"].forEach(function (k) { if (!C.lineFresh(t, k)) fetchLine(t, k); });
+    if (!t || t.status !== "active") return;
+    if (sample && !C.lineFresh(t, "push")) fetchLine(t, "push");
+    if (!C.lineFresh(t, "reflect")) fetchQuote(t);
+  }
+
+  // ---------- quotes (1.35.0) ----------
+  // The reflect screen shows a real quote from today's voice: its sourced quotes on Wikiquote (core.js
+  // parseQuotes), the twenty that share the most words with the principle (rankQuotes), and the model picks
+  // the one that speaks to it, or none (quotePrompt, readPick). Without a key, the closest is used only if it
+  // shares at least two word stems with the principle. Each voice's quotes are kept on the phone for 30 days.
+  // Only the voice's name goes to Wikiquote; only the principle and the candidate quotes go to Anthropic.
+  var LSQ = "scales.quotes.v1", QUOTE_DAYS = 30, quoteBook = lsGet(LSQ, {}), quoteFetch = {};
+  function voiceQuotes(v) {
+    var page = C.wqPage(v); if (!page) return Promise.resolve([]);
+    var kept = quoteBook[page];
+    if (kept && kept.list && Date.now() - kept.at < QUOTE_DAYS * 86400000) return Promise.resolve(kept.list);
+    if (quoteFetch[page]) return quoteFetch[page];
+    quoteFetch[page] = fetch(C.wqUrl(page)).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      var list = C.parseQuotes(j && j.parse && j.parse.wikitext, 400);
+      // Kept only when there is something to keep, so a page that failed to load is tried again next time.
+      if (list.length) { quoteBook[page] = { at: Date.now(), list: list }; lsSet(LSQ, quoteBook); }
+      delete quoteFetch[page];
+      return list.length ? list : (kept && kept.list) || [];
+    }, function () { delete quoteFetch[page]; return (kept && kept.list) || []; });
+    return quoteFetch[page];
+  }
+  // Find the quote for a principle and keep it on the principle, or keep that none fit.
+  // Resolves to the kept line, or null when nothing could be looked up (offline, no voice).
+  function fetchQuote(t) {
+    var v = todayVoice(), key = t.id + "\nquote\n" + t.text;
+    if (!v) return Promise.resolve(null);
+    if (inflight[key]) return inflight[key];
+    var of = t.text;
+    var p = voiceQuotes(v).then(function (quotes) {
+      if (!quotes.length) return null;
+      var ranked = C.rankQuotes(of, quotes, 20), list = ranked.map(function (r) { return quotes[r.i]; });
+      var pick = !sample ? Promise.resolve(ranked.length && ranked[0].score >= 2 ? 0 : -1)
+        : sample(C.quotePrompt(of, v.name, list)).then(function (res) { return C.readPick(res && res.text, list.length); }, function () { return ranked[0] && ranked[0].score >= 2 ? 0 : -1; });
+      return pick.then(function (k) {
+        var live = thoughts[t.id]; if (!live || live.text !== of) return null;
+        var q = k >= 0 ? list[k] : null;
+        var l = q ? C.keepLine(live, "reflect", q.q, { quote: true, author: v.name, src: q.src || "", voice: v.id })
+          : C.keepLine(live, "reflect", "", { none: true, voice: v.id });
+        save(live);
+        return l;
+      });
+    }).then(function (l) { delete inflight[key]; return l; }, function () { delete inflight[key]; return null; });
+    inflight[key] = p;
+    return p;
   }
   // Pick the next principle now and fetch its lines while this one is on screen.
   function prefetchNext() {
@@ -1180,21 +1215,42 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       if (ai) { t.recent_lines = (t.recent_lines || []).concat([text]).slice(-3); save(t); }
       paintLine();
     }
+    // The reflect screen: the kept quote, nothing when none fit, or a quiet placeholder while it is found.
+    function putQuote(l) {
+      shown = l && l.text ? { kind: kind, text: l.text, ai: true, quote: true, author: l.author, src: l.src } : { kind: kind, none: true };
+      paintLine();
+    }
+    if (kind === "reflect") {
+      if (C.lineFresh(t, kind)) { putQuote(t.lines[kind]); return; }
+      var v = todayVoice();
+      if (!v) { putQuote(null); return; }
+      shown = { kind: kind, text: "Looking for " + v.short + " on this\u2026", pending: true }; paintLine();
+      fetchQuote(t).then(function (l) {
+        if (seq !== aiSeq || current !== t.id || !shown || shown.kind !== kind) return;
+        putQuote(l);
+      });
+      return;
+    }
     if (C.lineFresh(t, kind)) { put(t.lines[kind].text, true); return; }
-    if (!sample) { put(fallbackLine(t, kind), false); return; }
+    if (!sample) { put(fallbackLine(t), false); return; }
     shown = { kind: kind, text: "Considering\u2026", ai: false, pending: true }; paintLine();
     fetchLine(t, kind).then(function (r) {
       if (seq !== aiSeq || current !== t.id || !shown || shown.kind !== kind) return;
-      if (r) put(r.text, true); else put(fallbackLine(t, kind), false);
+      if (r) put(r.text, true); else put(fallbackLine(t), false);
     });
   }
   // Draw the line on screen. 'pending' dims the placeholder while a model line is on the way.
+  // A quote shows its author and work; when no quote fit, the line's place is left empty.
   function paintLine() {
     var el = $("aiLine"); if (!el) return;
-    var l = shown; if (!l) { el.textContent = ""; return; }
-    el.textContent = l.text;
+    var l = shown, wrap = el.parentNode;
+    if (wrap) wrap.hidden = !!(l && l.none);
+    if (!l || l.none) { el.textContent = ""; return; }
+    el.textContent = l.quote ? "\u201C" + l.text + "\u201D" : l.text;
     el.classList.toggle("pending", !!l.pending);
-    var src = $("aiSrc"); if (src) src.textContent = l.pending ? "Considering" : l.ai ? "Considered for you. Press and hold to keep it." : "A question to sit with";
+    el.classList.toggle("quote", !!l.quote);
+    var src = $("aiSrc");
+    if (src) src.textContent = l.pending ? "" : l.quote ? l.author + (l.src ? ", " + l.src : "") : l.ai ? "Considered for you" : "A question to sit with";
   }
 
   // ---------- actions ----------
@@ -1464,9 +1520,9 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       v.innerHTML = '<article class="card reflect" id="card" aria-label="Testing it" aria-describedby="cardHow">' +
         '<div class="phase"><span>Testing it</span><button type="button" id="reflUndo">Undo</button></div>' +
         '<div class="mid">' + words + line + whereHtml(t) +
-          (canWeigh() ? '<button type="button" class="crow talkrow" id="talkRow"><span>Talk it through with ' + esc(todayVoice().short) + "<small>Today’s voice</small></span>" + ICON_NEXT + "</button>" : "") +
-          (nudge ? '<div class="banner"><span class="t">Have you lived this yet?</span><button type="button" id="nudgeNo">Not yet</button><button type="button" class="yes" id="nudgeYes">Living it</button></div>' : "") +
+          (canWeigh() ? '<button type="button" class="crow talkrow" id="talkRow"><span class="tr"><b>Talk it through with ' + esc(todayVoice().short) + "</b><small>Today’s voice</small></span>" + ICON_NEXT + "</button>" : "") +
         "</div>" + how + "</article>" +
+        (nudge ? '<div class="banner"><span class="t">Have you lived this yet?</span><button type="button" id="nudgeNo">Not yet</button><button type="button" class="yes" id="nudgeYes">Living it</button></div>' : "") +
         '<div class="reflfoot" id="reflFoot" aria-live="polite"></div>';
       $("reflUndo").onclick = function () { var p = reflectUndo; if (p) { restore(p); toast("Undone."); } };
       if ($("talkRow")) $("talkRow").onclick = openWeigh;
@@ -1574,7 +1630,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
         var m = mode; if (m !== "edit" && m !== "keep") return; mode = "";
         var t = onCard(); if (!t) return;
         coachSeen();
-        if (m === "edit") openEdit(t); else if (shown && shown.ai) openKeep(t, shown.text);
+        if (m === "edit") openEdit(t); else if (shown && shown.ai) openKeep(t, shown.text, shown.quote ? { author: shown.author, src: shown.src } : null);
       }, HOLD_MS);
     });
     deck.addEventListener("pointermove", function (e) {
@@ -1609,9 +1665,11 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   // Either one can be undone from the toast.
   var keepT = null, keepLine = "", keepMode = "add";
   function clip(s, n) { s = String(s || "").trim(); return s.length > n ? s.slice(0, n) + "…" : s; }
-  function openKeep(t, line) {
+  // meta: for a quote, its author and work, which a principle kept from it carries (1.35.0).
+  var keepMeta = null;
+  function openKeep(t, line, meta) {
     if (!t || !line) return;
-    keepT = t; keepLine = line; keepMode = "add";
+    keepT = t; keepLine = line; keepMode = "add"; keepMeta = meta || null;
     var coll = String(t.collection || "").trim();
     $("keepText").textContent = line;
     $("keepFrom").textContent = "From your principle" + (coll ? " in " + coll : "") + ": " + clip(t.text, 90);
@@ -1641,6 +1699,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     var u = undoPoint(), now = new Date();
     if (keepMode === "add") {
       var r = C.keepAsNew(all(), t, keepLine, now); if (!r.principle) return;
+      if (keepMeta) { r.principle.author = keepMeta.author || ""; r.principle.title = keepMeta.src || ""; r.principle.citation = "Quoted from Wikiquote"; }
       r.principle.id = newId(); save(r.principle);
       hide(); undoable("Added to " + (String(t.collection || "").trim() || "the deck") + ".", u);
       paintStat();
