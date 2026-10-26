@@ -17,15 +17,13 @@ You write down a principle you want to live by ("the hard conversation is usuall
 
 | Move | Hold the ring | What happens |
 |---|---|---|
-| Skip | let go early | The app pushes back once: a line to make you think twice, and the ring again. Hold again to sit with it instead. Let go early a second time, or tap Skip it, and it is set aside: its count goes up by 1, it rests, then comes back more often and set heavier. |
+| Skip | let go early | The app pushes back once: a line to make you think twice, and the ring again. Hold again to stay with it. Let go early a second time, or tap Skip it, and it is set aside: its count goes up by 1, it rests, then comes back more often and set heavier. |
 | Sit with it | hold until the ring closes (about 2.4 seconds) | A real quote from today's voice, where the principle came from, and Talk it through with that voice. After 8 seconds the test counts against Skip (the count drops by 1) and Next principle appears. Nothing moves on by itself. |
 | Living it | slide up while holding | Opens a short form for where it showed up, then moves the principle to your record. |
 
 A quick tap on the ring does nothing, so a stray touch never rests a principle. The three moves are also buttons for VoiceOver and the keyboard, and the arrow keys (left, up, right). Everything else (Capture, Edit, Show, the Ledger, Collections, Settings) is in the menu at the top right. With a keyboard, N captures, E edits, L switches between the deck and the Ledger, M opens the menu, and comma opens Settings.
 
 **The pushback and the quote.** When you let go early, one plain line pushes back, written by AI from the principle's own words and its record: nothing invented about your day, no metaphors. After a test, the reflect screen shows a real quote from today's voice instead of anything written. Scales reads the sourced quotes on that thinker's Wikiquote page (leaving out the disputed and misattributed ones), narrows them to the twenty that share the most words with your principle, and the AI picks the one that speaks to it, or none. When none fits, nothing is shown. Without a key, the closest match is shown only if it is a clear one. Each quote shows its author and work. Both are kept on the principle and reused until you test it again or change its wording; a principle that reaches three Skip gets its pushback rewritten once. Each voice's quotes are kept on the phone for 30 days, and only the voice's name is sent to Wikiquote. Press and hold a line or quote to keep it as a principle of its own; a kept quote keeps its author and work.
-
-**A thought when you skip.** The pushback screen has one optional line: What came up? Write what the line made you think, even if you are not ready to sit with the principle yet. It is kept with the line that prompted it. The next time you skip that principle it shows under the line (Last time you wrote), and when you finally sit with it, your thoughts so far show under the quote. A thought does not change the skip: the count still goes up and the principle still rests. The principle's history in the Ledger lists each thought with its line. Press and hold a thought to keep it as a principle of its own.
 
 **Show.** The deck draws from every collection by default. Show, in the menu, draws it from one; the chosen collection is named at the top of the deck.
 

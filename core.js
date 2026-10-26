@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.37.0";
+  var VERSION = "1.36.0";
   var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -709,20 +709,6 @@ var ScalesCore = (function () {
   // Days a principle was set aside, kept for the weekly review (last 20).
   function noteSkipDay(t, day) { t.skips_on = (t.skips_on || []).concat([day]).slice(-20); return t; }
 
-  // Thoughts on skipping (1.37.0). When you skip after the pushback, you can write one line about what came
-  // up as you read it. It is kept with the line that prompted it, shown under that line the next time you
-  // skip, and under the quote when you finally sit with it. It does not change the skip: the count still
-  // goes up and the principle still rests. The last 20 are kept.
-  var NOTE_MAX = 140;
-  function addNote(t, text, line, day, at) {
-    text = String(text || "").replace(/\s+/g, " ").trim().slice(0, NOTE_MAX);
-    if (!t || !text) return null;
-    var n = { day: day, at: at || new Date().toISOString(), text: text, line: String(line || "").trim() };
-    t.notes = (t.notes || []).concat([n]).slice(-20);
-    return n;
-  }
-  function lastNote(t) { var n = (t && t.notes) || []; return n.length ? n[n.length - 1] : null; }
-
   // ---------- your week ----------
   // The seven Scales days ending today, oldest first.
   function weekDays(today) { var out = []; for (var i = 6; i >= 0; i--) out.push(addDays(today, -i)); return out; }
@@ -762,8 +748,7 @@ var ScalesCore = (function () {
   function timeline(t) {
     var ev = [], d = function (iso) { return iso ? dayOf(new Date(iso)) : ""; };
     if (t.created_at) ev.push({ at: d(t.created_at), kind: "start", text: t.kept_from ? "Kept from an AI line" : "Captured" });
-    var noted = {}; (t.notes || []).forEach(function (n) { noted[n.day] = n; });
-    (t.skips_on || []).forEach(function (x) { ev.push({ at: x, kind: "skip", text: noted[x] ? "Skipped, with a thought: " + noted[x].text : "Skipped" }); });
+    (t.skips_on || []).forEach(function (x) { ev.push({ at: x, kind: "skip", text: "Skipped" }); });
     (t.acts || []).forEach(function (x) { ev.push({ at: x.day, kind: "act", text: "Smallest act: " + x.text }); });
     (t.caught || []).forEach(function (x) { ev.push({ at: x.day, kind: "caught", text: "Caught it" + (x.text ? ": " + x.text : "") }); });
     (t.talks || []).forEach(function (x) { if (x.line) ev.push({ at: x.day || d(x.at), kind: "talk", text: "Weighed in by " + (x.voice_name || "a thinker") + " on " + (MOVES[x.move] || x.move) }); });
@@ -795,7 +780,6 @@ var ScalesCore = (function () {
     setSize: setSize, freshDay: freshDay, dayState: dayState, noteDayMove: noteDayMove, dayPhase: dayPhase, focusChoices: focusChoices,
     daySummary: daySummary, checkinDue: checkinDue, askAct: askAct, actToday: actToday, addAct: addAct,
     addCatch: addCatch, catchCount: catchCount, suggestLiving: suggestLiving, noteSkipDay: noteSkipDay,
-    NOTE_MAX: NOTE_MAX, addNote: addNote, lastNote: lastNote,
     weekDays: weekDays, isReviewDay: isReviewDay, weekStats: weekStats, weekPrompt: weekPrompt, timeline: timeline };
 })();
 

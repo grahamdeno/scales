@@ -190,21 +190,6 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .pair.next { grid-template-columns:1fr 2fr; }
 .pair.next .primary { min-height:56px; }
 .pair.next .btn3d { min-height:56px; }
-/* Thoughts on skipping (1.37.0). */
-.pushnote { display:grid; gap:6px; }
-.pushnote label { display:flex; justify-content:space-between; gap:10px; font-size:var(--t-sm); color:var(--ink); }
-.pushnote label span { color:var(--faint); font-size:var(--t-xs); }
-.pushnote textarea { font-size:16px; min-height:52px; }
-.lastnote { margin:-6px 0 0; font-size:var(--t-md); line-height:1.4; color:var(--ink); }
-.lastnote span { display:block; font-size:var(--t-xs); color:var(--faint); margin-bottom:2px; }
-.mynotes { display:grid; gap:10px; }
-.mynotes .cap { margin-bottom:-2px; }
-.note-item { margin:0; font-size:var(--t-md); line-height:1.4; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
-.note-item small { display:block; margin-top:2px; font-size:var(--t-xs); color:var(--faint); }
-.rownotes { display:grid; gap:14px; }
-.rn p { margin:0; font-size:var(--t-md); line-height:1.4; }
-.rn p.rl { font-size:var(--t-sm); color:var(--muted); margin-bottom:4px; }
-.rn small { font-size:var(--t-xs); color:var(--faint); }
 .lived2 { flex:none; display:flex; flex-direction:column; gap:10px; padding-top:12px; font-size:var(--t-sm); color:var(--muted); }
 .ring { position:relative; width:96px; height:96px; display:grid; place-items:center; touch-action:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; cursor:pointer; }
 .ring svg { width:96px; height:96px; transform:rotate(-90deg); }
@@ -680,7 +665,6 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   <div class="glass" id="rowLine" hidden></div>
   <div class="ev" id="rowEv" hidden></div>
   <div id="rowHist"></div>
-  <div class="rownotes" id="rowNotes" hidden></div>
   <div class="tl" id="rowTl"></div>
   <div class="acts3" id="rowActs"></div>
 </dialog>
@@ -1314,11 +1298,9 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     if (kind === "skip") {
       // Not today: counted, rested until the next day, and owed one turn at the front.
       var u = undoPoint();
-      // A thought written on the pushback screen is kept with the line that prompted it (core.js addNote).
-      var ne = $("pushNote"), noted = phase === "push" && ne && C.addNote(t, ne.value, shown && !shown.pending ? shown.text : "", today());
       C.applySkip(t, today(), restDays()); C.noteSkipDay(t, today()); noteMove(t, "skip"); noteDay(t, "skip");
       save(t); logActivity("skip"); flyOut("left");
-      undoable((noted ? "Skipped, thought kept. " : "Skipped. ") + backText(t.rest_until), u); return;
+      undoable("Skipped. " + backText(t.rest_until), u); return;
     }
     if (kind === "keep") {
       if (phase === "reflect") return;
@@ -1573,7 +1555,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     if (phase === "reflect") {
       v.innerHTML = '<article class="card reflect" id="card" aria-label="Testing it" aria-describedby="cardHow">' +
         '<div class="phase"><span>Sitting with it</span></div>' +
-        '<div class="mid">' + words + line + notesHtml(t) + whereHtml(t) +
+        '<div class="mid">' + words + line + whereHtml(t) +
           (canWeigh() ? '<button type="button" class="crow talkrow" id="talkRow"><span class="tr"><b>Talk it through with ' + esc(todayVoice().short) + "</b><small>Today’s voice</small></span>" + ICON_NEXT + "</button>" : "") +
         "</div>" + how + "</article>" +
         (nudge ? '<div class="lived2"><span>Have you lived this yet?</span><div class="pair"><button type="button" class="btn3d" id="nudgeNo">Not yet</button><button type="button" class="btn3d" id="nudgeYes">Living it</button></div></div>' : "") +
@@ -1587,13 +1569,9 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       return;
     }
     if (phase === "push") {
-      var lastN = C.lastNote(t);
       v.innerHTML = '<article class="card push" id="card" aria-label="Skip this one?" aria-describedby="cardHow">' +
         '<div class="phase"><span>Skip this one?</span></div>' +
-        '<div class="mid">' + words + line + (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") +
-          (lastN ? '<p class="lastnote"><span>Last time you wrote</span>' + esc(lastN.text) + "</p>" : "") +
-          '<div class="pushnote"><label for="pushNote">What came up? <span>Optional, kept with this line</span></label><textarea id="pushNote" rows="2" maxlength="' + C.NOTE_MAX + '" placeholder="A thought, in a line"></textarea></div>' +
-        "</div>" + how + "</article>" +
+        '<div class="mid">' + words + line + (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") + "</div>" + how + "</article>" +
         holdHtml("Hold to sit with it instead", '<div class="widewrap"><button type="button" class="btn3d wide" id="setAside">Skip it</button></div>');
       $("setAside").onclick = function () { act("skip"); };
       paintLine();
@@ -1606,16 +1584,6 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       $("coach").onclick = function (e) { if (e.target === $("coach")) coachSeen(); };
     }
   }
-  // Your thoughts from earlier skips, newest first, under the quote when you sit with the principle (1.37.0).
-  // Press and hold one to keep it as a principle of its own.
-  function notesHtml(t) {
-    var n = (t.notes || []).slice(-3).reverse();
-    if (!n.length) return "";
-    return '<div class="mynotes"><span class="cap">Your thoughts so far</span>' + n.map(function (x) {
-      return '<p class="note-item" data-note="' + esc(x.at) + '">' + esc(x.text) + "<small>" + esc(fmtDayKey(x.day)) + "</small></p>";
-    }).join("") + "</div>";
-  }
-  function fmtDayKey(d) { if (!d) return ""; var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
   // The reflect screen's foot: a thin line filling for REFLECT_SEC, then Next.
   function paintReflectFoot() {
     var f = $("reflFoot"); if (!f) return;
@@ -1691,23 +1659,19 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
         var c = $("card"); if (c) c.classList.remove("spring", "enter");
         coachSeen(); frame(); return;
       }
-      var noteEl = e.target.closest(".note-item");
-      var press = e.target.closest("#words") ? "edit" : (e.target.closest("#aiLine") && shown && shown.ai) ? "keep" : noteEl ? "keepnote" : "";
+      var press = e.target.closest("#words") ? "edit" : (e.target.closest("#aiLine") && shown && shown.ai) ? "keep" : "";
       if (!press) return;
-      var noteAt = noteEl ? noteEl.getAttribute("data-note") : "";
       mode = press; sx = e.clientX; sy = e.clientY;
       clearTimeout(holdT);
       holdT = setTimeout(function () {
-        var m = mode; if (m !== "edit" && m !== "keep" && m !== "keepnote") return; mode = "";
+        var m = mode; if (m !== "edit" && m !== "keep") return; mode = "";
         var t = onCard(); if (!t) return;
         coachSeen();
-        if (m === "edit") openEdit(t);
-        else if (m === "keepnote") { var nn = (t.notes || []).filter(function (x) { return x.at === noteAt; })[0]; if (nn) openKeep(t, nn.text, { note: true }); }
-        else if (shown && shown.ai) openKeep(t, shown.text, shown.quote ? { author: shown.author, src: shown.src } : null);
+        if (m === "edit") openEdit(t); else if (shown && shown.ai) openKeep(t, shown.text, shown.quote ? { author: shown.author, src: shown.src } : null);
       }, HOLD_MS);
     });
     deck.addEventListener("pointermove", function (e) {
-      if ((mode === "edit" || mode === "keep" || mode === "keepnote") && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) { mode = ""; clearTimeout(holdT); return; }
+      if ((mode === "edit" || mode === "keep") && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) { mode = ""; clearTimeout(holdT); return; }
       if (mode !== "ring") return;
       dy = e.clientY - sy;
       var c = $("card"); if (c) { c.classList.add("dragging"); c.style.transform = "translateY(" + Math.max(Math.min(dy, 0), -C.HOLD_LIFT) * 0.4 + "px)"; }
@@ -1773,8 +1737,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     var u = undoPoint(), now = new Date();
     if (keepMode === "add") {
       var r = C.keepAsNew(all(), t, keepLine, now); if (!r.principle) return;
-      if (keepMeta && keepMeta.note) r.principle.citation = "From a thought on: " + clip(t.text, 80);
-      else if (keepMeta) { r.principle.author = keepMeta.author || ""; r.principle.title = keepMeta.src || ""; r.principle.citation = "Quoted from Wikiquote"; }
+      if (keepMeta) { r.principle.author = keepMeta.author || ""; r.principle.title = keepMeta.src || ""; r.principle.citation = "Quoted from Wikiquote"; }
       r.principle.id = newId(); save(r.principle);
       hide(); undoable("Added to " + (String(t.collection || "").trim() || "the deck") + ".", u);
       paintStat();
@@ -2150,11 +2113,6 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     $("rowLine").hidden = !l; $("rowLine").innerHTML = l ? "<p>" + esc(l) + "</p>" : "";
     $("rowEv").hidden = !(lived && t.evidence); $("rowEv").textContent = t.evidence || "";
     $("rowHist").innerHTML = historyHtml(t);
-    var ns = (t.notes || []).slice().reverse();
-    $("rowNotes").hidden = !ns.length;
-    $("rowNotes").innerHTML = ns.length ? '<span class="cap">Thoughts when skipping</span>' + ns.map(function (x) {
-      return '<div class="rn">' + (x.line ? '<p class="rl">' + esc(x.line) + "</p>" : "") + "<p>" + esc(x.text) + "</p><small>" + esc(fmtDayKey(x.day)) + "</small></div>";
-    }).join("") : "";
     var f = function (d) { if (!d) return ""; var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
     $("rowTl").innerHTML = C.timeline(t).slice(0, 30).map(function (e) {
       return '<div><i class="' + (TL_DOT[e.kind] || "") + '"></i>' + esc(clip(e.text, 120)) + "<span>" + esc(f(e.at)) + "</span></div>";
@@ -2389,8 +2347,6 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       if (c) p.push("caught " + times(c));
       if (!p.length) p.push(t.reflect_count ? "Sat with " + times(t.reflect_count) : "New");
     }
-    var nt = (t.notes || []).length;
-    if (nt) p.push(nt === 1 ? "one thought" : nt + " thoughts");
     var tk = (t.talks || []).filter(function (x) { return x.line; });
     if (tk.length) p.push("talked with " + voiceById(tk[tk.length - 1].voice, tk[tk.length - 1]).short);
     var s = p.join(", ");
