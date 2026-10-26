@@ -307,6 +307,13 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .wkey b { font-size:1.7647rem; line-height:1; letter-spacing:-.02em; }
 .wkey span { font-size:var(--t-xs); color:var(--muted); }
 .sec2 { margin:28px 0 0; display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-size:var(--t-xs); font-weight:500; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
+/* Settings (1.48.0): Advanced folds the rarely touched parts. */
+.adv { margin-top:28px; border-top:1px solid var(--line); }
+.adv > summary { list-style:none; display:flex; justify-content:space-between; align-items:center; min-height:52px; cursor:pointer; font-size:var(--t-md); color:var(--ink); }
+.adv > summary::-webkit-details-marker { display:none; }
+.adv > summary::after { content:"+"; font-size:1.2rem; color:var(--muted); }
+.adv[open] > summary::after { content:"\2212"; }
+.sec3 { margin:22px 0 0; font-size:var(--t-xs); font-weight:500; letter-spacing:.09em; text-transform:uppercase; color:var(--faint); }
 .sec2 span { font-size:var(--t-xs); color:var(--faint); font-weight:400; letter-spacing:0; text-transform:none; }
 .grid12 { margin-top:14px; padding:0; display:grid; grid-template-columns:repeat(14, minmax(0,1fr)); gap:7px; background:none !important; border:0 !important; }
 .grid12 i { aspect-ratio:1; border-radius:50%; background:color-mix(in srgb, var(--ink) 10%, transparent); }
@@ -765,47 +772,25 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <dialog class="sheet tall" id="sheetSettings" aria-modal="true" aria-labelledby="sheetSettingsTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetSettingsTitle">Settings</span> <button type="button" data-close>Done</button></h2>
+  <!-- Settings (1.48.0): five groups, everything rarely touched folded under Advanced. -->
 
   <h3 class="sec2" style="margin-top:4px">Look</h3>
   <div class="panel raised">
     <div class="setrow"><span id="lookLbl">Surface</span>
       <div class="seg pressed" role="group" aria-labelledby="lookLbl"><button type="button" data-look="matte" aria-pressed="true">Black</button><button type="button" data-look="light" aria-pressed="false">White</button></div></div>
-    <div class="setrow"><span id="tapLbl">Buttons instead of press and hold<small>Skip, Sit with it and Living it as buttons on the main screen</small></span>
-      <button type="button" class="toggle" id="tapToggle" role="switch" aria-checked="false" aria-labelledby="tapLbl"><i></i></button></div>
     <div class="setrow"><span id="whereLbl">Show where it came from<small>Collection, origin and author while you test a principle</small></span>
       <button type="button" class="toggle" id="whereToggle" role="switch" aria-checked="true" aria-labelledby="whereLbl"><i></i></button></div>
   </div>
 
   <h3 class="sec2">Deck</h3>
   <div class="panel raised">
+    <div class="setrow"><span id="setLbl">Today’s set<small>Then Done for today</small></span>
+      <div class="stepper" role="group" aria-labelledby="setLbl"><button type="button" class="raised" id="setDown" aria-label="One fewer">&minus;</button><output id="setOut" aria-live="polite">5</output><button type="button" class="raised" id="setUp" aria-label="One more">+</button></div></div>
     <div class="setrow"><span id="restLbl">Rest after Skip<small>It comes up first when it returns</small></span>
       <div class="stepper" role="group" aria-labelledby="restLbl"><button type="button" class="raised" id="restDown" aria-label="One day less">&minus;</button><output id="restOut" aria-live="polite">4 days</output><button type="button" class="raised" id="restUp" aria-label="One day more">+</button></div></div>
-    <div class="setrow"><span id="setLbl">Today’s set<small>Then Done for today, and today’s focus</small></span>
-      <div class="stepper" role="group" aria-labelledby="setLbl"><button type="button" class="raised" id="setDown" aria-label="One fewer">&minus;</button><output id="setOut" aria-live="polite">5</output><button type="button" class="raised" id="setUp" aria-label="One more">+</button></div></div>
+    <div class="setrow"><span id="tapLbl">Buttons instead of press and hold<small>Skip, Sit with it and Living it as buttons on the main screen</small></span>
+      <button type="button" class="toggle" id="tapToggle" role="switch" aria-checked="false" aria-labelledby="tapLbl"><i></i></button></div>
     <button type="button" class="setrow" id="openCollections" style="width:100%;text-align:left;color:inherit"><span>Manage collections<small>Rename, merge or remove</small></span><span class="status" style="display:flex;align-items:center;gap:6px;font-size:0.8235rem"><span id="collCount">0</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px"><path d="M9 6l6 6-6 6"/></svg></span></button>
-  </div>
-
-  <h3 class="sec2">Daily reminder</h3>
-  <div class="panel raised">
-    <div class="setrow stack">
-      <p class="note">Scales has no server, so it cannot send notifications itself. An iPhone automation can remind you instead. Set it up once for the morning set and once for the evening check-in.</p>
-      <div class="steps"><div><b>1</b><span>In Shortcuts: Automation, New Automation, Time of Day. Pick a time, then Run Immediately.</span></div><div><b>2</b><span>Add the Show Notification action with the words: Scales, today’s set.</span></div><div><b>3</b><span>Repeat for the evening, after 6 PM: Scales, evening check-in. Open Scales from the Home Screen when it arrives.</span></div></div>
-      <p class="note">A link would open Safari, which keeps its own copy of the data, so the reminder points you to the Home Screen app instead.</p>
-      <div class="btnrow"><button class="btn3d sm raised" type="button" id="openShortcuts">Open Shortcuts</button></div>
-    </div>
-  </div>
-
-  <h3 class="sec2">AI lines</h3>
-  <div class="panel raised">
-    <div class="setrow"><span id="aiLbl">Write a line for each principle<small>Your key stays on this phone</small></span>
-      <button type="button" class="toggle" id="aiToggle" role="switch" aria-checked="true" aria-labelledby="aiLbl"><i></i></button></div>
-    <div class="setrow stack">
-      <input class="field" id="apiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Anthropic API key (sk-ant-...)" aria-label="Anthropic API key">
-      <div class="btnrow"><button class="btn3d sm raised" type="button" id="saveKey">Save key</button><button class="btn3d sm raised" type="button" id="testKey">Test key</button><button class="btn3d sm raised" type="button" id="clearKey">Remove</button></div>
-      <p class="note" id="testResult" hidden></p>
-      <p class="status" id="aiText">AI lines: built-in (no key)</p>
-      <p class="note">The line that pushes back when you let go early is written by AI. Only the principle text, how often it was skipped and days in deck are sent, and only to Anthropic. Without a key, built-in questions are used.</p>
-    </div>
   </div>
 
   <h3 class="sec2">Voices<span id="voiceToday"></span></h3>
@@ -818,33 +803,61 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       <button class="btn3d sm raised" type="button" id="voiceAdd" disabled>Add</button>
     </div>
   </div>
-  <p class="note">One voice each day, in turn, changing at 4:00 AM. After you test a principle, Scales shows a real quote from that voice, taken from the sourced quotes on its Wikiquote page and chosen to fit the principle; when none fits, nothing is shown. Only the voice's name is sent to Wikiquote, and its quotes are kept on this phone for 30 days. Talk it through writes perspectives in the spirit of each thinker with AI, never quotations; living people are written about, not voiced, and it needs an API key.</p>
+  <p class="note">One voice a day, in turn. Sit with it shows a real quote from today’s voice, from Wikiquote, when one fits.</p>
+
+  <h3 class="sec2">Reminders</h3>
+  <div class="panel raised" id="remindPanel">
+    <div class="setrow stack">
+      <p class="note">Scales has no server, so it cannot send notifications itself. An iPhone automation can remind you instead. Set it up once for the morning set and once for the evening check-in.</p>
+      <div class="steps"><div><b>1</b><span>In Shortcuts: Automation, New Automation, Time of Day. Pick a time, then Run Immediately.</span></div><div><b>2</b><span>Add the Show Notification action with the words: Scales, today’s set.</span></div><div><b>3</b><span>Repeat for the evening, after 6 PM: Scales, evening check-in. Open Scales from the Home Screen when it arrives.</span></div></div>
+      <p class="note">A link would open Safari, which keeps its own copy of the data, so the reminder points you to the Home Screen app instead.</p>
+      <div class="btnrow"><button class="btn3d sm raised" type="button" id="openShortcuts">Open Shortcuts</button></div>
+    </div>
+  </div>
 
   <h3 class="sec2">Your data</h3>
   <div class="panel raised">
     <div class="setrow"><span>Back up<small id="syncText">One file with everything, for iCloud Drive</small></span><button class="btn3d sm raised" type="button" id="exportBtn">Back up</button></div>
     <div class="setrow"><span>Restore<small>Merges a backup into this phone</small></span><button class="btn3d sm raised" type="button" id="importBtn">Restore</button></div>
-    <div class="setrow"><span>CSV<small>Read and written on this phone only</small></span><div class="btnrow" style="flex:none"><button class="btn3d sm raised" type="button" id="csvExportBtn">Export</button><button class="btn3d sm raised" type="button" id="csvImportBtn">Import</button></div></div>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
     <input type="file" id="csvFile" accept=".csv,text/csv,text/plain" hidden>
   </div>
-  <p class="note">CSV uses the text, title, author, creationDate, tags, collection, link, citation columns. Importing leaves out principles already in the deck.</p>
 
+  <details class="adv" id="advanced">
+    <summary>Advanced</summary>
+    <h4 class="sec3">AI key</h4>
+    <div class="panel raised">
+    <div class="setrow"><span id="aiLbl">Write a line for each principle<small>Your key stays on this phone</small></span>
+      <button type="button" class="toggle" id="aiToggle" role="switch" aria-checked="true" aria-labelledby="aiLbl"><i></i></button></div>
+    <div class="setrow stack">
+      <input class="field" id="apiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Anthropic API key (sk-ant-...)" aria-label="Anthropic API key">
+      <div class="btnrow"><button class="btn3d sm raised" type="button" id="saveKey">Save key</button><button class="btn3d sm raised" type="button" id="testKey">Test key</button><button class="btn3d sm raised" type="button" id="clearKey">Remove</button></div>
+      <p class="note" id="testResult" hidden></p>
+      <p class="status" id="aiText">AI lines: built-in (no key)</p>
+      <p class="note">The line on the Skip screen, and Talk it through, are written by AI. Only the principle and how often it was skipped are sent, and only to Anthropic. Without a key, built-in questions are used.</p>
+    </div>
+    </div>
+    <h4 class="sec3">CSV</h4>
+    <div class="panel raised">
+    <div class="setrow"><span>CSV<small>Read and written on this phone only</small></span><div class="btnrow" style="flex:none"><button class="btn3d sm raised" type="button" id="csvExportBtn">Export</button><button class="btn3d sm raised" type="button" id="csvImportBtn">Import</button></div></div>
+    </div>
+  <p class="note">CSV uses the text, title, author, creationDate, tags, collection, link, citation columns. Importing leaves out principles already in the deck.</p>
   <div class="group" id="starterGroup">
-    <h3 class="sec2">Starter decks</h3>
+    <h4 class="sec3">Starter decks</h4>
     <div class="sd"><button class="btn3d raised" type="button" data-starter="stoic">Stoic</button><button class="btn3d raised" type="button" data-starter="leadership">Leadership</button><button class="btn3d raised" type="button" data-starter="athletic">Athletic mindset</button><button class="btn3d raised" type="button" data-starter="overcoming">Self-overcoming</button></div>
     <p class="note">Adds a short set of principles to the deck. Delete any that are not yours from the Ledger.</p>
   </div>
 
-  <h3 class="sec2">How it works</h3>
-  <p class="note">Press and hold anywhere on the bottom of the screen. After half a second your three choices open: Living it, Sit with it and Skip. Slide onto one and let go, or let go and tap one. Letting go never chooses by itself: slide off the list or tap outside it to close it. Skip asks you once first, with a line to reconsider. Sit with it shows a real quote from today's voice, Talk it through with that voice, and Next after eight seconds, when it lowers the skip count. Press and hold the principle to edit it, or a line or quote to keep it. The heavier a principle is set, the more often you have skipped it. Show, in the menu, draws the deck from one collection. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
+  <h4 class="sec3">How it works</h4>
+  <p class="note">Press and hold anywhere on the bottom of the screen. After half a second your three choices open: Living it, Sit with it and Skip. Slide onto one and let go, or let go and tap one. Letting go never chooses by itself: slide off the list or tap outside it to close it. Skip asks you once first, with a line to reconsider. Sit with it shows a real quote from today’s voice and Talk it through, and Next after eight seconds lowers the skip count. Press and hold the principle to edit it, or a line or quote to keep it. The heavier a principle is set, the more often you have skipped it. Show, in the menu, draws the deck from one collection. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
   <p class="note" id="howRest"></p>
 
-  <h3 class="sec2">About</h3>
+  <h4 class="sec3">About</h4>
   <p class="note" id="versionText">Version</p>
   <p class="note">The name comes from scales falling from the eyes, and from Nietzsche's three metamorphoses: the camel carries ideas, the lion tests them, the child acts from them without thinking. Scales is built for the lion stage.</p>
-  <p class="note">In Safari, tap Share, then Add to Home Screen. Works offline once installed. After an update, close and reopen Scales; if the version has not changed, the phone is still running the previous one.</p>
-  <p class="version" id="screenCheck"></p>
+  <p class="note">In Safari, tap Share, then Add to Home Screen. Works offline once installed. When an update is ready, a Reload bar appears.</p>
+    <p class="version" id="screenCheck"></p>
+  </details>
 </dialog>
 
 <!-- Measuring element for the Settings screen check: viewport heights and safe areas. Never visible. -->
@@ -1657,7 +1670,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         '<button type="button" class="btn3d raised" id="emptyStarter">Load a starter deck</button>');
       $("emptyAdd").onclick = openCapture;
       // Scroll only the Settings sheet to the starter decks; scrolling the element into view would also move the page.
-      $("emptyStarter").onclick = function () { openSettings(); var sh = $("sheetSettings"), g = $("starterGroup"); if (g) sh.scrollTop = Math.max(0, g.offsetTop - 12); };
+      $("emptyStarter").onclick = function () { openSettings(); var sh = $("sheetSettings"), g = $("starterGroup"); $("advanced").open = true; if (g) sh.scrollTop = Math.max(0, g.offsetTop - 12); };
       paintStat();
       return;
     }
