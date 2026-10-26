@@ -2,13 +2,13 @@
 
 Scales is a single page app with no build step and no backend. Everything the app does happens on the phone. The only outside services are GitHub Pages (hosting), Wikiquote (the sourced quotes for each voice, by name only) and, if a key is saved, the Anthropic API. The type face (Geist) ships in `fonts/`.
 
-The user-facing names (principle, Not today, Testing it, Living it) differ from some internal names, which were kept so stored data and exports stay compatible:
+The user-facing names (principle, Skip, Sit with it, Living it) differ from some internal names, which were kept so stored data and exports stay compatible:
 
 | On screen | In code and storage |
 |---|---|
 | Principle | thought (`thoughts`, `scales.thoughts.v1`) |
-| Not today | skip (`skip_count`, `lifetime_skips`) |
-| Testing it | keep / reflect (`reflect_count`) |
+| Skip | skip (`skip_count`, `lifetime_skips`) |
+| Sit with it | keep / reflect (`reflect_count`) |
 | Living it | shed (`status: "shed"`, `shed_at`, `evidence`) |
 
 ## Where everything sits
@@ -67,7 +67,7 @@ flowchart TB
     store <--> ls
     io <--> ls
     io <--> files
-    line -- "only if a key is saved:<br/>principle text, not today count, days" --> api
+    line -- "only if a key is saved:<br/>principle text, skip count, days" --> api
     api -- "one short line" --> line
 ```
 
@@ -77,10 +77,10 @@ flowchart TB
 stateDiagram-v2
     [*] --> Active: Capture sheet or starter deck<br/>all counts start at 0
     Active --> Push: Let go early<br/>push line, ring again
-    Push --> Active: Hold through<br/>Testing it
-    Push --> Resting: Let go early again or Set aside anyway<br/>count +1, weight up, owed a turn at the front
+    Push --> Active: Hold through<br/>Sit with it
+    Push --> Resting: Let go early again or Skip it<br/>count +1, weight up, owed a turn at the front
     Resting --> Active: 4:00 AM after the rest (4 days by default)<br/>leads once, most avoided first
-    Active --> Reflect: Hold through / Testing it<br/>inspections +1
+    Active --> Reflect: Hold through / Sit with it<br/>inspections +1
     Reflect --> Active: Next, after 8s<br/>count -1 at 8s, lines spent
     Active --> Nudge: 3 in a row
     Nudge --> Active: Not yet<br/>streak reset
@@ -116,7 +116,7 @@ sequenceDiagram
     U->>D: hold the ring and let go
     alt let go early
         D-->>U: push screen: push line, ring again (built-in line if none kept and no key)
-        U->>D: hold through, or let go early again / Set aside anyway
+        U->>D: hold through, or let go early again / Skip it
     else hold through
         D-->>U: reflect screen: reflect line, Talk it through; Next after 8s
         U->>D: Next
@@ -130,9 +130,9 @@ sequenceDiagram
 
 | Key | Holds |
 |---|---|
-| `scales.thoughts.v1` | Every principle by id: text, `lines` (push and reflect, each with the wording and Not today count it was written for), collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai`; `talks` (last five weigh-ins, each with its voice, move, line and replies); `acts` (smallest acts by day), `caught` (Caught it by day), `checkins`, `skips_on` (days set aside, for the weekly review) |
+| `scales.thoughts.v1` | Every principle by id: text, `lines` (push and reflect, each with the wording and Skip count it was written for), collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai`; `talks` (last five weigh-ins, each with its voice, move, line and replies); `acts` (smallest acts by day), `caught` (Caught it by day), `checkins`, `skips_on` (days set aside, for the weekly review) |
 | `scales.activity.v1` | Per Scales day counts: `i` weighed, `s` Living it, `c` Caught it; last 120 days |
-| `scales.prefs.v1` | Today's set (`day`: moves, focus, check-in), set size, the Testing it count, the week's review state, look, rest length, Show where it came from, AI lines on or off, chosen voices and names added, the collection key, Show anyway's day, first-use tip seen |
+| `scales.prefs.v1` | Today's set (`day`: moves, focus, check-in), set size, the Sit with it count, the week's review state, look, rest length, Show where it came from, AI lines on or off, chosen voices and names added, the collection key, Show anyway's day, first-use tip seen |
 | `scales.apikey.v1` | Anthropic API key, only if saved |
 | `scales.quotes.v1` | Each voice's sourced quotes from Wikiquote (`parseQuotes`), by page name, refreshed after 30 days |
 
@@ -140,31 +140,31 @@ sequenceDiagram
 
 | Setting | Value | Why |
 |---|---|---|
-| Weight | 1 + 0.5 per Not today | Avoided principles come back more often |
+| Weight | 1 + 0.5 per Skip | Avoided principles come back more often |
 | Weight cap | 4x | One principle cannot take over the deck |
 | Day boundary | 4:00 AM local | A late-night session counts as the day it started in |
-| Rest after Not today | 4 days (`REST_DAYS`), 1 to 7 in Settings (`restDays`) | Long enough that a reflex skip each morning cannot become a habit; was 1 day in 1.24.0 |
+| Rest after Skip | 4 days (`REST_DAYS`), 1 to 7 in Settings (`restDays`) | Long enough that a reflex skip each morning cannot become a habit; was 1 day in 1.24.0 |
 | Talk it through | 6 replies, 70 words each | A reflection, not a chat |
 | Today's set | 5 by default, 1 to 20 | Long enough to think, short enough to finish |
 | Evening check-in | from 6 PM until 4:00 AM | After the day's chances to act |
-| Smallest act | every third Testing it | Often enough to matter, rare enough not to nag |
+| Smallest act | every third Sit with it | Often enough to matter, rare enough not to nag |
 | Caught it suggests Living it | 3 catches in 30 days | A pattern, not a single good day |
 | Voices | one per Scales day, in turn | Each voice gets its day; the order is the list order |
 | Press and hold to edit | 550 ms | Longer than a tap, shorter than a deliberate wait |
-| Front of the stack | once per Not today | Most avoided first, then longest waiting since last shown |
+| Front of the stack | once per Skip | Most avoided first, then longest waiting since last shown |
 | Cooldown | last 3 shown (last 1 in a deck of 3 or fewer) | No back to back repeats |
-| Reflect (`REFLECT_SEC`) | 8 seconds before Next | A quick Testing it does not erase a Not today; the wait is visible as a filling line |
+| Reflect (`REFLECT_SEC`) | 8 seconds before Next | A quick Sit with it does not erase a Skip; the wait is visible as a filling line |
 | Pushback | once per showing | A second early release sets it aside; a second warning would nag |
 | Quote pick (`rankQuotes`, `quotePrompt`) | 20 candidates by shared word stems; the model answers a number or 0; without a key, the top one only with 2 or more shared stems | Real words only, and nothing rather than a loose fit |
-| Lines (`lineFresh`) | kept per principle, rewritten after a test, a wording change, or once at 3 Not today | Reused for cost and consistency, refreshed so the pushback does not go stale |
-| Nudge | 3 Testing it in a row | Prompts the Living it question |
+| Lines (`lineFresh`) | kept per principle, rewritten after a test, a wording change, or once at 3 Skip | Reused for cost and consistency, refreshed so the pushback does not go stale |
+| Nudge | 3 Sit with it in a row | Prompts the Living it question |
 | Line length | 25 words | Room for one complete consideration, still readable at a glance |
 | Model output budget | 1024 tokens | The model may reason before answering, and reasoning counts against the budget |
 | Hold through (`HOLD_FULL`) | 2.4 seconds | Long enough to read a short principle as it inks in |
 | Tap (`HOLD_TAP`) | under 0.3 seconds does nothing | A stray touch never rests a principle for days |
 | Lift (`HOLD_LIFT`) | 70 px up | Clear of a thumb's wobble while holding |
-| Type weight (`inkWeight`) | 400, plus 125 per Not today, to 900 | Avoidance shows in the words themselves |
-| Ledger groups (`ledgerGroup`) | Avoiding at 3 or more Not today; Nearly lived at 0 with 3 tests, 2 in a row, or a catch | Three groups a glance can read |
+| Type weight (`inkWeight`) | 400, plus 125 per Skip, to 900 | Avoidance shows in the words themselves |
+| Ledger groups (`ledgerGroup`) | Avoiding at 3 or more Skip; Nearly lived at 0 with 3 tests, 2 in a row, or a catch | Three groups a glance can read |
 | Principle length | 1,500 characters | Capture and Edit share the limit; long enough for a short poem |
 | Collection, title, author | 40, 120, 80 characters | Enough for a name; collections match existing ones ignoring capitalization |
 

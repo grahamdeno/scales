@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.35.0";
+  var VERSION = "1.36.0";
   var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -572,7 +572,7 @@ var ScalesCore = (function () {
     { id: "goggins", name: "David Goggins", short: "Goggins", living: true, lens: "callousing the mind, accountability, refusing excuses, and doing the hard thing when you do not want to" }
   ];
   var TALK_MAX = 6, REPLY_WORDS = 70;
-  var MOVES = { skip: "Not today", keep: "Testing it", shed: "Living it" };
+  var MOVES = { skip: "Skip", keep: "Sit with it", shed: "Living it" };
 
   // Every voice on offer: the built-in ones, then names the user added ({ name, first }).
   function allVoices(custom) {
@@ -604,7 +604,7 @@ var ScalesCore = (function () {
   // One line weighing the move just made on principle t.
   function weighPrompt(v, t, move, daysIn) {
     return "You give the user a perspective from " + v.name + " on a move they just made in Scales, an app for living by chosen principles.\n" +
-      "In Scales, Not today sets a principle aside, Testing it keeps it in practice in daily life, and Living it says they now act on it without prompting.\n" +
+      "In Scales, Skip sets a principle aside for now, Sit with it keeps it in practice in daily life, and Living it says they now act on it without prompting.\n" +
       (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "Draw on what " + v.name + " is known to think and value.\n") +
       voiceRule(v) + "\n" +
       "Weigh the move itself: was it honest, evasive, earned, premature? Hold the standard; no flattery, no permission to wait.\n" +
@@ -677,8 +677,8 @@ var ScalesCore = (function () {
     state.moved.forEach(function (m) { if (n[m.move] != null) n[m.move]++; });
     var w = function (k) { return k <= 10 ? NUM[k] : String(k); };
     var parts = [];
-    if (n.keep) parts.push(w(n.keep) + " testing it");
-    if (n.skip) parts.push(w(n.skip) + " set aside");
+    if (n.keep) parts.push(w(n.keep) + " sat with");
+    if (n.skip) parts.push(w(n.skip) + " skipped");
     if (n.shed) parts.push(w(n.shed) + " living it");
     if (!parts.length) return "";
     var s = parts.length > 1 ? parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1] : parts[0];
@@ -740,7 +740,7 @@ var ScalesCore = (function () {
       "Hold the standard; no flattery, no permission to wait. Point at the one thing that matters most for the coming week.\n" +
       "Rules:\n- " + MAX_WORDS + " words or fewer.\n- One or two sentences. No exclamation marks, quotation marks, emoji, em-dashes or lists.\nReturn only the line.\n\n" +
       "Principles weighed: " + w.weighed + "\nTimes caught living a principle without the app: " + w.caught + "\nNewly living: " + w.living +
-      (w.pushed ? "\nPushed back most, set aside " + w.pushedTimes + " times: " + w.pushed.text : "");
+      (w.pushed ? "\nPushed back most, skipped " + w.pushedTimes + " times: " + w.pushed.text : "");
   }
 
   // ---------- a principle's history, for the Ledger ----------
@@ -748,7 +748,7 @@ var ScalesCore = (function () {
   function timeline(t) {
     var ev = [], d = function (iso) { return iso ? dayOf(new Date(iso)) : ""; };
     if (t.created_at) ev.push({ at: d(t.created_at), kind: "start", text: t.kept_from ? "Kept from an AI line" : "Captured" });
-    (t.skips_on || []).forEach(function (x) { ev.push({ at: x, kind: "skip", text: "Set aside" }); });
+    (t.skips_on || []).forEach(function (x) { ev.push({ at: x, kind: "skip", text: "Skipped" }); });
     (t.acts || []).forEach(function (x) { ev.push({ at: x.day, kind: "act", text: "Smallest act: " + x.text }); });
     (t.caught || []).forEach(function (x) { ev.push({ at: x.day, kind: "caught", text: "Caught it" + (x.text ? ": " + x.text : "") }); });
     (t.talks || []).forEach(function (x) { if (x.line) ev.push({ at: x.day || d(x.at), kind: "talk", text: "Weighed in by " + (x.voice_name || "a thinker") + " on " + (MOVES[x.move] || x.move) }); });

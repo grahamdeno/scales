@@ -648,8 +648,9 @@ test("the three moves: hold the ring, buttons for VoiceOver and keys; Not today 
   assert.match(html, /var HOLD_MS = 550;/);
   assert.match(html, /if \(m === "edit"\) openEdit\(t\); else if \(shown && shown\.ai\) openKeep\(t, shown\.text, shown\.quote \? \{ author: shown\.author, src: shown\.src \} : null\);/);
   assert.match(html, /id="holdRing" aria-hidden="true"/, "the ring is pointer only; the buttons are the accessible path");
+  assert.match(html, /var r = e\.target\.closest\("#holdZone"\);\s*if \(r && !e\.target\.closest\("button"\)\)/, "the whole hold area starts a hold, not just the ring");
   assert.match(html, /var o = C\.holdOutcome\(Date\.now\(\) - t0, dy\)/, "the release is read by core.js");
-  assert.match(html, /toast\("Hold the ring\. Let go early for Not today\."\)/, "a tap explains itself and moves nothing");
+  assert.match(html, /toast\("Press and hold\. Let go early to skip\."\)/, "a tap explains itself and moves nothing");
   // Push: the first Not today shows the line; the second, or Set aside anyway, commits. No second pushback.
   assert.match(html, /if \(phase === "push"\) \{ act\("skip"\); return; \}/);
   assert.match(html, /coachSeen\(\); phase = "push"; renderDeck\(\); showLine\(t, "push"\);/);
@@ -743,13 +744,19 @@ test("motion respects reduced motion", () => {
   assert.match(html, /@media \(prefers-reduced-motion: reduce\) \{ \.card, \.card\.spring/);
 });
 
-test("touch targets: the ring, the move buttons, chips and menu rows are at least 40px", () => {
+test("touch targets: a hold area, not a small ring; buttons a thumb can hit (1.36.0)", () => {
   const c = css();
-  assert.match(rule(c, ".iconbtn"), /width:44px; height:44px;/);
-  assert.match(rule(c, ".ring"), /width:96px; height:96px;/);
-  assert.match(rule(c, ".key"), /min-height:48px;/);
+  assert.match(rule(c, ".iconbtn"), /width:48px; height:48px;/);
+  assert.match(rule(c, ".hold"), /height:clamp\(230px, 33dvh, 300px\);/, "the bottom third of the screen holds");
+  assert.match(rule(c, ".btn3d.wide"), /min-height:56px;/);
+  assert.match(rule(c, ".pair .btn3d"), /min-height:52px;/);
   assert.match(rule(c, ".menu button"), /min-height:48px;/);
   assert.match(rule(c, ".lrow2"), /min-height:48px;/);
+  const html = read("index.html");
+  assert.match(html, /id="setAside">Skip it<\/button>/, "Skip it is a full-width button");
+  assert.match(html, /class="btn3d" id="reflUndo">Undo<\/button><button type="button" class="primary" id="reflNext">Next principle/, "Undo sits beside Next");
+  assert.match(html, /id="setBar" role="progressbar"/, "today's set is a line at the top, not the date");
+  assert.match(html, /el\.textContent = deckColl\(\) \|\| "";/);
 });
 // ---------- 1.31.0: a thinker weighs in, and Talk it through ----------
 test("the voices: eight built in, living ones in the third person, added names living by default (Story 12)", () => {
@@ -783,7 +790,7 @@ test("first person for thinkers who have died, third person for the living, neve
   assert.match(pg, /Write in the third person about how David Goggins would see this/);
   assert.match(pg, /Never write as Goggins speaking, and never invent a quotation/);
   for (const p of [pn, pg]) {
-    assert.match(p, /Move: Not today/);
+    assert.match(p, /Move: Skip/);
     assert.match(p, new RegExp(C.MAX_WORDS + " words or fewer"));
     assert.match(p, /no permission to wait/);
     assert.doesNotMatch(p, /—/);
@@ -831,11 +838,11 @@ test("the page offers Weigh in only after a move, with a key, and keeps talks in
 });
 
 // ---------- 1.32.0: a day that ends, the evening check-in, Caught it, your week ----------
-test("the middle move is Testing it everywhere on screen", () => {
+test("the moves are named Skip, Sit with it and Living it everywhere on screen (1.36.0)", () => {
   const html = read("index.html");
-  assert.doesNotMatch(html, /Still working on it|Working on it/);
-  assert.match(html, /<b>Testing it<\/b>/);
-  assert.equal(C.MOVES.keep, "Testing it");
+  assert.doesNotMatch(html, /Still working on it|<b>Testing it<\/b>|<b>Not today<\/b>/);
+  assert.match(html, /<b>Sit with it<\/b>/);
+  assert.deepEqual([C.MOVES.skip, C.MOVES.keep, C.MOVES.shed], ["Skip", "Sit with it", "Living it"]);
 });
 
 test("today's set: a size you choose, then done, then focus or more (1.32.0)", () => {
@@ -856,7 +863,7 @@ test("focus choices are today's principles, newest first, once each; the summary
   const s = C.freshDay("2026-10-17");
   [["a", "keep"], ["b", "skip"], ["a", "keep"], ["gone", "skip"], ["c", "shed"]].forEach(([id, m]) => C.noteDayMove(s, id, m));
   assert.deepEqual(C.focusChoices(s, { a: { id: "a" }, b: { id: "b" }, c: { id: "c" } }).map((x) => x.t.id), ["c", "a", "b"]);
-  assert.equal(C.daySummary(s), "Two testing it, two set aside and one living it.");
+  assert.equal(C.daySummary(s), "Two sat with, two skipped and one living it.");
   assert.equal(C.daySummary(C.freshDay("x")), "");
   assert.doesNotMatch(C.daySummary(s), /—/);
 });
@@ -904,7 +911,7 @@ test("your week: seven days, counts from the activity log, and what pushed back 
   assert.equal(w.pushed.id, "a"); assert.equal(w.pushedTimes, 2);
   assert.deepEqual(w.days.map((d) => d.kind), ["lv", "", "", "lv", "", "", "on"]);
   const p = C.weekPrompt(C.VOICES[1], w);
-  assert.match(p, /first person as Friedrich Nietzsche/); assert.match(p, /Pushed back most, set aside 2 times: A/);
+  assert.match(p, /first person as Friedrich Nietzsche/); assert.match(p, /Pushed back most, skipped 2 times: A/);
 });
 
 test("a principle's timeline lists what happened, newest first", () => {
@@ -913,7 +920,7 @@ test("a principle's timeline lists what happened, newest first", () => {
   const tl = C.timeline(t);
   assert.equal(tl[tl.length - 1].text, "Captured");
   assert.equal(tl[0].kind, "caught"); assert.equal(tl[1].kind, "talk");
-  assert.match(tl[1].text, /Weighed in by David Goggins on Not today/);
+  assert.match(tl[1].text, /Weighed in by David Goggins on Skip/);
   assert.deepEqual(tl.map((e) => e.at), ["2026-10-17", "2026-10-17", "2026-10-16", "2026-10-14", "2026-09-20"]);
 });
 
