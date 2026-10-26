@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.50.0";
+  var VERSION = "1.51.0";
   var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -675,6 +675,37 @@ var ScalesCore = (function () {
   }
   // One line on how the set went: "Two testing it, two set aside, one living it."
   var NUM = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+  // ---------- reminders and the icon badge (1.51.0) ----------
+  // A GitHub Actions schedule sends a web push at 8 AM and 6 PM; the service worker turns it into a notification
+  // and sets the Home Screen badge from the last state the app saved (it cannot read localStorage).
+  // The badge: what is left of today's set, plus anything saved for Later that is back.
+  var VAPID_PUBLIC = "BN1g3kmncYJyRO3EmaSdx55jVTS06PJiLEJvjsX8llcuHxbuyjQBopEiH9wazrZpLB_wr5royAFYWYeTnRg9_5A";
+  function badgeFrom(s, now) {
+    if (!s) return 0;
+    now = now || new Date();
+    var left = s.day === dayOf(now) ? (+s.left || 0) : Math.min(+s.size || 0, +s.active || 0);
+    var later = (s.laters || []).filter(function (l) { return laterDue({ later: l }, now); }).length;
+    return Math.max(0, left) + later;
+  }
+  function pushText(kind, s, now) {
+    now = now || new Date();
+    var left = s ? (s.day === dayOf(now) ? (+s.left || 0) : Math.min(+s.size || 0, +s.active || 0)) : 0;
+    var later = s ? (s.laters || []).filter(function (l) { return laterDue({ later: l }, now); }).length : 0;
+    if (kind === "evening") {
+      if (later) return later === 1 ? "One principle saved for later is back." : later + " principles saved for later are back.";
+      return left ? left + " left in today’s set." : "Done for today. Nothing is waiting.";
+    }
+    return left ? "Today’s set is ready: " + left + (left === 1 ? " principle." : " principles.") : "Today’s set is ready.";
+  }
+  // The schedule runs at two UTC hours for each reminder, one for daylight saving time and one for standard
+  // time; only the run that lands on the local hour sends. Returns "morning", "evening" or "".
+  function pushSlot(cron, offsetHours, morning, evening) {
+    var h = +(String(cron || "").trim().split(/\s+/)[1]);
+    if (isNaN(h)) return "";
+    var utc = function (local) { return ((local - offsetHours) % 24 + 24) % 24; };
+    return h === utc(morning == null ? 8 : morning) ? "morning" : h === utc(evening == null ? 18 : evening) ? "evening" : "";
+  }
+
   // ---------- backup reminders (1.50.0) ----------
   // As in The Road: once the deck has something in it, ask for a backup when there has never been one or
   // the last is more than a week old. Not now waits two days.
@@ -836,6 +867,7 @@ var ScalesCore = (function () {
     addCatch: addCatch, catchCount: catchCount, suggestLiving: suggestLiving, noteSkipDay: noteSkipDay,
     REPLY_MAX: REPLY_MAX, addReply: addReply, thread: thread, lastReply: lastReply,
     LATER_MAX: LATER_MAX, laterDue: laterDue, waiting: waiting, canLater: canLater,
+    VAPID_PUBLIC: VAPID_PUBLIC, badgeFrom: badgeFrom, pushText: pushText, pushSlot: pushSlot,
     BACKUP_EVERY: BACKUP_EVERY, BACKUP_SNOOZE: BACKUP_SNOOZE, needsBackup: needsBackup, backupAgo: backupAgo,
     weekDays: weekDays, isReviewDay: isReviewDay, weekStats: weekStats, weekPrompt: weekPrompt, timeline: timeline };
 })();
