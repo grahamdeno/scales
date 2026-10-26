@@ -309,11 +309,19 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .was { margin-top:8px; font-size:var(--t-xs); line-height:1.4; color:var(--muted); }
 .kfrom { color:var(--muted); }
 /* A row: the principle at its weight, a short count on the right. */
-.lrow2 { display:flex; justify-content:space-between; align-items:baseline; gap:16px; width:100%; min-height:48px; padding:12px 0; border-bottom:1px solid var(--line); text-align:left; color:var(--ink); }
+.lrow2 { display:flex; justify-content:space-between; align-items:baseline; gap:16px; width:100%; min-height:52px; padding:14px 0; border-bottom:1px solid var(--line); text-align:left; color:var(--ink); }
 .lrow2 > span { min-width:0; }
-.lrow2 .lt { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:22px; line-height:1.15; letter-spacing:-.015em; }
+.lrow2 .lt { min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:17px; line-height:1.3; letter-spacing:-.005em; font-weight:var(--fw, 450); }
 .lrow2 small { flex:none; text-align:right; font-size:var(--t-sm); line-height:1.35; color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums; }
-.lrow2.lived .lt { font-weight:200; color:var(--muted); font-size:18px; }
+.lrow2.lived .lt { color:var(--muted); }
+.lrow2.resting { opacity:.45; }
+/* Ledger tabs (1.43.0): one group at a time, each count under its name so all four fit a phone. */
+.ltabs { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:8px; margin-top:22px; border-bottom:1px solid var(--line); }
+.ltab { display:flex; flex-direction:column; align-items:flex-start; gap:2px; min-height:56px; padding:6px 0 10px; font-size:var(--t-sm); color:var(--muted); white-space:nowrap; text-align:left; }
+.ltab b { font-weight:500; font-size:var(--t-lg); line-height:1.1; color:var(--faint); font-variant-numeric:tabular-nums; }
+.ltab[aria-selected="true"] { color:var(--ink); box-shadow:inset 0 -2px 0 var(--ink); }
+.ltab[aria-selected="true"] b { color:var(--muted); }
+#ledgerList .gl { margin:14px 0 4px; font-size:var(--t-sm); color:var(--faint); }
 .lgroup { margin-top:28px; }
 .lgroup h3 { margin:0; font-size:var(--t-xs); font-weight:500; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
 .lgroup p.gl { margin:4px 0 0; font-size:var(--t-sm); color:var(--faint); }
@@ -517,16 +525,12 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
 <!-- Deck view. Empty here on purpose: renderDeck() builds the collection keys, the principle, the three keys and the footer. -->
   <section class="view" id="v-deck" aria-label="Deck"></section>
 
-<!-- Ledger view: a summary, the key to the three weights, the principles grouped by how they are going,
-     Lived folded away, then Your week and the last 12 weeks. Filled by renderLedger(). -->
+<!-- Ledger view: a summary, tabs for the groups (one shown at a time),
+     then Your week and the last 12 weeks. Filled by renderLedger(). -->
   <section class="view" id="v-ledger" aria-label="Ledger" hidden>
     <h2 class="ptitle">Ledger</h2>
     <p class="summary" id="lSummary"></p>
-    <div class="wkey" role="group" aria-label="What the type weight means">
-      <div><b style="font-weight:900">Aa</b><span>Avoiding</span></div>
-      <div><b style="font-weight:500">Aa</b><span>Working on</span></div>
-      <div><b style="font-weight:200">Aa</b><span>Nearly lived</span></div>
-    </div>
+    <div class="ltabs" id="ledgerTabs" role="tablist" aria-label="Groups"></div>
     <div id="ledgerList"></div>
     <button type="button" class="crow" id="openWeek" style="margin-top:16px"><span>Your week<small>The last seven days, and one voice on them</small></span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></button>
     <h3 class="sec2">Last 12 weeks<span>Each dot is a day</span></h3>
@@ -2468,7 +2472,6 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   // ---------- render: ledger ----------
   // Ledger (1.32.0): a record, not a scorecard. One sentence on where you stand, Your week, the 12 week grid,
   // and the In deck / Living it list. Each row opens the principle in full (openRow), where its actions are.
-  var listMode = "deck";
   function weekdayOf(day, opts) { var p = day.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", opts || { weekday: "short" }); }
   // Notes kept for the Living it record and the row's small line.
   function historyHtml(t) {
@@ -2500,25 +2503,27 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     var s = p.join(", ");
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
-  // The Ledger (1.33.0): every principle in the deck set at its weight (core.js inkWeight), grouped by
-  // how it is going (core.js ledgerGroup), with one short count on the right. Lived principles fold
-  // under one row that opens them in place (listMode "shed").
+  // The Ledger (1.43.0): one group at a time, chosen from tabs with counts (Avoiding, Working on, Nearly
+  // lived, Lived), opening on Avoiding. One line per principle; tap a row for the full text and its history.
+  // Each group has one type weight, so the weight always means the group. Resting principles are dimmed.
   var GROUPS = [
-    { id: "avoiding", name: "Avoiding", note: "Skipped three or more times" },
-    { id: "working", name: "Working on", note: "In the deck, still in practice" },
-    { id: "nearly", name: "Nearly lived", note: "No skips left, and sat with or caught" }
+    { id: "avoiding", name: "Avoiding", note: "Skipped three or more times", fw: 800 },
+    { id: "working", name: "Working on", note: "In the deck, still in practice", fw: 450 },
+    { id: "nearly", name: "Nearly lived", note: "No skips left, and sat with or caught", fw: 250 },
+    { id: "lived", name: "Lived", note: "You act on these without prompting", fw: 250 }
   ];
+  // The one fact on the right of a row.
   function rowCount(t, g, td) {
-    var c = C.catchCount(t, td), s = t.skip_count || 0, r = t.reflect_count || 0, p = [];
-    if (g === "nearly") p.push(c ? "caught " + c + "×" : r + "× sat with");
-    else if (s) p.push(s + "× skipped");
-    else p.push(r ? r + "× sat with" : "new");
-    if (C.isResting(t, td)) p.push("resting");
-    return p.join("<br>");
+    if (g === "lived") return fmtDate(t.shed_at);
+    var c = C.catchCount(t, td), s = t.skip_count || 0, r = t.reflect_count || 0;
+    if (g === "nearly") return c ? "caught " + c + "×" : r + "× sat with";
+    if (s) return s + "× skipped";
+    return r ? r + "× sat with" : "new";
   }
   function ledgerRow(t, g, td) {
-    var fw = g === "nearly" ? 250 : C.inkWeight(t);
-    return '<button type="button" class="lrow2" data-row="' + esc(t.id) + '" aria-label="' + esc(clip(t.text, 80) + ". " + rowState(t, td)) + '"><span class="lt" style="font-weight:' + fw + '">' + esc(t.text) + "</span><small>" + rowCount(t, g, td) + "</small></button>";
+    var rest = g !== "lived" && C.isResting(t, td);
+    return '<button type="button" class="lrow2 ' + g + (rest ? " resting" : "") + '" data-row="' + esc(t.id) + '" aria-label="' + esc(clip(t.text, 80) + ". " + rowState(t, td)) + '">' +
+      '<span class="lt">' + esc(String(t.text).split("\n")[0]) + "</span><small>" + esc(rowCount(t, g, td)) + "</small></button>";
   }
   function renderLedger() {
     var items = all(), td = today();
@@ -2529,18 +2534,18 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     $("lSummary").innerHTML = "<b>" + act_.length + " in the deck</b>" + (resting ? ", " + resting + " resting" : "") + ", <b>" + shed.length + " lived</b>." +
       (wk.caught ? " " + wk.caught + " caught this week." : "");
     paintStat();
-    var h = GROUPS.map(function (g) {
-      var rows = act_.filter(function (t) { return C.ledgerGroup(t, td) === g.id; });
-      if (!rows.length) return "";
-      return '<div class="lgroup"><h3>' + g.name + '</h3><p class="gl">' + g.note + "</p>" + rows.map(function (t) { return ledgerRow(t, g.id, td); }).join("") + "</div>";
+    var byGroup = { avoiding: [], working: [], nearly: [], lived: shed };
+    act_.forEach(function (t) { byGroup[C.ledgerGroup(t, td)].push(t); });
+    // The open tab: the one last chosen, or Avoiding, or the first group with anything in it.
+    var tab = prefs.ledger_tab && byGroup[prefs.ledger_tab] ? prefs.ledger_tab : "avoiding";
+    if (!byGroup[tab].length && !prefs.ledger_tab) tab = (GROUPS.filter(function (g) { return byGroup[g.id].length; })[0] || GROUPS[0]).id;
+    $("ledgerTabs").innerHTML = GROUPS.map(function (g) {
+      var on = g.id === tab;
+      return '<button type="button" role="tab" class="ltab" data-tab="' + g.id + '" aria-selected="' + on + '"><span>' + g.name + "</span><b>" + byGroup[g.id].length + "</b></button>";
     }).join("");
-    if (!act_.length) h = '<p class="none" style="margin-top:28px">Nothing in the deck.</p>';
-    var open = listMode === "shed";
-    h += '<button type="button" class="livedbtn" id="livedBtn" aria-expanded="' + open + '">Lived<span>' + shed.length + (open ? " ⌃" : " ›") + "</span></button>";
-    if (open) h += shed.length ? shed.map(function (t) {
-      return '<button type="button" class="lrow2 lived" data-row="' + esc(t.id) + '"><span class="lt">' + esc(t.text) + "</span><small>" + esc(fmtDate(t.shed_at)) + "</small></button>";
-    }).join("") : '<p class="none">Nothing here yet. A principle moves here once you live it without prompting.</p>';
-    $("ledgerList").innerHTML = h;
+    var g = GROUPS.filter(function (x) { return x.id === tab; })[0], rows = byGroup[tab];
+    $("ledgerList").innerHTML = '<p class="gl">' + g.note + "</p>" + (rows.length ? '<div class="lrows" style="--fw:' + g.fw + '">' + rows.map(function (t) { return ledgerRow(t, tab, td); }).join("") + "</div>"
+      : '<p class="none">' + (tab === "lived" ? "Nothing here yet. A principle moves here once you live it without prompting." : "Nothing here right now.") + "</p>");
 
     var cells = [], now = new Date();
     for (var i = 83; i >= 0; i--) {
@@ -2553,8 +2558,12 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     $("cal").innerHTML = cells.join("");
   }
   $("ledgerList").addEventListener("click", function (e) {
-    if (e.target.closest("#livedBtn")) { listMode = listMode === "shed" ? "deck" : "shed"; renderLedger(); var lb = $("livedBtn"); if (lb) lb.focus({ preventScroll: true }); return; }
     var b = e.target.closest("[data-row]"); if (b) openRow(thoughts[b.getAttribute("data-row")]);
+  });
+  $("ledgerTabs").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-tab]"); if (!b) return;
+    prefs.ledger_tab = b.getAttribute("data-tab"); savePrefs(); renderLedger();
+    var nb = document.querySelector('#ledgerTabs [data-tab="' + prefs.ledger_tab + '"]'); if (nb) { try { nb.focus({ preventScroll: true }); } catch (_) {} }
   });
   $("openWeek").onclick = openWeek;
 

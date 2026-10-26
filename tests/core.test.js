@@ -711,15 +711,16 @@ test("at rest only the principle and the ring; lines appear on push and reflect 
   assert.match(html, /sample = prefs\.ai_off \? null : makeSampler\(savedKey\)/, "AI lines off uses the built-in questions");
   assert.match(html, /if \(sample && !C\.lineFresh\(t, "push"\)\) fetchLine\(t, "push"\);\s*if \(!C\.lineFresh\(t, "reflect"\)\) fetchQuote\(t\);/, "the push line and the quote are fetched ahead, only when missing or stale");
   assert.match(html, /if \(live && live\.text === of\) \{ C\.keepLine\(live, kind, s\); save\(live\); \}/, "a written line is kept on the principle");
-});test("the Ledger: a key, three weight groups, Lived folded away, Your week and the grid (1.33.0)", () => {
-  const html = read("index.html");
-  for (const id of ["lSummary", "openWeek", "cal", "ledgerList", "sheetRow", "rowTl", "rowActs", "rowHist"]) assert.match(html, new RegExp('id="' + id + '"'), id);
-  assert.doesNotMatch(html, /id="gauge"|id="caps"|class="pbc|id="segDeck"|id="segShed"/, "the gauge, tiles and list switch are gone");
-  assert.match(html, /class="wkey"[\s\S]*Avoiding[\s\S]*Working on[\s\S]*Nearly lived/, "the key explains the weights");
-  assert.match(html, /C\.ledgerGroup\(t, td\) === g\.id/);
-  assert.match(html, /var fw = g === "nearly" \? 250 : C\.inkWeight\(t\);/);
-  assert.match(html, /class="lrow2" data-row="' \+ esc\(t\.id\)/);
-  assert.match(html, /id="livedBtn" aria-expanded="/);
+});test("the Ledger: tabs with counts, one group at a time, one line per principle (1.43.0)", () => {
+  const html = read("index.html"), c = css();
+  for (const id of ["lSummary", "ledgerTabs", "openWeek", "cal", "ledgerList", "sheetRow", "rowTl", "rowActs", "rowHist"]) assert.match(html, new RegExp('id="' + id + '"'), id);
+  assert.doesNotMatch(html, /class="wkey"|id="livedBtn"|id="gauge"|class="pbc/, "the Aa key and the Lived fold are gone");
+  assert.match(html, /\{ id: "avoiding", name: "Avoiding", note: "Skipped three or more times", fw: 800 \}/, "one weight per group");
+  assert.match(html, /\{ id: "lived", name: "Lived",/);
+  assert.match(html, /var tab = prefs\.ledger_tab && byGroup\[prefs\.ledger_tab\] \? prefs\.ledger_tab : "avoiding";/, "opens on Avoiding");
+  assert.match(html, /'<div class="lrows" style="--fw:' \+ g\.fw \+ '">'/);
+  assert.match(rule(c, ".lrow2 .lt"), /white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:17px;/, "one line per principle");
+  assert.match(c, /\.lrow2\.resting \{ opacity:\.45; \}/, "resting is a shade, not a label");
   assert.match(html, /C\.timeline\(t\)/);
   for (const r of ["show", "caught", "edit", "ev", "keep", "talk", "del"]) assert.match(html, new RegExp('data-r="' + r + '"'), r + " action");
   assert.match(html, /var cls = a && \(a\.s \|\| a\.c\) \? "lv" : n >= 3 \? "on2" : n \? "on" : "";/);
@@ -747,7 +748,7 @@ test("touch targets: a hold area, not a small ring; buttons a thumb can hit (1.3
   assert.match(rule(c, ".btn3d.wide"), /min-height:56px;/);
   assert.match(rule(c, ".pair .btn3d"), /min-height:52px;/);
   assert.match(rule(c, ".menu button"), /min-height:48px;/);
-  assert.match(rule(c, ".lrow2"), /min-height:48px;/);
+  assert.match(rule(c, ".lrow2"), /min-height:52px;/);
   const html = read("index.html");
   assert.match(html, /class="btn3d" id="reflUndo">Undo<\/button><button type="button" class="primary" id="reflNext">Next principle/, "Undo sits beside Next");
   assert.match(html, /id="setBar" role="progressbar"/, "today's set is a line at the top, not the date");
