@@ -35,7 +35,7 @@ A quick tap on the ring does nothing, so a stray touch never rests a principle. 
 
 **Later.** On the skip screen, or after tapping to see the line, Later is for a principle that deserves more time than you have right now. It is not a skip: no count, no weight, no rest. It waits until after 6 PM that day, then comes back first, straight to Sit with it, headed Saved from earlier. Up to three can wait at once, and a principle that came back from Later is not offered Later again until you have sat with it for the full eight seconds.
 
-**Readable and reachable.** Text follows the iPhone's text size (Settings > Display & Brightness > Text Size). Undo stays until your next move. Settings > Deck > Buttons instead of press and hold puts Skip, Sit with it and Living it on the main screen as plain buttons, for anyone who cannot press and hold.
+**Readable and reachable.** Text follows the iPhone's text size (Settings > Display & Brightness > Text Size). Undo stays for 8 seconds, or until your next move once VoiceOver or a keyboard reaches it. Settings > Deck > Buttons instead of press and hold puts Skip, Sit with it and Living it on the main screen as plain buttons, for anyone who cannot press and hold.
 
 **Show.** The deck draws from every collection by default. Show, in the menu, draws it from one; the chosen collection is named at the top of the deck.
 
@@ -61,7 +61,7 @@ A quick tap on the ring does nothing, so a stray touch never rests a principle. 
 
 **Pushing back.** The Ledger opens on Avoiding, the principles you skip most, so resistance is visible instead of hidden.
 
-**Undo.** Skip, Sit with it, Living it, Later and Delete each show a toast with Undo that puts everything back, counts, rest days, the activity grid and the Ledger included. It stays until your next move.
+**Undo.** Skip, Sit with it, Living it, Later and Delete each show a toast with Undo that puts everything back, counts, rest days, the activity grid and the Ledger included. It goes after 8 seconds or at your next move, whichever comes first.
 
 **Starter decks.** Stoic, Leadership, Athletic mindset and Self-overcoming sets, loaded on first run, from the empty deck, or Settings > Advanced, so a new deck has something in it. Every starter principle fills every field (collection, title, author, origin, tags, link and citation) as a worked example. Original lines are credited to Scales and cite their deck. The lines by Epictetus and Nietzsche use the exact wording of a named public-domain translation (Elizabeth Carter, George Long, Thomas Common), cite the work and section, and link to that chapter. Loading a deck again adds nothing new; it fills any empty fields on starter principles already in the deck without overwriting your own values.
 

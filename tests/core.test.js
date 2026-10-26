@@ -1000,7 +1000,7 @@ test("an update shows a bar with Reload that stays until tapped (1.34.2)", () =>
   assert.match(html, /navigator\.serviceWorker\.addEventListener\("controllerchange"/);
   assert.match(html, /if \(hadWorker\) toast\("Scales was updated\.", null, \{ label: "Reload", fn: function \(\) \{ location\.reload\(\); \} \}\);/);
   assert.match(html, /document\.visibilityState === "visible" && reg && reg\.update\) reg\.update\(\)/, "coming back to the app checks for a release");
-  assert.match(html, /if \(!stay && !onUndo\) toastTimer = setTimeout/, "the update bar and Undo do not time out");
+  assert.match(html, /if \(!stay\) toastTimer = setTimeout/, "the update bar does not time out");
   assert.match(html, /if \(staying && !stay\) return;/, "a passing message does not replace it");
   assert.match(sw, /self\.skipWaiting\(\)/);
   assert.match(sw, /self\.clients\.claim\(\)/, "the new worker takes over, which fires controllerchange");
@@ -1194,7 +1194,8 @@ test("text follows the iPhone text size; contrast passes; Undo waits; buttons in
   assert.match(c, /:focus-visible \{ outline:2px solid var\(--ink\);/);
   assert.match(html, /function dropUndo\(\)/);
   for (const f of ["act(kind)", "requestSkip()", "saveLater()"]) assert.match(html, new RegExp("function " + f.replace(/[()]/g, "\\$&") + " \\{\\s*dropUndo\\(\\);"), f + " drops the last Undo");
-  assert.match(html, /Undo is available until your next move\./);
+  assert.match(html, /Undo is available for a few seconds\./);
+  assert.match(html, /var UNDO_MS = 8000;/);
   assert.match(html, /if \(tapMoves\(\)\) return '<div class="tapmoves" id="keys"/);
   assert.match(html, /id="tapToggle" role="switch"/);
 });
