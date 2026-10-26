@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.39.0";
+  var VERSION = "1.40.0";
   var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -712,6 +712,28 @@ var ScalesCore = (function () {
   // Days a principle was set aside, kept for the weekly review (last 20).
   function noteSkipDay(t, day) { t.skips_on = (t.skips_on || []).concat([day]).slice(-20); return t; }
 
+  // Replies (1.40.0). On the skip and sit-with screens you can reply to the line or quote shown. A reply is
+  // kept on the principle with the words it answered: { at, day, kind, line, author, text }. kind is "push"
+  // for the line shown on Skip, "reflect" for the quote shown on Sit with it. Replying never makes or changes
+  // a move. The last 40 are kept.
+  var REPLY_MAX = 280;
+  function addReply(t, text, to, day, at) {
+    text = String(text || "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim().slice(0, REPLY_MAX);
+    if (!t || !text) return null;
+    to = to || {};
+    var r = { at: at || new Date().toISOString(), day: day, kind: to.kind === "reflect" ? "reflect" : "push", line: String(to.line || "").trim(), author: to.author || "", text: text };
+    t.replies = (t.replies || []).concat([r]).slice(-40);
+    return r;
+  }
+  // The whole thread on a principle, oldest first: replies, plus any thoughts written in 1.37.0 (t.notes),
+  // which were replies to the skip line under another name.
+  function thread(t) {
+    var out = (t && t.replies || []).slice();
+    (t && t.notes || []).forEach(function (n) { out.push({ at: n.at, day: n.day, kind: "push", line: n.line || "", author: "", text: n.text }); });
+    return out.sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : 0; });
+  }
+  function lastReply(t) { var th = thread(t); return th.length ? th[th.length - 1] : null; }
+
   // ---------- your week ----------
   // The seven Scales days ending today, oldest first.
   function weekDays(today) { var out = []; for (var i = 6; i >= 0; i--) out.push(addDays(today, -i)); return out; }
@@ -783,6 +805,7 @@ var ScalesCore = (function () {
     setSize: setSize, freshDay: freshDay, dayState: dayState, noteDayMove: noteDayMove, dayPhase: dayPhase, focusChoices: focusChoices,
     daySummary: daySummary, checkinDue: checkinDue, askAct: askAct, actToday: actToday, addAct: addAct,
     addCatch: addCatch, catchCount: catchCount, suggestLiving: suggestLiving, noteSkipDay: noteSkipDay,
+    REPLY_MAX: REPLY_MAX, addReply: addReply, thread: thread, lastReply: lastReply,
     weekDays: weekDays, isReviewDay: isReviewDay, weekStats: weekStats, weekPrompt: weekPrompt, timeline: timeline };
 })();
 

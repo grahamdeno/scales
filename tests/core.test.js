@@ -481,7 +481,7 @@ test("an undo point is a copy: later changes do not leak in, and applying it twi
 
 test("the page wires sheets as modal dialogs, Undo and the coach (1.26.0)", () => {
   const html = read("index.html");
-  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 14, "every sheet is a <dialog>");
+  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 15, "every sheet is a <dialog>");
   assert.doesNotMatch(html, /<section class="sheet/, "no sheet left as a hidden section");
   assert.match(html, /\.showModal\(\)/);
   for (const id of (html.match(/aria-labelledby="(sheet\w+Title)"/g) || []).map((m) => m.slice(17, -1))) {
@@ -1118,4 +1118,38 @@ test("holding opens the three choices; letting go never chooses by itself (1.39.
   assert.match(html, /holdHtml\("Press and hold to choose"\);/, "the skip screen uses the same choices; no separate Skip it button");
   assert.doesNotMatch(html, /id="setAside"|class="hl hl-/);
   assert.match(rule(c, ".pickrow"), /min-height:60px;/);
+});
+
+// ---------- 1.40.0: reply to the line ----------
+test("addReply keeps a reply with what it answered; replies never touch the counts", () => {
+  const t = A("a", { skip_count: 2, reflect_count: 1 });
+  assert.equal(C.addReply(t, "  ", { kind: "push", line: "L" }, "2026-10-26"), null);
+  const r = C.addReply(t, "  It is pride,   not time. ", { kind: "reflect", line: "Q", author: "Carl Jung" }, "2026-10-26", "2026-10-26T12:00:00.000Z");
+  assert.deepEqual(r, { at: "2026-10-26T12:00:00.000Z", day: "2026-10-26", kind: "reflect", line: "Q", author: "Carl Jung", text: "It is pride, not time." });
+  assert.deepEqual([t.skip_count, t.reflect_count], [2, 1]);
+  assert.equal(C.addReply(t, "x".repeat(400), {}, "2026-10-27").text.length, C.REPLY_MAX);
+  assert.equal(C.addReply(t, "y", { kind: "other" }, "2026-10-27").kind, "push");
+  for (let i = 0; i < 50; i++) C.addReply(t, "r" + i, {}, "2026-10-28");
+  assert.equal(t.replies.length, 40);
+});
+
+test("the thread brings in thoughts written in 1.37.0, oldest first", () => {
+  const t = A("a", { notes: [{ day: "2026-10-26", at: "2026-10-26T10:00:00.000Z", text: "Old thought", line: "Old line" }] });
+  C.addReply(t, "New reply", { kind: "push", line: "New line" }, "2026-10-27", "2026-10-27T10:00:00.000Z");
+  assert.deepEqual(C.thread(t).map((r) => r.text), ["Old thought", "New reply"]);
+  assert.equal(C.thread(t)[0].line, "Old line");
+  assert.equal(C.lastReply(t).text, "New reply");
+  assert.equal(C.lastReply(A("b")), null);
+});
+
+test("Reply opens a sheet above the keyboard; the choice is still waiting (1.40.0)", () => {
+  const html = read("index.html");
+  assert.match(html, /<dialog class="sheet replysheet" id="sheetReply"/);
+  assert.match(html, /id="replyDone" class="rdone" disabled>Done<\/button>/, "Done sits in the title row, never under the keyboard");
+  assert.match(html, /var kb = Math\.max\(0, window\.innerHeight - vv\.height - vv\.offsetTop\);\s*d\.style\.bottom = kb \+ "px";/, "the sheet rides above the keyboard");
+  assert.match(html, /if \(!C\.addReply\(t, \$\("replyInput"\)\.value, f, today\(\)\)\) return;\s*save\(t\); hide\(\); paintReplies\(\);/, "saving does not render a new screen or make a move");
+  assert.match(html, /id="replyBtn"/);
+  assert.match(html, /if \(openSheet\) return; \/\/ a press and hold on the line opened Keep/);
+  assert.match(html, /id="rowThread"/);
+  assert.doesNotMatch(html, /id="pushNote"/, "no text box in the skip screen itself");
 });
