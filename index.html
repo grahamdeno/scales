@@ -311,7 +311,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 /* A row: the principle at its weight, a short count on the right. */
 .lrow2 { display:flex; justify-content:space-between; align-items:baseline; gap:16px; width:100%; min-height:52px; padding:14px 0; border-bottom:1px solid var(--line); text-align:left; color:var(--ink); }
 .lrow2 > span { min-width:0; }
-.lrow2 .lt { min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:17px; line-height:1.3; letter-spacing:-.005em; font-weight:var(--fw, 450); }
+.lrow2 .lt { min-width:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:17px; line-height:1.3; letter-spacing:-.005em; font-weight:var(--fw, 450); }
 .lrow2 small { flex:none; text-align:right; font-size:var(--t-sm); line-height:1.35; color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums; }
 .lrow2.lived .lt { color:var(--muted); }
 .lrow2.resting { opacity:.45; }
@@ -2504,7 +2504,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
   // The Ledger (1.43.0): one group at a time, chosen from tabs with counts (Avoiding, Working on, Nearly
-  // lived, Lived), opening on Avoiding. One line per principle; tap a row for the full text and its history.
+  // lived, Lived), opening on Avoiding. Two lines per principle (1.44.0); tap a row for the full text and its history.
   // Each group has one type weight, so the weight always means the group. Resting principles are dimmed.
   var GROUPS = [
     { id: "avoiding", name: "Avoiding", note: "Skipped three or more times", fw: 800 },
@@ -2523,7 +2523,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   function ledgerRow(t, g, td) {
     var rest = g !== "lived" && C.isResting(t, td);
     return '<button type="button" class="lrow2 ' + g + (rest ? " resting" : "") + '" data-row="' + esc(t.id) + '" aria-label="' + esc(clip(t.text, 80) + ". " + rowState(t, td)) + '">' +
-      '<span class="lt">' + esc(String(t.text).split("\n")[0]) + "</span><small>" + esc(rowCount(t, g, td)) + "</small></button>";
+      '<span class="lt">' + esc(String(t.text).replace(/\s*\n\s*/g, " ")) + "</span><small>" + esc(rowCount(t, g, td)) + "</small></button>";
   }
   function renderLedger() {
     var items = all(), td = today();
