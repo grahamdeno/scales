@@ -97,6 +97,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .date span { margin-left:.5em; }
 .iconbtn { width:48px; height:48px; display:grid; place-items:center; color:var(--ink); flex:none; border:0 !important; background:none !important; }
 #menuBtn { margin-right:-12px; } #backDeck { margin-left:-12px; }
+.topacts { display:flex; align-items:center; gap:4px; margin-left:auto; }
 .iconbtn[hidden] { display:none; }
 .main { position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
 .view { position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
@@ -225,6 +226,13 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .replyto p { margin:0; font-size:0.8824rem; line-height:1.4; color:var(--muted); }
 .replyto small { display:block; margin-top:4px; font-size:var(--t-xs); color:var(--faint); }
 #replyInput { font-size:1.0588rem; line-height:1.4; min-height:110px; }
+/* The welcome (1.47.0). */
+.welcome { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; justify-content:center; gap:16px; padding:12px 0 max(20px, env(safe-area-inset-bottom, 0px)); }
+.welcome h1 { margin:0; font-size:var(--d-lg); line-height:1.04; letter-spacing:-.03em; font-weight:600; }
+.welcome p { margin:0; font-size:var(--t-md); line-height:1.5; color:var(--muted); max-width:34ch; }
+.welcome p b { color:var(--ink); font-weight:500; }
+.welcome .note { font-size:var(--t-sm); }
+.wdecks { display:grid; gap:8px; margin-top:8px; }
 .lived2 { flex:none; display:flex; flex-direction:column; gap:10px; padding-top:12px; font-size:var(--t-sm); color:var(--muted); }
 .ring { position:relative; width:96px; height:96px; display:grid; place-items:center; touch-action:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; cursor:pointer; }
 .ring svg { width:96px; height:96px; transform:rotate(-90deg); }
@@ -524,7 +532,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <!-- On the deck: the collection Show is drawing from, when one is chosen; nothing otherwise. On the Ledger: the way back to the deck. -->
     <h1 class="date" id="todayLbl"></h1>
     <button type="button" class="iconbtn raised" id="backDeck" aria-label="Back to the deck" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
-    <button type="button" class="iconbtn raised" id="menuBtn" aria-label="Menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16M4 16h10"/></svg></button>
+    <div class="topacts">
+      <button type="button" class="iconbtn" id="addTop" aria-label="Capture a principle"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button type="button" class="iconbtn raised" id="menuBtn" aria-label="Menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16M4 16h10"/></svg></button>
+    </div>
   </header>
 
   <main class="main">
@@ -1603,7 +1614,12 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       fromLater = true; act("keep");
       return;
     }
-    // The evening check-in comes first, then Done for today and today's focus.
+    // First run (1.47.0): until it is finished, a new deck opens on the welcome. Someone who already has
+    // principles never sees it.
+    if (!prefs.onboarded) {
+      if (!prefs.welcoming && all().length) { prefs.onboarded = true; savePrefs(); }
+      else { if (!prefs.welcoming) { prefs.welcoming = true; savePrefs(); } renderWelcome(); return; }
+    }
     if (!mid && (dp === "done" || (dp === "set" && day.moved.length && !nextUp()))) { renderDone(dp === "set" ? "Nothing else is due today. " + C.daySummary(day) : ""); return; }
     var t = thoughts[current];
     var enter = entering; entering = false;
@@ -2067,6 +2083,33 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var dc = deckColl();
     el.innerHTML = dc ? esc(dc) : '<span class="sr">Scales</span>';
   }
+  // The welcome (1.47.0): what Scales is, a starter deck or your own principle, then the hold, once.
+  var welcomeStep = 0;
+  function standalone() { return !!(navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches)); }
+  function renderWelcome() {
+    var v = $("v-deck"), step = all().length ? 2 : welcomeStep;
+    if (step === 0) {
+      v.innerHTML = '<div class="welcome"><h1>Scales</h1>' +
+        "<p>Write down the principles you want to live by. Scales shows you one at a time, and keeps showing it until you live it without being reminded.</p>" +
+        (standalone() ? "" : '<p class="note">Best as an app: in Safari, tap Share, then Add to Home Screen, and open Scales from there.</p>') +
+        '<div class="widewrap"><button type="button" class="primary" id="wNext">Start</button></div></div>';
+      $("wNext").onclick = function () { welcomeStep = 1; renderWelcome(); };
+    } else if (step === 1) {
+      v.innerHTML = '<div class="welcome"><h1>Start with</h1><p>A short starter deck, or one principle of your own. You can add more anytime with +.</p>' +
+        '<div class="wdecks">' + [["stoic", "Stoic"], ["leadership", "Leadership"], ["athletic", "Athletic mindset"], ["overcoming", "Self-overcoming"]].map(function (d) {
+          return '<button type="button" class="btn3d wide" data-starter="' + d[0] + '">' + d[1] + "</button>";
+        }).join("") + '<button type="button" class="primary" id="wOwn">Write my own</button></div></div>';
+      $("wOwn").onclick = openCapture;
+    } else {
+      v.innerHTML = '<div class="welcome"><h1>Press and hold</h1>' +
+        "<p>Press and hold the bottom of the screen and your three choices open: <b>Living it</b>, <b>Sit with it</b> and <b>Skip</b>. Slide onto one, or let go and tap one.</p>" +
+        "<p>Letting go never chooses by itself. Skip asks once before it rests a principle.</p>" +
+        '<div class="widewrap"><button type="button" class="primary" id="wDone">Got it</button></div></div>';
+      $("wDone").onclick = function () { prefs.onboarded = true; prefs.welcoming = false; prefs.coach_seen = true; savePrefs(); showNext(); };
+    }
+    paintStat();
+  }
+
   // Done for today (1.46.0): how the set went, and Keep going. Today's focus and the evening check-in were cut;
   // Later owns the evening.
   function renderDone(note) {
@@ -2547,8 +2590,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       O("Character is built in the small, unwatched moments, where the shortcut would be easier and nobody would know.", "Unwatched moments", "Chosen", "character, integrity"),
       O("Temper yourself and give grace to others.", "Temper and grace", "Handed to me", "restraint, grace")])
   };
-  Array.prototype.forEach.call(document.querySelectorAll("[data-starter]"), function (b) {
-    b.onclick = function () {
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-starter]"); if (!b) return;
+    (function () {
       var key = b.getAttribute("data-starter"), set = STARTERS[key]; if (!set) return;
       var r = C.loadStarter(all(), set.name, set.items, Date.now());
       r.add.forEach(function (t) { t.id = newId(); save(t); });
@@ -2560,7 +2604,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       if (!parts.length) return;
       hide(); go("deck");
       if (!current) showNext(); else renderDeck();
-    };
+    })();
   });
 
   // ---------- navigation ----------
@@ -2667,6 +2711,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     else if (m === "focus") openFocus();
     else if (m === "settings") openSettings();
   });
+  $("addTop").onclick = function () { closeMenu(); openCapture(); };
   menuBtn.addEventListener("click", function () { if (menu.open) closeMenu(); else openMenu(); });
 
   // Keyboard. On the deck, with no sheet or menu open and no field in use: the arrow keys are the three moves
