@@ -1079,7 +1079,7 @@ test("the reflect screen shows the quote or nothing; the push line is plain (1.3
   const html = read("index.html");
   assert.doesNotMatch(html, /REFLECT_FALLBACK/, "no built-in reflections: nothing shows when no quote fits");
   assert.match(html, /if \(wrap\) wrap\.hidden = !!\(l && l\.none\);/);
-  assert.match(html, /l\.quote \? l\.author \+ \(l\.src \? ", " \+ l\.src : ""\)/, "the author and work under a quote");
+  assert.match(html, /l\.quote \? esc\(l\.author \+ \(l\.src \? ", " \+ l\.src : ""\)\)/, "the author and work under a quote");
   assert.match(html, /sample\(C\.quotePrompt\(of, v\.name, list\)\)/);
   assert.match(html, /ranked\[0\]\.score >= 2 \? 0 : -1/, "without a key, only a close match is shown");
   assert.match(html, /Never invent anything about the user's day, schedule, hours, plans, people or circumstances\./);
@@ -1220,4 +1220,16 @@ test("Settings has five groups and folds the rest under Advanced", () => {
   const adv = sheet.slice(sheet.indexOf('<details class="adv"'));
   for (const id of ["apiKey", "csvExportBtn", "starterGroup", "howRest", "versionText", "screenCheck"]) assert.match(adv, new RegExp('id="' + id + '"'));
   assert.doesNotMatch(sheet, /today’s focus/);
+});
+
+// ---------- 1.49.0: wording sweep, Wikiquote credit, privacy ----------
+test("no leftover old names in the app's words", () => {
+  const html = read("index.html").replace(/\/\/[^\n]*/g, "").replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  for (const w of [/>Tested</, /Testing it/, /evening check-in/i, /today’s focus/, /sets a principle aside/, /You keep setting this aside/]) assert.doesNotMatch(html, w);
+});
+test("quotes credit Wikiquote and Settings says what leaves the phone", () => {
+  const html = read("index.html");
+  assert.match(html, /en\.wikiquote\.org\/wiki\//);
+  assert.match(html, /CC BY-SA 4\.0/);
+  assert.match(html, /id="privacyNote"/);
 });

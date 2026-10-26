@@ -144,6 +144,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .lineWrap { position:relative; flex:none; padding-top:20px; border-top:1px solid var(--line); -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
 .ai-p { margin:0; font-size:1.2941rem; line-height:1.3; letter-spacing:-.01em; font-weight:450; color:var(--ink); transition:opacity .3s; }
 .ai-src { display:block; margin-top:10px; font-size:var(--t-xs); color:var(--faint); }
+.ai-src a { color:inherit; text-decoration:underline; text-underline-offset:2px; text-decoration-thickness:1px; padding:12px 0; }
 .talkrow { border-top:1px solid var(--line) !important; }
 .talkrow .tr { flex-direction:column; align-items:flex-start; gap:2px; }
 .talkrow .tr b { color:var(--ink); font-size:var(--t-md); font-weight:500; }
@@ -557,8 +558,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <div class="ltabs" id="ledgerTabs" role="tablist" aria-label="Groups"></div>
     <div id="ledgerList"></div>
     <h3 class="sec2">Last 12 weeks<span>Each dot is a day</span></h3>
-    <div class="grid12" id="cal" role="img" aria-label="Days weighed over the last 12 weeks"></div>
-    <div class="gkey"><span><i style="background:color-mix(in srgb, var(--ink) 45%, transparent)"></i>weighed</span><span><i style="background:var(--ink)"></i>caught it or living it</span></div>
+    <div class="grid12" id="cal" role="img" aria-label="Days with moves over the last 12 weeks"></div>
+    <div class="gkey"><span><i style="background:color-mix(in srgb, var(--ink) 45%, transparent)"></i>moves</span><span><i style="background:var(--ink)"></i>caught it or living it</span></div>
   </section>
   </main>
 </div>
@@ -621,7 +622,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <textarea id="evidenceInput" rows="3" maxlength="280" placeholder="One line on when you lived it."></textarea>
   </div>
   <div class="stats">
-    <div class="stat pressed"><b id="sReflect">0</b><span>Tested</span></div>
+    <div class="stat pressed"><b id="sReflect">0</b><span>Sat with</span></div>
     <div class="stat pressed"><b id="sSkips" class="br">0</b><span>Skipped</span></div>
     <div class="stat pressed"><b id="sDays">0</b><span>Days in deck</span></div>
   </div>
@@ -778,7 +779,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <div class="panel raised">
     <div class="setrow"><span id="lookLbl">Surface</span>
       <div class="seg pressed" role="group" aria-labelledby="lookLbl"><button type="button" data-look="matte" aria-pressed="true">Black</button><button type="button" data-look="light" aria-pressed="false">White</button></div></div>
-    <div class="setrow"><span id="whereLbl">Show where it came from<small>Collection, origin and author while you test a principle</small></span>
+    <div class="setrow"><span id="whereLbl">Show where it came from<small>Collection, origin and author on Sit with it</small></span>
       <button type="button" class="toggle" id="whereToggle" role="switch" aria-checked="true" aria-labelledby="whereLbl"><i></i></button></div>
   </div>
 
@@ -803,13 +804,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       <button class="btn3d sm raised" type="button" id="voiceAdd" disabled>Add</button>
     </div>
   </div>
-  <p class="note">One voice a day, in turn. Sit with it shows a real quote from today’s voice, from Wikiquote, when one fits.</p>
+  <p class="note">One voice a day, in turn. Sit with it shows a real quote from today’s voice, from Wikiquote (CC BY-SA 4.0), when one fits.</p>
 
   <h3 class="sec2">Reminders</h3>
   <div class="panel raised" id="remindPanel">
     <div class="setrow stack">
-      <p class="note">Scales has no server, so it cannot send notifications itself. An iPhone automation can remind you instead. Set it up once for the morning set and once for the evening check-in.</p>
-      <div class="steps"><div><b>1</b><span>In Shortcuts: Automation, New Automation, Time of Day. Pick a time, then Run Immediately.</span></div><div><b>2</b><span>Add the Show Notification action with the words: Scales, today’s set.</span></div><div><b>3</b><span>Repeat for the evening, after 6 PM: Scales, evening check-in. Open Scales from the Home Screen when it arrives.</span></div></div>
+      <p class="note">Scales has no server, so it cannot send notifications itself. An iPhone automation can remind you instead. Set it up once in the morning for today’s set, and once after 6 PM for anything saved for Later.</p>
+      <div class="steps"><div><b>1</b><span>In Shortcuts: Automation, New Automation, Time of Day. Pick a time, then Run Immediately.</span></div><div><b>2</b><span>Add the Show Notification action with the words: Scales, today’s set.</span></div><div><b>3</b><span>Repeat after 6 PM with: Scales, saved for later. Open Scales from the Home Screen when it arrives.</span></div></div>
       <p class="note">A link would open Safari, which keeps its own copy of the data, so the reminder points you to the Home Screen app instead.</p>
       <div class="btnrow"><button class="btn3d sm raised" type="button" id="openShortcuts">Open Shortcuts</button></div>
     </div>
@@ -819,6 +820,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <div class="panel raised">
     <div class="setrow"><span>Back up<small id="syncText">One file with everything, for iCloud Drive</small></span><button class="btn3d sm raised" type="button" id="exportBtn">Back up</button></div>
     <div class="setrow"><span>Restore<small>Merges a backup into this phone</small></span><button class="btn3d sm raised" type="button" id="importBtn">Restore</button></div>
+    <div class="setrow stack"><p class="note" id="privacyNote"><b>What leaves this phone.</b> No account, no server, no analytics. Today’s voice’s name goes to Wikiquote for its quotes. With an AI key, the principle, its skip count and anything you write to a voice go to Anthropic. Nothing else is sent.</p></div>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
     <input type="file" id="csvFile" accept=".csv,text/csv,text/plain" hidden>
   </div>
@@ -884,12 +886,12 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     0: ["What is in the way of this today?",
         "Name the reason you are setting this down today.",
         "What would doing this today take, instead of later?"],
-    1: ["You have set this aside before. What is different about today?",
+    1: ["You have skipped this before. What is different about today?",
         "Is the reason the same as last time?",
-        "What did setting it aside last time get you?"],
-    3: ["You keep setting this aside. What is the avoidance protecting?",
+        "What did skipping it last time get you?"],
+    3: ["You keep skipping this. What is the avoidance protecting?",
         "This is a pattern now. What would breaking it today take?",
-        "Set aside again and again. What do you think it will ask of you?"]
+        "Skipped again and again. What do you think it will ask of you?"]
   };
   // What the model's push line does at each tier. Same tiers as FALLBACK.
   var ANGLE = {
@@ -1267,7 +1269,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       return pick.then(function (k) {
         var live = thoughts[t.id]; if (!live || live.text !== of) return null;
         var q = k >= 0 ? list[k] : null;
-        var l = q ? C.keepLine(live, "reflect", q.q, { quote: true, author: v.name, src: q.src || "", voice: v.id })
+        var l = q ? C.keepLine(live, "reflect", q.q, { quote: true, author: v.name, src: q.src || "", voice: v.id, page: C.wqPage(v) })
           : C.keepLine(live, "reflect", "", { none: true, voice: v.id });
         save(live);
         return l;
@@ -1294,7 +1296,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     }
     // The reflect screen: the kept quote, nothing when none fit, or a quiet placeholder while it is found.
     function putQuote(l) {
-      shown = l && l.text ? { kind: kind, text: l.text, ai: true, quote: true, author: l.author, src: l.src } : { kind: kind, none: true };
+      shown = l && l.text ? { kind: kind, text: l.text, ai: true, quote: true, author: l.author, src: l.src, page: l.page } : { kind: kind, none: true };
       paintLine();
     }
     if (kind === "reflect") {
@@ -1327,7 +1329,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     el.classList.toggle("pending", !!l.pending);
     el.classList.toggle("quote", !!l.quote);
     var src = $("aiSrc");
-    if (src) src.textContent = l.pending ? "" : l.quote ? l.author + (l.src ? ", " + l.src : "") : l.ai ? "Considered for you" : "A question to sit with";
+    // Quotes credit Wikiquote (1.49.0), whose text is CC BY-SA 4.0, with a link to the voice's page.
+    if (src) src.innerHTML = l.pending ? "" : l.quote ? esc(l.author + (l.src ? ", " + l.src : "")) +
+      ' <span aria-hidden="true">·</span> <a href="https://en.wikiquote.org/wiki/' + encodeURIComponent(String(l.page || l.author).replace(/ /g, "_")) + '" target="_blank" rel="noopener">Wikiquote</a>'
+      : esc(l.ai ? "Considered for you" : "A question to sit with");
     paintReplies();
   }
   // Under the line: your last reply on this principle, as a bubble, and a Reply button (1.40.0).
@@ -1684,7 +1689,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       '<div class="replies" id="replies"></div></div>';
     var how = '<span class="sr" id="cardHow">Use the Skip, Sit with it and Living it buttons, or press and hold the bottom of the screen to open them. Press and hold the principle to edit it.</span>';
     if (phase === "reflect") {
-      v.innerHTML = '<article class="card reflect" id="card" aria-label="Testing it" aria-describedby="cardHow">' +
+      v.innerHTML = '<article class="card reflect" id="card" aria-label="Sit with it" aria-describedby="cardHow">' +
         '<div class="phase"><span>' + (fromLater ? "Saved from earlier" : "Sitting with it") + "</span></div>" +
         '<div class="mid">' + words + line + whereHtml(t) +
           (canWeigh() ? '<button type="button" class="crow talkrow" id="talkRow"><span class="tr"><b>Talk it through with ' + esc(todayVoice().short) + "</b><small>Today’s voice</small></span>" + ICON_NEXT + "</button>" : "") +
@@ -2668,7 +2673,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     $("restOut").textContent = n + (n === 1 ? " day" : " days");
     $("restDown").disabled = n <= C.REST_MIN; $("restUp").disabled = n >= C.REST_MAX;
     var z = setSize(); $("setOut").textContent = z; $("setDown").disabled = z <= C.SET_MIN; $("setUp").disabled = z >= C.SET_MAX;
-    $("howRest").textContent = "Skip sets a principle aside for " + n + (n === 1 ? " day" : " days") + " and raises its weight, up to four times as likely as a new one. When it returns, at " +
+    $("howRest").textContent = "Skip rests a principle for " + n + (n === 1 ? " day" : " days") + " and raises its weight, up to four times as likely as a new one. When it returns, at " +
       C.DAY_START_HOUR + ":00 AM, it comes up first, once, most avoided first; then it rejoins the deck. A new rest length applies from the next Skip. Sit with it, after 8 seconds, lowers that weight by one step. Living it moves the principle to your record.";
   }
   Array.prototype.forEach.call(document.querySelectorAll(".seg [data-look]"), function (b) {
@@ -2724,6 +2729,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     else if (m === "focus") openFocus();
     else if (m === "settings") openSettings();
   });
+  ["click", "pointerdown"].forEach(function (ev) { document.addEventListener(ev, function (e) { if (e.target.closest && e.target.closest(".ai-src a")) e.stopPropagation(); }, true); });
   $("addTop").onclick = function () { closeMenu(); openCapture(); };
   menuBtn.addEventListener("click", function () { if (menu.open) closeMenu(); else openMenu(); });
 
