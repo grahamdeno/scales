@@ -130,9 +130,9 @@ sequenceDiagram
 
 | Key | Holds |
 |---|---|
-| `scales.thoughts.v1` | Every principle by id: text, `lines` (push and reflect, each with the wording and Skip count it was written for), collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai`; `replies` (answers to the line or quote, each with the words it answered, last 40; `notes` from 1.37.0 join the same thread), `talks` (last five weigh-ins, each with its voice, move, line and replies); `acts` (smallest acts by day), `caught` (Caught it by day), `checkins`, `skips_on` (days set aside, for the weekly review) |
+| `scales.thoughts.v1` | Every principle by id: text, `lines` (push and reflect, each with the wording and Skip count it was written for), collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai`; `replies` (answers to the line or quote, each with the words it answered, last 40; `notes` from 1.37.0 join the same thread), `talks` (last five weigh-ins, each with its voice, move, line and replies); `caught` (Caught it by day), `skips_on` (days skipped), `later` and `later_blocked`; older data may still carry `acts` and `checkins`, no longer written since 1.46.0 |
 | `scales.activity.v1` | Per Scales day counts: `i` weighed, `s` Living it, `c` Caught it; last 120 days |
-| `scales.prefs.v1` | Today's set (`day`: moves, focus, check-in), set size, the Sit with it count, the week's review state, look, rest length, Show where it came from, AI lines on or off, chosen voices and names added, the collection key, Show anyway's day, first-use tip seen |
+| `scales.prefs.v1` | Today's set (`day`: moves), set size, look, rest length, Show where it came from, buttons instead of hold (`tap_moves`), AI lines on or off, chosen voices and names added, the collection key, Show anyway's day, the open Ledger tab (`ledger_tab`), first run (`welcoming`, `onboarded`) |
 | `scales.apikey.v1` | Anthropic API key, only if saved |
 | `scales.quotes.v1` | Each voice's sourced quotes from Wikiquote (`parseQuotes`), by page name, refreshed after 30 days |
 
@@ -146,17 +146,16 @@ sequenceDiagram
 | Rest after Skip | 4 days (`REST_DAYS`), 1 to 7 in Settings (`restDays`) | Long enough that a reflex skip each morning cannot become a habit; was 1 day in 1.24.0 |
 | Talk it through | 6 replies, 70 words each | A reflection, not a chat |
 | Today's set | 5 by default, 1 to 20 | Long enough to think, short enough to finish |
-| Evening check-in | from 6 PM until 4:00 AM | After the day's chances to act |
-| Smallest act | every third Sit with it | Often enough to matter, rare enough not to nag |
+| Later | waits until 6 PM, up to 3 at once | After the day's chances to act; a cap so Later cannot become a second Skip |
 | Caught it suggests Living it | 3 catches in 30 days | A pattern, not a single good day |
 | Voices | one per Scales day, in turn | Each voice gets its day; the order is the list order |
 | Press and hold to edit | 550 ms | Longer than a tap, shorter than a deliberate wait |
 | Front of the stack | once per Skip | Most avoided first, then longest waiting since last shown |
 | Cooldown | last 3 shown (last 1 in a deck of 3 or fewer) | No back to back repeats |
 | Reflect (`REFLECT_SEC`) | 8 seconds before Next | A quick Sit with it does not erase a Skip; the wait is visible as a filling line |
-| Pushback | once per showing | A second early release sets it aside; a second warning would nag |
+| Pushback | once per showing | Skip it on the push screen rests it; a second warning would nag |
 | Quote pick (`rankQuotes`, `quotePrompt`) | 20 candidates by shared word stems; the model answers a number or 0; without a key, the top one only with 2 or more shared stems | Real words only, and nothing rather than a loose fit |
-| Lines (`lineFresh`) | kept per principle, rewritten after a test, a wording change, or once at 3 Skip | Reused for cost and consistency, refreshed so the pushback does not go stale |
+| Lines (`lineFresh`) | kept per principle, rewritten after Sit with it, a wording change, or once at 3 Skip | Reused for cost and consistency, refreshed so the pushback does not go stale |
 | Nudge | 3 Sit with it in a row | Prompts the Living it question |
 | Line length | 25 words | Room for one complete consideration, still readable at a glance |
 | Model output budget | 1024 tokens | The model may reason before answering, and reasoning counts against the budget |
@@ -192,4 +191,4 @@ Colors are custom properties on `:root`, with a second set under `:root[data-loo
 | `.frost` | ground with a hairline | the menu |
 | `.primary` | solid ink | one per sheet |
 
-The deck's words are one `<span class="w">` each (`wordsHtml`), so the hold can ink them in turn (`.thought.ink .w.in`). The ring (`#holdRing`) is pointer only and hidden from assistive tech; the three buttons (`data-move`, visually hidden until focused) are the accessible path. The deck has three stages (`phase`): rest, push and reflect; a principle mid-push or mid-reflect stays on screen even when that move ended the day's set.
+The principle is plain text. Pressing and holding the bottom area (`#holdZone`) for `HOLD_REVEAL` opens the choices (`#choices`); the hold is pointer only, and the three buttons (`data-move`, visually hidden until focused) are the accessible path. Settings can show them as plain buttons instead (`prefs.tap_moves`). The deck has three stages (`phase`): rest, push and reflect; a principle mid-push or mid-reflect stays on screen even when that move ended the day's set.
