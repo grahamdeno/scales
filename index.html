@@ -291,7 +291,8 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 #v-ledger > * { flex-shrink:0; }
 .ptitle { margin:4px 0 0; font-size:var(--d-md); font-weight:600; letter-spacing:-.02em; line-height:1.1; }
 .summary { margin:10px 0 0; font-size:var(--t-md); line-height:1.45; color:var(--muted); }
-.summary b { color:var(--ink); font-weight:500; } .summary b.br { color:var(--ink); }
+.summary b { color:var(--ink); font-weight:500; }
+.summary .wk { display:block; margin-top:4px; font-size:var(--t-sm); color:var(--faint); } .summary b.br { color:var(--ink); }
 /* The key: what the three weights mean. */
 .wkey { margin-top:24px; padding-bottom:20px; border-bottom:1px solid var(--line); display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
 .wkey div { display:flex; flex-direction:column; gap:6px; }
@@ -450,7 +451,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 .weekrow i { width:16px; height:16px; border-radius:50%; background:color-mix(in srgb, var(--ink) 12%, transparent); }
 .weekrow i.on { background:color-mix(in srgb, var(--ink) 45%, transparent); }
 .weekrow i.lv { background:var(--ink); }
-#openWeek > span:first-child { display:block; color:var(--ink); font-size:var(--t-md); }
 .crow small { display:block; margin-top:3px; font-size:var(--t-xs); color:var(--muted); font-weight:400; }
 /* Collections and other lists of rows: hairlines between, no boxes. */
 .coll-list { display:grid; border-top:1px solid var(--line); }
@@ -538,7 +538,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <p class="summary" id="lSummary"></p>
     <div class="ltabs" id="ledgerTabs" role="tablist" aria-label="Groups"></div>
     <div id="ledgerList"></div>
-    <button type="button" class="crow" id="openWeek" style="margin-top:16px"><span>Your week<small>The last seven days, and one voice on them</small></span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></button>
     <h3 class="sec2">Last 12 weeks<span>Each dot is a day</span></h3>
     <div class="grid12" id="cal" role="img" aria-label="Days weighed over the last 12 weeks"></div>
     <div class="gkey"><span><i style="background:color-mix(in srgb, var(--ink) 45%, transparent)"></i>weighed</span><span><i style="background:var(--ink)"></i>caught it or living it</span></div>
@@ -550,7 +549,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <dialog class="menu frost" id="menu" aria-label="Menu">
   <button type="button" data-m="capture">Capture<span>New principle</span></button>
   <button type="button" data-m="edit" id="mEdit">Edit this principle</button>
-  <button type="button" data-m="caught" id="mCaught">Caught it<span>Lived it today</span></button>
   <hr>
   <button type="button" data-m="focus" id="mFocus">Show<span id="mFocusVal">All</span></button>
   <button type="button" data-m="ledger" id="mLedger">Ledger<span>Your record</span></button>
@@ -678,32 +676,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <div class="notice pressed" id="caughtNotice"></div>
     <div class="sd"><button type="button" class="btn3d raised" id="caughtNotYet">Not yet</button><button type="button" class="primary" id="caughtLive">Living it</button></div>
   </div>
-</dialog>
-
-<!-- Testing it, every third time: the smallest act today. -->
-<dialog class="sheet" id="sheetAct" aria-modal="true" aria-labelledby="sheetActTitle">
-  <div class="grabber" aria-hidden="true"></div>
-  <h2><span id="sheetActTitle">Sit with it</span> <button type="button" data-close>Skip</button></h2>
-  <div class="quote dim" id="actText"></div>
-  <div class="group">
-    <label for="actInput">What is the smallest act today?</label>
-    <textarea id="actInput" rows="2" maxlength="200" placeholder="Leave the phone in the kitchen tonight."></textarea>
-  </div>
-  <p class="note">Asked every third time you sit with a principle. It shows up in this evening’s check-in when this is today’s focus.</p>
-  <button class="primary" type="button" id="actSave" disabled>Save</button>
-</dialog>
-
-<!-- Your week: the last seven Scales days. -->
-<dialog class="sheet tall" id="sheetWeek" aria-modal="true" aria-labelledby="sheetWeekTitle">
-  <div class="grabber" aria-hidden="true"></div>
-  <h2><span id="sheetWeekTitle">Your week</span> <button type="button" data-close>Done</button></h2>
-  <p class="note" id="weekRange" style="margin-top:-8px"></p>
-  <div class="stats"><div class="stat pressed"><b id="wWeighed">0</b><span>Weighed</span></div><div class="stat pressed"><b id="wCaught" class="br">0</b><span>Caught it</span></div><div class="stat pressed"><b id="wLiving">0</b><span>Now living</span></div></div>
-  <div class="weekrow pressed" id="weekRow" role="img"></div>
-  <div class="group" id="weekPushWrap"><h3 class="sec2" style="margin-top:4px">Pushed back most<span id="weekPushN"></span></h3><button type="button" class="crow raised" id="weekPush" style="font-weight:500;white-space:normal"></button></div>
-  <div class="glass" id="weekLine" hidden></div>
-  <button type="button" class="btn3d raised" id="weekAsk" hidden></button>
-  <div class="sheet-foot"><button class="primary" type="button" id="weekStart">Start the week</button></div>
 </dialog>
 
 <!-- A principle in full, from the Ledger: its history and everything you can do with it. -->
@@ -1052,7 +1024,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // showing Nothing left today, look again.
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState !== "visible") return;
-    paintDate(); checkinLater = false;
+    paintDate();
     if (!current && activeList().length) showNext(); else if ($("v-ledger").hidden && !openSheet) renderDeck();
   });
   window.addEventListener("pageshow", resetScroll);
@@ -1408,7 +1380,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       prefs.tests = (prefs.tests || 0) + 1; savePrefs();
       save(t); logActivity("keep");
       // Every third Testing it: the smallest act today, asked when you move on.
-      pendingAct = C.askAct(prefs.tests);
       phase = "reflect"; reflectAt = Date.now(); reflectDone = false; reflectLighter = false;
       clearTimeout(reflectT); reflectT = setTimeout(finishReflect, C.REFLECT_SEC * 1000);
       renderDeck(); showLine(t, "reflect");
@@ -1449,7 +1420,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     clearTimeout(reflectT); pendingAct = false; reflectUndo = null;
     if (t) { C.spendLines(t); save(t); }
     phase = "rest"; entering = true; showNext();
-    if (ask && t) setTimeout(function () { openAct(thoughts[t.id]); }, 450);
   }
 
   // ---------- undo ----------
@@ -1612,7 +1582,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 
   function footHtml(left) {
     // After Keep going, the footer offers the way back to today's focus.
-    if (!left && day && day.more && day.focus && thoughts[day.focus]) left = '<button type="button" class="linkbtn" id="backFocus" style="margin:-12px 0;padding:0;align-self:auto">Today’s focus</button>';
     return '<div class="foot"><span>' + left + '</span><span id="deckN"></span></div>';
   }
   function emptyHtml(title, text, acts, left) {
@@ -1635,8 +1604,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       return;
     }
     // The evening check-in comes first, then Done for today and today's focus.
-    if (!mid && !checkinLater && C.checkinDue(day, new Date()) && renderCheckin()) return;
-    if (!mid && dp === "focus") { renderFocus(); return; }
     if (!mid && (dp === "done" || (dp === "set" && day.moved.length && !nextUp()))) { renderDone(dp === "set" ? "Nothing else is due today. " + C.daySummary(day) : ""); return; }
     var t = thoughts[current];
     var enter = entering; entering = false;
@@ -1933,7 +1900,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
   $("v-deck").addEventListener("click", function (e) {
     if (e.target.closest("#weighBtn")) openWeigh();
-    else if (e.target.closest("#backFocus")) { day.more = false; saveDay(); renderDeck(); }
   });
 
   var wT = null, wAt = null, wBusy = false, wFromLedger = false;
@@ -2085,7 +2051,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // Today's set (core.js dayPhase): the deck closes after the number of moves chosen in Settings, asks which
   // principle you will act on today, and carries it as today's focus. From 6 PM the deck opens on the
   // evening check-in for that focus. Every third Testing it asks for the smallest act today.
-  var day = null, checkinLater = false;
+  var day = null;
   function setSize() { return C.setSize(prefs.set_size); }
   function refreshDay() { day = C.dayState(day || prefs.day, today()); }
   function saveDay() { prefs.day = day; savePrefs(); }
@@ -2101,63 +2067,18 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var dc = deckColl();
     el.innerHTML = dc ? esc(dc) : '<span class="sr">Scales</span>';
   }
-  // Done for today: how the set went, then today's focus.
-  var focusPick = null;
+  // Done for today (1.46.0): how the set went, and Keep going. Today's focus and the evening check-in were cut;
+  // Later owns the evening.
   function renderDone(note) {
-    var v = $("v-deck"), choices = C.focusChoices(day, thoughts).slice(0, 6);
-    if (!focusPick || !choices.some(function (c) { return c.t.id === focusPick; })) focusPick = choices.length ? choices[0].t.id : null;
-    v.innerHTML = '<div class="done">' +
-      "<h1>Done for today.</h1>" + '<p class="note big">' + esc(note || C.daySummary(day)) + "</p>" +
-      (choices.length ? '<h3 class="sec2">Which one will you act on today?</h3><div class="choice" id="focusPick" role="radiogroup" aria-label="Today’s focus">' +
-        choices.map(function (c) {
-          return '<button type="button" class="opt raised" data-focus="' + c.t.id + '" role="radio" aria-checked="' + (c.t.id === focusPick) + '" aria-pressed="' + (c.t.id === focusPick) + '"><i class="radio" aria-hidden="true"></i><span><b class="optp">' + esc(clip(c.t.text, 120)) + "</b></span></button>";
-        }).join("") + '</div><button type="button" class="primary" id="focusSet">Make it today’s focus</button>' : "") +
-      '<button type="button" class="linkbtn" id="keepGoing">Keep going instead</button></div>' + footHtml(footLeft(""));
-    if ($("focusPick")) $("focusPick").onclick = function (e) { var b = e.target.closest("[data-focus]"); if (b) { focusPick = b.getAttribute("data-focus"); renderDeck(); } };
-    if ($("focusSet")) $("focusSet").onclick = function () { day.focus = focusPick; day.closed = true; saveDay(); toast("Today’s focus set. Check in after 6 PM."); renderDeck(); };
+    var v = $("v-deck");
+    v.innerHTML = '<div class="done"><h1>Done for today.</h1><p class="note big">' + esc(note || C.daySummary(day)) + "</p>" +
+      '<div class="widewrap"><button type="button" class="btn3d wide" id="keepGoing">Keep going</button></div></div>' + footHtml(footLeft(""));
     $("keepGoing").onclick = keepGoing;
     paintStat();
   }
   function keepGoing() { day.more = true; saveDay(); if (!current || !thoughts[current] || thoughts[current].status !== "active") showNext(); else renderDeck(); }
-  // Today's focus, after the set.
-  function renderFocus() {
-    var v = $("v-deck"), t = thoughts[day.focus];
-    if (!t) { day.closed = false; day.focus = null; saveDay(); renderDone(); return; }
-    var act = C.actToday(t, day.day);
-    v.innerHTML = '<div class="focuswrap"><div class="focus raised"><div class="k">Today’s focus</div><div class="p' + sizeClass(t.text) + '">' + esc(t.text) + "</div>" +
-      (act ? '<div class="n">Smallest act: ' + esc(act) + "</div>" : "") + '<div class="n faint">Check in after 6 PM.</div></div>' +
-      '<div class="sd" style="margin-top:20px"><button type="button" class="btn3d raised" id="keepGoing">Keep going</button><button type="button" class="btn3d raised" id="focusCaught">Caught it</button></div></div>' +
-      footHtml(footLeft("Done for today"));
-    $("keepGoing").onclick = keepGoing;
-    $("focusCaught").onclick = function () { openCaught(t, false); };
-    paintStat();
-  }
-  // The evening check-in.
-  function renderCheckin() {
-    var v = $("v-deck"), t = thoughts[day.focus]; if (!t) return false;
-    var act = C.actToday(t, day.day);
-    v.innerHTML = '<div class="ask"><div class="k">Today’s focus</div><div class="thought' + sizeClass(t.text) + '"><span>' + esc(t.text) + "</span></div>" +
-      (act ? '<p class="note big">Smallest act: ' + esc(act) + "</p>" : "") +
-      '<h3 class="sec2">Did you live it today?</h3><div class="three" id="checkin">' +
-      '<button type="button" class="key raised" data-ci="no">' + ICON_SKIP + "<span>No</span></button>" +
-      '<button type="button" class="key raised" data-ci="partly">' + ICON_UP + "<span>Partly</span></button>" +
-      '<button type="button" class="key raised live" data-ci="yes">' + ICON_SHED + "<span>Yes</span></button></div>" +
-      '<button type="button" class="linkbtn" id="ciLater">Later</button></div>' + footHtml("");
-    $("checkin").onclick = function (e) {
-      var b = e.target.closest("[data-ci]"); if (!b) return;
-      var r = b.getAttribute("data-ci");
-      if (r === "yes") { openCaught(t, true); return; }
-      t.checkins = (t.checkins || []).concat([{ day: day.day, result: r }]).slice(-30); save(t);
-      day.checkin = r; saveDay();
-      toast(r === "partly" ? "Partly. It stays in the deck; tomorrow is another set." : "Noted. Tomorrow is another set.");
-      renderDeck();
-    };
-    $("ciLater").onclick = function () { checkinLater = true; renderDeck(); };
-    paintStat();
-    return true;
-  }
 
-  // Caught it: when you lived a principle without the app. From the check-in, the menu, or the Ledger.
+  // Caught it: when you lived a principle without the app. From the principle's history in the Ledger.
   var caughtT = null, caughtFromCheckin = false;
   function openCaught(t, fromCheckin) {
     if (!t) return;
@@ -2193,68 +2114,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     openShed(t);
     if (last && last.text) $("evidenceInput").value = last.text;
   };
-
-  // Testing it, every third time: the smallest act today.
-  var actT = null;
-  function openAct(t) {
-    if (!t || openSheet) return;
-    actT = t;
-    $("actText").textContent = t.text;
-    $("actInput").value = C.actToday(t, today());
-    show("sheetAct");
-    setTimeout(function () { $("actInput").focus(); }, 60);
-  }
-  $("actInput").addEventListener("input", function () { $("actSave").disabled = !$("actInput").value.trim(); });
-  $("actSave").onclick = function () {
-    var t = actT; if (!t || !$("actInput").value.trim()) return;
-    C.addAct(t, today(), $("actInput").value); save(t); hide();
-    toast(day && day.focus === t.id ? "Saved. It shows in this evening’s check-in." : "Saved.");
-    if (!$("v-ledger").hidden) renderLedger(); else if (day && (day.closed)) renderDeck();
-  };
-
-  // ---------- your week ----------
-  // A calm review of the last seven Scales days. Opens itself on Sunday, once; the Ledger has it any day.
-  function openWeek() {
-    var w = C.weekStats(all(), activity, today());
-    var f = function (d) { var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", { month: "long", day: "numeric" }); };
-    $("weekRange").textContent = f(w.from) + " to " + f(w.to);
-    $("wWeighed").textContent = w.weighed; $("wCaught").textContent = w.caught; $("wLiving").textContent = w.living;
-    $("weekRow").innerHTML = w.days.map(function (d) {
-      var p = d.day.split("-"), dt = new Date(+p[0], +p[1] - 1, +p[2]);
-      return '<div><i class="' + d.kind + '"></i>' + dt.toLocaleDateString("en-US", { weekday: "narrow" }) + "</div>";
-    }).join("");
-    $("weekRow").setAttribute("aria-label", w.days.filter(function (d) { return d.weighed || d.caught; }).length + " of 7 days active");
-    $("weekPushWrap").hidden = !w.pushed;
-    if (w.pushed) { $("weekPushN").textContent = "Skipped " + times(w.pushedTimes); $("weekPush").textContent = w.pushed.text; $("weekPush").setAttribute("data-show", w.pushed.id); }
-    var wl = prefs.week_line && prefs.week_line.day === today() ? prefs.week_line : null, v = todayVoice();
-    $("weekLine").hidden = !wl;
-    if (wl) $("weekLine").innerHTML = "<p>" + esc(wl.text) + '</p><div class="vlabel"><span>' + esc(wl.label) + "</span></div>";
-    $("weekAsk").hidden = !!wl || !sample || !v;
-    if (v) $("weekAsk").innerHTML = ICON_VOICE + " " + esc(v.short) + " on your week";
-    weekStatsNow = w;
-    show("sheetWeek");
-  }
-  var weekStatsNow = null;
-  $("weekAsk").onclick = function () {
-    var v = todayVoice(), w = weekStatsNow; if (!v || !w || !sample) return;
-    $("weekAsk").disabled = true; $("weekAsk").textContent = "Considering…";
-    var tries = 0;
-    function attempt() {
-      return sample(C.weekPrompt(v, w)).then(function (res) {
-        var r = vet(res && res.text, { text: w.pushed ? w.pushed.text : "" });
-        return r.line || (++tries < 3 ? attempt() : null);
-      });
-    }
-    attempt().then(function (line) {
-      $("weekAsk").disabled = false;
-      if (!line) { $("weekAsk").textContent = "No usable answer. Try again"; return; }
-      prefs.week_line = { day: today(), text: line, label: C.voiceLabel(v) }; savePrefs();
-      $("weekLine").hidden = false; $("weekLine").innerHTML = "<p>" + esc(line) + '</p><div class="vlabel"><span>' + esc(C.voiceLabel(v)) + "</span></div>";
-      $("weekAsk").hidden = true;
-    }, function () { $("weekAsk").disabled = false; $("weekAsk").textContent = "No connection. Try again"; });
-  };
-  $("weekPush").onclick = function () { var t = thoughts[$("weekPush").getAttribute("data-show")]; if (!t) return; hide(); if (!C.inCollection(t, deckColl())) { prefs.deck_coll = ""; savePrefs(); } day.more = true; saveDay(); go("deck"); showThought(t); };
-  $("weekStart").onclick = hide;
 
   // ---------- a principle in full (the Ledger row) ----------
   var rowT = null;
@@ -2549,7 +2408,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var resting = act_.filter(function (t) { return C.isResting(t, td); }).length;
     var wk = C.weekStats(items, activity, td);
     $("lSummary").innerHTML = "<b>" + act_.length + " in the deck</b>" + (resting ? ", " + resting + " resting" : "") + ", <b>" + shed.length + " lived</b>." +
-      (wk.caught ? " " + wk.caught + " caught this week." : "");
+      // Your week (1.46.0): one line here instead of its own sheet.
+      '<span class="wk">This week: ' + wk.weighed + (wk.weighed === 1 ? " move" : " moves") + (wk.caught ? ", " + wk.caught + " caught" : "") + (wk.living ? ", " + wk.living + " now living" : "") + ".</span>";
     paintStat();
     var byGroup = { avoiding: [], working: [], nearly: [], lived: shed };
     act_.forEach(function (t) { byGroup[C.ledgerGroup(t, td)].push(t); });
@@ -2582,7 +2442,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     prefs.ledger_tab = b.getAttribute("data-tab"); savePrefs(); renderLedger();
     var nb = document.querySelector('#ledgerTabs [data-tab="' + prefs.ledger_tab + '"]'); if (nb) { try { nb.focus({ preventScroll: true }); } catch (_) {} }
   });
-  $("openWeek").onclick = openWeek;
 
   // ---------- capture ----------
   // Capture sheet. Optional origin pill, MAX_TEXT character limit, and a new principle starts
@@ -2782,7 +2641,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (openSheet || menu.open) return;
     var deck = $("v-ledger").hidden;
     $("mEdit").hidden = !onCard();
-    $("mCaught").hidden = !onCard();
     $("mLedger").innerHTML = deck ? "Ledger<span>Your record</span>" : "Deck<span>Today</span>";
     $("mColl").textContent = C.collections(all()).length;
     $("mFocusVal").textContent = deckColl() || "All";
@@ -2804,7 +2662,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     try { menuBtn.focus({ preventScroll: true }); } catch (_) {}
     if (m === "capture") openCapture();
     else if (m === "edit" && t) openEdit(t);
-    else if (m === "caught" && t) openCaught(t, false);
     else if (m === "ledger") go($("v-ledger").hidden ? "ledger" : "deck");
     else if (m === "collections") openCollections("menu");
     else if (m === "focus") openFocus();
@@ -3050,13 +2907,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     }).catch(function () { toast("Could not read that CSV"); });
     e.target.value = "";
   };
-
-  // ---------- your week, on Sunday ----------
-  // The review opens itself once on Sunday, when there was something to review.
-  (function () {
-    var td = today(), w = C.weekStats(all(), activity, td);
-    if (C.isReviewDay(td) && prefs.week_seen !== td && (w.weighed || w.caught)) { prefs.week_seen = td; savePrefs(); setTimeout(openWeek, 400); }
-  })();
 
   // ---------- offline ----------
   // Register the service worker (sw.js) so the app opens offline.

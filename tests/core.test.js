@@ -481,7 +481,7 @@ test("an undo point is a copy: later changes do not leak in, and applying it twi
 
 test("the page wires sheets as modal dialogs, Undo and the coach (1.26.0)", () => {
   const html = read("index.html");
-  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 15, "every sheet is a <dialog>");
+  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 13, "every sheet is a <dialog>");
   assert.doesNotMatch(html, /<section class="sheet/, "no sheet left as a hidden section");
   assert.match(html, /\.showModal\(\)/);
   for (const id of (html.match(/aria-labelledby="(sheet\w+Title)"/g) || []).map((m) => m.slice(17, -1))) {
@@ -713,7 +713,7 @@ test("at rest only the principle and the ring; lines appear on push and reflect 
   assert.match(html, /if \(live && live\.text === of\) \{ C\.keepLine\(live, kind, s\); save\(live\); \}/, "a written line is kept on the principle");
 });test("the Ledger: tabs with counts, one group at a time, two lines per principle (1.44.0)", () => {
   const html = read("index.html"), c = css();
-  for (const id of ["lSummary", "ledgerTabs", "openWeek", "cal", "ledgerList", "sheetRow", "rowTl", "rowActs", "rowHist"]) assert.match(html, new RegExp('id="' + id + '"'), id);
+  for (const id of ["lSummary", "ledgerTabs", "cal", "ledgerList", "sheetRow", "rowTl", "rowActs", "rowHist"]) assert.match(html, new RegExp('id="' + id + '"'), id);
   assert.doesNotMatch(html, /class="wkey"|id="livedBtn"|id="gauge"|class="pbc/, "the Aa key and the Lived fold are gone");
   assert.match(html, /\{ id: "avoiding", name: "Avoiding", note: "Skipped three or more times", fw: 800 \}/, "one weight per group");
   assert.match(html, /\{ id: "lived", name: "Lived",/);
@@ -920,15 +920,16 @@ test("a principle's timeline lists what happened, newest first", () => {
   assert.deepEqual(tl.map((e) => e.at), ["2026-10-17", "2026-10-17", "2026-10-16", "2026-10-14", "2026-09-20"]);
 });
 
-test("the page wires the day: moves counted, undo restores the day, check-in first, week on Sunday", () => {
+test("the page wires the day: moves counted, undo restores the day; focus, check-in, smallest act and Your week are gone (1.46.0)", () => {
   const html = read("index.html");
   for (const m of ['noteDay(t, "skip")', 'noteDay(t, "keep")', 'noteDay(t, "shed")']) assert.ok(html.includes(m), m);
   assert.match(html, /p\.day = JSON\.parse\(JSON\.stringify\(day\)\)/, "the undo point holds the day");
   assert.match(html, /if \(point\.day\) \{ day = JSON\.parse/);
-  assert.match(html, /C\.checkinDue\(day, new Date\(\)\) && renderCheckin\(\)\) return;/);
-  assert.match(html, /pendingAct = C\.askAct\(prefs\.tests\);/, "the smallest act is asked when you move on from the reflect screen");
-  assert.match(html, /C\.isReviewDay\(td\) && prefs\.week_seen !== td/);
-  for (const id of ["sheetCaught", "sheetAct", "sheetWeek", "setOut", "openShortcuts", "mCaught"]) assert.match(html, new RegExp('id="' + id + '"'), id);
+  assert.match(html, /<h1>Done for today\.<\/h1>/);
+  assert.doesNotMatch(html, /renderCheckin|renderFocus|openAct|id="sheetAct"|id="sheetWeek"|openWeek|data-m="caught"/);
+  assert.match(html, /This week: ' \+ wk\.weighed/, "the week is one line in the Ledger");
+  assert.match(html, /data-r="caught"/, "Caught it stays in each principle's history");
+  for (const id of ["sheetCaught", "setOut", "openShortcuts"]) assert.match(html, new RegExp('id="' + id + '"'), id);
   assert.match(html, /if \(kind === "shed"\) d\.s\+\+; else if \(kind === "caught"\) d\.c = \(d\.c \|\| 0\) \+ 1; else d\.i\+\+;/);
 });
 
