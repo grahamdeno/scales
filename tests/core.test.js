@@ -1288,3 +1288,15 @@ test("the service worker shows reminders, sets the badge and keeps its state cac
   assert.match(C.VAPID_PUBLIC, /^B[A-Za-z0-9_-]{86}$/);
   assert.match(read(".github/workflows/remind.yml"), /secrets\.PUSH_SUBSCRIPTION/);
 });
+
+// ---------- 1.52.0: paper writing sheets ----------
+test("Capture and Edit are paper sheets with the action in the title row", () => {
+  const html = read("index.html");
+  assert.match(html, /class="sheet inverse writesheet" id="sheetCapture"/);
+  assert.match(html, /class="sheet tall inverse writesheet" id="sheetEdit"/);
+  assert.match(html, /<button type="submit" form="captureForm" class="wdone" id="addBtn" disabled>Add<\/button>/);
+  assert.match(html, /class="wdone" id="editSave" disabled>Save<\/button>/);
+  assert.doesNotMatch(html, /Write it as a claim/);
+  const cap = html.slice(html.indexOf('id="sheetCapture"'), html.indexOf("</dialog>", html.indexOf('id="sheetCapture"')));
+  assert.ok(cap.indexOf('id="capDetails"') < cap.indexOf('id="originPills"'), "Where it came from sits under More details");
+});

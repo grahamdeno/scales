@@ -382,6 +382,17 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .sheet[open] { display:grid; align-content:start; }
 .sheet.tall { min-height:88%; }
 .sheet::backdrop { background:var(--scrim); }
+/* Writing sheets (1.52.0): matte paper with black lettering on the Black look, and the reverse on White. */
+.sheet.inverse { --paper:#ECEAE5; --deep:#E2E0DA; --rise:#ECEAE5; --ink:#141414; --muted:#5A5955; --faint:#6A6965;
+  --line:rgba(20,20,20,.16); --brass:#141414; --onBrass:#ECEAE5; --danger:#A3402C; color-scheme:light; border-top:0; }
+:root[data-look="light"] .sheet.inverse { --paper:#121212; --deep:#1B1B1A; --rise:#121212; --ink:#ECEAE5; --muted:#9A9994; --faint:#7F7E7A;
+  --line:rgba(236,234,229,.16); --brass:#ECEAE5; --onBrass:#121212; --danger:#E3A595; color-scheme:dark; }
+.writesheet h2 { display:grid; grid-template-columns:1fr auto 1fr; }
+.writesheet h2 .wcancel { justify-self:start; margin:-6px 0 -6px -8px; }
+.writesheet h2 .wdone { justify-self:end; color:var(--ink); font-weight:600; }
+.writesheet h2 .wdone:disabled { color:var(--faint); }
+.writesheet textarea.big { min-height:max(140px, 26vh); }
+.writesheet .wcount { margin:6px 0 0; text-align:right; font-size:var(--t-xs); color:var(--faint); }
 .sheet.dragging { transition:none; }
 .sheet.settle { transition:transform .22s var(--ease-out); }
 @media (prefers-reduced-motion: no-preference) { .sheet[open] { animation:up .28s var(--ease-out); } .sheet[open]::backdrop { animation:fade .2s; } }
@@ -592,25 +603,26 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
      page behind inert, and draws the dimmed ::backdrop. Tapping the backdrop or Escape closes them. -->
 
 <!-- Capture sheet -->
-<dialog class="sheet" id="sheetCapture" aria-modal="true" aria-labelledby="sheetCaptureTitle">
+<!-- Writing sheets (1.52.0): paper, the opposite of the deck's surface, so writing reads as a different mode.
+     Cancel on the left, the action on the right, and the field fills the sheet. -->
+<dialog class="sheet inverse writesheet" id="sheetCapture" aria-modal="true" aria-labelledby="sheetCaptureTitle">
   <div class="grabber" aria-hidden="true"></div>
-  <h2><span id="sheetCaptureTitle">New principle</span> <button type="button" data-close>Cancel</button></h2>
+  <h2><button type="button" class="wcancel" data-close>Cancel</button><span id="sheetCaptureTitle">New principle</span><button type="submit" form="captureForm" class="wdone" id="addBtn" disabled>Add</button></h2>
   <form class="group" id="captureForm" autocomplete="off" style="gap:16px">
     <div class="group">
-      <label for="thoughtInput"><span>Principle</span><span class="counter" id="thoughtCount">0 / 1500</span></label>
-      <textarea id="thoughtInput" class="big" maxlength="1500" placeholder="Rest is part of the work, not a reward for it."></textarea>
-      <p class="note">Write it as a claim. It stays in the deck until you live it without prompting.</p>
+      <textarea id="thoughtInput" class="big" maxlength="1500" aria-label="Principle" placeholder="Rest is part of the work, not a reward for it."></textarea>
+      <p class="counter wcount" id="thoughtCount" hidden></p>
     </div>
-    <div class="group">
-      <span class="lbl" id="originLabel">Where it came from</span>
-      <div class="pills" role="group" aria-labelledby="originLabel" id="originPills">
+    <button type="button" class="more raised" id="capMore" aria-expanded="false" aria-controls="capDetails">More details <small id="capMoreHint">Where it came from, collection, author</small></button>
+    <div class="group" id="capDetails" hidden style="gap:16px">
+      <div class="group">
+        <span class="lbl" id="originLabel">Where it came from</span>
+        <div class="pills" role="group" aria-labelledby="originLabel" id="originPills">
         <button type="button" class="pill raised" data-o="Handed to me" aria-pressed="false">Handed to me</button>
         <button type="button" class="pill raised" data-o="Chosen" aria-pressed="false">Chosen</button>
         <button type="button" class="pill raised" data-o="Not sure" aria-pressed="false">Not sure</button>
+        </div>
       </div>
-    </div>
-    <button type="button" class="more raised" id="capMore" aria-expanded="false" aria-controls="capDetails">More details <small id="capMoreHint">Collection, title, author</small></button>
-    <div class="group" id="capDetails" hidden style="gap:16px">
       <div class="group"><label for="capCollection">Collection</label><input class="field" id="capCollection" maxlength="40" autocomplete="off" placeholder="Optional, e.g. Poems">
         <div class="chips" id="capChips"></div><p class="hint" id="capHint" hidden></p></div>
       <div class="two">
@@ -618,7 +630,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         <div class="group"><label for="capAuthor">Author</label><input class="field" id="capAuthor" maxlength="80" autocomplete="off" placeholder="Optional"></div>
       </div>
     </div>
-    <div class="sheet-foot"><button class="primary" type="submit" id="addBtn" disabled>Add to the deck</button></div>
   </form>
 </dialog>
 
@@ -752,13 +763,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 </dialog>
 
 <!-- Edit sheet: change a principle's wording and details from the deck or the Ledger. History is kept. -->
-<dialog class="sheet tall" id="sheetEdit" aria-modal="true" aria-labelledby="sheetEditTitle">
+<dialog class="sheet tall inverse writesheet" id="sheetEdit" aria-modal="true" aria-labelledby="sheetEditTitle">
   <div class="grabber" aria-hidden="true"></div>
-  <h2><span id="sheetEditTitle">Edit principle</span> <button type="button" data-close>Cancel</button></h2>
+  <h2><button type="button" class="wcancel" data-close>Cancel</button><span id="sheetEditTitle">Edit principle</span><button type="button" class="wdone" id="editSave" disabled>Save</button></h2>
   <p class="note" id="editNote"></p>
   <div class="group">
-    <label for="editInput"><span>Principle</span><span class="counter" id="editCount">0 / 1500</span></label>
-    <textarea id="editInput" class="big" maxlength="1500"></textarea>
+    <textarea id="editInput" class="big" maxlength="1500" aria-label="Principle"></textarea>
+    <p class="counter wcount" id="editCount" hidden></p>
   </div>
   <p class="sheet-err" id="editErr" role="alert" hidden></p>
   <div class="group"><label for="editCollection">Collection</label><input class="field" id="editCollection" maxlength="40" autocomplete="off" placeholder="Optional, e.g. Poems">
@@ -778,7 +789,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <span class="lbl">Kept on save</span>
     <div class="kept" id="editKept"></div>
   </div>
-  <div class="sheet-foot"><button class="primary" type="button" id="editSave" disabled>Save changes</button></div>
 </dialog>
 
 <!-- Settings sheet -->
@@ -2329,7 +2339,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       : "Your counts, dates and weight stay. Changing the wording rewrites the AI line; changing details keeps it.";
     $("editKept").innerHTML = (lived
       ? ["Lived " + fmtDate(t.shed_at), t.evidence ? "Where it showed up" : "", lastLine(t) ? "Last AI line" : "", "Skipped " + times(t.lifetime_skips)]
-      : ["Skipped " + times(t.skip_count), "Sat with " + times(t.reflect_count), "Since " + fmtDate(t.created_at), "Weight " + weight(t).toFixed(1)]
+      : ["Skipped " + times(t.skip_count || 0), "Sat with " + times(t.reflect_count || 0), "Since " + fmtDate(t.created_at), "Weight " + weight(t).toFixed(1)]
     ).filter(Boolean).map(function (x) { return '<span class="pressed">' + esc(x) + "</span>"; }).join("");
     $("editInput").value = t.text;
     $("editCollection").value = t.collection || "";
@@ -2360,7 +2370,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function checkEditInput() {
     var v = $("editInput").value, err = $("editErr");
     var r = editTarget ? C.checkEdit(all(), editTarget, editValues()) : { reason: "empty" };
-    $("editCount").textContent = v.length + " / " + C.MAX_TEXT;
+    paintCount($("editCount"), v.length);
     $("editSave").disabled = !r.ok;
     if (r.reason === "duplicate") {
       var other = r.conflict.text.trim();
@@ -2557,15 +2567,21 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function setCapMore(open) {
     $("capDetails").hidden = !open;
     $("capMore").setAttribute("aria-expanded", String(open));
-    $("capMoreHint").textContent = open ? "Hide" : "Collection, title, author";
+    $("capMoreHint").textContent = open ? "Hide" : "Where it came from, collection, author";
     $("capMore").classList.toggle("down", open);
     if (open) capColl.paint();
   }
   var capColl = collectionField("cap");
   $("capMore").onclick = function () { setCapMore($("capDetails").hidden); };
-  function openCapture() { setCapMore(false); show("sheetCapture"); setTimeout(function () { input.focus(); }, 60); }
+  function openCapture() {
+    setCapMore(false); show("sheetCapture");
+    try { input.focus({ preventScroll: true }); } catch (_) { input.focus(); }
+    setTimeout(function () { if (document.activeElement !== input) input.focus(); }, 60);
+  }
+  // The count shows only near the limit (1.52.0).
+  function paintCount(el, n) { el.hidden = n < C.MAX_TEXT - 300; el.textContent = n + " / " + C.MAX_TEXT; }
   input.addEventListener("input", function () {
-    $("thoughtCount").textContent = input.value.length + " / " + C.MAX_TEXT;
+    paintCount($("thoughtCount"), input.value.length);
     $("addBtn").disabled = !input.value.trim();
   });
   Array.prototype.forEach.call(document.querySelectorAll("#originPills .pill"), function (p) {
