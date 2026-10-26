@@ -1,0 +1,34 @@
+name: remind
+
+# Reminders (1.51.0): 8 AM and 6 PM in America/New_York. Each reminder has two UTC runs, one for daylight
+# saving time and one for standard time; the script sends only from the run that matches the local hour.
+on:
+  schedule:
+    - cron: "31 12 * * *"
+    - cron: "31 13 * * *"
+    - cron: "31 22 * * *"
+    - cron: "31 23 * * *"
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: "Which reminder to send now"
+        type: choice
+        options: [morning, evening]
+        default: morning
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save --no-package-lock web-push@3.6.7
+      - run: node .github/scripts/remind.js
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          KIND: ${{ github.event.inputs.kind }}
+          TZ_NAME: America/New_York
+          VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
+          PUSH_SUBSCRIPTION: ${{ secrets.PUSH_SUBSCRIPTION }}

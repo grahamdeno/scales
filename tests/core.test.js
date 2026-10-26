@@ -1252,3 +1252,39 @@ test("the backup reminder shows on Done for today and in the Ledger, not on the 
   assert.match(html, /id="keepGoing">Keep going<\/button><\/div>' \+ backupHtml\(\)/);
   assert.match(html, /prefs\.last_backup = new Date\(\)\.toISOString\(\)/);
 });
+
+// ---------- 1.51.0: reminders and the badge ----------
+test("the badge counts today's set left plus Later that is back", () => {
+  const at = (h) => new Date(2026, 9, 26, h, 0);
+  const s = { day: "2026-10-26", left: 3, size: 5, active: 9, laters: [{ day: "2026-10-26" }, { day: "2026-10-25" }] };
+  assert.equal(C.badgeFrom(s, at(9)), 3 + 1, "morning: yesterday's Later is back, today's is not yet");
+  assert.equal(C.badgeFrom(s, at(19)), 3 + 2, "evening: both are back");
+  assert.equal(C.badgeFrom({ day: "2026-10-25", left: 0, size: 5, active: 2, laters: [] }, at(9)), 2, "a new day: the set, capped by the deck");
+  assert.equal(C.badgeFrom(null, at(9)), 0);
+});
+test("reminder text says what is waiting", () => {
+  const at = (h) => new Date(2026, 9, 26, h, 0);
+  assert.equal(C.pushText("morning", { day: "2026-10-25", left: 0, size: 5, active: 9, laters: [] }, at(8)), "Today’s set is ready: 5 principles.");
+  assert.equal(C.pushText("evening", { day: "2026-10-26", left: 0, size: 5, active: 9, laters: [{ day: "2026-10-26" }] }, at(18)), "One principle saved for later is back.");
+  assert.equal(C.pushText("evening", { day: "2026-10-26", left: 2, size: 5, active: 9, laters: [] }, at(18)), "2 left in today’s set.");
+  assert.equal(C.pushText("evening", { day: "2026-10-26", left: 0, size: 5, active: 9, laters: [] }, at(18)), "Done for today. Nothing is waiting.");
+});
+test("only the schedule run on the local hour sends", () => {
+  assert.equal(C.pushSlot("31 12 * * *", -4), "morning", "EDT");
+  assert.equal(C.pushSlot("31 13 * * *", -4), "");
+  assert.equal(C.pushSlot("31 13 * * *", -5), "morning", "EST");
+  assert.equal(C.pushSlot("31 22 * * *", -4), "evening");
+  assert.equal(C.pushSlot("31 23 * * *", -5), "evening");
+  assert.equal(C.pushSlot("31 22 * * *", -5), "");
+  assert.equal(C.pushSlot("", -4), "");
+});
+test("the service worker shows reminders, sets the badge and keeps its state cache", () => {
+  const sw = read("sw.js");
+  assert.match(sw, /importScripts\("core\.js"\)/);
+  assert.match(sw, /addEventListener\("push"/);
+  assert.match(sw, /setAppBadge/);
+  assert.match(sw, /addEventListener\("notificationclick"/);
+  assert.match(sw, /k !== CACHE && k !== STATE/);
+  assert.match(C.VAPID_PUBLIC, /^B[A-Za-z0-9_-]{86}$/);
+  assert.match(read(".github/workflows/remind.yml"), /secrets\.PUSH_SUBSCRIPTION/);
+});
