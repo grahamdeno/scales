@@ -234,6 +234,14 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .welcome p b { color:var(--ink); font-weight:500; }
 .welcome .note { font-size:var(--t-sm); }
 .wdecks { display:grid; gap:8px; margin-top:8px; }
+/* Backup reminder (1.50.0), as in The Road: on Done for today and in the Ledger, never on the deck. */
+.bk { margin-top:24px; padding-top:16px; border-top:1px solid var(--line); }
+.bk p { margin:0; font-size:var(--t-sm); line-height:1.45; color:var(--muted); max-width:none; }
+.bk p b { color:var(--ink); font-weight:500; }
+.bkb { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+.bkb button { min-height:48px; margin:0 !important; }
+.done .widewrap { margin-top:24px; padding-bottom:0; }
+#ledgerBk .bk { margin-top:16px; padding-top:0; border-top:0; }
 .lived2 { flex:none; display:flex; flex-direction:column; gap:10px; padding-top:12px; font-size:var(--t-sm); color:var(--muted); }
 .ring { position:relative; width:96px; height:96px; display:grid; place-items:center; touch-action:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; cursor:pointer; }
 .ring svg { width:96px; height:96px; transform:rotate(-90deg); }
@@ -554,6 +562,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
      then Your week and the last 12 weeks. Filled by renderLedger(). -->
   <section class="view" id="v-ledger" aria-label="Ledger" hidden>
     <h2 class="ptitle">Ledger</h2>
+    <div id="ledgerBk"></div>
     <p class="summary" id="lSummary"></p>
     <div class="ltabs" id="ledgerTabs" role="tablist" aria-label="Groups"></div>
     <div id="ledgerList"></div>
@@ -1507,7 +1516,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     $("shedText").textContent = t.text;
     showSheetLine("shedLine", t);
     $("evidenceInput").value = "";
-    $("sReflect").textContent = t.reflect_count;
+    $("sReflect").textContent = t.reflect_count || 0;
     $("sSkips").textContent = t.lifetime_skips;
     $("sDays").textContent = days(t.created_at);
     show("sheetShed", function () {
@@ -2133,7 +2142,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function renderDone(note) {
     var v = $("v-deck");
     v.innerHTML = '<div class="done"><h1>Done for today.</h1><p class="note big">' + esc(note || C.daySummary(day)) + "</p>" +
-      '<div class="widewrap"><button type="button" class="btn3d wide" id="keepGoing">Keep going</button></div></div>' + footHtml(footLeft(""));
+      '<div class="widewrap"><button type="button" class="btn3d wide" id="keepGoing">Keep going</button></div>' + backupHtml() + "</div>" + footHtml(footLeft(""));
     $("keepGoing").onclick = keepGoing;
     paintStat();
   }
@@ -2468,6 +2477,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var shed = items.filter(function (t) { return t.status === "shed"; }).sort(function (a, b) { return (b.shed_at || "").localeCompare(a.shed_at || ""); });
     var resting = act_.filter(function (t) { return C.isResting(t, td); }).length;
     var wk = C.weekStats(items, activity, td);
+    var lb = $("ledgerBk"); if (lb) lb.innerHTML = backupHtml();
     $("lSummary").innerHTML = "<b>" + act_.length + " in the deck</b>" + (resting ? ", " + resting + " resting" : "") + ", <b>" + shed.length + " lived</b>." +
       // Your week (1.46.0): one line here instead of its own sheet.
       '<span class="wk">This week: ' + wk.weighed + (wk.weighed === 1 ? " move" : " moves") + (wk.caught ? ", " + wk.caught + " caught" : "") + (wk.living ? ", " + wk.living + " now living" : "") + ".</span>";
@@ -2662,7 +2672,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       " \u00b7 safe " + r(parseFloat(ps.paddingTop)) + "/" + r(parseFloat(ps.paddingBottom)) +
       " \u00b7 scroll " + r(window.scrollY);
   }
-  function openSettings() { paintSettings(); paintVoices(); screenCheck(); show("sheetSettings", function () { if ($("v-ledger").hidden) { renderDeck(); } }); }
+  function openSettings() { paintBackup(); paintSettings(); paintVoices(); screenCheck(); show("sheetSettings", function () { if ($("v-ledger").hidden) { renderDeck(); } }); }
   // Settings controls (1.30.0): look, Show where it came from, rest after Not today, AI lines on or off.
   function paintSettings() {
     var n = restDays();
@@ -2844,18 +2854,37 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // ---------- backup / restore ----------
   // Back up: the whole deck, activity and theme as one JSON file. Uses the iOS share sheet
   // when available (so it can go to iCloud Drive), otherwise a normal download.
-  $("exportBtn").onclick = function () {
+  // Backup reminders (1.50.0): a backup is recorded when the share sheet finishes (or the download starts);
+  // cancelling the share sheet records nothing. Resolves true when it was backed up.
+  function backupNow() {
     var data = { app: "scales", version: 1, exported_at: new Date().toISOString(), thoughts: thoughts, activity: activity, prefs: prefs };
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     var name = "scales-backup-" + dayKey() + ".json";
     var file = null; try { file = new File([blob], name, { type: "application/json" }); } catch (e) {}
+    function done() { prefs.last_backup = new Date().toISOString(); prefs.backup_snooze = null; savePrefs(); paintBackup(); return true; }
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], title: "Scales backup" }).catch(function () {});
-    } else {
-      var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
-      document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      return navigator.share({ files: [file], title: "Scales backup" }).then(done, function () { return false; });
     }
-  };
+    var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    return Promise.resolve(done());
+  }
+  function backupDue() { return C.needsBackup(all().length, prefs.last_backup, prefs.backup_snooze); }
+  function paintBackup() {
+    var s = $("syncText"); if (s) s.textContent = "Last backup " + C.backupAgo(prefs.last_backup) + ". One file, for iCloud Drive";
+  }
+  function backupHtml() {
+    if (!backupDue()) return "";
+    return '<div class="bk" id="bk"><p><b>Back up your deck.</b> ' + (prefs.last_backup ? "Last backup " + C.backupAgo(prefs.last_backup) + "." : "Not backed up yet.") +
+      " Save it to iCloud Drive; deleting the Home Screen icon deletes everything.</p>" +
+      '<div class="bkb"><button type="button" class="btn3d sm" id="bkLater">Not now</button><button type="button" class="primary sm" id="bkGo">Back up</button></div></div>';
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest && e.target.closest("#bkLater, #bkGo"); if (!t) return;
+    if (t.id === "bkLater") { prefs.backup_snooze = Date.now() + C.BACKUP_SNOOZE * 86400000; savePrefs(); var b = $("bk"); if (b) b.remove(); return; }
+    backupNow().then(function (ok) { if (ok) { var b = $("bk"); if (b) b.remove(); toast("Backed up."); } });
+  });
+  $("exportBtn").onclick = function () { backupNow().then(function (ok) { if (ok) toast("Backed up."); }); };
   $("importBtn").onclick = function () { $("importFile").click(); };
   // Restore: merge a backup in. Existing thoughts are kept; only new ids are added.
   // Activity days take the higher count from either side.

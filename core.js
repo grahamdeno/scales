@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.49.0";
+  var VERSION = "1.50.0";
   var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -675,6 +675,22 @@ var ScalesCore = (function () {
   }
   // One line on how the set went: "Two testing it, two set aside, one living it."
   var NUM = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+  // ---------- backup reminders (1.50.0) ----------
+  // As in The Road: once the deck has something in it, ask for a backup when there has never been one or
+  // the last is more than a week old. Not now waits two days.
+  var BACKUP_EVERY = 7, BACKUP_SNOOZE = 2;
+  function needsBackup(count, last, snooze, now) {
+    if (!count) return false;
+    var t = +(now || Date.now());
+    if (snooze && t < +snooze) return false;
+    return !last || t - Date.parse(last) > BACKUP_EVERY * 86400000;
+  }
+  function backupAgo(last, now) {
+    if (!last) return "never";
+    var d = Math.floor((+(now || Date.now()) - Date.parse(last)) / 86400000);
+    return d <= 0 ? "today" : d === 1 ? "yesterday" : d + " days ago";
+  }
+
   function daySummary(state) {
     var n = { skip: 0, keep: 0, shed: 0 };
     state.moved.forEach(function (m) { if (n[m.move] != null) n[m.move]++; });
@@ -820,6 +836,7 @@ var ScalesCore = (function () {
     addCatch: addCatch, catchCount: catchCount, suggestLiving: suggestLiving, noteSkipDay: noteSkipDay,
     REPLY_MAX: REPLY_MAX, addReply: addReply, thread: thread, lastReply: lastReply,
     LATER_MAX: LATER_MAX, laterDue: laterDue, waiting: waiting, canLater: canLater,
+    BACKUP_EVERY: BACKUP_EVERY, BACKUP_SNOOZE: BACKUP_SNOOZE, needsBackup: needsBackup, backupAgo: backupAgo,
     weekDays: weekDays, isReviewDay: isReviewDay, weekStats: weekStats, weekPrompt: weekPrompt, timeline: timeline };
 })();
 

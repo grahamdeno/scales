@@ -1233,3 +1233,22 @@ test("quotes credit Wikiquote and Settings says what leaves the phone", () => {
   assert.match(html, /CC BY-SA 4\.0/);
   assert.match(html, /id="privacyNote"/);
 });
+
+// ---------- 1.50.0: backup reminders ----------
+test("a backup is asked for weekly once the deck has something in it", () => {
+  const now = Date.parse("2026-10-26T12:00:00Z");
+  assert.equal(C.needsBackup(0, null, null, now), false, "empty deck");
+  assert.equal(C.needsBackup(3, null, null, now), true, "never backed up");
+  assert.equal(C.needsBackup(3, "2026-10-22T12:00:00Z", null, now), false, "4 days ago");
+  assert.equal(C.needsBackup(3, "2026-10-18T12:00:00Z", null, now), true, "8 days ago");
+  assert.equal(C.needsBackup(3, null, now + 1000, now), false, "Not now waits");
+  assert.equal(C.backupAgo(null, now), "never");
+  assert.equal(C.backupAgo("2026-10-25T11:00:00Z", now), "yesterday");
+  assert.equal(C.backupAgo("2026-10-16T12:00:00Z", now), "10 days ago");
+});
+test("the backup reminder shows on Done for today and in the Ledger, not on the deck", () => {
+  const html = read("index.html");
+  assert.match(html, /id="ledgerBk"/);
+  assert.match(html, /id="keepGoing">Keep going<\/button><\/div>' \+ backupHtml\(\)/);
+  assert.match(html, /prefs\.last_backup = new Date\(\)\.toISOString\(\)/);
+});
