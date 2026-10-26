@@ -114,17 +114,12 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .thought.long { font-size:19px; line-height:1.4; letter-spacing:-.005em; text-wrap:pretty; }
 /* At rest the words are in full ink. Held, they step back and ink in again one by one. On the push screen
    the principle sits a step back from the line. */
-.thought.ink .w { color:var(--ink); transition:color .18s ease; }
-.thought.ink.holding .w, .card.push .thought.ink .w, .card.push .thought.plain { color:var(--rest); }
-.card.push .thought.plain.holding { color:var(--ink); }
-.thought.ink.holding .w.in { color:var(--ink); }
+/* The principle is one plain text node (1.34.4). Held, it steps back to --rest and darkens to full ink as the
+   ring fills (paintHold sets the color). Per-word spans were dropped: Safari set them one word per line. */
+.card.push .thought.plain { color:var(--rest); }
 .thought.small { font-size:clamp(24px, 7.4vw, 30px); line-height:1.08; letter-spacing:-.025em; }
 .thought.small.mid { font-size:22px; line-height:1.15; }
 .thought.small.long { font-size:16px; line-height:1.4; }
-/* Each word is its own inline span (wordsHtml). Line balancing is kept for short principles only: Safari
-   applied it to long ones word by word and set one word per line (1.34.1). */
-.thought .w { display:inline; }
-.thought.mid, .thought.long, .thought.small { text-wrap:wrap; }
 /* On push and reflect the line is the subject, so a long principle folds to four lines; tap to open it. */
 .thought.small.fold { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4; overflow:hidden; cursor:pointer; }
 .foldhint { margin-top:-14px; font-size:var(--t-xs); color:var(--faint); }
@@ -443,7 +438,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
 @keyframes vt-in { from { opacity:0; transform:translateX(24px); } }
 @keyframes vt-out-back { to { opacity:0; transform:translateX(18px); } }
 @keyframes vt-in-back { from { opacity:0; transform:translateX(-24px); } }
-@media (prefers-reduced-motion: reduce) { .card, .card.spring, .ai-p, .raised, .toggle i, .key, .ring i, .thought.ink .w { transition:none; } .reflfoot .bar { display:none; } }
+@media (prefers-reduced-motion: reduce) { .card, .card.spring, .ai-p, .raised, .toggle i, .key, .ring i, .thought { transition:none; } .reflfoot .bar { display:none; } }
 </style>
 </head>
 <body>
@@ -775,7 +770,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   </div>
 
   <h3 class="sec2">How it works</h3>
-  <p class="note">Hold the ring under a principle. The words ink in as you hold. Let go early and the app pushes back once with a line to reconsider: hold again to stay with it, or set it aside. Hold until the ring closes to test it: you get a question to sit with, Talk it through with today's voice, and Next after eight seconds, when the test lowers its Not today count. Slide up while holding when you are living it. A quick tap does nothing. Press and hold the principle to edit it, or a written line to keep it. The heavier a principle is set, the more often you have set it aside. Show, in the menu, draws the deck from one collection. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
+  <p class="note">Hold the ring under a principle. The principle darkens as you hold. Let go early and the app pushes back once with a line to reconsider: hold again to stay with it, or set it aside. Hold until the ring closes to test it: you get a question to sit with, Talk it through with today's voice, and Next after eight seconds, when the test lowers its Not today count. Slide up while holding when you are living it. A quick tap does nothing. Press and hold the principle to edit it, or a written line to keep it. The heavier a principle is set, the more often you have set it aside. Show, in the menu, draws the deck from one collection. With a keyboard: the arrow keys for the three moves, N to capture, E to edit, L for the Ledger, M for the menu, comma for Settings.</p>
   <p class="note" id="howRest"></p>
 
   <h3 class="sec2">About</h3>
@@ -1397,10 +1392,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       '<button type="button" class="key" id="kKeep" data-move="keep"><b>Testing it</b></button>' +
       '<button type="button" class="key" id="kShed" data-move="shed"><b>Living it</b></button></div>' + (extra || "") + "</div>";
   }
-  // The principle's words, one span each, so the hold can ink them in turn. Spaces and line breaks stay as they are.
-  function wordsHtml(text) {
-    return String(text).split(/(\s+)/).map(function (p) { return /^\s+$/.test(p) || !p ? esc(p) : '<span class="w">' + esc(p) + "</span>"; }).join("");
-  }
+
   function footHtml(left) {
     // After Keep going, the footer offers the way back to today's focus.
     if (!left && day && day.more && day.focus && thoughts[day.focus]) left = '<button type="button" class="linkbtn" id="backFocus" style="margin:-12px 0;padding:0;align-self:auto">Today’s focus</button>';
@@ -1464,9 +1456,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     // At rest the words are one span each so the hold can ink them. On push and reflect the principle is plain
     // text: Safari laid the spans out one word per line there (1.34.3).
     var fold = phase !== "rest" && sizeClass(t.text) !== "";
-    var words = (phase === "rest"
-        ? '<div class="thought ink' + sizeClass(t.text) + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + wordsHtml(t.text) + "</div>"
-        : '<div class="thought plain' + sizeClass(t.text) + " small" + (fold ? " fold" : "") + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + esc(t.text) + "</div>") +
+    var words = '<div class="thought plain' + sizeClass(t.text) + (phase === "rest" ? "" : " small") + (fold ? " fold" : "") + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + esc(t.text) + "</div>" +
       (fold ? '<small class="foldhint" id="foldHint" aria-hidden="true">Tap to read it all</small>' : "");
     var line = '<div class="lineWrap"><p class="ai-p" id="aiLine"></p><small class="ai-src" id="aiSrc"></small></div>';
     var how = '<span class="sr" id="cardHow">Use the Not today, Testing it and Living it buttons, or hold the ring. Press and hold the principle to edit it.</span>';
@@ -1553,10 +1543,9 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   (function bindHold() {
     var deck = $("v-deck"), ring = null, t0 = 0, sy = 0, dy = 0, raf = 0, mode = "", holdT = 0, sx = 0;
     function paintHold(p, move) {
-      var arc = $("holdArc"), w = $("words"), ws = document.querySelectorAll("#words .w"), n = Math.round(p * ws.length), lbl = $("holdLbl");
+      var arc = $("holdArc"), w = $("words"), lbl = $("holdLbl");
       if (arc) arc.setAttribute("stroke-dashoffset", (RING_C * (1 - p)).toFixed(1));
-      if (w) w.classList.toggle("holding", !!move);
-      for (var i = 0; i < ws.length; i++) ws[i].classList.toggle("in", i < n);
+      if (w) w.style.color = move ? "color-mix(in srgb, var(--ink) " + Math.round(p * 100) + "%, var(--rest))" : "";
       if (lbl) lbl.textContent = move ? (move === "skip" && phase === "push" ? "Let go now: set it aside" : LET_GO[move]) : lbl.getAttribute("data-rest");
       if (ring) { ring.classList.toggle("held", p > 0); ring.classList.toggle("lift", move === "shed"); }
     }

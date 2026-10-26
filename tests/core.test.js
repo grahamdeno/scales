@@ -699,9 +699,8 @@ test("at rest only the principle and the ring; lines appear on push and reflect 
   const card = rule(c, ".card");
   assert.doesNotMatch(card, /background|box-shadow|border-radius|border:/, "no card chrome");
   assert.match(html, /id="words" style="font-weight:' \+ C\.inkWeight\(t\)/, "weight from the record");
-  assert.match(html, /function wordsHtml\(text\)/);
-  assert.match(c, /\.thought\.ink \.w \{ color:var\(--ink\);/, "full ink at rest");
-  assert.match(c, /\.thought\.ink\.holding \.w\.in \{ color:var\(--ink\); \}/);
+  assert.doesNotMatch(html, /function wordsHtml|class="w"/, "no per-word spans: Safari set them one word per line");
+  assert.match(html, /w\.style\.color = move \? "color-mix\(in srgb, var\(--ink\) " \+ Math\.round\(p \* 100\)/, "held, the principle darkens as the ring fills");
   const rest = html.slice(html.indexOf("    v.innerHTML = '<article class=\"card' + (enter"), html.indexOf("  // The reflect screen's foot"));
   assert.doesNotMatch(rest, /aiLine|whereHtml|chipsHtml|footHtml/, "nothing but the principle and the ring at rest");
   assert.doesNotMatch(html, /id="chips"|class="chips-row"/, "collections are off the home screen");
@@ -988,7 +987,6 @@ test("two kept lines: reused until a test or a wording change; pushback sharpens
 
 test("long principles wrap normally and fold on push and reflect (1.34.1)", () => {
   const c = css(), html = read("index.html");
-  assert.match(c, /\.thought\.mid, \.thought\.long, \.thought\.small \{ text-wrap:wrap; \}/, "no line balancing on long text, which Safari set one word per line");
   assert.match(c, /\.thought\.small\.fold \{[^}]*-webkit-line-clamp:4;/);
   assert.match(html, /var fold = phase !== "rest" && sizeClass\(t\.text\) !== "";/);
 });
@@ -1006,5 +1004,5 @@ test("an update shows a bar with Reload that stays until tapped (1.34.2)", () =>
 
 test("push and reflect show the principle as plain text, not word spans (1.34.3)", () => {
   const html = read("index.html");
-  assert.match(html, /'<div class="thought plain' \+ sizeClass\(t\.text\) \+ " small"[^\n]*esc\(t\.text\)/);
+  assert.match(html, /var words = '<div class="thought plain' \+ sizeClass\(t\.text\)[^\n]*esc\(t\.text\) \+ "<\/div>"/);
 });
