@@ -5,24 +5,26 @@ A small phone app for turning the principles you collect into how you actually l
 You write down a principle you want to live by ("the hard conversation is usually shorter than the dread before it"), or load a starter deck. Scales keeps putting it in front of you. Each time, you mark it Testing it, Not today, or Living it. Once you act on it without being reminded, it moves to your Living it record with a line on where it showed up.
 
 <p>
-  <img src="docs/deck.png" width="260" alt="Deck view in the Matte look">
-  <img src="docs/ledger.png" width="260" alt="Ledger view with the Living it gauge, capsules and 12 week grid">
-  <img src="docs/deck-light.png" width="260" alt="Deck view in the Light look">
+  <img src="docs/deck.png" width="260" alt="Deck view in the Black look: a principle set heavy, the hold ring and the three moves">
+  <img src="docs/ledger.png" width="260" alt="Ledger view: the weight key and principles grouped as Avoiding, Working on and Nearly lived">
+  <img src="docs/deck-light.png" width="260" alt="Deck view in the White look, mid-hold, with the first words inked">
 </p>
 
 ## How it works
 
 **The deck.** One principle on screen at a time. Three moves:
 
-| Move | Gesture or key | What happens |
+| Move | Hold the ring | What happens |
 |---|---|---|
-| Not today | swipe left | Its count goes up by 1. The principle rests, then comes back more often. |
-| Testing it | swipe up | Counts as an inspection. If you stayed on the card at least 8 seconds, the not today count drops by 1. |
-| Living it | swipe right | Opens a short form for where it showed up, then moves the principle to your record. |
+| Not today | let go early | Its count goes up by 1. The principle rests, then comes back more often, and is set heavier. |
+| Testing it | hold until the ring closes (about 2.4 seconds) | Counts as an inspection. If you stayed on the principle at least 8 seconds, the not today count drops by 1. |
+| Living it | slide up while holding | Opens a short form for where it showed up, then moves the principle to your record. |
 
-The same three moves are three keys under the principle, always on screen, and the arrow keys (left, up, right). Swipe anywhere on the deck; the key for the move you are heading toward presses in as you drag. Everything else (Capture, Edit, the Ledger, Collections, Settings) is in the menu at the top right. With a keyboard, N captures, E edits, L switches between the deck and the Ledger, M opens the menu, and comma opens Settings.
+As you hold, the principle's words ink in one by one and the move your release would make is underlined under the ring. A quick tap does nothing, so a stray touch never rests a principle. The same three moves are three plain buttons under the ring, and the arrow keys (left, up, right). Everything else (Capture, Edit, the Ledger, Collections, Settings) is in the menu at the top right. With a keyboard, N captures, E edits, L switches between the deck and the Ledger, M opens the menu, and comma opens Settings.
 
 **Editing.** Press and hold the principle, choose Edit this principle in the menu (or press E), or Edit on any Ledger row, to change a principle's wording or its details: collection, title, author and where it came from. Its counts, dates and weight are kept. Changing the wording of a principle still in the deck gets it a fresh AI line; changing only details keeps the line it has. A lived principle keeps its Living it date, evidence and last line either way. Principles can be up to 1,500 characters, long enough for a short poem. The Capture sheet has the same details under More details, collapsed by default.
+
+**Weight.** A principle is set heavier each time you set it aside: a new one is regular weight, and four or more Not today make it the boldest the type goes. Testing it brings the count down, so the words lighten as the avoidance is worked off.
 
 **Where it came from.** Under each principle: its collection, where it came from, its author, and how often it has been set aside. Settings > Look > Show where it came from turns off the collection, origin and author.
 
@@ -46,7 +48,7 @@ The same three moves are three keys under the principle, always on screen, and t
 
 **Starter decks.** Stoic, Leadership, Athletic mindset and Self-overcoming sets, loaded from Settings or the empty deck, so a new deck has something in it. Every starter principle fills every field (collection, title, author, origin, tags, link and citation) as a worked example. Original lines are credited to Scales and cite their deck. The lines by Epictetus and Nietzsche use the exact wording of a named public-domain translation (Elizabeth Carter, George Long, Thomas Common), cite the work and section, and link to that chapter. Loading a deck again adds nothing new; it fills any empty fields on starter principles already in the deck without overwriting your own values.
 
-**The ledger.** A record, not a scorecard: one sentence on where you stand, Your week, a 12 week grid of days (brighter on busier days, brass on days you caught yourself or marked Living it), and the In deck and Living it lists. Tap a principle for its history (set aside, smallest acts, catches, talks, wording changes, Living it) and everything you can do with it. The Living it list is the record: each principle in full, the last model line it received, and where it showed up, editable later. The Living it and evidence sheets show that last line too, so it is in view while you write.
+**The ledger.** A record, not a scorecard. A key at the top shows what the weights mean, then every principle in the deck at its weight, grouped as Avoiding (set aside three or more times), Working on, and Nearly lived (no Not today left, and tested or caught), each with one short count on the right. Lived principles fold under one row that opens in place. Below them, Your week and a 12 week grid of days (darker on busier days, solid on days you caught yourself or marked Living it). Tap a principle for its history (set aside, smallest acts, catches, talks, wording changes, Living it) and everything you can do with it. The Living it and evidence sheets show the last model line a principle received, so it is in view while you write.
 
 **The line under each principle.** A short line, 25 words or fewer, drawn from the words of the principle itself and written in the spirit of Jung and Nietzsche: avoidance is treated as the shadow protecting comfort, fear or self-image, and the line speaks for the person you are becoming rather than your comfort today. It holds the standard. No praise, no pep talk, and no grace for the gap between the principle and your conduct. It presses harder the more a principle has been set aside: fresh ones are asked what they demand, set-aside ones what was chosen instead, and the most avoided are confronted with what the avoidance protects. Lines that slip into a gentle, permission-giving tone are rejected and asked for again. Built-in questions are used by default. If you add your own Anthropic API key in Settings, a new consideration is written for each showing by a small, fast model. Only the principle text, its not today count and days in the deck are sent. Settings > AI lines can switch model lines off while keeping the key.
 
@@ -101,11 +103,11 @@ To check the key, tap **Test key** under AI lines. It sends one tiny request and
 
 ## The look
 
-**Matte (1.30.0).** A matte, lightly grained ground in two looks, Matte (dark, the default) and Light, chosen in Settings > Look. Two materials sit on it: raised, for anything you press (the three keys, the collection keys, buttons), and pressed, for fields, wells, and the choice that is selected. Frosted glass is kept for what floats over the page: the AI line, the menu, sheets and the toast. Brass marks Living it and the one primary action on each sheet; a soft violet light sits behind the AI line, the one lit element on the page. One face, Geist, self-hosted so it looks the same offline.
+**Black and White (1.33.0).** Two flat matte surfaces, Black (the default) and White, chosen in Settings > Look, with a faint grain. No cards, raised keys, glass, shadows or rounded panels: the type carries the page, and lines are hairlines. The one filled control on each sheet is solid ink. One face, Geist, self-hosted so it looks the same offline, set at the weight each principle has earned.
 
-The principle is not on a card: its words sit on the page above the AI line and the three keys. As you swipe, the words lean a little, the key for the move presses in, and a small label names the move. Let go early and they spring back; Living it ends with a short ring of brass. With Reduce Motion on, the springs, the ring and the view transitions are left out.
+The deck has one gesture, the hold. The principle sits on the page at its weight with the AI line under it, and the ring sits below. Living it ends with a thin ring of ink that opens from the words. With Reduce Motion on, the ink, the springs, the ring and the view transitions are left out.
 
-Earlier looks: 1.27.0 put the principle on a tilting card with a frosted tab bar; 1.28.0 and 1.29.0 followed a serif, front-page system with a single corner button and six color themes. 1.30.0 replaced both. A theme chosen under 1.29.0 is dropped, and the app opens in Matte.
+Earlier looks: 1.27.0 put the principle on a tilting card with a frosted tab bar; 1.28.0 and 1.29.0 followed a serif, front-page system with six color themes; 1.30.0 to 1.32.1 were Matte, with raised keys, frosted glass and swipes. 1.33.0 replaced them. A look chosen before keeps working: Matte opens as Black and Light as White.
 
 ## Project layout
 
@@ -130,7 +132,8 @@ No build step and no runtime dependencies. The type face is served from `fonts/`
 - **Network first service worker.** Updates show up the next time the app opens; the cache only covers being offline. API calls are never cached.
 - **Built-in questions as the floor.** The app is fully usable with no key and no connection. With a key, the next card's line is fetched while the current card is read, and a built-in line is shown only if the model cannot supply a valid one (25 words or fewer after trimming to whole sentences, no exclamation mark, not a restatement of a long principle).
 - **Not today cap at 4x.** Without a cap, one avoided principle would take over the deck.
-- **Dwell check on Testing it.** A quick swipe up should not erase a Not today. Eight seconds on the card is the bar.
+- **Dwell check on Testing it.** A quick hold should not erase a Not today. Eight seconds on the principle is the bar.
+- **A tap is not a move.** A press shorter than 0.3 seconds on the ring does nothing, because Not today rests a principle for days.
 
 ## Run it locally
 

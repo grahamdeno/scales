@@ -30,7 +30,7 @@ flowchart TB
         subgraph ui["Screens"]
             direction LR
             header["Top and menu<br/>day and date / menu: Capture, Edit, Ledger, Collections, Settings"]
-            deck["Deck view<br/>collection keys, the principle on the page, AI line with Keep, three keys, swipes, first-swipe tip"]
+            deck["Deck view<br/>collection keys, the principle at its weight, AI line with Keep, the hold ring and three move buttons, first-use tip"]
             ledger["Ledger view<br/>gauge, capsules, Pushing back tiles, 12 week grid, In deck / Living it"]
             sheets["Sheets (modal dialog)<br/>Capture, Edit, Living it, Evidence, Keep, Collections, Settings"]
         end
@@ -81,7 +81,7 @@ stateDiagram-v2
     Active --> Active: Testing it<br/>inspections +1, count -1 after 8s on card
     Active --> Nudge: 3 in a row
     Nudge --> Active: Not yet<br/>streak reset
-    Active --> LivingSheet: Swipe right / Living it
+    Active --> LivingSheet: Hold and lift / Living it
     Nudge --> LivingSheet: Living it
     LivingSheet --> Active: Not yet
     LivingSheet --> Lived: I live this now<br/>optional evidence line
@@ -120,7 +120,7 @@ sequenceDiagram
     end
     L->>S: remember shown line to avoid repeats
     L->>A: prefetch the line for the next queued principle
-    U->>D: swipe left, up, or right
+    U->>D: hold the ring: let go early, hold through, or lift
     D->>S: save counts, log today's activity
     D->>D: flyOut() then show the queued principle
 ```
@@ -131,7 +131,7 @@ sequenceDiagram
 |---|---|
 | `scales.thoughts.v1` | Every principle by id: text, collection, title, author, origin, dates, status, counts, recent lines, evidence; for a kept AI line, `kept_from` and `kept_at`; for a replaced wording, `earlier` (last five) and `worded_from_ai`; `talks` (last five weigh-ins, each with its voice, move, line and replies); `acts` (smallest acts by day), `caught` (Caught it by day), `checkins`, `skips_on` (days set aside, for the weekly review) |
 | `scales.activity.v1` | Per Scales day counts: `i` weighed, `s` Living it, `c` Caught it; last 120 days |
-| `scales.prefs.v1` | Today's set (`day`: moves, focus, check-in), set size, the Testing it count, the week's review state, look, rest length, Show where it came from, AI lines on or off, chosen voices and names added, the collection key, Show anyway's day, first-swipe tip seen |
+| `scales.prefs.v1` | Today's set (`day`: moves, focus, check-in), set size, the Testing it count, the week's review state, look, rest length, Show where it came from, AI lines on or off, chosen voices and names added, the collection key, Show anyway's day, first-use tip seen |
 | `scales.apikey.v1` | Anthropic API key, only if saved |
 
 ## Key numbers
@@ -151,11 +151,15 @@ sequenceDiagram
 | Press and hold to edit | 550 ms | Longer than a tap, shorter than a deliberate wait |
 | Front of the stack | once per Not today | Most avoided first, then longest waiting since last shown |
 | Cooldown | last 3 shown (last 1 in a deck of 3 or fewer) | No back to back repeats |
-| Dwell check | 8 seconds | A quick swipe up does not erase a Not today |
+| Dwell check | 8 seconds | A quick Testing it does not erase a Not today |
 | Nudge | 3 Testing it in a row | Prompts the Living it question |
 | Line length | 25 words | Room for one complete consideration, still readable at a glance |
 | Model output budget | 1024 tokens | The model may reason before answering, and reasoning counts against the budget |
-| Swipe threshold | 90 px | Short drags spring back |
+| Hold through (`HOLD_FULL`) | 2.4 seconds | Long enough to read a short principle as it inks in |
+| Tap (`HOLD_TAP`) | under 0.3 seconds does nothing | A stray touch never rests a principle for days |
+| Lift (`HOLD_LIFT`) | 70 px up | Clear of a thumb's wobble while holding |
+| Type weight (`inkWeight`) | 400, plus 125 per Not today, to 900 | Avoidance shows in the words themselves |
+| Ledger groups (`ledgerGroup`) | Avoiding at 3 or more Not today; Nearly lived at 0 with 3 tests, 2 in a row, or a catch | Three groups a glance can read |
 | Principle length | 1,500 characters | Capture and Edit share the limit; long enough for a short poem |
 | Collection, title, author | 40, 120, 80 characters | Enough for a name; collections match existing ones ignoring capitalization |
 
@@ -169,18 +173,18 @@ sequenceDiagram
 
 ## Tests
 
-`node --test` runs `tests/core.test.js` with no dependencies. It covers weighting, the selection cooldown, answer cleanup and checks (including the short-principle case that once discarded every model line), rest and the front of the stack, undo, collections, keeping an AI line, the page wiring for the Matte design, and the version and offline-cache wiring. GitHub Actions runs the same command on every push to `main`.
+`node --test` runs `tests/core.test.js` with no dependencies. It covers weighting, the selection cooldown, answer cleanup and checks (including the short-principle case that once discarded every model line), rest and the front of the stack, undo, collections, keeping an AI line, the hold and Ledger groups, the page wiring for the Black and White design, and the version and offline-cache wiring. GitHub Actions runs the same command on every push to `main`.
 
-## Design system (1.30.0, Matte)
+## Design system (1.33.0, Black and White)
 
-Colors are custom properties on `:root`, with a second set under `:root[data-look="light"]`: `--paper` (ground), `--deep` (wells), `--rise` (the lit side of a raised surface), `--ink`, `--muted`, `--faint`, `--brass` (Living it and the primary action), `--violet` (the light behind the AI line), and `--hi` / `--lo` (the highlight and shadow that make the materials).
+Colors are custom properties on `:root`, with a second set under `:root[data-look="light"]` (stored as `look: "light"`, shown as White; the default is shown as Black): `--paper` (ground), `--deep` (a field or the selected choice), `--ink`, `--muted`, `--faint`, `--rest` (words not yet inked), `--line` (hairlines), `--danger`. `--brass`, `--violet` and `--onBrass` remain as aliases of ink and paper so older markup reads correctly. Corners are square (`--r-*` are 0). There are no shadows, gradients or backdrop blur.
 
-| Class | Material | Used for |
+| Class | Now | Used for |
 |---|---|---|
-| `.raised` | highlight up-left, shadow down-right | keys, collection keys, buttons, panels, list rows |
-| `.pressed`, `.raised[aria-pressed="true"]`, `.raised.down` | inner shadow | fields, wells, the selected choice, a key while you swipe toward it |
-| `.glass` | frosted, blurred | the AI line, the first-swipe tip, AI lines in the Ledger |
-| `.frost` | frosted ground | the menu, the toast (sheets use the same treatment) |
-| `.primary` | brass | one per sheet |
+| `.raised` | hairline box | buttons and options that need an edge |
+| `.pressed`, `.raised[aria-pressed="true"]` | deeper fill, ink edge | the selected choice |
+| `.glass` | plain, no surface | the AI line, the first-use tip, AI lines in sheets |
+| `.frost` | ground with a hairline | the menu |
+| `.primary` | solid ink | one per sheet |
 
-Without backdrop blur (`@supports not`), glass and frost fall back to solid surfaces.
+The deck's words are one `<span class="w">` each (`wordsHtml`), so the hold can ink them in turn (`.thought.ink .w.in`). The ring (`#holdRing`) is pointer only and hidden from assistive tech; the three buttons under it (`data-move`) are the accessible path and do the same moves with one tap.

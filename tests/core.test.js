@@ -564,7 +564,7 @@ test("swipeIntent keeps the commit rules and reads the direction for the glow", 
 });
 
 // ---------- 1.30.0: Matte, the menu, and keeping an AI line ----------
-const css = () => { const html = read("index.html"), i = html.indexOf("<style>\n/* Layout (1.30.0)"); assert.ok(i >= 0, "Matte style block"); return html.slice(i, html.indexOf("</style>", i)); };
+const css = () => { const html = read("index.html"), i = html.indexOf("<style>\n/* Layout (1.33.0)"); assert.ok(i >= 0, "Black and White style block"); return html.slice(i, html.indexOf("</style>", i)); };
 const rule = (c, sel) => { const i = c.indexOf("\n" + sel + " {"); assert.ok(i >= 0, sel + " rule"); return c.slice(i, c.indexOf("}", i)); };
 
 test("rest after Not today is a setting from 1 to 7 days, 4 by default (1.30.0)", () => {
@@ -636,9 +636,9 @@ test("the Keep sheet offers add or replace, and both can be undone", () => {
   assert.match(html, /Kept from an AI line on /);
 });
 
-test("the three moves are three keys, swipes, and arrow keys; press and hold edits (1.30.0)", () => {
+test("the three moves: hold the ring, three plain buttons, arrow keys; press and hold the words edits (1.33.0)", () => {
   const html = read("index.html");
-  for (const m of ["skip", "keep", "shed"]) assert.match(html, new RegExp('data-move="' + m + '"'), m + " key");
+  for (const m of ["skip", "keep", "shed"]) assert.match(html, new RegExp('data-move="' + m + '"'), m + " button");
   assert.match(html, /act\(k\.getAttribute\("data-move"\)\)/);
   assert.match(html, /k === "ArrowLeft"\) act\("skip"\)/);
   assert.match(html, /k === "ArrowUp"\) act\("keep"\)/);
@@ -646,12 +646,12 @@ test("the three moves are three keys, swipes, and arrow keys; press and hold edi
   assert.match(html, /if \(openSheet \|\| menu\.open \|\| isTyping\(document\.activeElement\)/, "shortcuts never fire while typing, in a sheet or in the menu");
   assert.match(html, /var HOLD_MS = 550;/);
   assert.match(html, /if \(t\) \{ coachSeen\(\); openEdit\(t\); \}/);
-  assert.match(html, /key\.classList\.toggle\("down", k === kind/, "the key presses in while you swipe toward it");
-  assert.match(html, /C\.swipeIntent\(dx, dy\)/);
+  assert.match(html, /id="holdRing" aria-hidden="true"/, "the ring is pointer only; the buttons are the accessible path");
+  assert.match(html, /var o = C\.holdOutcome\(Date\.now\(\) - t0, dy\)/, "the release is read by core.js");
+  assert.match(html, /toast\("Hold the ring\. Let go early for Not today\."\)/, "a tap explains itself and moves nothing");
   assert.match(html, /aria-describedby="cardHow"/);
-  assert.doesNotMatch(html, /id="fab"|id="ring"|function openRing|wakeCorner/, "the corner button and its ring are gone");
+  assert.doesNotMatch(html, /id="tagSkip"|C\.swipeIntent\(/, "the swipes are gone from the deck");
 });
-
 test("everything else is in a modal menu at the top right (1.30.0)", () => {
   const html = read("index.html");
   assert.match(html, /<header class="top">[\s\S]*id="todayLbl"[\s\S]*id="backDeck"[^>]*hidden[\s\S]*id="menuBtn"[^>]*aria-haspopup="dialog"[^>]*aria-expanded="false"[^>]*aria-controls="menu"[\s\S]*<\/header>/);
@@ -661,14 +661,16 @@ test("everything else is in a modal menu at the top right (1.30.0)", () => {
   assert.match(html, /menu\.showModal\(\)/);
 });
 
-test("Matte: one face, two looks, raised and pressed materials (1.30.0)", () => {
+test("Black and White: one face, two flat looks, no shadows, glass or rounded panels (1.33.0)", () => {
   const c = css(), html = read("index.html"), sw = read("sw.js");
-  assert.match(c, /--paper:#2E3038; --deep:#24262C; --rise:#363841; --ink:#ECE8E1;/);
-  assert.match(c, /:root\[data-look="light"\] \{\s*--paper:#E3E7ED;/);
-  assert.match(rule(c, ".raised"), /box-shadow:-6px -6px 14px var\(--hi\), 8px 10px 20px var\(--lo\)/);
-  assert.match(c, /\.pressed, \.raised\[aria-pressed="true"\], \.raised\.down \{[^}]*inset 5px 6px 12px var\(--lo\)/);
-  assert.match(c, /\.glass \{[^}]*backdrop-filter:blur\(22px\)/);
-  assert.match(html, /@supports not \(\(-webkit-backdrop-filter:blur\(1px\)\) or \(backdrop-filter:blur\(1px\)\)\)/, "glass has a fallback");
+  assert.match(c, /--paper:#121212;[^}]*--ink:#ECEAE5;/);
+  assert.match(c, /:root\[data-look="light"\] \{\s*--paper:#ECEAE5;[^}]*--ink:#141414;/);
+  assert.doesNotMatch(c, /box-shadow:-?\d+px -?\d+px \d+px|backdrop-filter|radial-gradient|linear-gradient/, "no raised shadows, blur or gradients");
+  assert.match(c, /--r-s:0; --r-m:0; --r-l:0; --r-xl:0;/, "square corners");
+  assert.match(rule(c, ".primary"), /background:var\(--ink\)/);
+  assert.match(html, /data-look="matte" aria-pressed="true">Black<\/button><button type="button" data-look="light" aria-pressed="false">White<\/button>/);
+  assert.match(html, /content="#121212" id="themeColor"/);
+  assert.match(read("manifest.webmanifest"), /"background_color": "#121212"/);
   // Geist only, self-hosted, preloaded and cached.
   assert.ok(fs.statSync(path.join(root, "fonts/geist-latin.woff2")).size > 10000);
   assert.match(html, /font-family:"Geist"; font-style:normal; font-weight:100 900; font-display:swap; src:url\("fonts\/geist-latin\.woff2"\)/);
@@ -678,18 +680,19 @@ test("Matte: one face, two looks, raised and pressed materials (1.30.0)", () => 
     assert.ok(!fs.existsSync(path.join(root, "fonts/" + gone + ".woff2")), gone + " is gone");
     assert.doesNotMatch(html + sw, new RegExp(gone), gone + " is not referenced");
   }
-  assert.doesNotMatch(c, /Instrument Serif|Geist Mono|font-family:var\(--f-display\)/);
   assert.doesNotMatch(html, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
   assert.match(read("fonts/OFL.txt"), /Geist Project Authors/);
   assert.match(html, /function applyLook\(\)/);
   assert.match(html, /\.seg \[data-look\]/);
 });
-
-test("the principle sits on the page, not on a card, with where it came from under it", () => {
+test("the principle sits on the page at its weight, its words inked as the ring is held (1.33.0)", () => {
   const c = css(), html = read("index.html");
   const card = rule(c, ".card");
   assert.doesNotMatch(card, /background|box-shadow|border-radius|border:/, "no card chrome");
-  assert.match(card, /justify-content:flex-end/);
+  assert.match(html, /id="words" style="font-weight:' \+ C\.inkWeight\(t\)/, "weight from the record");
+  assert.match(html, /function wordsHtml\(text\)/);
+  assert.match(c, /\.thought\.ink \.w \{ color:var\(--rest\);/);
+  assert.match(c, /\.thought\.ink \.w\.in \{ color:var\(--ink\); \}/);
   assert.match(html, /function whereHtml\(t\)/);
   assert.match(html, /if \(showWhere\(\)\) \{/);
   assert.match(html, /function showWhere\(\) \{ return prefs\.show_where !== false; \}/, "on by default");
@@ -697,17 +700,19 @@ test("the principle sits on the page, not on a card, with where it came from und
   assert.match(html, /id="aiToggle" role="switch"/);
   assert.match(html, /sample = prefs\.ai_off \? null : makeSampler\(savedKey\)/, "AI lines off uses the built-in questions");
 });
-
-test("the Ledger is a record: a summary, Your week, the grid, plain rows that open in full (1.32.0)", () => {
+test("the Ledger: a key, three weight groups, Lived folded away, Your week and the grid (1.33.0)", () => {
   const html = read("index.html");
-  for (const id of ["lSummary", "openWeek", "cal", "segDeck", "segShed", "ledgerList", "sheetRow", "rowTl", "rowActs", "rowHist"]) assert.match(html, new RegExp('id="' + id + '"'), id);
-  assert.doesNotMatch(html, /id="gauge"|id="caps"|class="pbc/, "the gauge, capsules and tiles are gone");
-  assert.match(html, /class="lrow2" data-row="/);
+  for (const id of ["lSummary", "openWeek", "cal", "ledgerList", "sheetRow", "rowTl", "rowActs", "rowHist"]) assert.match(html, new RegExp('id="' + id + '"'), id);
+  assert.doesNotMatch(html, /id="gauge"|id="caps"|class="pbc|id="segDeck"|id="segShed"/, "the gauge, tiles and list switch are gone");
+  assert.match(html, /class="wkey"[\s\S]*Avoiding[\s\S]*Working on[\s\S]*Nearly lived/, "the key explains the weights");
+  assert.match(html, /C\.ledgerGroup\(t, td\) === g\.id/);
+  assert.match(html, /var fw = g === "nearly" \? 250 : C\.inkWeight\(t\);/);
+  assert.match(html, /class="lrow2" data-row="' \+ esc\(t\.id\)/);
+  assert.match(html, /id="livedBtn" aria-expanded="/);
   assert.match(html, /C\.timeline\(t\)/);
   for (const r of ["show", "caught", "edit", "ev", "keep", "talk", "del"]) assert.match(html, new RegExp('data-r="' + r + '"'), r + " action");
   assert.match(html, /var cls = a && \(a\.s \|\| a\.c\) \? "lv" : n >= 3 \? "on2" : n \? "on" : "";/);
 });
-
 test("the top: the day and date on the deck, the way back on the Ledger", () => {
   const html = read("index.html");
   assert.match(html, /\$\("backDeck"\)\.hidden = view !== "ledger";/);
@@ -724,16 +729,15 @@ test("motion respects reduced motion", () => {
   assert.match(html, /@media \(prefers-reduced-motion: reduce\) \{ \.card, \.card\.spring/);
 });
 
-test("touch targets: keys, chips and row actions are at least 36px with 44px hit areas", () => {
+test("touch targets: the ring, the move buttons, chips and menu rows are at least 40px", () => {
   const c = css();
   assert.match(rule(c, ".iconbtn"), /width:44px; height:44px;/);
-  assert.match(rule(c, ".key"), /height:clamp\(66px, 11svh, 92px\)/);
-  assert.match(rule(c, ".chip"), /height:36px;/);
-  assert.match(c, /\.chip::after \{ content:""; position:absolute; inset:-4px 0; \}/);
-  assert.match(rule(c, ".acts-row button"), /min-height:44px; min-width:44px;/);
+  assert.match(rule(c, ".ring"), /width:96px; height:96px;/);
+  assert.match(rule(c, ".key"), /min-height:48px;/);
+  assert.match(rule(c, ".chip"), /height:40px;/);
   assert.match(rule(c, ".menu button"), /min-height:48px;/);
+  assert.match(rule(c, ".lrow2"), /min-height:48px;/);
 });
-
 // ---------- 1.31.0: a thinker weighs in, and Talk it through ----------
 test("the voices: eight built in, living ones in the third person, added names living by default (Story 12)", () => {
   assert.deepEqual(C.VOICES.map((v) => v.id), ["jung", "nietzsche", "dostoevsky", "epictetus", "marcus", "perel", "peterson", "goggins"]);
@@ -817,7 +821,7 @@ test("the page offers Weigh in only after a move, with a key, and keeps talks in
 test("the middle move is Testing it everywhere on screen", () => {
   const html = read("index.html");
   assert.doesNotMatch(html, /Still working on it|Working on it/);
-  assert.match(html, /<span>Testing it<\/span>/);
+  assert.match(html, /<b>Testing it<\/b>/);
   assert.equal(C.MOVES.keep, "Testing it");
 });
 
@@ -910,4 +914,37 @@ test("the page wires the day: moves counted, undo restores the day, check-in fir
   assert.match(html, /C\.isReviewDay\(td\) && prefs\.week_seen !== td/);
   for (const id of ["sheetCaught", "sheetAct", "sheetWeek", "setOut", "openShortcuts", "mCaught"]) assert.match(html, new RegExp('id="' + id + '"'), id);
   assert.match(html, /if \(kind === "shed"\) d\.s\+\+; else if \(kind === "caught"\) d\.c = \(d\.c \|\| 0\) \+ 1; else d\.i\+\+;/);
+});
+
+// ---------- 1.33.0: Black and White, Hold, and the weighted Ledger ----------
+test("holdOutcome: a tap does nothing, early is Not today, through is Testing it, lift is Living it", () => {
+  assert.deepEqual([C.HOLD_FULL, C.HOLD_TAP, C.HOLD_LIFT], [2400, 300, 70]);
+  assert.equal(C.holdOutcome(0, 0).move, "");
+  assert.equal(C.holdOutcome(299, 0).move, "", "a stray touch never rests a principle");
+  assert.equal(C.holdOutcome(300, 0).move, "skip");
+  assert.equal(C.holdOutcome(2399, 0).move, "skip");
+  assert.equal(C.holdOutcome(2400, 0).move, "keep");
+  assert.equal(C.holdOutcome(9000, -20).move, "keep", "a small wobble is not a lift");
+  assert.equal(C.holdOutcome(100, -70).move, "shed", "lift wins at any point");
+  assert.equal(C.holdOutcome(5000, -200).move, "shed");
+  assert.equal(C.holdOutcome(1200, 0).progress, 0.5);
+  assert.equal(C.holdOutcome(99999, 0).progress, 1);
+  assert.equal(C.holdOutcome(-5, "x").progress, 0);
+});
+
+test("inkWeight: 400 fresh, 125 heavier per Not today, 900 at four or more", () => {
+  assert.deepEqual([0, 1, 2, 3, 4, 9].map((n) => C.inkWeight({ skip_count: n })), [400, 525, 650, 775, 900, 900]);
+  assert.equal(C.inkWeight({}), 400);
+  assert.equal(C.inkWeight({ skip_count: -2 }), 400);
+});
+
+test("ledgerGroup: avoiding at three Not today, nearly lived once worked clear and tested or caught", () => {
+  const td = "2026-10-25";
+  assert.equal(C.ledgerGroup(A("a", { skip_count: 3 }), td), "avoiding");
+  assert.equal(C.ledgerGroup(A("a", { skip_count: 2, reflect_count: 9 }), td), "working");
+  assert.equal(C.ledgerGroup(A("a"), td), "working", "a new principle is being worked on");
+  assert.equal(C.ledgerGroup(A("a", { reflect_count: 3 }), td), "nearly");
+  assert.equal(C.ledgerGroup(A("a", { reflect_count: 2, consecutive_reflects: 2 }), td), "nearly");
+  assert.equal(C.ledgerGroup(A("a", { caught: [{ day: "2026-10-20", text: "" }] }), td), "nearly");
+  assert.equal(C.ledgerGroup(A("a", { skip_count: 1, caught: [{ day: "2026-10-20", text: "" }] }), td), "working", "an open Not today keeps it in progress");
 });

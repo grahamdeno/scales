@@ -11,8 +11,8 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.32.1";
-  var BUILT = "2026-10-17";
+  var VERSION = "1.33.0";
+  var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
   // MAX_WORDS  longest consideration the app will show. Long enough for one complete
@@ -353,6 +353,37 @@ var ScalesCore = (function () {
     return { kind: kind, strength: Math.round(strength * 1000) / 1000, commit: !!commit, tilt: Math.round(tilt * 100) / 100 };
   }
 
+  // Hold (1.33.0): the deck's one gesture. The ring is held down; how long and where the finger
+  // goes on release decide the move. A press shorter than HOLD_TAP is a tap and does nothing, so a
+  // stray touch never rests a principle for days. Lifting the finger HOLD_LIFT px or more toward
+  // the top before release is Living it at any point; holding the full HOLD_FULL is Testing it;
+  // letting go in between is Not today. ms is how long the ring was held, dy the vertical offset
+  // in pixels (negative going up). progress (0 to 1) drives the ring and how many words are inked.
+  var HOLD_FULL = 2400, HOLD_TAP = 300, HOLD_LIFT = 70;
+  function holdOutcome(ms, dy) {
+    ms = Math.max(0, +ms || 0); dy = +dy || 0;
+    var progress = Math.min(1, ms / HOLD_FULL);
+    var move = dy <= -HOLD_LIFT ? "shed" : ms < HOLD_TAP ? "" : progress >= 1 ? "keep" : "skip";
+    return { move: move, progress: Math.round(progress * 1000) / 1000 };
+  }
+
+  // Type weight (1.33.0): how heavy a principle is set, from its current Not today count. A fresh
+  // principle is 400; each Not today adds 125, to 900 at four or more. Testing it lowers the count,
+  // so the words lighten as the avoidance is worked off.
+  function inkWeight(t) { return 400 + Math.min(Math.max(+(t && t.skip_count) || 0, 0), 4) * 125; }
+
+  // Ledger groups (1.33.0), for a principle still in the deck:
+  //   avoiding      set aside three or more times and not yet worked back down
+  //   nearly        no Not today left and either caught in the last 30 days, tested twice running,
+  //                 or tested three or more times
+  //   working       everything else
+  function ledgerGroup(t, today) {
+    var s = +t.skip_count || 0;
+    if (s >= 3) return "avoiding";
+    if (s === 0 && (catchCount(t, today) > 0 || (t.consecutive_reflects || 0) >= 2 || (t.reflect_count || 0) >= 3)) return "nearly";
+    return "working";
+  }
+
   // Ledger bars (1.27.0): every principle counted once. Living it = lived; Not today = still in the
   // deck and currently set aside more than worked through (skip_count above 0); Testing it = the
   // rest of the deck. Percentages are whole numbers that add up to 100 (largest remainder), or all 0
@@ -620,6 +651,7 @@ var ScalesCore = (function () {
     undoPoint: undoPoint, applyUndo: applyUndo,
     inCollection: inCollection, deckCollections: deckCollections, deckFilter: deckFilter, outcomeMix: outcomeMix,
     SWIPE: SWIPE, swipeIntent: swipeIntent,
+    HOLD_FULL: HOLD_FULL, HOLD_TAP: HOLD_TAP, HOLD_LIFT: HOLD_LIFT, holdOutcome: holdOutcome, inkWeight: inkWeight, ledgerGroup: ledgerGroup,
     shortDate: shortDate, keepAsNew: keepAsNew, keepReplace: keepReplace,
     VOICES: VOICES, TALK_MAX: TALK_MAX, REPLY_WORDS: REPLY_WORDS, MOVES: MOVES, allVoices: allVoices, chosenVoices: chosenVoices,
     voiceOfDay: voiceOfDay, voiceLabel: voiceLabel, weighPrompt: weighPrompt, talkRequest: talkRequest, vetReply: vetReply,
