@@ -1210,3 +1210,14 @@ test("a new deck opens on the welcome; an existing one never does; + opens Captu
   assert.match(html, /id="addTop" aria-label="Capture a principle"/);
   assert.match(html, /\$\("addTop"\)\.onclick = function \(\) \{ closeMenu\(\); openCapture\(\); \};/);
 });
+
+// ---------- 1.48.0: Settings rebuilt ----------
+test("Settings has five groups and folds the rest under Advanced", () => {
+  const html = read("index.html");
+  const sheet = html.slice(html.indexOf('id="sheetSettings"'), html.indexOf("</dialog>", html.indexOf('id="sheetSettings"')));
+  const groups = [...sheet.matchAll(/<h3 class="sec2"[^>]*>([^<]+)/g)].map(m => m[1].trim());
+  assert.deepEqual(groups, ["Look", "Deck", "Voices", "Reminders", "Your data"]);
+  const adv = sheet.slice(sheet.indexOf('<details class="adv"'));
+  for (const id of ["apiKey", "csvExportBtn", "starterGroup", "howRest", "versionText", "screenCheck"]) assert.match(adv, new RegExp('id="' + id + '"'));
+  assert.doesNotMatch(sheet, /today’s focus/);
+});
