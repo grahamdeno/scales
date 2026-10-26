@@ -640,7 +640,7 @@ test("the three moves: hold the ring, buttons for VoiceOver and keys; Not today 
   const html = read("index.html");
   for (const m of ["skip", "keep", "shed"]) assert.match(html, new RegExp('data-move="' + m + '"'), m + " button");
   assert.match(html, /class="moves sr" id="keys"/, "the buttons are for VoiceOver and the keyboard");
-  assert.match(html, /if \(m === "skip"\) requestSkip\(\); else act\(m\);/);
+  assert.match(html, /if \(m === "skip"\) requestSkip\(\); else if \(m === "later"\) saveLater\(\); else act\(m\);/);
   assert.match(html, /k === "ArrowLeft"\) requestSkip\(\)/);
   assert.match(html, /k === "ArrowUp"\) act\("keep"\)/);
   assert.match(html, /k === "ArrowRight"\) act\("shed"\)/);
@@ -654,7 +654,7 @@ test("the three moves: hold the ring, buttons for VoiceOver and keys; Not today 
   assert.match(html, /coachSeen\(\); phase = "push"; renderDeck\(\); showLine\(t, "push"\);/);
   // Reflect: Next only after REFLECT_SEC, and only then does the test lower the Not today count.
   assert.match(html, /reflectT = setTimeout\(finishReflect, C\.REFLECT_SEC \* 1000\)/);
-  assert.match(html, /if \(t\.skip_count > 0\) \{ t\.skip_count--; reflectLighter = true; save\(t\); \}/);
+  assert.match(html, /if \(t\.skip_count > 0\) \{ t\.skip_count--; reflectLighter = true; \}/);
   assert.match(html, /id="reflNext">Next principle</);
   assert.match(html, /if \(t\) \{ C\.spendLines\(t\); save\(t\); \}/, "moving on from a test spends the lines");
   assert.doesNotMatch(html, /dwell >= DWELL_SEC/, "the old dwell check is replaced by the reflect screen");
@@ -1114,7 +1114,7 @@ test("holding opens the three choices; letting go never chooses by itself (1.39.
   assert.match(html, /if \(touched\) \{ closeChoices\(\); return; \} \/\/ slid off the list: cancel/);
   assert.match(html, /light\(null\); \/\/ never touched a row: stay open to tap/);
   assert.match(html, /if \(row && choicesOpen\) pick\(row\.getAttribute\("data-pick"\)\);/, "or tap one");
-  assert.match(html, /if \(move === "skip"\) requestSkip\(\); else act\(move\);/, "Skip still asks first");
+  assert.match(html, /if \(move === "skip"\) requestSkip\(\); else if \(move === "later"\) saveLater\(\); else act\(move\);/, "Skip still asks first");
   assert.match(html, /holdHtml\("Press and hold to choose"\);/, "the skip screen uses the same choices; no separate Skip it button");
   assert.doesNotMatch(html, /id="setAside"|class="hl hl-/);
   assert.match(rule(c, ".pickrow"), /min-height:60px;/);
@@ -1152,4 +1152,32 @@ test("Reply opens a sheet above the keyboard; the choice is still waiting (1.40.
   assert.match(html, /if \(openSheet\) return; \/\/ a press and hold on the line opened Keep/);
   assert.match(html, /id="rowThread"/);
   assert.doesNotMatch(html, /id="pushNote"/, "no text box in the skip screen itself");
+});
+
+// ---------- 1.42.0: Later ----------
+test("Later waits until the evening of the day it was saved; three at most; not twice in a row", () => {
+  const t = A("a", { later: { day: "2026-10-26" } });
+  assert.equal(C.laterDue(t, new Date(2026, 9, 26, 17, 59)), false, "not before 6 PM");
+  assert.equal(C.laterDue(t, new Date(2026, 9, 26, 18, 0)), true);
+  assert.equal(C.laterDue(t, new Date(2026, 9, 27, 9, 0)), true, "or any later day");
+  assert.equal(C.laterDue(A("b"), new Date(2026, 9, 27, 9, 0)), false);
+  const list = [A("1", { later: { day: "x" } }), A("2", { later: { day: "x" } }), A("3"), A("4", { status: "shed", later: { day: "x" } })];
+  assert.equal(C.waiting(list).length, 2);
+  assert.equal(C.canLater(list, list[2]), true);
+  list.push(A("5", { later: { day: "x" } }));
+  assert.equal(C.canLater(list, list[2]), false, "three are already waiting");
+  assert.equal(C.canLater([], A("6", { later_blocked: true })), false, "back from Later: sit with it first");
+  assert.equal(C.canLater([], A("7", { later: { day: "x" } })), false);
+});
+
+test("Later is offered on the skip screen and is not a skip (1.42.0)", () => {
+  const html = read("index.html");
+  assert.match(html, /if \(push && C\.canLater\(all\(\), cur\)\) rows\.splice\(2, 0, \["later", "Later", "When I have time"\]\);/);
+  const save = html.slice(html.indexOf("  function saveLater()"), html.indexOf("  // After REFLECT_SEC on the reflect screen:"));
+  assert.doesNotMatch(save, /applySkip|skip_count|noteSkipDay|logActivity/, "no count, no weight, no rest");
+  assert.match(html, /return C\.inCollection\(t, c\) && !t\.later;/, "waiting principles are left out of the deck");
+  assert.match(html, /L\.later = null; L\.later_blocked = true; save\(L\);/);
+  assert.match(html, /fromLater = true; act\("keep"\);/, "it comes back straight to Sit with it");
+  assert.match(html, /\(fromLater \? "Saved from earlier" : "Sitting with it"\)/);
+  assert.match(html, /if \(t\.later_blocked\) t\.later_blocked = false;/, "sitting with it for the full time lifts the block");
 });

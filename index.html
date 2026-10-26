@@ -1119,7 +1119,9 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   // Collection chips (1.27.0): prefs.deck_coll is the chosen collection, "" for all. deckColl() reads it
   // through core.js deckFilter, so a collection that was renamed away or emptied falls back to all.
   function deckColl() { return C.deckFilter(all(), prefs.deck_coll); }
-  function deckList() { var c = deckColl(); return activeList().filter(function (t) { return C.inCollection(t, c); }); }
+  function deckList() { var c = deckColl(); return activeList().filter(function (t) { return C.inCollection(t, c) && !t.later; }); }
+  // A principle saved for later whose evening has come, from any collection (1.42.0).
+  function dueLater() { var now = new Date(); return C.waiting(all()).filter(function (t) { return C.laterDue(t, now); })[0] || null; }
   // Whether the deck has a principle to show now.
   function nextUp() { var t = thoughts[current]; return !!(t && t.status === "active"); }
   function pickNext() { return C.nextCard(deckList(), history, today(), showAnyway()).card; }
@@ -1407,15 +1409,28 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     if (phase === "push") { act("skip"); return; }
     coachSeen(); phase = "push"; renderDeck(); showLine(t, "push");
   }
+  // Later (1.42.0): not a skip. It waits until this evening, then opens straight to Sit with it.
+  var fromLater = false;
+  function saveLater() {
+    var t = onCard(); if (!t || !C.canLater(all(), t)) return;
+    var u = undoPoint();
+    t.later = { day: today(), at: new Date().toISOString() }; save(t);
+    noteMove(t, "later"); noteDay(t, "later");
+    phase = "rest"; flyOut("up");
+    var evening = new Date().getHours() >= C.CHECKIN_HOUR;
+    undoable(evening ? "Saved. It comes back next." : "Saved for after 6 PM.", u);
+  }
   // After REFLECT_SEC on the reflect screen: the test counts against Not today, and Next appears.
   function finishReflect() {
     var t = thoughts[current]; if (phase !== "reflect" || !t) return;
-    if (t.skip_count > 0) { t.skip_count--; reflectLighter = true; save(t); }
+    if (t.skip_count > 0) { t.skip_count--; reflectLighter = true; }
+    if (t.later_blocked) t.later_blocked = false;
+    save(t);
     reflectDone = true; paintReflectFoot();
   }
   // Next principle: the lines this one had are spent, so new ones are written next time it comes up.
   function nextFromReflect() {
-    var t = thoughts[current], ask = pendingAct;
+    var t = thoughts[current], ask = pendingAct; fromLater = false;
     clearTimeout(reflectT); pendingAct = false; reflectUndo = null;
     if (t) { C.spendLines(t); save(t); }
     phase = "rest"; entering = true; showNext();
@@ -1436,6 +1451,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   }
   function undoable(msg, point) { toast(msg, function () { restore(point); toast("Undone."); }); }
   function restore(point) {
+      fromLater = false;
       clearTimeout(reflectT); phase = "rest"; reflectUndo = null; pendingAct = false;
       var r = C.applyUndo(point);
       lastMove = null; // the move is undone, so there is nothing to weigh
@@ -1556,6 +1572,9 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       ["keep", "Sit with it", "A quote, then Next"],
       ["skip", push ? "Skip it" : "Skip", push ? "Rests " + n + (n === 1 ? " day" : " days") : "Asks first"]
     ];
+    // On the skip screen: Later, when there is room and this principle has not just come back from Later.
+    var cur = thoughts[current];
+    if (push && C.canLater(all(), cur)) rows.splice(2, 0, ["later", "Later", "When I have time"]);
     return '<div class="hold" id="holdZone">' +
       '<div class="picks" id="choices" role="menu" aria-label="Choose" hidden>' + rows.map(function (r) {
         return '<button type="button" class="pickrow" role="menuitem" data-pick="' + r[0] + '"><span>' + r[1] + "</span><small>" + r[2] + "</small></button>";
@@ -1566,6 +1585,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       '<div class="moves sr" id="keys" role="group" aria-label="Moves">' +
       '<button type="button" class="key" id="kSkip" data-move="skip"><b>' + (push ? "Skip it" : "Skip") + "</b></button>" +
       '<button type="button" class="key" id="kKeep" data-move="keep"><b>Sit with it</b></button>' +
+      (push && C.canLater(all(), cur) ? '<button type="button" class="key" id="kLater" data-move="later"><b>Later</b></button>' : "") +
       '<button type="button" class="key" id="kShed" data-move="shed"><b>Living it</b></button></div></div>';
   }
   function restCaption() { return "Press and hold"; }
@@ -1585,6 +1605,15 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     paintTop(dp);
     // A principle mid-push or mid-reflect stays on screen until you move on, even if that move ended the set.
     var mid = phase !== "rest" && nextUp();
+    // Its evening has come: a principle saved for later opens straight to Sit with it, ahead of everything.
+    var L = !mid && dueLater();
+    if (L) {
+      L.later = null; L.later_blocked = true; save(L);
+      current = L.id; currentLead = null; history.push(L.id); if (history.length > 20) history.shift();
+      C.markShown(L, new Date(), false); save(L); shownAt = Date.now();
+      fromLater = true; act("keep");
+      return;
+    }
     // The evening check-in comes first, then Done for today and today's focus.
     if (!mid && !checkinLater && C.checkinDue(day, new Date()) && renderCheckin()) return;
     if (!mid && dp === "focus") { renderFocus(); return; }
@@ -1640,7 +1669,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     var how = '<span class="sr" id="cardHow">Use the Skip, Sit with it and Living it buttons, or press and hold the bottom of the screen to open them. Press and hold the principle to edit it.</span>';
     if (phase === "reflect") {
       v.innerHTML = '<article class="card reflect" id="card" aria-label="Testing it" aria-describedby="cardHow">' +
-        '<div class="phase"><span>Sitting with it</span></div>' +
+        '<div class="phase"><span>' + (fromLater ? "Saved from earlier" : "Sitting with it") + "</span></div>" +
         '<div class="mid">' + words + line + whereHtml(t) +
           (canWeigh() ? '<button type="button" class="crow talkrow" id="talkRow"><span class="tr"><b>Talk it through with ' + esc(todayVoice().short) + "</b><small>Today’s voice</small></span>" + ICON_NEXT + "</button>" : "") +
         "</div>" + how + "</article>" +
@@ -1691,7 +1720,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   $("v-deck").addEventListener("click", function (e) {
     var k = e.target.closest("[data-move]"); if (!k || !onCard()) return;
     var m = k.getAttribute("data-move");
-    if (m === "skip") requestSkip(); else act(m);
+    if (m === "skip") requestSkip(); else if (m === "later") saveLater(); else act(m);
   });
 
   // ---------- first-swipe tip ----------
@@ -1737,7 +1766,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   function pick(move) {
     closeChoices(); coachSeen();
     prefs.holds = (prefs.holds || 0) + 1; savePrefs();
-    if (move === "skip") requestSkip(); else act(move);
+    if (move === "skip") requestSkip(); else if (move === "later") saveLater(); else act(move);
   }
   (function bindHold() {
     var deck = $("v-deck"), t0 = 0, raf = 0, mode = "", holdT = 0, sx = 0, sy = 0, touched = false;
@@ -2457,7 +2486,8 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       var span = Math.max(1, Math.round((new Date(t.shed_at) - new Date(t.created_at)) / 86400000));
       p.push("Lived " + fmtDate(t.shed_at) + ", after " + span + (span === 1 ? " day" : " days"));
     } else {
-      if (C.isResting(t, td)) p.push("Resting until " + weekdayOf(t.rest_until));
+      if (t.later) p.push("Saved for tonight");
+      else if (C.isResting(t, td)) p.push("Resting until " + weekdayOf(t.rest_until));
       else if (t.skip_count > 0) p.push("Skipped " + times(t.skip_count));
       var c = C.catchCount(t, td);
       if (c) p.push("caught " + times(c));

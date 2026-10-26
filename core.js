@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.41.0";
+  var VERSION = "1.42.0";
   var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -710,6 +710,19 @@ var ScalesCore = (function () {
   }
   function suggestLiving(t, today) { return t.status === "active" && catchCount(t, today) >= CATCH_SUGGEST; }
   // Days a principle was set aside, kept for the weekly review (last 20).
+  // Later (1.42.0): a principle that deserves more time than you have right now. Chosen from the skip screen,
+  // it is not a skip: no count, no weight, no rest. It waits until the evening (CHECKIN_HOUR) of the day it
+  // was saved, or any later day, then opens straight to Sit with it. At most LATER_MAX wait at once, and a
+  // principle that came back from Later is not offered Later again until you have sat with it for the full
+  // reflect time (t.later_blocked).
+  var LATER_MAX = 3;
+  function laterDue(t, now) {
+    if (!t || !t.later) return false;
+    var d = dayOf(now);
+    return d > t.later.day || (d === t.later.day && now.getHours() >= CHECKIN_HOUR);
+  }
+  function waiting(list) { return (list || []).filter(function (t) { return t.status === "active" && t.later; }); }
+  function canLater(list, t) { return !!t && !t.later && !t.later_blocked && waiting(list).length < LATER_MAX; }
   function noteSkipDay(t, day) { t.skips_on = (t.skips_on || []).concat([day]).slice(-20); return t; }
 
   // Replies (1.40.0). On the skip and sit-with screens you can reply to the line or quote shown. A reply is
@@ -806,6 +819,7 @@ var ScalesCore = (function () {
     daySummary: daySummary, checkinDue: checkinDue, askAct: askAct, actToday: actToday, addAct: addAct,
     addCatch: addCatch, catchCount: catchCount, suggestLiving: suggestLiving, noteSkipDay: noteSkipDay,
     REPLY_MAX: REPLY_MAX, addReply: addReply, thread: thread, lastReply: lastReply,
+    LATER_MAX: LATER_MAX, laterDue: laterDue, waiting: waiting, canLater: canLater,
     weekDays: weekDays, isReviewDay: isReviewDay, weekStats: weekStats, weekPrompt: weekPrompt, timeline: timeline };
 })();
 
