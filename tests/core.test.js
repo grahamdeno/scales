@@ -655,7 +655,7 @@ test("the three moves: hold the ring, buttons for VoiceOver and keys; Not today 
   // Push: the first Not today shows the line; the second, or Set aside anyway, commits. No second pushback.
   assert.match(html, /if \(phase === "push"\) \{ act\("skip"\); return; \}/);
   assert.match(html, /coachSeen\(\); phase = "push"; renderDeck\(\); showLine\(t, "push"\);/);
-  assert.match(html, /sa\.onclick = function \(\) \{ if \(Date\.now\(\) < armAt\) return; act\("skip"\); \};/, "Skip it ignores taps for a second after the screen opens");
+  assert.match(html, /\$\("setAside"\)\.onclick = function \(\) \{ act\("skip"\); \};/);
   // Reflect: Next only after REFLECT_SEC, and only then does the test lower the Not today count.
   assert.match(html, /reflectT = setTimeout\(finishReflect, C\.REFLECT_SEC \* 1000\)/);
   assert.match(html, /if \(t\.skip_count > 0\) \{ t\.skip_count--; reflectLighter = true; save\(t\); \}/);
@@ -675,7 +675,7 @@ test("the three moves: hold the ring, buttons for VoiceOver and keys; Not today 
 test("Black and White: one face, two flat looks, no shadows, glass or rounded panels (1.33.0)", () => {
   const c = css(), html = read("index.html"), sw = read("sw.js");
   assert.match(c, /--paper:#121212;[^}]*--ink:#ECEAE5;/);
-  assert.match(c, /:root\[data-look="light"\] \{\s*(--hint:#\w+; )?--paper:#ECEAE5;[^}]*--ink:#141414;/);
+  assert.match(c, /:root\[data-look="light"\] \{\s*--paper:#ECEAE5;[^}]*--ink:#141414;/);
   assert.doesNotMatch(c, /box-shadow:-?\d+px -?\d+px \d+px|backdrop-filter|radial-gradient|linear-gradient/, "no raised shadows, blur or gradients");
   assert.match(c, /--r-s:0; --r-m:0; --r-l:0; --r-xl:0;/, "square corners");
   assert.match(rule(c, ".primary"), /background:var\(--ink\)/);
@@ -939,10 +939,10 @@ test("the page wires the day: moves counted, undo restores the day, check-in fir
 
 // ---------- 1.33.0: Black and White, Hold, and the weighted Ledger ----------
 test("holdOutcome: a tap does nothing, early is Not today, through is Testing it, lift is Living it", () => {
-  assert.deepEqual([C.HOLD_FULL, C.HOLD_TAP, C.HOLD_LIFT], [2400, 600, 70]);
+  assert.deepEqual([C.HOLD_FULL, C.HOLD_TAP, C.HOLD_LIFT], [2400, 300, 70]);
   assert.equal(C.holdOutcome(0, 0).move, "");
-  assert.equal(C.holdOutcome(599, 0).move, "", "a quick press and release does nothing");
-  assert.equal(C.holdOutcome(600, 0).move, "skip");
+  assert.equal(C.holdOutcome(299, 0).move, "", "a stray touch never rests a principle");
+  assert.equal(C.holdOutcome(300, 0).move, "skip");
   assert.equal(C.holdOutcome(2399, 0).move, "skip");
   assert.equal(C.holdOutcome(2400, 0).move, "keep");
   assert.equal(C.holdOutcome(9000, -20).move, "keep", "a small wobble is not a lift");
@@ -1139,13 +1139,4 @@ test("the pushback asks what came up; the thought is kept with its line and come
   assert.match(html, /'<div class="mid">' \+ words \+ line \+ notesHtml\(t\) \+ whereHtml\(t\)/, "and under the quote when you sit with it");
   assert.match(html, /openKeep\(t, nn\.text, \{ note: true \}\)/, "press and hold a thought to keep it as a principle");
   assert.match(html, /id="rowNotes"/);
-});
-
-test("the choices show before you hold, in light grey, with a switch to turn them off (1.38.0)", () => {
-  const html = read("index.html"), c = css();
-  assert.match(html, /'<div class="hold' \+ \(pre \? " preview" : ""\) \+ '" id="holdZone">'/);
-  assert.match(html, /function showChoices\(\) \{ return prefs\.show_choices !== false; \}/, "on by default");
-  assert.match(html, /pre \? "Skip<br><small>asks first<\/small>" : "Skip"/);
-  assert.match(html, /id="choicesToggle" role="switch"/);
-  assert.match(c, /\.hold\.preview \.hl \{ opacity:1; color:var\(--hint\); \}/);
 });

@@ -34,7 +34,7 @@ img { max-width: 100%; }
 
 /* Black (default). */
 :root {
-  --hint:#4A4A47; --paper:#121212; --deep:#1B1B1A; --rise:#121212; --ink:#ECEAE5; --muted:#9A9994; --faint:#7F7E7A; --rest:#8A8986;
+  --paper:#121212; --deep:#1B1B1A; --rise:#121212; --ink:#ECEAE5; --muted:#9A9994; --faint:#7F7E7A; --rest:#8A8986;
   --line:rgba(236,234,229,.16); --brass:#ECEAE5; --brass-hi:#ECEAE5; --violet:#ECEAE5; --danger:#E3A595;
   --hi:transparent; --lo:transparent; --scrim:rgba(0,0,0,.55); --onBrass:#121212;
   --font:"Geist",-apple-system,"SF Pro Text",system-ui,sans-serif;
@@ -49,7 +49,7 @@ img { max-width: 100%; }
 }
 /* White. */
 :root[data-look="light"] {
-  --hint:#C4C2BC; --paper:#ECEAE5; --deep:#E2E0DA; --rise:#ECEAE5; --ink:#141414; --muted:#5A5955; --faint:#6A6965; --rest:#7A7975;
+  --paper:#ECEAE5; --deep:#E2E0DA; --rise:#ECEAE5; --ink:#141414; --muted:#5A5955; --faint:#6A6965; --rest:#7A7975;
   --line:rgba(20,20,20,.16); --brass:#141414; --brass-hi:#141414; --violet:#141414; --danger:#A3402C;
   --scrim:rgba(20,20,20,.28); --onBrass:#ECEAE5;
   color-scheme:light;
@@ -175,13 +175,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .card.push ~ .hold { height:clamp(200px, 27dvh, 250px); }
 .hl { position:absolute; font-size:var(--t-md); color:var(--faint); opacity:0; transition:opacity .15s ease; pointer-events:none; white-space:nowrap; }
 .hold.holding .hl { opacity:1; }
-/* Before you hold (1.38.0): the choices sit in place in a very light grey; Hold sits under the ring. */
-.hold.preview .hl { opacity:1; color:var(--hint); }
-.hold.preview.holding .hl { color:var(--faint); }
-.hold.preview.holding .hl.on { color:var(--ink); }
-.hl-left small { display:inline-block; font-size:var(--t-xs); }
-.hold.preview .holdlbl { position:static; margin-top:12px; }
-.hold .hl.on { color:var(--ink); font-weight:500; text-decoration:underline; text-underline-offset:5px; text-decoration-thickness:1px; }
+.hl.on { color:var(--ink); font-weight:500; text-decoration:underline; text-underline-offset:5px; text-decoration-thickness:1px; }
 .hl-up { top:12px; left:0; right:0; text-align:center; }
 .hl-left { left:var(--gutter); top:50%; transform:translateY(-50%); margin-top:-10px; }
 .hl-down { bottom:max(36px, calc(env(safe-area-inset-bottom, 0px) + 16px)); left:0; right:0; text-align:center; }
@@ -189,8 +183,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .hold.holding .holdlbl { opacity:0; }
 .ring .tick { stroke:var(--ink); stroke-width:1.5; }
 /* Wide, thumb-sized buttons (1.36.0): nothing smaller than 48px to aim at. */
-.btn3d.wide { width:100%; min-height:56px; transition:opacity .25s ease; }
-.btn3d.wide.arming { opacity:.25; }
+.btn3d.wide { width:100%; min-height:56px; }
 .widewrap { flex:none; padding:0 0 max(16px, env(safe-area-inset-bottom, 0px)); margin-top:-8px; }
 .pair { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
 .pair .btn3d { min-height:52px; }
@@ -765,8 +758,6 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
 
   <h3 class="sec2">Deck</h3>
   <div class="panel raised">
-    <div class="setrow"><span id="choicesLbl">Show the choices before you hold<small>Skip, Sit with it and Living it, in light grey around the ring</small></span>
-      <button type="button" class="toggle" id="choicesToggle" role="switch" aria-checked="true" aria-labelledby="choicesLbl"><i></i></button></div>
     <div class="setrow"><span id="restLbl">Rest after Skip<small>It comes up first when it returns</small></span>
       <div class="stepper" role="group" aria-labelledby="restLbl"><button type="button" class="raised" id="restDown" aria-label="One day less">&minus;</button><output id="restOut" aria-live="polite">4 days</output><button type="button" class="raised" id="restUp" aria-label="One day more">+</button></div></div>
     <div class="setrow"><span id="setLbl">Today’s set<small>Then Done for today, and today’s focus</small></span>
@@ -1496,11 +1487,9 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   var RING_R = 46, RING_C = 2 * Math.PI * RING_R, HOLD_LEARNED = 20;
   function holdHtml(caption, extra) {
     var skip = phase === "push" ? "Skip it" : "Skip";
-    // Choices shown before you hold (1.38.0), in a very light grey, unless turned off in Settings.
-    var pre = showChoices(), hlSkip = phase === "push" ? "Skip it" : pre ? "Skip<br><small>asks first</small>" : "Skip";
-    return '<div class="hold' + (pre ? " preview" : "") + '" id="holdZone">' +
+    return '<div class="hold" id="holdZone">' +
       '<span class="hl hl-up" id="hlUp" aria-hidden="true">↑ Living it</span>' +
-      '<span class="hl hl-left" id="hlLeft" aria-hidden="true">' + hlSkip + "</span>" + // hlSkip is fixed markup, no user text
+      '<span class="hl hl-left" id="hlLeft" aria-hidden="true">' + skip + "</span>" +
       '<div class="ring" id="holdRing" aria-hidden="true"><svg viewBox="0 0 96 96"><circle class="track" cx="48" cy="48" r="' + RING_R + '"></circle>' +
       '<circle class="arc" id="holdArc" cx="48" cy="48" r="' + RING_R + '" stroke-dasharray="' + RING_C.toFixed(1) + '" stroke-dashoffset="' + RING_C.toFixed(1) + '"></circle>' +
       '<line class="tick" x1="90" y1="48" x2="96" y2="48"></line></svg><i></i></div>' +
@@ -1512,8 +1501,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
       '<button type="button" class="key" id="kShed" data-move="shed"><b>Living it</b></button></div></div>' + (extra || "");
   }
   // The word under the ring at rest: Hold, until it has been learned.
-  function restCaption() { return showChoices() ? "Hold" : (prefs.holds || 0) >= HOLD_LEARNED ? "" : "Hold"; }
-  function showChoices() { return prefs.show_choices !== false; }
+  function restCaption() { return (prefs.holds || 0) >= HOLD_LEARNED ? "" : "Hold"; }
 
   function footHtml(left) {
     // After Keep going, the footer offers the way back to today's focus.
@@ -1607,11 +1595,7 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
           '<div class="pushnote"><label for="pushNote">What came up? <span>Optional, kept with this line</span></label><textarea id="pushNote" rows="2" maxlength="' + C.NOTE_MAX + '" placeholder="A thought, in a line"></textarea></div>' +
         "</div>" + how + "</article>" +
         holdHtml("Hold to sit with it instead", '<div class="widewrap"><button type="button" class="btn3d wide" id="setAside">Skip it</button></div>');
-      // Skip it sits where the thumb was holding, so it takes taps only after a second (1.38.0): a nervous
-      // second tap right after letting go cannot skip by accident.
-      var sa = $("setAside"), armAt = Date.now() + 1000;
-      sa.classList.add("arming"); setTimeout(function () { sa.classList.remove("arming"); }, 1000);
-      sa.onclick = function () { if (Date.now() < armAt) return; act("skip"); };
+      $("setAside").onclick = function () { act("skip"); };
       paintLine();
       return;
     }
@@ -2633,7 +2617,6 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
     var n = restDays();
     paintCollCount();
     $("whereToggle").setAttribute("aria-checked", String(showWhere()));
-    $("choicesToggle").setAttribute("aria-checked", String(showChoices()));
     $("aiToggle").setAttribute("aria-checked", String(!prefs.ai_off));
     $("restOut").textContent = n + (n === 1 ? " day" : " days");
     $("restDown").disabled = n <= C.REST_MIN; $("restUp").disabled = n >= C.REST_MAX;
@@ -2644,7 +2627,6 @@ textarea.big { font-size:22px; line-height:1.25; letter-spacing:-.015em; font-we
   Array.prototype.forEach.call(document.querySelectorAll(".seg [data-look]"), function (b) {
     b.onclick = function () { prefs.look = b.getAttribute("data-look"); savePrefs(); applyLook(); };
   });
-  $("choicesToggle").onclick = function () { prefs.show_choices = !showChoices(); savePrefs(); paintSettings(); };
   $("whereToggle").onclick = function () { prefs.show_where = !showWhere(); savePrefs(); paintSettings(); if (onCard()) renderDeck(); };
   function setRest(n) { prefs.rest_days = C.restDays(n); savePrefs(); paintSettings(); }
   $("restDown").onclick = function () { setRest(restDays() - 1); };
