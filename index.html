@@ -391,7 +391,8 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .writesheet h2 .wcancel { justify-self:start; margin:-6px 0 -6px -8px; }
 .writesheet h2 .wdone { justify-self:end; color:var(--ink); font-weight:600; }
 .writesheet h2 .wdone:disabled { color:var(--faint); }
-.writesheet textarea.big { min-height:max(140px, 26vh); }
+.writesheet { inset:auto 0 0 0; }
+.writesheet textarea.big { min-height:max(120px, 22vh); }
 .writesheet .wcount { margin:6px 0 0; text-align:right; font-size:var(--t-xs); color:var(--faint); }
 .sheet.dragging { transition:none; }
 .sheet.settle { transition:transform .22s var(--ease-out); }
@@ -1418,11 +1419,16 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   };
   // Keep the reply sheet above the keyboard: iOS overlays the keyboard on the page, so the sheet's bottom is
   // lifted by the keyboard's height (the part of the window the visual viewport no longer covers).
+  // 1.52.1: the writing sheets (Capture, Edit) ride above the keyboard the same way.
+  function fits(d) { return !!d && (d.id === "sheetReply" || d.classList.contains("writesheet")); }
   function fitReply() {
-    var d = $("sheetReply"), vv = window.visualViewport; if (!d || !vv || openSheet !== d) return;
+    var vv = window.visualViewport;
+    Array.prototype.forEach.call(document.querySelectorAll("#sheetReply, .writesheet"), function (x) { if (x !== openSheet) { x.style.bottom = ""; x.style.maxHeight = ""; x.style.minHeight = ""; } });
+    var d = openSheet; if (!vv || !fits(d)) return;
     var kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
     d.style.bottom = kb + "px";
     d.style.maxHeight = Math.max(200, vv.height - 24) + "px";
+    d.style.minHeight = kb ? "0" : "";
   }
   function unfitReply() { var d = $("sheetReply"); if (d) { d.style.bottom = ""; d.style.maxHeight = ""; } }
   if (window.visualViewport) { visualViewport.addEventListener("resize", fitReply); visualViewport.addEventListener("scroll", fitReply); }
@@ -2349,7 +2355,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     paintEditOrigin();
     editColl.paint();
     checkEditInput();
-    show("sheetEdit");
+    show("sheetEdit", fitReply); fitReply();
     setTimeout(function () { var el = $("editInput"); el.focus(); el.setSelectionRange(el.value.length, el.value.length); }, 60);
   }
   // Everything the sheet would save, as one edit for core.js.
@@ -2574,7 +2580,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   var capColl = collectionField("cap");
   $("capMore").onclick = function () { setCapMore($("capDetails").hidden); };
   function openCapture() {
-    setCapMore(false); show("sheetCapture");
+    setCapMore(false); show("sheetCapture", fitReply); fitReply();
     try { input.focus({ preventScroll: true }); } catch (_) { input.focus(); }
     setTimeout(function () { if (document.activeElement !== input) input.focus(); }, 60);
   }

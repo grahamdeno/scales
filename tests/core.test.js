@@ -1300,3 +1300,11 @@ test("Capture and Edit are paper sheets with the action in the title row", () =>
   const cap = html.slice(html.indexOf('id="sheetCapture"'), html.indexOf("</dialog>", html.indexOf('id="sheetCapture"')));
   assert.ok(cap.indexOf('id="capDetails"') < cap.indexOf('id="originPills"'), "Where it came from sits under More details");
 });
+
+// ---------- 1.52.1: writing sheets ride above the keyboard ----------
+test("Capture and Edit are lifted above the keyboard like the reply sheet", () => {
+  const html = read("index.html");
+  assert.match(html, /d\.id === "sheetReply" \|\| d\.classList\.contains\("writesheet"\)/);
+  assert.match(html, /show\("sheetCapture", fitReply\); fitReply\(\);/);
+  assert.match(html, /show\("sheetEdit", fitReply\); fitReply\(\);/);
+});
