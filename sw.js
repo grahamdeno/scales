@@ -4,7 +4,7 @@
 // so updates show up the next time the app opens.
 
 // Bump this name whenever cached files change so phones drop the old copy.
-const CACHE = "scales-v1.57.0";
+const CACHE = "scales-v1.58.0";
 // Reminders (1.51.0): the app writes the badge state here; it survives version changes.
 const STATE = "scales-state";
 try { importScripts("core.js"); } catch (_) {}
@@ -40,26 +40,3 @@ self.addEventListener("fetch", e => {
   );
 });
 
-// Push (1.51.0): the scheduled reminder. Sets the Home Screen badge from the state the app last saved, then
-// shows the notification (iPhone requires one for every push).
-self.addEventListener("push", e => {
-  let d = {};
-  try { d = e.data ? e.data.json() : {}; } catch (_) {}
-  e.waitUntil((async () => {
-    let s = null;
-    try { const r = await (await caches.open(STATE)).match("badge"); if (r) s = await r.json(); } catch (_) {}
-    const C = self.ScalesCore, now = new Date();
-    const n = C ? C.badgeFrom(s, now) : 0;
-    try { if (self.navigator.setAppBadge) { if (n) await self.navigator.setAppBadge(n); else await self.navigator.clearAppBadge(); } } catch (_) {}
-    const body = C ? C.pushText(d.kind, s, now) : "Today\u2019s set is ready.";
-    await self.registration.showNotification("Scales", { body, tag: "scales", icon: "icons/icon-192.png", data: { url: "./" } });
-  })());
-});
-// Tapping the notification opens Scales, or brings it forward if it is already open.
-self.addEventListener("notificationclick", e => {
-  e.notification.close();
-  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(cs => {
-    for (const c of cs) if ("focus" in c) return c.focus();
-    return self.clients.openWindow("./");
-  }));
-});
