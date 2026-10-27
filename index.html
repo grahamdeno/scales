@@ -147,7 +147,9 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .card .mid.under { margin-top:18px; }
 .card .mid.under > :first-child { margin-top:0; }
 .card.peek { justify-content:flex-start; }
-.card > .thought, .card > .foldhint, .card > .phase { flex:none; }
+#scrollHint { flex:none; margin:10px 0 0; position:static; }
+/* Only on the line screens, where a long principle folds; at rest it shrinks to the space and scrolls (1.69.0). */
+.card.push > .thought, .card.reflect > .thought, .card.peek > .thought, .card > .foldhint, .card > .phase { flex:none; }
 .aside { font-size:0.7647rem; color:var(--faint); margin-top:-10px; }
 /* The AI line: the subject of the push and reflect screens. */
 .lineWrap { position:relative; flex:none; padding-top:20px; border-top:1px solid var(--line); -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
@@ -1886,6 +1888,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     }
     v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current principle" aria-describedby="cardHow">' + words + how + "</article>" +
       holdHtml(restCaption()) + (coachOn ? coachHtml() : "");
+    // A principle too long for the screen scrolls; a quiet hint says so until the end is reached (1.69.0).
+    requestAnimationFrame(function () {
+      var w = $("words"); if (!w || w.scrollHeight <= w.clientHeight + 2) return;
+      var h = document.createElement("small"); h.className = "foldhint"; h.id = "scrollHint"; h.setAttribute("aria-hidden", "true"); h.textContent = "Scroll for more";
+      w.insertAdjacentElement("afterend", h);
+      w.addEventListener("scroll", function () { if (w.scrollTop + w.clientHeight >= w.scrollHeight - 4) { var x = $("scrollHint"); if (x) x.remove(); } });
+    });
     if (coachOn) {
       $("coachOk").onclick = function () { coachSeen(); };
       $("coach").onclick = function (e) { if (e.target === $("coach")) coachSeen(); };
@@ -2276,8 +2285,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function paintTop(phase) {
     var el = $("todayLbl");
     el.className = "date"; el.removeAttribute("aria-label");
-    var dc = deckColl();
-    el.innerHTML = dc ? esc(dc) : '<span class="sr">Scales</span>';
+    // 1.69.0: the same number as the Home Screen badge, said in words, so the badge explains itself.
+    var dc = deckColl(), s = badgeState(), n = s ? C.badgeFrom(s, new Date()) : 0, parts = [];
+    if (dc) parts.push(esc(dc));
+    if (n && phase === "set") parts.push(n + " left today");
+    el.innerHTML = parts.length ? parts.join(" \u00b7 ") : '<span class="sr">Scales</span>';
   }
   // The welcome (1.47.0): what Scales is, a starter deck or your own principle, then the hold, once.
   var welcomeStep = 0;

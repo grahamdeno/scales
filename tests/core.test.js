@@ -747,7 +747,7 @@ test("touch targets: a hold area, not a small ring; buttons a thumb can hit (1.3
   const html = read("index.html");
   assert.match(html, /class="btn3d" id="reflUndo">Undo<\/button><button type="button" class="primary" id="reflNext">Next principle/, "Undo sits beside Next");
   assert.doesNotMatch(html, /id="setBar"/, "no progress line at the top (1.62.0)");
-  assert.match(html, /el\.innerHTML = dc \? esc\(dc\) : '<span class="sr">Scales<\/span>';/, "the deck heading is never empty");
+  assert.match(html, /el\.innerHTML = parts\.length \? parts\.join\(" \\u00b7 "\) : '<span class="sr">Scales<\/span>';/, "the deck heading is never empty");
 });
 // ---------- 1.31.0: a thinker weighs in, and Talk it through ----------
 test("the voices: five built in, none living; added names living by default (Story 12, 1.60.0)", () => {
