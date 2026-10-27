@@ -1202,7 +1202,7 @@ test("a new deck opens on the welcome; an existing one never does; + opens Captu
   assert.match(html, /if \(!prefs\.welcoming && all\(\)\.length\) \{ prefs\.onboarded = true; savePrefs\(\); \}/, "someone with principles skips the welcome");
   assert.match(html, /function renderWelcome\(\)/);
   assert.match(html, /Best as an app: in Safari, tap Share, then Add to Home Screen/);
-  assert.match(html, /\$\("wDone"\)\.onclick = function \(\) \{ prefs\.onboarded = true;/);
+  assert.match(html, /var finish = function \(\) \{\s*prefs\.onboarded = true;/); assert.match(html, /\$\("wDone"\)\.onclick = finish;/);
   assert.match(html, /var b = e\.target\.closest && e\.target\.closest\("\[data-starter\]"\)/, "starter decks work from the welcome too");
   assert.match(html, /id="addTop" aria-label="Capture a principle"/);
   assert.match(html, /\$\("addTop"\)\.onclick = function \(\) \{ closeMenu\(\); openCapture\(\); \};/);
@@ -1246,7 +1246,7 @@ test("a backup is asked for weekly once the deck has something in it", () => {
 test("the backup reminder shows on Done for today and in the Ledger, not on the deck", () => {
   const html = read("index.html");
   assert.match(html, /id="ledgerBk"/);
-  assert.match(html, /id="keepGoing">Keep going<\/button><\/div>' \+ backupHtml\(\)/);
+  assert.match(html, /id="keepGoing">Keep going<\/button><\/div>' \+ \(remindOffer\(\) \? remindOfferHtml\(\) : backupHtml\(\)\)/);
   assert.match(html, /prefs\.last_backup = new Date\(\)\.toISOString\(\)/);
 });
 
@@ -1381,4 +1381,12 @@ test("the AI server fixes the model and limits and only takes same-origin text m
   assert.equal(seen[0].body.max_tokens, 1024);
   assert.equal(seen[0].key, "sk-ant-server");
   assert.equal((await mod.onRequestPost({ env: {}, request: new Request("https://scales.tangomike.app/api/ai", { method: "POST", headers: { Origin: "https://scales.tangomike.app" }, body: "{}" }) })).status, 503);
+});
+
+// ---------- 1.65.0: first run for the iPhone app ----------
+test("first run: no Home Screen note in the app, a buttons choice, AI asked after the welcome, a reminder offered once", () => {
+  const html = read("index.html");
+  assert.match(html, /function standalone\(\) \{ return !!\(NATIVE \|\| navigator\.standalone/);
+  assert.match(html, /id="wButtons">Use buttons instead of press and hold</);
+  assert.match(html, /function remindOffer\(\) \{ return NATIVE && !prefs\.remind_on && !prefs\.remind_offered; \}/);
 });
