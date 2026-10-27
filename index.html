@@ -911,6 +911,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         <li>Press and hold a principle to edit it, or a quote to keep it as a principle of its own.</li>
       </ul>
     </details>
+    <a class="setrow linkrow" id="feedbackLink" href="mailto:support@tangomike.app"><span>Send feedback<small>An email to the developer, with your version filled in</small></span><span class="chev" aria-hidden="true">›</span></a>
     <a class="setrow linkrow" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support<small>Questions and problems</small></span><span class="chev" aria-hidden="true">›</span></a>
     <a class="setrow linkrow" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy<small id="privacyNote">Your principles stay on this phone</small></span><span class="chev" aria-hidden="true">›</span></a>
     <div class="setrow stack aboutbox">
@@ -1290,6 +1291,21 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // At rest nothing is shown; both lines are fetched in the background for the principle on screen and
   // the one queued next, so they are ready the moment they are needed. Without a key, or when the
   // model cannot supply a usable line, a built-in line is shown and nothing is kept.
+  // Questions to sit with (1.70.0), shown on Sit with it when no quote fits. One per principle per day.
+  var SIT_QUESTIONS = [
+    "Where would this have changed something yesterday?",
+    "What would living this look like before noon today?",
+    "Who would notice if you lived this?",
+    "What makes this hard to live right now?",
+    "When did you last see someone live this well?",
+    "What is the smallest way to act on this today?",
+    "What would you stop doing if you lived this?"
+  ];
+  function sitQuestion(t) {
+    var key = String((t && t.id) || "") + today(), h = 0;
+    for (var i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+    return SIT_QUESTIONS[h % SIT_QUESTIONS.length];
+  }
   function fallbackLine(t) {
     var arr = FALLBACK[tier(t.skip_count)], used = t.recent_lines || [];
     var opts = arr.filter(function (l) { return used.indexOf(l) < 0; });
@@ -1422,8 +1438,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       paintLine();
     }
     // The reflect screen: the kept quote, nothing when none fit, or a quiet placeholder while it is found.
+    // 1.70.0: when no quote fits, a question to sit with takes its place, so the screen is never empty.
     function putQuote(l) {
-      shown = l && l.text ? { kind: kind, text: l.text, ai: true, quote: true, author: l.author, src: l.src, page: l.page } : { kind: kind, none: true };
+      shown = l && l.text ? { kind: kind, text: l.text, ai: true, quote: true, author: l.author, src: l.src, page: l.page } : { kind: kind, text: sitQuestion(t), ai: false };
       paintLine();
     }
     if (kind === "reflect") {
@@ -2296,6 +2313,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function standalone() { return !!(NATIVE || navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches)); }
   function renderWelcome() {
     var v = $("v-deck"), step = all().length ? 2 : welcomeStep;
+    // 1.70.0: no + or menu during the welcome, so a new user cannot leave it halfway.
+    $("addTop").hidden = true; $("menuBtn").hidden = true;
     if (step === 0) {
       v.innerHTML = '<div class="welcome"><h1>Scales</h1>' +
         "<p>Write down the principles you want to live by. Scales shows you one at a time, and keeps showing it until you live it without being reminded.</p>" +
@@ -2316,6 +2335,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         '<button type="button" class="linkbtn wbuttons" id="wButtons">Use buttons instead of press and hold</button></div></div>';
       // 1.65.0: the AI question comes right after the welcome, where it has a reason, not on a later launch.
       var finish = function () {
+        $("addTop").hidden = false; $("menuBtn").hidden = false;
         prefs.onboarded = true; prefs.welcoming = false; prefs.coach_seen = true; savePrefs(); showNext();
         if ((savedKey || PROXY) && prefs.ai_consent === undefined) setTimeout(function () { if (!openSheet) askConsent(); }, 400);
       };
@@ -2412,7 +2432,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       return '<div><i class="' + (TL_DOT[e.kind] || "") + '"></i>' + esc(clip(e.text, 120)) + "<span>" + esc(f(e.at)) + "</span></div>";
     }).join("");
     var b = [];
-    if (!lived) b.push('<button type="button" class="btn3d raised" data-r="show">Show</button>', '<button type="button" class="btn3d raised" data-r="caught">Caught it</button>');
+    if (!lived) b.push('<button type="button" class="btn3d raised" data-r="show">Open on deck</button>', '<button type="button" class="btn3d raised" data-r="caught">Caught it</button>');
     b.push('<button type="button" class="btn3d raised" data-r="edit">Edit</button>');
     if (lived) b.push('<button type="button" class="btn3d raised" data-r="ev">' + (t.evidence ? "Evidence" : "Add evidence") + "</button>");
     if (l) b.push('<button type="button" class="btn3d raised" data-r="keep">Keep line</button>');
@@ -3011,6 +3031,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   applyLook();
   resetScroll();
   $("versionText").textContent = "Version " + C.VERSION + ", built " + fmtDate(C.BUILT + "T12:00:00") + ".";
+  // 1.70.0: feedback by email, with the version and where Scales runs filled in.
+  $("feedbackLink").href = "mailto:support@tangomike.app?subject=" + encodeURIComponent("Scales feedback (" + C.VERSION + ")") +
+    "&body=" + encodeURIComponent("\n\n\nScales " + C.VERSION + (NATIVE ? ", iPhone app" : standalone() ? ", Home Screen" : ", browser") + "\n");
   $("mVer").textContent = C.VERSION;
   showNext();
 

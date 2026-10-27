@@ -155,3 +155,14 @@ test("a long principle stays between the top and the hold, and the top says how 
   }
   assert.match(await page.textContent("#todayLbl"), /3 left today/);
 });
+
+test("the welcome hides + and the menu; Sit with it shows a question when no quote fits", async () => {
+  let page = await open();
+  assert.equal(await page.$eval("#addTop", (e) => e.hidden), true);
+  assert.equal(await page.$eval("#menuBtn", (e) => e.hidden), true);
+  page = await open({ prefs: ready, thoughts: { a: P("a", "One.") } });
+  assert.equal(await page.$eval("#menuBtn", (e) => e.hidden), false);
+  await hold(page); await page.click('#choices [data-pick="keep"]');
+  assert.ok(await until(page, async () => ((await page.textContent("#aiLine").catch(() => "")) || "").endsWith("?")), "a question to sit with");
+  assert.match(await page.getAttribute("#feedbackLink", "href"), /^mailto:support@tangomike\.app\?subject=Scales%20feedback/);
+});
