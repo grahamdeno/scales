@@ -709,7 +709,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <li>the quotes it is choosing between</li>
     <li>what you write in Talk it through</li>
   </ul>
-  <p class="note">Nothing else leaves your phone. Without AI, Scales uses questions written into the app. You can change this anytime in Settings &gt; Advanced.</p>
+  <p class="note">Nothing else leaves your phone. Without AI, Scales uses questions written into the app. You can change this anytime in Settings &gt; Your deck.</p>
   <div class="sheet-foot"><button class="primary" type="button" id="consentYes">Allow AI</button></div>
 </dialog>
 
@@ -1465,7 +1465,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     // Quotes credit Wikiquote (1.49.0), whose text is CC BY-SA 4.0, with a link to the voice's page.
     if (src) src.innerHTML = l.pending ? "" : l.quote ? esc(l.author + (l.src ? ", " + l.src : "")) +
       ' <span aria-hidden="true">·</span> <a href="https://en.wikiquote.org/wiki/' + encodeURIComponent(String(l.page || l.author).replace(/ /g, "_")) + '" target="_blank" rel="noopener">Wikiquote</a>'
-      : esc(l.ai ? "Considered for you" : "A question to sit with");
+      : esc(l.ai ? "Written by AI" : "A question to sit with");
     paintReplies();
   }
   // Under the line: your last reply on this principle, as a bubble, and a Reply button (1.40.0).
@@ -1890,7 +1890,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       holdHtml(restCaption()) + (coachOn ? coachHtml() : "");
     // A principle too long for the screen scrolls; a quiet hint says so until the end is reached (1.69.0).
     requestAnimationFrame(function () {
-      var w = $("words"); if (!w || w.scrollHeight <= w.clientHeight + 2) return;
+      var w = $("words"); if (!w || w.scrollHeight <= w.clientHeight + 12) return; // glyphs overhang the tight line height by a few pixels
       var h = document.createElement("small"); h.className = "foldhint"; h.id = "scrollHint"; h.setAttribute("aria-hidden", "true"); h.textContent = "Scroll for more";
       w.insertAdjacentElement("afterend", h);
       w.addEventListener("scroll", function () { if (w.scrollTop + w.clientHeight >= w.scrollHeight - 4) { var x = $("scrollHint"); if (x) x.remove(); } });
@@ -3102,7 +3102,12 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
     return Promise.resolve(done());
   }
-  function backupDue() { return C.needsBackup(all().length, prefs.last_backup, prefs.backup_snooze); }
+  // 1.69.1: no backup reminder in someone's first three days; a starter deck alone is not worth nagging about.
+  function backupDue() {
+    var first = all().reduce(function (m, t) { var d = Date.parse(t.created_at) || Date.now(); return Math.min(m, d); }, Date.now());
+    if (!prefs.last_backup && Date.now() - first < 3 * 86400000) return false;
+    return C.needsBackup(all().length, prefs.last_backup, prefs.backup_snooze);
+  }
   function paintBackup() {
     var s = $("syncText"); if (s) s.textContent = (prefs.last_backup ? "Last backup " + C.backupAgo(prefs.last_backup) : "Not backed up yet") + ". One file, for iCloud Drive";
   }
