@@ -4,7 +4,7 @@
 // so updates show up the next time the app opens.
 
 // Bump this name whenever cached files change so phones drop the old copy.
-const CACHE = "scales-v1.62.0";
+const CACHE = "scales-v1.62.1";
 // Reminders (1.51.0): the app writes the badge state here; it survives version changes.
 const STATE = "scales-state";
 try { importScripts("core.js"); } catch (_) {}
