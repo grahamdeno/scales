@@ -750,19 +750,20 @@ test("touch targets: a hold area, not a small ring; buttons a thumb can hit (1.3
   assert.match(html, /el\.innerHTML = dc \? esc\(dc\) : '<span class="sr">Scales<\/span>';/, "the deck heading is never empty");
 });
 // ---------- 1.31.0: a thinker weighs in, and Talk it through ----------
-test("the voices: eight built in, living ones in the third person, added names living by default (Story 12)", () => {
-  assert.deepEqual(C.VOICES.map((v) => v.id), ["jung", "nietzsche", "dostoevsky", "epictetus", "marcus", "perel", "peterson", "goggins"]);
-  assert.deepEqual(C.VOICES.filter((v) => v.living).map((v) => v.id), ["perel", "peterson", "goggins"]);
+test("the voices: five built in, none living; added names living by default (Story 12, 1.60.0)", () => {
+  assert.deepEqual(C.VOICES.map((v) => v.id), ["jung", "nietzsche", "dostoevsky", "epictetus", "marcus"]);
+  assert.deepEqual(C.VOICES.filter((v) => v.living).map((v) => v.id), []);
   const all = C.allVoices([{ name: "  Viktor   Frankl " }, { name: "Seneca", first: true }, { name: " " }]);
-  assert.equal(all.length, 10);
-  assert.deepEqual(all.slice(8).map((v) => [v.id, v.name, v.living]), [["c:viktor frankl", "Viktor Frankl", true], ["c:seneca", "Seneca", false]]);
-  assert.equal(C.chosenVoices(undefined, [{ name: "Seneca" }]).length, 8, "by default every built-in voice, none added");
-  assert.deepEqual(C.chosenVoices(["goggins", "c:seneca", "jung"], [{ name: "Seneca" }]).map((v) => v.id), ["jung", "goggins", "c:seneca"]);
+  assert.equal(all.length, 7);
+  assert.deepEqual(all.slice(5).map((v) => [v.id, v.name, v.living]), [["c:viktor frankl", "Viktor Frankl", true], ["c:seneca", "Seneca", false]]);
+  assert.equal(C.chosenVoices(undefined, [{ name: "Seneca" }]).length, 5, "by default every built-in voice, none added");
+  assert.deepEqual(C.chosenVoices(["marcus", "c:seneca", "jung"], [{ name: "Seneca" }]).map((v) => v.id), ["jung", "marcus", "c:seneca"]);
   assert.equal(C.chosenVoices([], []).length, 0);
+  assert.deepEqual(C.chosenVoices(["perel", "goggins"], []).map((v) => v.id), ["jung", "nietzsche", "dostoevsky", "epictetus", "marcus"], "only removed voices chosen: back to the built-ins");
 });
 
 test("one voice a day, rotating in order, changing with the Scales day (Story 12)", () => {
-  const vs = C.chosenVoices(["jung", "nietzsche", "goggins"]);
+  const vs = C.chosenVoices(["jung", "nietzsche", "marcus"]);
   const seq = ["2026-10-17", "2026-10-18", "2026-10-19", "2026-10-20"].map((d) => C.voiceOfDay(vs, d).id);
   assert.equal(new Set(seq.slice(0, 3)).size, 3, "three days, three voices");
   assert.equal(seq[3], seq[0], "then it comes round again");
@@ -773,13 +774,13 @@ test("one voice a day, rotating in order, changing with the Scales day (Story 12
 
 test("first person for thinkers who have died, third person for the living, never a quotation (Story 12)", () => {
   const t = { text: "Discipline is choosing what my future self needs.", skip_count: 2 };
-  const n = C.VOICES.find((v) => v.id === "nietzsche"), g = C.VOICES.find((v) => v.id === "goggins");
+  const n = C.VOICES.find((v) => v.id === "nietzsche"), g = C.allVoices([{ name: "Jane Example" }]).find((v) => v.custom);
   assert.equal(C.voiceLabel(n), "In the spirit of Nietzsche, written by AI");
-  assert.equal(C.voiceLabel(g), "Through Goggins's lens, written by AI");
+  assert.equal(C.voiceLabel(g), "Through Example's lens, written by AI");
   const pn = C.weighPrompt(n, t, "skip", 27), pg = C.weighPrompt(g, t, "skip", 27);
   assert.match(pn, /Speak in the first person as Friedrich Nietzsche/);
-  assert.match(pg, /Write in the third person about how David Goggins would see this/);
-  assert.match(pg, /Never write as Goggins speaking, and never invent a quotation/);
+  assert.match(pg, /Write in the third person about how Jane Example would see this/);
+  assert.match(pg, /Never write as Example speaking, and never invent a quotation/);
   for (const p of [pn, pg]) {
     assert.match(p, /Move: Skip/);
     assert.match(p, new RegExp(C.MAX_WORDS + " words or fewer"));
@@ -789,7 +790,7 @@ test("first person for thinkers who have died, third person for the living, neve
 });
 
 test("Talk it through: the request carries the line and turns, replies are checked, six replies at most (Story 13)", () => {
-  const g = C.VOICES.find((v) => v.id === "goggins"), t = { text: "P", skip_count: 1 };
+  const g = C.allVoices([{ name: "Jane Example" }]).find((v) => v.custom), t = { text: "P", skip_count: 1 };
   const talk = { move: "keep", line: "The line.", turns: [{ me: true, text: "Why?" }, { me: false, text: "Because." }, { me: true, text: "And?" }] };
   const r = C.talkRequest(g, t, talk);
   assert.match(r.system, /third person/);
