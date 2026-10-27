@@ -1335,3 +1335,9 @@ test("a principle back from Later opens with its quote and counts nothing until 
   assert.match(html, /if \(returned\(\)\) \{/);
   assert.match(html, /Counted as Sit with it\./);
 });
+
+// ---------- 1.56.1: the fold hint only when cut off ----------
+test("Tap to read it all shows only when the principle is cut off", () => {
+  const html = read("index.html");
+  assert.match(html, /if \(w\.scrollHeight <= w\.clientHeight \+ 1\) \{ w\.classList\.remove\("fold"\);/);
+});
