@@ -143,3 +143,14 @@ test("Undo goes away after eight seconds", async () => {
   await page.clock.runFor(8500);
   assert.equal(await page.$("#toastUndo"), null, "and gone");
 });
+
+test("a long principle stays between the top and the hold, and the top says how many are left", async () => {
+  const long = Array.from({ length: 6 }, (_, i) => "Part " + (i + 1) + "\nA line long enough to wrap across the screen more than once, so the whole principle is tall.").join("\n\n");
+  const page = await open({ prefs: ready, thoughts: { a: P("a", long), b: P("b", "Two."), c: P("c", "Three.") } });
+  await page.clock.runFor(300);
+  const box = await page.evaluate(() => { const b = (id) => document.getElementById(id).getBoundingClientRect(); return { words: b("words"), card: b("card") }; });
+  if ((await words(page)).startsWith("Part")) {
+    assert.ok(box.words.top >= box.card.top - 1 && box.words.bottom <= box.card.bottom + 1, "the principle fits inside its area");
+  }
+  assert.match(await page.textContent("#todayLbl"), /3 left today/);
+});
