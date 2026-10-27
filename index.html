@@ -1384,7 +1384,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
   // Draw the line on screen. 'pending' dims the placeholder while a model line is on the way.
   // A quote shows its author and work; when no quote fit, the line's place is left empty.
+  // 1.56.1: the fold and its hint stay only when the principle is actually cut off.
+  function trimFold() {
+    var w = document.querySelector("#words.fold"); if (!w) return;
+    if (w.scrollHeight <= w.clientHeight + 1) { w.classList.remove("fold"); var h = $("foldHint"); if (h) h.remove(); }
+  }
   function paintLine() {
+    trimFold(); requestAnimationFrame(trimFold);
     var el = $("aiLine"); if (!el) return;
     var l = shown, wrap = el.parentNode;
     if (wrap) wrap.hidden = !!(l && l.none);
