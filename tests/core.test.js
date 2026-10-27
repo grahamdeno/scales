@@ -1333,3 +1333,10 @@ test("nothing is sent to AI until the user allows it", () => {
   assert.match(html, /sample = aiAllowed\(\) \? makeSampler\(savedKey\) : null;/);
   assert.doesNotMatch(html, /sample = prefs\.ai_off \? null : makeSampler/);
 });
+
+// ---------- 1.59.0: lines only for the principle on screen ----------
+test("lines are written for the principle on screen only, not the next one", () => {
+  const html = read("index.html");
+  assert.doesNotMatch(html, /if \(n && n\.id !== current\) ensureLines\(n\);/);
+  assert.match(html, /function requestLine\(t\) \{ shown = null; ensureLines\(t\); prefetchNext\(\); \}/);
+});
