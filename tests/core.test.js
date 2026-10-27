@@ -1353,3 +1353,10 @@ test("inside the iPhone app, Scales hands the badge and a week of reminders to t
   for (const t of ["ready", "schedule", "unschedule", "badge"]) assert.match(swift, new RegExp('case "' + t + '"'));
   assert.match(fs.readFileSync(path.join(__dirname, "..", "ios", "project.yml"), "utf8"), /PRODUCT_BUNDLE_IDENTIFIER: com\.grahamdeno\.scales/);
 });
+
+// ---------- 1.63.0: the old address says Scales has moved ----------
+test("the old GitHub Pages address points to the new home and offers a backup", () => {
+  const html = read("index.html");
+  assert.match(html, /if \(location\.hostname === "grahamdeno\.github\.io"\)/);
+  assert.match(html, /Scales has moved to the iPhone app and scales\.tangomike\.app\/app\./);
+});
