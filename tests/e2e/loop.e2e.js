@@ -178,7 +178,8 @@ test("Reply: without AI the reply is kept; with AI today's voice answers in the 
   const answer = "Then say it before the meeting starts. What are you protecting by waiting?";
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
   await ctx.route(/^https?:\/\/(?!localhost)/, (r) => /api\.anthropic\.com/.test(r.request().url())
-    ? r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ content: [{ type: "text", text: answer }], stop_reason: "end_turn" }) })
+    // The voice's answer only for the thread; the line on screen gets a different text, so the two are never confused.
+    ? r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ content: [{ type: "text", text: /They are replying/.test(r.request().postData() || "") ? answer : "Where would saying it early have changed yesterday?" }], stop_reason: "end_turn" }) })
     : r.abort());
   page = await ctx.newPage();
   await page.clock.install({ time: new Date(2026, 9, 27, 9, 0) });
@@ -191,7 +192,7 @@ test("Reply: without AI the reply is kept; with AI today's voice answers in the 
   await page.click("#replyBtn");
   assert.match(await page.textContent("#replyNote"), /answers\./);
   await page.fill("#replyInput", "In the meeting."); await page.click("#replyDone");
-  assert.ok(await until(page, async () => ((await page.textContent("#talkLog").catch(() => "")) || "").includes(answer)), "the voice answered");
+  assert.ok(await until(page, async () => (await page.$$eval("#talkLog .bub.them", (b) => b.map((x) => x.textContent)).catch(() => [])).some((x) => x.includes(answer))), "the voice answered");
   const t = (await saved(page)).a;
   assert.equal(t.talks.length, 1); assert.equal(t.talks[0].reply, true);
   assert.deepEqual(t.talks[0].turns.map((x) => x.me), [true, false]);
