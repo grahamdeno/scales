@@ -487,6 +487,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 .done .choice { margin-top:12px; }
 .done .primary { margin-top:20px; }
 .optp { font-weight:500 !important; font-size:0.8824rem !important; }
+.plusprice { margin:14px 0 0; font-size:var(--t-md); color:var(--ink); }
+.pluslinks { display:flex; flex-wrap:wrap; justify-content:center; gap:0 4px; margin-top:4px; }
+.pluslinks .linkbtn { padding:0 8px; }
+.pluslinks a.linkbtn { display:inline-flex; align-items:center; text-decoration:none; }
 .linkbtn { align-self:center; min-height:44px; padding:0 14px; margin-top:6px; font-size:var(--t-sm); color:var(--muted); }
 .focus { padding:0; border:0 !important; background:none !important; }
 .focus .k, .ask .k { font-size:var(--t-xs); font-weight:500; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
@@ -708,6 +712,23 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <div class="sheet-foot"><button class="primary" type="button" id="consentYes">Allow AI</button></div>
 </dialog>
 
+<!-- Scales Plus (1.72.0): what it adds, the price from the App Store, and the terms Apple asks to be shown. -->
+<dialog class="sheet" id="sheetPlus" aria-modal="true" aria-labelledby="sheetPlusTitle">
+  <div class="grabber" aria-hidden="true"></div>
+  <h2><span id="sheetPlusTitle">Scales Plus</span> <button type="button" data-close>Close</button></h2>
+  <ul class="consentlist">
+    <li>A question written for each principle</li>
+    <li>The quote from today’s voice that fits it best</li>
+    <li>Today’s voice answers when you reply</li>
+  </ul>
+  <p class="note">Free keeps the full deck, the Ledger, quotes, reminders and backups.</p>
+  <p class="plusprice" id="plusPrice"></p>
+  <div class="sheet-foot"><button class="primary" type="button" id="plusBuy">Start free trial</button></div>
+  <p class="note" id="plusTerms">Renews automatically each year until you cancel. Cancel anytime in iPhone Settings &gt; your name &gt; Subscriptions, at least a day before the trial or year ends.</p>
+  <div class="pluslinks"><button type="button" class="linkbtn" id="plusRestore">Restore purchase</button><button type="button" class="linkbtn" id="plusManage" hidden>Manage subscription</button>
+    <a class="linkbtn" href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener">Terms of Use</a><a class="linkbtn" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener">Privacy</a></div>
+</dialog>
+
 <dialog class="sheet replysheet" id="sheetReply" aria-modal="true" aria-labelledby="sheetReplyTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><button type="button" data-close class="rcancel">Cancel</button><span id="sheetReplyTitle">Reply</span><button type="button" id="replyDone" class="rdone" disabled>Done</button></h2>
@@ -892,6 +913,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <div class="sd"><button class="btn3d raised" type="button" data-starter="stoic">Stoic</button><button class="btn3d raised" type="button" data-starter="leadership">Leadership</button><button class="btn3d raised" type="button" data-starter="athletic">Athletic mindset</button><button class="btn3d raised" type="button" data-starter="overcoming">Self-overcoming</button></div>
   </div>
 
+  <div id="plusGroup" hidden>
+  <h3 class="sec2">Scales Plus</h3>
+  <div class="panel raised">
+    <button type="button" class="setrow" id="openPlus" style="width:100%;text-align:left;color:inherit"><span>Scales Plus<small id="plusStatus">AI questions, the best quote, and answers when you reply</small></span><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;flex:none"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+  </div>
+
   <h3 class="sec2">Help</h3>
   <div class="panel raised">
     <details class="adv inner helpbox">
@@ -900,7 +928,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         <li>One principle at a time. Tap it to see the question Scales has for it.</li>
         <li>Press and hold the bottom of the screen for your choices: <b>Living it</b>, <b>Sit with it</b> or <b>Skip</b>. Slide onto one, or let go and tap one.</li>
         <li><b>Sit with it</b> shows a real quote from today’s voice. After eight seconds it counts, and the principle gets lighter.</li>
-        <li><b>Reply</b> to any line to keep what came up. With AI on, today’s voice answers, and you can go back and forth.</li>
+        <li><b>Reply</b> to any line to keep what came up. With Scales Plus, today’s voice answers, and you can go back and forth.</li>
         <li id="howRest"><b>Skip</b> rests a principle for a few days. It comes back first, set heavier, until you live it.</li>
         <li><b>Later</b> saves a principle for this evening, after 6 PM.</li>
         <li><b>Living it</b> moves it to your record in the Ledger, with where it showed up.</li>
@@ -1059,7 +1087,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     }
     toNative({ type: "schedule", items: items });
   }
-  window.scalesActive = function () { paintBadge(); };
+  window.scalesActive = function () { paintBadge(); toNative({ type: "plus" }); };
   window.scalesPermission = function (state) { prefs.remind_perm = state; savePrefs(); if (openSheet && openSheet.id === "sheetSettings") paintReminders(); };
   function paintBadge() {
     var s = badgeState(); if (!s) return;
@@ -1197,12 +1225,16 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // AI through Scales' own server (1.64.0): at scales.tangomike.app the app posts to /api/ai, which holds the
   // Anthropic key, so nobody pastes one. Anywhere else (the old GitHub Pages address) a saved key still works.
   var PROXY = location.hostname === "scales.tangomike.app" ? "/api/ai" : null;
+  // Scales Plus (1.72.0): the iPhone app sends where the subscription stands (window.scalesStore). The server
+  // answers only requests that carry the App Store's signed record of it, so without Plus there is no server AI.
+  var plus = { active: false }, plusBusy = false;
+  function plusOn() { return !!(plus.active && plus.jws && (!plus.expires || plus.expires > Date.now())); }
   function makeSampler(key) {
-    if (!PROXY && !key) return null;
+    if (PROXY ? !plusOn() : !key) return null;
     // prompt is one user message, or { system, messages } for Talk it through.
     return function (prompt) {
       var req = typeof prompt === "string" ? { messages: [{ role: "user", content: prompt }] } : prompt;
-      var call = PROXY ? fetch(PROXY, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(req) })
+      var call = PROXY ? fetch(PROXY, { method: "POST", headers: { "content-type": "application/json", "X-Scales-Plus": plus.jws }, body: JSON.stringify(req) })
         : fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
           headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
@@ -1215,6 +1247,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
           var e = new Error((j && j.error && j.error.message) || ("HTTP " + r.status));
           e.status = r.status;
           if (!PROXY && (r.status === 401 || r.status === 403)) e.code = "not_granted";
+          if (PROXY && r.status === 402 && NATIVE) toNative({ type: "plus" }); // the record may be stale; ask for it again
           throw e;
         });
       }).then(function (j) {
@@ -1225,7 +1258,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
   // Updates the dot and label in Settings to show whether model lines are on.
   function setAiStatus() {
-    $("aiText").textContent = prefs.ai_off ? "AI lines: off. Built-in questions are shown." : prefs.ai_consent !== true ? "AI lines: off until you allow AI." : sample ? (PROXY ? "AI lines: on" : "AI lines: on (your key)") : "AI lines: built-in (no key)";
+    $("aiText").textContent = prefs.ai_off ? "AI lines: off. Built-in questions are shown." : prefs.ai_consent !== true ? "AI lines: off until you allow AI." : sample ? (PROXY ? "AI lines: on" : "AI lines: on (your key)") : PROXY ? "AI lines: need Scales Plus" : "AI lines: built-in (no key)";
   }
   function all() { return Object.keys(thoughts).map(function (k) { return thoughts[k]; }); }
   // Thoughts still in the deck (not shed).
@@ -2325,7 +2358,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       var finish = function () {
         $("addTop").hidden = false; $("menuBtn").hidden = false;
         prefs.onboarded = true; prefs.welcoming = false; prefs.coach_seen = true; savePrefs(); showNext();
-        if ((savedKey || PROXY) && prefs.ai_consent === undefined) setTimeout(function () { if (!openSheet) askConsent(); }, 400);
+        if ((savedKey || plusOn()) && prefs.ai_consent === undefined) setTimeout(function () { if (!openSheet) askConsent(); }, 400);
       };
       $("wDone").onclick = finish;
       $("wButtons").onclick = function () { prefs.tap_moves = true; finish(); };
@@ -2884,7 +2917,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   $("remindPm").onchange = function () { if (this.value) { prefs.remind_pm = this.value; savePrefs(); } };
   function paintAiBox() {
     $("keyBox").hidden = !!PROXY; $("aiServer").hidden = !PROXY; $("installNote").hidden = standalone();
-    if (PROXY) { $("aiSub").textContent = "Through Scales' server; nothing is kept"; $("aiText").hidden = false; }
+    if (PROXY) {
+      $("aiSub").textContent = plusOn() ? "Scales Plus, through Scales' server; nothing is kept" : NATIVE ? "Part of Scales Plus" : "Part of Scales Plus, in the iPhone app";
+      $("aiText").hidden = false;
+    }
+    paintPlus();
   }
   function openSettings() { paintBackup(); paintReminders(); paintAiBox(); paintSettings(); paintVoices(); show("sheetSettings", function () { if ($("v-ledger").hidden) { renderDeck(); } }); }
   // Settings controls (1.30.0): look, Show where it came from, rest after Not today, AI lines on or off.
@@ -2893,7 +2930,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     paintCollCount();
     $("whereToggle").setAttribute("aria-checked", String(showWhere()));
     $("tapToggle").setAttribute("aria-checked", String(tapMoves()));
-    $("aiToggle").setAttribute("aria-checked", String(aiAllowed()));
+    $("aiToggle").setAttribute("aria-checked", String(aiAllowed() && (!PROXY || plusOn())));
     $("restOut").textContent = n + (n === 1 ? " day" : " days");
     $("restDown").disabled = n <= C.REST_MIN; $("restUp").disabled = n >= C.REST_MAX;
     var z = setSize(); $("setOut").textContent = z; $("setDown").disabled = z <= C.SET_MIN; $("setUp").disabled = z >= C.SET_MAX;
@@ -2915,8 +2952,47 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // in Safari, whose storage is separate from the Home Screen app, so it is not offered.
   $("openShortcuts").onclick = function () { location.href = "shortcuts://"; };
   $("aiToggle").onclick = function () {
+    if (PROXY && !plusOn()) { if (NATIVE) openPlus(); return; }
     if (prefs.ai_consent !== true) { askConsent(); return; }
     prefs.ai_off = !prefs.ai_off; savePrefs(); applyKey(); paintSettings();
+  };
+
+  // ---------- Scales Plus (1.72.0) ----------
+  function longDate(ms) { return new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
+  function paintPlus() {
+    $("plusGroup").hidden = !(NATIVE && PROXY);
+    var on = plusOn(), days = plus.trialDays, when = plus.expires ? longDate(plus.expires) : "";
+    $("plusStatus").textContent = on ? (plus.trial ? "Free trial" : "On") + (when ? (plus.renews === false || plus.trial ? (plus.trial && plus.renews !== false ? " until " : ", ends ") : ", renews ") + when : "")
+      : days ? "Try it free for " + days + " days" : "AI questions, the best quote, and answers when you reply";
+    $("plusPrice").textContent = on ? (plus.trial && when && plus.renews !== false ? "Your free trial runs until " + when + ". Then " + (plus.price || "the yearly price") + " a year."
+      : "Scales Plus is on." + (when ? (plus.renews === false ? " It ends " : " It renews ") + when + "." : ""))
+      : !plus.price ? "Scales Plus is not available yet." : days ? days + " days free, then " + plus.price + " a year." : plus.price + " a year.";
+    $("plusBuy").hidden = on;
+    $("plusBuy").disabled = plusBusy || !plus.price;
+    $("plusBuy").textContent = plusBusy ? "Waiting for the App Store…" : days ? "Start free trial" : "Subscribe";
+    $("plusTerms").hidden = on;
+    $("plusRestore").hidden = on; $("plusManage").hidden = !on;
+  }
+  function openPlus() { paintPlus(); show("sheetPlus"); }
+  $("openPlus").onclick = openPlus;
+  $("plusBuy").onclick = function () { plusBusy = true; paintPlus(); toNative({ type: "purchase" }); };
+  $("plusRestore").onclick = function () { plusBusy = true; paintPlus(); toNative({ type: "restore" }); };
+  $("plusManage").onclick = function () { toNative({ type: "manage" }); };
+  // Where Plus stands, from the iPhone app: on start, on return to the app, and after a purchase or restore.
+  window.scalesStore = function (s) {
+    var was = plusOn();
+    plus = s || { active: false }; plusBusy = false;
+    if (was !== plusOn()) applyKey();
+    paintPlus(); if (openSheet && openSheet.id === "sheetSettings") { paintAiBox(); paintSettings(); }
+    var note = s && s.note;
+    if (note === "bought" || (note === "restored" && plusOn())) {
+      if (openSheet && openSheet.id === "sheetPlus") hide();
+      toast(note === "bought" ? "Scales Plus is on." : "Scales Plus restored.");
+      if (prefs.ai_consent === undefined || (prefs.ai_consent === false && note === "bought")) setTimeout(function () { if (!openSheet) askConsent(); }, 500);
+    } else if (note === "restored") toast("No Scales Plus purchase found for this Apple Account.");
+    else if (note === "pending") toast("Waiting for approval.");
+    else if (note === "failed") toast("The App Store did not finish. Try again.");
+    else if (note === "unavailable") toast("Scales Plus is not available right now.");
   };
 
   // ---------- menu (1.30.0) ----------
@@ -3042,7 +3118,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     show("sheetConsent", function () { if (prefs.ai_consent !== true) { prefs.ai_consent = false; savePrefs(); applyKey(); paintSettings(); } });
   }
   $("consentYes").onclick = function () { prefs.ai_consent = true; prefs.ai_off = false; savePrefs(); hide(); applyKey(); paintSettings(); toast("AI is on."); };
-  if ((savedKey || PROXY) && prefs.ai_consent === undefined && prefs.onboarded) setTimeout(function () { if (!openSheet) askConsent(); }, 900);
+  if (savedKey && prefs.ai_consent === undefined && prefs.onboarded) setTimeout(function () { if (!openSheet) askConsent(); }, 900);
   $("saveKey").onclick = function () {
     var k = $("apiKey").value.trim(); if (!k) return;
     try { localStorage.setItem(LSK, k); } catch (e) {}
@@ -3061,6 +3137,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       if (!st) return "Could not reach Scales' AI server. Check the connection.";
       if (st === 429) return "Too many AI requests right now. Try again in a minute.";
       if (st === 503) return "The AI server is not set up yet.";
+      if (st === 402) return "AI needs Scales Plus.";
       if (st >= 500) return "The AI service is busy. Try again in a few minutes.";
       return "The AI server refused the request (HTTP " + st + ").";
     }

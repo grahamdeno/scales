@@ -1,0 +1,11 @@
+[root]
+basicConstraints = critical,CA:true
+keyUsage = critical,keyCertSign,cRLSign
+[mid]
+basicConstraints = critical,CA:true,pathlen:0
+keyUsage = critical,keyCertSign,cRLSign
+1.2.840.113635.100.6.2.1 = ASN1:NULL
+[leaf]
+basicConstraints = critical,CA:false
+keyUsage = critical,digitalSignature
+1.2.840.113635.100.6.11.1 = ASN1:NULL
