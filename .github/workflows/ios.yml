@@ -16,7 +16,7 @@ jobs:
     env:
       HAS_KEY: ${{ secrets.ASC_KEY_P8 != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Pick Xcode
         run: |
           echo "::notice::Xcodes on this Mac: $(ls -d /Applications/Xcode_*.app | xargs -n1 basename | tr '\n' ' ')"
