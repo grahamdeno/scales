@@ -237,6 +237,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .welcome p b { color:var(--ink); font-weight:500; }
 .welcome .note { font-size:var(--t-sm); }
 .wdecks { display:grid; gap:8px; margin-top:8px; }
+.welcome .wbuttons { display:block; margin:12px auto 0; text-decoration:underline; text-underline-offset:3px; }
 /* Backup reminder (1.50.0), as in The Road: on Done for today and in the Ledger, never on the deck. */
 .bk { margin-top:24px; padding-top:16px; border-top:1px solid var(--line); }
 .bk p { margin:0; font-size:var(--t-sm); line-height:1.45; color:var(--muted); max-width:none; }
@@ -2253,7 +2254,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
   // The welcome (1.47.0): what Scales is, a starter deck or your own principle, then the hold, once.
   var welcomeStep = 0;
-  function standalone() { return !!(navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches)); }
+  function standalone() { return !!(NATIVE || navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches)); }
   function renderWelcome() {
     var v = $("v-deck"), step = all().length ? 2 : welcomeStep;
     if (step === 0) {
@@ -2272,8 +2273,15 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       v.innerHTML = '<div class="welcome"><h1>Press and hold</h1>' +
         "<p>Press and hold the bottom of the screen and your three choices open: <b>Living it</b>, <b>Sit with it</b> and <b>Skip</b>. Slide onto one, or let go and tap one.</p>" +
         "<p>Letting go never chooses by itself. Tap the principle to see the line Scales has for it.</p>" +
-        '<div class="widewrap"><button type="button" class="primary" id="wDone">Got it</button></div></div>';
-      $("wDone").onclick = function () { prefs.onboarded = true; prefs.welcoming = false; prefs.coach_seen = true; savePrefs(); showNext(); };
+        '<div class="widewrap"><button type="button" class="primary" id="wDone">Got it</button>' +
+        '<button type="button" class="linkbtn wbuttons" id="wButtons">Use buttons instead of press and hold</button></div></div>';
+      // 1.65.0: the AI question comes right after the welcome, where it has a reason, not on a later launch.
+      var finish = function () {
+        prefs.onboarded = true; prefs.welcoming = false; prefs.coach_seen = true; savePrefs(); showNext();
+        if ((savedKey || PROXY) && prefs.ai_consent === undefined) setTimeout(function () { if (!openSheet) askConsent(); }, 400);
+      };
+      $("wDone").onclick = finish;
+      $("wButtons").onclick = function () { prefs.tap_moves = true; finish(); };
     }
     paintStat();
   }
@@ -2283,9 +2291,20 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function renderDone(note) {
     var v = $("v-deck");
     v.innerHTML = '<div class="done"><h1>Done for today.</h1><p class="note big">' + esc(note || C.daySummary(day)) + "</p>" +
-      '<div class="widewrap"><button type="button" class="btn3d wide" id="keepGoing">Keep going</button></div>' + backupHtml() + "</div>" + footHtml(footLeft(""));
+      '<div class="widewrap"><button type="button" class="btn3d wide" id="keepGoing">Keep going</button></div>' + (remindOffer() ? remindOfferHtml() : backupHtml()) + "</div>" + footHtml(footLeft(""));
     $("keepGoing").onclick = keepGoing;
+    if ($("roYes")) {
+      $("roYes").onclick = function () { prefs.remind_on = true; prefs.remind_offered = true; savePrefs(); paintBadge(); $("ro").remove(); toast("Reminders on. Change the times in Settings."); };
+      $("roNo").onclick = function () { prefs.remind_offered = true; savePrefs(); $("ro").remove(); };
+    }
     paintStat();
+  }
+  // The reminder offer (1.65.0): once, in the iPhone app, after the first finished set, when a reminder makes sense.
+  function remindOffer() { return NATIVE && !prefs.remind_on && !prefs.remind_offered; }
+  function remindOfferHtml() {
+    var am = remindTimes().am.split(":"), h = +am[0], label = (h % 12 || 12) + (am[1] !== "00" ? ":" + am[1] : "") + (h < 12 ? " AM" : " PM");
+    return '<div class="bk" id="ro"><p><b>Want a reminder tomorrow?</b> Scales can remind you at ' + label + " with your set, and in the evening for anything saved for Later.</p>" +
+      '<div class="bkb"><button type="button" class="btn3d sm" id="roNo">Not now</button><button type="button" class="primary sm" id="roYes">Remind me</button></div></div>';
   }
   function keepGoing() { day.more = true; saveDay(); if (!current || !thoughts[current] || thoughts[current].status !== "active") showNext(); else renderDeck(); }
 
