@@ -156,10 +156,6 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .ai-p { margin:0; font-size:1.2941rem; line-height:1.3; letter-spacing:-.01em; font-weight:450; color:var(--ink); transition:opacity .3s; }
 .ai-src { display:block; margin-top:10px; font-size:var(--t-xs); color:var(--faint); }
 .ai-src a { color:inherit; text-decoration:underline; text-underline-offset:2px; text-decoration-thickness:1px; padding:12px 0; }
-.talkrow { border-top:1px solid var(--line) !important; }
-.talkrow .tr { flex-direction:column; align-items:flex-start; gap:2px; }
-.talkrow .tr b { color:var(--ink); font-size:var(--t-md); font-weight:500; }
-.talkrow .tr small { margin:0; }
 .ai-p.quote { font-style:normal; }
 .lineWrap[hidden] { display:none; }
 .reflfoot { flex:none; display:flex; flex-direction:column; gap:12px; padding:14px 0 max(20px, env(safe-area-inset-bottom, 0px)); min-height:150px; justify-content:flex-end; }
@@ -467,14 +463,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 .radio { width:18px; height:18px; border-radius:50%; margin-top:2px; border:1px solid var(--muted); background:none; }
 .opt[aria-pressed="true"] .radio { border-color:var(--accent); background:var(--accent); box-shadow:inset 0 0 0 4px var(--paper); }
 /* A thinker weighs in (1.31.0): the line, then a short exchange. */
-.weighbtn { display:inline-flex; align-items:center; gap:8px; min-height:40px; margin-block:-8px; padding:0; font-size:var(--t-sm); font-weight:500; color:var(--ink); white-space:nowrap; max-width:100%; overflow:hidden; border:0 !important; background:none !important; text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px; }
-.weighbtn span { color:var(--muted); font-weight:400; overflow:hidden; text-overflow:ellipsis; }
-.weighbtn svg.i, .talk svg.i { width:15px; height:15px; }
+.talk svg.i { width:15px; height:15px; }
 .talk { display:grid; gap:12px; }
 .bub { max-width:90%; padding:12px 14px; font-size:0.8824rem; line-height:1.45; overflow-wrap:anywhere; border:1px solid var(--line); background:none !important; }
 .bub.me { justify-self:end; background:var(--deep) !important; border-color:transparent; }
 .bub.them { justify-self:start; }
 .bub.pending { opacity:.55; }
+.sheet .bub { padding:12px 14px; } /* 1.71.0: .sheet .glass had taken the padding off the voice's answers */
 .vlabel { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; font-size:var(--t-xs); color:var(--muted); }
 .talkbar { display:flex; gap:12px; align-items:flex-end; }
 .talkbar textarea { min-height:52px; max-height:30vh; }
@@ -703,11 +698,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <dialog class="sheet" id="sheetConsent" aria-modal="true" aria-labelledby="sheetConsentTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetConsentTitle">Use AI in Scales?</span> <button type="button" data-close>Not now</button></h2>
-  <p class="note">To write a question for each principle, pick the quote that fits it best, and answer you in Talk it through, Scales sends these, through its own server, to Anthropic, an AI company:</p>
+  <p class="note">To write a question for each principle, pick the quote that fits it best, and have today’s voice answer your replies, Scales sends these, through its own server, to Anthropic, an AI company:</p>
   <ul class="consentlist">
     <li>the principle on screen and how many times you have skipped it</li>
     <li>the quotes it is choosing between</li>
-    <li>what you write in Talk it through</li>
+    <li>what you write in Reply</li>
   </ul>
   <p class="note">Nothing else leaves your phone. Without AI, Scales uses questions written into the app. You can change this anytime in Settings &gt; Your deck.</p>
   <div class="sheet-foot"><button class="primary" type="button" id="consentYes">Allow AI</button></div>
@@ -718,16 +713,16 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <h2><button type="button" data-close class="rcancel">Cancel</button><span id="sheetReplyTitle">Reply</span><button type="button" id="replyDone" class="rdone" disabled>Done</button></h2>
   <blockquote class="replyto" id="replyTo"></blockquote>
   <textarea id="replyInput" rows="4" maxlength="280" placeholder="What came up?" aria-label="Your reply"></textarea>
-  <p class="note">Kept with this line. Your choice is still waiting.</p>
+  <p class="note" id="replyNote">Kept with this line. Your choice is still waiting.</p>
 </dialog>
 
-<!-- Weigh in (Stories 12 and 13): today's voice on the move just made, then Talk it through. -->
+<!-- The thread (1.71.0): your reply and today's voice answering, up to six replies. Also opens older talks from the Ledger. -->
 <dialog class="sheet tall" id="sheetWeigh" aria-modal="true" aria-labelledby="sheetWeighTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetWeighTitle">Weigh in</span> <button type="button" data-close>Done</button></h2>
   <p class="note" id="weighAbout"></p>
   <div class="talk" id="talkLog" aria-live="polite"></div>
-  <button type="button" class="btn3d raised" id="talkOpen" hidden>Talk it through</button>
+  <button type="button" class="btn3d raised" id="talkOpen" hidden>Reply</button>
   <p class="note" id="talkNote" hidden></p>
   <button type="button" class="link-danger" id="talkDelete" hidden>Delete this talk</button>
   <form class="sheet-foot talkbar" id="talkForm" autocomplete="off" hidden>
@@ -874,7 +869,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       <button class="btn3d sm raised" type="button" id="voiceAdd" disabled>Add</button>
     </div>
   </div>
-  <p class="note">One voice a day, in turn. Sit with it shows a real quote from today’s voice when one fits.</p>
+  <p class="note">One voice a day, in turn. Sit with it shows a real quote from today’s voice when one fits, and the voice answers when you reply.</p>
 
   <h3 class="sec2">Look</h3>
   <div class="panel raised">
@@ -905,6 +900,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         <li>One principle at a time. Tap it to see the question Scales has for it.</li>
         <li>Press and hold the bottom of the screen for your choices: <b>Living it</b>, <b>Sit with it</b> or <b>Skip</b>. Slide onto one, or let go and tap one.</li>
         <li><b>Sit with it</b> shows a real quote from today’s voice. After eight seconds it counts, and the principle gets lighter.</li>
+        <li><b>Reply</b> to any line to keep what came up. With AI on, today’s voice answers, and you can go back and forth.</li>
         <li id="howRest"><b>Skip</b> rests a principle for a few days. It comes back first, set heavier, until you live it.</li>
         <li><b>Later</b> saves a principle for this evening, after 6 PM.</li>
         <li><b>Living it</b> moves it to your record in the Ledger, with where it showed up.</li>
@@ -1502,6 +1498,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     replyFor = { id: t.id, kind: l.quote ? "reflect" : "push", line: l.text, author: l.quote ? l.author : "" };
     $("replyTo").innerHTML = "<p>" + esc(l.quote ? "\u201C" + l.text + "\u201D" : l.text) + "</p>" + (l.quote ? "<small>" + esc(l.author) + "</small>" : "");
     $("replyInput").value = ""; $("replyDone").disabled = true;
+    var v = replyVoice();
+    $("replyNote").textContent = v ? "Kept with this line. " + v.short + " answers. Your choice is still waiting." : "Kept with this line. Your choice is still waiting.";
     show("sheetReply", function () { replyFor = null; unfitReply(); });
     fitReply();
     setTimeout(function () { $("replyInput").focus(); }, 60);
@@ -1509,9 +1507,16 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   $("replyInput").addEventListener("input", function () { $("replyDone").disabled = !this.value.trim(); });
   $("replyDone").onclick = function () {
     var f = replyFor, t = f && thoughts[f.id]; if (!t) return;
-    if (!C.addReply(t, $("replyInput").value, f, today())) return;
-    save(t); hide(); paintReplies(); toast("Reply kept.");
+    var r = C.addReply(t, $("replyInput").value, f, today()); if (!r) return;
+    save(t); paintReplies();
+    var v = replyVoice();
+    if (!v) { hide(); toast("Reply kept."); return; }
+    // 1.71.0: with AI on, today's voice answers in the thread, and you can keep going there.
+    var k = C.addTalk(t, { at: r.at, day: today(), reply: true, move: "", voice: v.id, voice_name: v.name, living: v.living, line: f.line, author: f.author, turns: [{ me: true, text: r.text }] });
+    save(t); wT = t.id; wAt = k.at; wFromLedger = false;
+    paintWeigh(); show("sheetWeigh"); askReply();
   };
+  function replyVoice() { return sample ? todayVoice() : null; }
   // Keep the reply sheet above the keyboard: iOS overlays the keyboard on the page, so the sheet's bottom is
   // lifted by the keyboard's height (the part of the window the visual viewport no longer covers).
   // 1.52.1: the writing sheets (Capture, Edit) ride above the keyboard the same way.
@@ -1539,7 +1544,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   //   rest     the principle and the ring, nothing else
   //   push     after letting go early: the push line, and the ring again. Holding again stays with it;
   //            letting go early a second time, or Set aside anyway, is Not today. No second pushback.
-  //   reflect  after holding through: the reflect line, where it came from, Talk it through. Next
+  //   reflect  after holding through: the reflect line, where it came from, Reply. Next
   //            appears after REFLECT_SEC; at that point a Testing it lowers the Not today count by 1.
   var phase = "rest", reflectT = 0, reflectAt = 0, reflectDone = false, reflectLighter = false, reflectUndo = null, pendingAct = false;
   // The three moves.
@@ -1866,12 +1871,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (phase === "reflect") {
       v.innerHTML = '<article class="card reflect" id="card" aria-label="Sit with it" aria-describedby="cardHow">' +
         '<div class="phase"><span>' + (fromLater ? "Saved from earlier" : "Sitting with it") + "</span></div>" +
-        words + '<div class="mid under">' + line + whereHtml(t) +
-          (canWeigh() ? '<button type="button" class="crow talkrow" id="talkRow"><span class="tr"><b>Talk it through with ' + esc(todayVoice().short) + "</b><small>Today’s voice</small></span>" + ICON_NEXT + "</button>" : "") +
-        "</div>" + how + "</article>" +
+        words + '<div class="mid under">' + line + whereHtml(t) + "</div>" + how + "</article>" +
         (nudge ? '<div class="lived2"><span>Have you lived this yet?</span><div class="pair"><button type="button" class="btn3d" id="nudgeNo">Not yet</button><button type="button" class="btn3d" id="nudgeYes">Living it</button></div></div>' : "") +
         '<div class="reflfoot" id="reflFoot" aria-live="polite"></div>';
-      if ($("talkRow")) $("talkRow").onclick = openWeigh;
       if (nudge) {
         $("nudgeYes").onclick = function () { act("shed"); };
         $("nudgeNo").onclick = function () { t.consecutive_reflects = 0; save(t); renderDeck(); paintLine(); };
@@ -2117,11 +2119,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (!$("v-ledger").hidden) renderLedger();
   };
 
-  // ---------- a thinker weighs in (Stories 12 and 13) ----------
-  // After a move, Weigh in under the keys asks today's voice (core.js voiceOfDay) for one line on that
-  // move. The line, and any Talk it through exchange that follows, is saved on the principle (t.talks)
-  // and shown in the Ledger. Nothing is asked for until Weigh in is tapped. Needs a key.
-  var ICON_VOICE = icon("M5 10v4M9 7v10M13 4v16M17 8v8M21 11v2");
+  // ---------- today's voice answers (Stories 12 and 13; one Reply since 1.71.0) ----------
+  // Reply under the line keeps what you wrote. With AI on, today's voice (core.js voiceOfDay) answers in a
+  // thread saved on the principle (t.talks) and shown in the Ledger. Talks from before 1.71.0 began with a
+  // Weigh in line on a move; they still open from the Ledger.
   var lastMove = null; // { id, move, day, at }: the move Weigh in is about, until the next move
   function noteMove(t, move) { lastMove = { id: t.id, move: move, day: today(), at: null }; }
   function voices() { return C.chosenVoices(prefs.voices, prefs.custom_voices); }
@@ -2132,33 +2133,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var n = (talk && talk.voice_name) || "A thinker";
     return { id: id, name: n, short: n.split(" ").slice(-1)[0], living: !!(talk && talk.living), lens: "" };
   }
-  function canWeigh() { return !!(sample && lastMove && lastMove.day === today() && thoughts[lastMove.id] && todayVoice()); }
-  // The footer's left side: Weigh in when a move can be weighed, otherwise the given text.
-  function footLeft(text) {
-    if (!canWeigh()) return text;
-    var v = todayVoice();
-    return '<button type="button" class="weighbtn raised" id="weighBtn">' + ICON_VOICE + "Weigh in<span>" + esc(v.short) + " on " + esc(C.MOVES[lastMove.move]) + "</span></button>";
-  }
-  $("v-deck").addEventListener("click", function (e) {
-    if (e.target.closest("#weighBtn")) openWeigh();
-  });
+  // 1.71.0: one way to talk back. Reply under the line is it; Weigh in and Talk it through are gone from the deck.
+  function footLeft(text) { return text; }
 
   var wT = null, wAt = null, wBusy = false, wFromLedger = false;
   function wTalk() { var t = thoughts[wT]; return t && (t.talks || []).filter(function (x) { return x.at === wAt; })[0]; }
-  // Open from the deck: reuse the talk already started for this move, or start one.
-  function openWeigh() {
-    if (!canWeigh()) return;
-    var t = thoughts[lastMove.id];
-    wT = t.id; wFromLedger = false; wAt = lastMove.at;
-    if (!wAt || !wTalk()) {
-      var v = todayVoice();
-      wAt = lastMove.at = new Date().toISOString();
-      C.addTalk(t, { at: wAt, day: today(), move: lastMove.move, voice: v.id, voice_name: v.name, living: v.living, line: "", turns: [] });
-      save(t);
-    }
-    paintWeigh(); show("sheetWeigh");
-    if (!wTalk().line) askLine();
-  }
   // Open a saved talk from the Ledger: the newest one on that principle.
   function openTalks(t) {
     var list = t.talks || []; if (!list.length) return;
@@ -2169,9 +2148,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var t = thoughts[wT], k = wTalk(); if (!t || !k) return;
     var v = voiceById(k.voice, k);
     $("sheetWeighTitle").textContent = v.short;
-    $("weighAbout").textContent = "On " + C.MOVES[k.move] + ", " + fmtDate(k.at) + ": " + clip(t.text, 110);
+    $("weighAbout").textContent = (k.reply ? "Reply" : "On " + C.MOVES[k.move]) + ", " + fmtDate(k.at) + ": " + clip(t.text, 110);
     var h = "";
-    if (k.line) {
+    if (k.reply) {
+      h += '<blockquote class="replyto"><p>' + esc(k.author ? "\u201C" + k.line + "\u201D" : k.line) + "</p>" + (k.author ? "<small>" + esc(k.author) + "</small>" : "") + "</blockquote>";
+    } else if (k.line) {
       h += '<div class="bub them glass"><div>' + esc(k.line) + '</div><div class="vlabel"><span>' + esc(C.voiceLabel(v)) + "</span>" +
         '<button type="button" class="keep raised" id="weighKeep">' + ICON_KEEP + "Keep</button></div></div>";
     } else if (k.failed) {
@@ -2179,17 +2160,20 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     } else h += '<div class="bub them glass pending">Considering…</div>';
     (k.turns || []).forEach(function (x) { h += '<div class="bub ' + (x.me ? "me pressed" : "them glass") + '">' + esc(x.text) + "</div>"; });
     if (wBusy && k.line) h += '<div class="bub them glass pending">Considering…</div>';
+    var turns = k.turns || [], waiting = turns.length && turns[turns.length - 1].me;
+    if (k.reply && waiting && !wBusy) h += '<div class="bub them glass"><div>No usable answer came back.</div><div class="vlabel"><span></span><button type="button" class="keep raised" id="replyRetry">Try again</button></div></div>';
     $("talkLog").innerHTML = h;
     var left = C.talkLeft(k), talking = (k.turns || []).length > 0;
-    var formOpen = !!(k.line && sample && left && (talking || $("talkForm").dataset.open === "1"));
+    var formOpen = !!(k.line && sample && left && !waiting && (talking || $("talkForm").dataset.open === "1"));
     $("talkForm").hidden = !formOpen;
     $("talkOpen").hidden = !(k.line && sample && left && !formOpen);
     $("talkNote").hidden = !(k.line && (talking || !sample));
-    $("talkNote").textContent = !sample ? "Add an API key in Settings to talk it through." : left ? left + (left === 1 ? " reply left in this talk." : " replies left in this talk.") : "That is the end of this talk. Take it into the day.";
+    $("talkNote").textContent = !sample ? "Turn on AI questions and quotes in Settings to keep talking." : left ? left + (left === 1 ? " reply left in this talk." : " replies left in this talk.") : "That is the end of this talk. Take it into the day.";
     $("talkDelete").hidden = !wFromLedger;
     $("talkSend").disabled = wBusy || !$("talkInput").value.trim();
     var wk = $("weighKeep"); if (wk) wk.onclick = function () { openKeep(t, k.line); };
     var wr = $("weighRetry"); if (wr) wr.onclick = function () { delete k.failed; save(t); paintWeigh(); askLine(); };
+    var rr = $("replyRetry"); if (rr) rr.onclick = askReply;
   }
   // Ask for the line: the same checks as the AI line (core.js vet), up to three tries.
   function askLine() {
@@ -2218,7 +2202,12 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var t = thoughts[wT], k = wTalk(), text = $("talkInput").value.trim();
     if (!t || !k || !text || wBusy || !sample || !C.talkLeft(k)) return;
     k.turns.push({ me: true, text: text }); save(t);
-    $("talkInput").value = ""; wBusy = true; paintWeigh();
+    $("talkInput").value = ""; askReply();
+  });
+  // The voice answers the last thing you wrote, with the same checks as before (core.js vetReply), up to three tries.
+  function askReply() {
+    var t = thoughts[wT], k = wTalk(); if (!t || !k || wBusy || !sample) return;
+    wBusy = true; paintWeigh();
     var v = voiceById(k.voice, k), at = k.at, tries = 0;
     function attempt() {
       return sample(C.talkRequest(v, t, k)).then(function (res) {
@@ -2231,11 +2220,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       wBusy = false;
       var live = thoughts[t.id], kk = live && (live.talks || []).filter(function (x) { return x.at === at; })[0];
       if (kk) { if (reply) kk.turns.push({ me: false, text: reply }); save(live); }
-      if (!reply) toast("No usable reply came back. Send again.");
-      paintWeigh();
+      if (wT === t.id && wAt === at) paintWeigh();
     }
     attempt().then(done, function () { done(null); });
-  });
+  }
   // Delete a saved talk, from the Ledger. Undo from the toast.
   $("talkDelete").onclick = function () {
     var t = thoughts[wT]; if (!t) return;
@@ -2285,7 +2273,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     $("voiceName").value = ""; $("voiceAdd").disabled = true; $("voiceFirst").setAttribute("aria-checked", "false");
     savePrefs(); paintVoices(); renderDeckFoot(); toast("Added " + name + ".");
   };
-  // Redraw only the deck when voices change while it shows, so Weigh in appears or goes.
+  // Redraw only the deck when voices change while it shows.
   function renderDeckFoot() { if ($("v-ledger").hidden && !openSheet) renderDeck(); }
 
   // ---------- a day that ends (1.32.0) ----------

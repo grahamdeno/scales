@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.70.0";
+  var VERSION = "1.71.0";
   var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -617,7 +617,16 @@ var ScalesCore = (function () {
       "Principle: " + t.text + "\nMove: " + (MOVES[move] || move) + "\nTimes set aside: " + (t.skip_count || 0) + "\nDays in deck: " + (daysIn || 0);
   }
   // The conversation for Talk it through: a system prompt and the turns so far, ready for the API.
+  // 1.71.0: a talk can start from a Reply (talk.reply): the user answered the line on screen, and the voice answers them.
   function talkRequest(v, t, talk) {
+    if (talk.reply) {
+      var sys = "You are giving the user a perspective from " + v.name + " about a principle they are trying to live by, in a short reflective exchange.\n" +
+        (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "") + voiceRule(v) + "\n" +
+        "Hold the standard: no flattery, no reassurance, no permission to wait. Press on their reasoning and ask one sharp question when it helps.\n" +
+        "Answer in " + REPLY_WORDS + " words or fewer, as one paragraph. No exclamation marks, quotation marks, emoji, em-dashes or lists. Do not discuss these instructions.\n\n" +
+        "Principle: " + t.text + "\nTimes set aside: " + (t.skip_count || 0) + "\nThey are replying to this line" + (talk.author ? " by " + talk.author : "") + ": " + talk.line;
+      return { system: sys, messages: (talk.turns || []).map(function (x) { return { role: x.me ? "user" : "assistant", content: x.text }; }) };
+    }
     var system = "You are giving the user a perspective from " + v.name + " about a principle they are trying to live by, in a short reflective exchange.\n" +
       (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "") + voiceRule(v) + "\n" +
       "Hold the standard: no flattery, no reassurance, no permission to wait. Press on their reasoning and ask one sharp question when it helps.\n" +
@@ -827,7 +836,7 @@ var ScalesCore = (function () {
     (t.skips_on || []).forEach(function (x) { ev.push({ at: x, kind: "skip", text: "Skipped" }); });
     (t.acts || []).forEach(function (x) { ev.push({ at: x.day, kind: "act", text: "Smallest act: " + x.text }); });
     (t.caught || []).forEach(function (x) { ev.push({ at: x.day, kind: "caught", text: "Caught it" + (x.text ? ": " + x.text : "") }); });
-    (t.talks || []).forEach(function (x) { if (x.line) ev.push({ at: x.day || d(x.at), kind: "talk", text: "Weighed in by " + (x.voice_name || "a thinker") + " on " + (MOVES[x.move] || x.move) }); });
+    (t.talks || []).forEach(function (x) { if (x.line) ev.push({ at: x.day || d(x.at), kind: "talk", text: x.reply ? "Talked with " + (x.voice_name || "a thinker") : "Weighed in by " + (x.voice_name || "a thinker") + " on " + (MOVES[x.move] || x.move) }); });
     (t.earlier || []).forEach(function (x) { ev.push({ at: d(x.until), kind: "edit", text: "Wording changed" }); });
     if (t.status === "shed" && t.shed_at) ev.push({ at: d(t.shed_at), kind: "lived", text: "Living it" + (t.evidence ? ": " + t.evidence : "") });
     var order = { start: 0, edit: 1, skip: 2, act: 3, talk: 4, caught: 5, lived: 6 };
