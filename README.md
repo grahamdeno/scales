@@ -55,7 +55,7 @@ A quick tap on the ring does nothing, so a stray touch never rests a principle. 
 
 **This week.** One line under the Ledger summary: moves this week, catches, and anything now living.
 
-**Reminders and the badge.** Settings > Reminders > Turn on reminders asks for notifications and subscribes this phone to web push (Home Screen app only, iOS 16.4 or later). A GitHub Actions schedule (`.github/workflows/remind.yml`) sends one push at 8 AM (today's set) and one at 6 PM (anything saved for Later), New York time; it needs two repo secrets, `VAPID_PRIVATE` and `PUSH_SUBSCRIPTION` (the code Settings shows after turning reminders on). The Home Screen icon shows today's set left plus Later that is back, set by the app and by each reminder. Free: no server, no service. Shortcuts instead, folded under Reminders, still works without GitHub. It does not open a link, because a link opens Safari, which keeps a separate copy of the data from the Home Screen app.
+**Reminders.** Reminders built into Scales come with the iPhone app, scheduled on the device. Until then, Settings > Reminders walks through an iPhone Shortcuts automation: one in the morning for today's set, one after 6 PM for anything saved for Later. It does not open a link, because a link opens Safari, which keeps a separate copy of the data from the Home Screen app. (1.51.0 to 1.57.0 sent web push from a GitHub schedule; 1.58.0 removed it, since it could only ever reach one phone.)
 
 **Weighting.** What you skip comes back more often. A principle's chance of showing up is `1 + 0.5 x skip count`, capped at 4x. A short cooldown keeps the same principle from repeating back to back.
 
@@ -91,7 +91,6 @@ The name comes from scales falling from the eyes, and from Nietzsche's three met
 - Everything lives in the phone's browser storage. No account, no server, no analytics.
 - The API key, if used, stays on the phone and is sent only to `api.anthropic.com`, with the principle, its skip count and anything you write to a voice.
 - Today's voice's name is sent to Wikiquote (`en.wikiquote.org`) for its quotes. Quotes are Wikiquote text under CC BY-SA 4.0 and link back to their page.
-- With reminders on, this phone's push subscription is stored as a GitHub Actions secret in this repo, which uses it only to send the two daily reminders.
 - Settings > Your data says the same in one line.
 - Starter decks are written for this app and contain no personal data.
 

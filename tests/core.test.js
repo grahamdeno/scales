@@ -324,11 +324,6 @@ test("page offsets from the keyboard and scroll memory are reset in script (1.22
   assert.match(html, /addEventListener\("focusout"/);
 });
 
-test("Settings shows a screen check for real-device layout numbers", () => {
-  const html = read("index.html");
-  assert.match(html, /id="screenCheck"/);
-  assert.match(html, /function screenCheck\(\)/);
-});
 
 // ---------- 1.24.0: rest for the day, front of the stack ----------
 const at = (y, m, d, h = 12, min = 0) => new Date(y, m - 1, d, h, min);
@@ -1219,7 +1214,7 @@ test("Settings has five groups and folds the rest under Advanced", () => {
   const groups = [...sheet.matchAll(/<h3 class="sec2"[^>]*>([^<]+)/g)].map(m => m[1].trim());
   assert.deepEqual(groups, ["Look", "Deck", "Voices", "Reminders", "Your data"]);
   const adv = sheet.slice(sheet.indexOf('<details class="adv"'));
-  for (const id of ["apiKey", "csvExportBtn", "starterGroup", "howRest", "versionText", "screenCheck"]) assert.match(adv, new RegExp('id="' + id + '"'));
+  for (const id of ["apiKey", "csvExportBtn", "starterGroup", "howRest", "versionText"]) assert.match(adv, new RegExp('id="' + id + '"'));
   assert.doesNotMatch(sheet, /today’s focus/);
 });
 
@@ -1270,27 +1265,15 @@ test("reminder text says what is waiting", () => {
   assert.equal(C.pushText("evening", { day: "2026-10-26", left: 2, size: 5, active: 9, laters: [] }, at(18)), "2 left in today’s set.");
   assert.equal(C.pushText("evening", { day: "2026-10-26", left: 0, size: 5, active: 9, laters: [] }, at(18)), "Done for today. Nothing is waiting.");
 });
-test("only the schedule run on the local hour sends", () => {
-  assert.equal(C.pushSlot("31 12 * * *", -4), "morning", "EDT");
-  assert.equal(C.pushSlot("31 13 * * *", -4), "");
-  assert.equal(C.pushSlot("31 13 * * *", -5), "morning", "EST");
-  assert.equal(C.pushSlot("31 22 * * *", -4), "evening");
-  assert.equal(C.pushSlot("31 23 * * *", -5), "evening");
-  assert.equal(C.pushSlot("31 22 * * *", -5), "");
-  assert.equal(C.pushSlot("", -4), "");
-});
-test("the service worker shows reminders, sets the badge and keeps its state cache", () => {
-  const sw = read("sw.js");
-  assert.match(sw, /importScripts\("core\.js"\)/);
-  assert.match(sw, /addEventListener\("push"/);
-  assert.match(sw, /setAppBadge/);
-  assert.match(sw, /addEventListener\("notificationclick"/);
-  assert.match(sw, /k !== CACHE && k !== STATE/);
-  assert.match(C.VAPID_PUBLIC, /^B[A-Za-z0-9_-]{86}$/);
-  assert.match(read(".github/workflows/remind.yml"), /secrets\.PUSH_SUBSCRIPTION/);
+test("no personal setup is left: no GitHub schedule, no VAPID key, no screen check (1.58.0)", () => {
+  const fs = require("fs"), path = require("path");
+  assert.ok(!fs.existsSync(path.join(__dirname, "..", ".github", "workflows", "remind.yml")));
+  assert.equal(C.VAPID_PUBLIC, undefined);
+  const html = read("index.html"), sw = read("sw.js");
+  assert.doesNotMatch(html, /screenCheck|pushOn|PUSH_SUBSCRIPTION/);
+  assert.doesNotMatch(sw, /addEventListener\("push"/);
 });
 
-// ---------- 1.52.0: paper writing sheets ----------
 test("Capture and Edit are paper sheets with the action in the title row", () => {
   const html = read("index.html");
   assert.match(html, /class="sheet inverse writesheet" id="sheetCapture"/);

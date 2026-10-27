@@ -249,7 +249,6 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .done .widewrap { margin-top:24px; padding-bottom:0; }
 .adv.inner { margin:0; border-top:0; }
 .adv.inner > summary { font-size:var(--t-sm); color:var(--muted); min-height:48px; }
-#pushCode .field { font-family:ui-monospace, Menlo, monospace; font-size:max(16px, 0.7rem); resize:none; }
 #ledgerBk .bk { margin-top:16px; padding-top:0; border-top:0; }
 .lived2 { flex:none; display:flex; flex-direction:column; gap:10px; padding-top:12px; font-size:var(--t-sm); color:var(--muted); }
 .ring { position:relative; width:96px; height:96px; display:grid; place-items:center; touch-action:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; cursor:pointer; }
@@ -856,31 +855,18 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <h3 class="sec2">Reminders</h3>
   <div class="panel raised" id="remindPanel">
     <div class="setrow stack">
-      <p class="note">At 8 AM for today’s set and 6 PM for anything saved for Later. The Home Screen icon shows how many are waiting.</p>
-      <p class="status" id="pushState" aria-live="polite"></p>
-      <div class="btnrow" id="pushBtns"><button class="btn3d sm raised" type="button" id="pushOn">Turn on reminders</button><button class="btn3d sm raised" type="button" id="pushOff" hidden>Turn off</button></div>
-      <div id="pushCode" hidden>
-        <p class="note">The reminder schedule needs this phone’s code once. Copy it and save it as the PUSH_SUBSCRIPTION secret in the scales repo on GitHub.</p>
-        <textarea class="field" id="pushSub" rows="4" readonly aria-label="This phone’s reminder code"></textarea>
-        <div class="btnrow"><button class="btn3d sm raised" type="button" id="pushCopy">Copy code</button></div>
-      </div>
-    </div>
-    <details class="adv inner">
-      <summary>Shortcuts instead</summary>
-    <div class="setrow stack">
-      <p class="note">Scales has no server, so it cannot send notifications itself. An iPhone automation can remind you instead. Set it up once in the morning for today’s set, and once after 6 PM for anything saved for Later.</p>
+      <p class="note">Reminders built into Scales come with the iPhone app. Until then, an iPhone automation can remind you. Set it up once in the morning for today’s set, and once after 6 PM for anything saved for Later.</p>
       <div class="steps"><div><b>1</b><span>In Shortcuts: Automation, New Automation, Time of Day. Pick a time, then Run Immediately.</span></div><div><b>2</b><span>Add the Show Notification action with the words: Scales, today’s set.</span></div><div><b>3</b><span>Repeat after 6 PM with: Scales, saved for later. Open Scales from the Home Screen when it arrives.</span></div></div>
       <p class="note">A link would open Safari, which keeps its own copy of the data, so the reminder points you to the Home Screen app instead.</p>
       <div class="btnrow"><button class="btn3d sm raised" type="button" id="openShortcuts">Open Shortcuts</button></div>
     </div>
-    </details>
   </div>
 
   <h3 class="sec2">Your data</h3>
   <div class="panel raised">
     <div class="setrow"><span>Back up<small id="syncText">One file with everything, for iCloud Drive</small></span><button class="btn3d sm raised" type="button" id="exportBtn">Back up</button></div>
     <div class="setrow"><span>Restore<small>Merges a backup into this phone</small></span><button class="btn3d sm raised" type="button" id="importBtn">Restore</button></div>
-    <div class="setrow stack"><p class="note" id="privacyNote"><b>What leaves this phone.</b> No account, no server, no analytics. Today’s voice’s name goes to Wikiquote for its quotes. With an AI key, the principle, its skip count and anything you write to a voice go to Anthropic. With reminders on, this phone’s reminder code is kept as a secret in the scales repo on GitHub, which sends the reminders. Nothing else is sent.</p></div>
+    <div class="setrow stack"><p class="note" id="privacyNote"><b>What leaves this phone.</b> No account, no server, no analytics. Today’s voice’s name goes to Wikiquote for its quotes. If you allow AI, the principle on screen, its skip count, the quotes being chosen between and anything you write to a voice go to Anthropic. Nothing else is sent.</p></div>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
     <input type="file" id="csvFile" accept=".csv,text/csv,text/plain" hidden>
   </div>
@@ -918,7 +904,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <p class="note" id="versionText">Version</p>
   <p class="note">The name comes from scales falling from the eyes, and from Nietzsche's three metamorphoses: the camel carries ideas, the lion tests them, the child acts from them without thinking. Scales is built for the lion stage.</p>
   <p class="note">In Safari, tap Share, then Add to Home Screen. Works offline once installed. When an update is ready, a Reload bar appears.</p>
-    <p class="version" id="screenCheck"></p>
   </details>
 </dialog>
 
@@ -2788,21 +2773,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     } else swap();
   }
   $("backDeck").onclick = function () { go("deck"); try { $("menuBtn").focus({ preventScroll: true }); } catch (e) {} };
-  // Screen check: the measurements that decide whether the app fills the display. Shown under
-  // About so a layout change can be checked against real phone numbers, not an emulator.
-  function screenCheck() {
-    var pr = $("vhProbe"), ps = getComputedStyle(pr), i = pr.children, r = function (x) { return Math.round(x); };
-    var app = document.querySelector(".app").getBoundingClientRect();
-    var home = !!(navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches));
-    $("screenCheck").textContent = "Screen check \u00b7 " + (home ? "Home Screen" : "browser") +
-      " \u00b7 screen " + r(screen.height) + " \u00b7 window " + r(innerHeight) +
-      " \u00b7 visible " + r(window.visualViewport ? visualViewport.height : innerHeight) +
-      " \u00b7 app " + r(app.top) + "\u2013" + r(app.bottom) +
-      " \u00b7 dvh " + r(i[0].offsetHeight) + " svh " + r(i[1].offsetHeight) + " lvh " + r(i[2].offsetHeight) +
-      " \u00b7 safe " + r(parseFloat(ps.paddingTop)) + "/" + r(parseFloat(ps.paddingBottom)) +
-      " \u00b7 scroll " + r(window.scrollY);
-  }
-  function openSettings() { paintBackup(); paintPush(); paintSettings(); paintVoices(); screenCheck(); show("sheetSettings", function () { if ($("v-ledger").hidden) { renderDeck(); } }); }
+  function openSettings() { paintBackup(); paintSettings(); paintVoices(); show("sheetSettings", function () { if ($("v-ledger").hidden) { renderDeck(); } }); }
   // Settings controls (1.30.0): look, Show where it came from, rest after Not today, AI lines on or off.
   function paintSettings() {
     var n = restDays();
@@ -3027,42 +2998,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (t.id === "bkLater") { prefs.backup_snooze = Date.now() + C.BACKUP_SNOOZE * 86400000; savePrefs(); var b = $("bk"); if (b) b.remove(); return; }
     backupNow().then(function (ok) { if (ok) { var b = $("bk"); if (b) b.remove(); toast("Backed up."); } });
   });
-  // ---------- reminders (1.51.0) ----------
-  function pushKey() {
-    var b = C.VAPID_PUBLIC.replace(/-/g, "+").replace(/_/g, "/"), raw = atob(b + "===".slice((b.length + 3) % 4));
-    var out = new Uint8Array(raw.length); for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i); return out;
-  }
-  function pushReg() { return navigator.serviceWorker ? navigator.serviceWorker.ready : Promise.reject(new Error("none")); }
-  function paintPush() {
-    var st = $("pushState"), on = $("pushOn"), off = $("pushOff"), code = $("pushCode");
-    var can = "serviceWorker" in navigator && "PushManager" in window && window.Notification;
-    function set(text, showOn, sub) {
-      st.textContent = text; on.hidden = !showOn; off.hidden = !sub; code.hidden = !sub; $("pushBtns").hidden = !showOn && !sub;
-      if (sub) $("pushSub").value = JSON.stringify(sub);
-    }
-    if (!can) return set(standalone() ? "This phone cannot receive reminders from Scales." : "Add Scales to the Home Screen and open it from there to turn on reminders.", false, null);
-    if (Notification.permission === "denied") return set("Notifications are off for Scales. Turn them on in iPhone Settings > Notifications > Scales.", false, null);
-    pushReg().then(function (r) { return r.pushManager.getSubscription(); }).then(function (sub) {
-      set(sub ? "Reminders are on for this phone." : "Reminders are off.", !sub, sub);
-    }).catch(function () { set("Reminders are off.", true, null); });
-  }
-  $("pushOn").onclick = function () {
-    Notification.requestPermission().then(function (p) {
-      if (p !== "granted") { paintPush(); return; }
-      return pushReg().then(function (r) {
-        return r.pushManager.getSubscription().then(function (s) { return s || r.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: pushKey() }); });
-      }).then(function () { paintPush(); paintBadge(); toast("Reminders on. Copy the code below once."); });
-    }).catch(function (e) { $("pushState").textContent = "Could not turn on reminders (" + ((e && e.message) || "error") + ")."; });
-  };
-  $("pushOff").onclick = function () {
-    pushReg().then(function (r) { return r.pushManager.getSubscription(); }).then(function (s) { return s && s.unsubscribe(); })
-      .then(function () { if (navigator.clearAppBadge) navigator.clearAppBadge().catch(function () {}); paintPush(); });
-  };
-  $("pushCopy").onclick = function () {
-    var v = $("pushSub").value;
-    (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(function () { toast("Copied."); }, function () { $("pushSub").select(); });
-  };
-
   $("exportBtn").onclick = function () { backupNow().then(function (ok) { if (ok) toast("Backed up."); }); };
   $("importBtn").onclick = function () { $("importFile").click(); };
   // Restore: merge a backup in. Existing thoughts are kept; only new ids are added.
