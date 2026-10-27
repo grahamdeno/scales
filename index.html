@@ -391,6 +391,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
    title row stays pinned while the fields scroll. */
 dialog.sheet > h2 { position:sticky; top:-12px; z-index:2; margin:-10px calc(-1 * var(--gutter)) 0; padding:22px var(--gutter) 8px; background:var(--paper); }
 .sheet::backdrop { background:var(--scrim); }
+.consentlist { margin:0; padding-left:20px; display:grid; gap:6px; font-size:var(--t-md); line-height:1.45; color:var(--ink); }
 /* Writing sheets (1.52.0): matte paper with black lettering on the Black look, and the reverse on White. */
 .sheet.inverse { --paper:#ECEAE5; --deep:#E2E0DA; --rise:#ECEAE5; --ink:#141414; --muted:#5A5955; --faint:#6A6965;
   --line:rgba(20,20,20,.16); --brass:#141414; --onBrass:#ECEAE5; --danger:#A3402C; color-scheme:light; border-top:0; }
@@ -691,6 +692,20 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 
 <!-- Reply (1.40.0): answer the line or quote on screen. It sits at the top of the screen and moves up with
      the keyboard (fitReply), so the keyboard never covers what you are typing. Done is in the title row. -->
+<!-- AI consent (1.57.0): asked once, before anything is sent to an AI service (App Store Guideline 5.1.2(i)). -->
+<dialog class="sheet" id="sheetConsent" aria-modal="true" aria-labelledby="sheetConsentTitle">
+  <div class="grabber" aria-hidden="true"></div>
+  <h2><span id="sheetConsentTitle">Use AI in Scales?</span> <button type="button" data-close>Not now</button></h2>
+  <p class="note">To write a question for each principle, pick the quote that fits it best, and answer you in Talk it through, Scales sends these to Anthropic, an AI company:</p>
+  <ul class="consentlist">
+    <li>the principle on screen and how many times you have skipped it</li>
+    <li>the quotes it is choosing between</li>
+    <li>what you write in Talk it through</li>
+  </ul>
+  <p class="note">Nothing else leaves your phone. Without AI, Scales uses questions written into the app. You can change this anytime in Settings &gt; Advanced.</p>
+  <div class="sheet-foot"><button class="primary" type="button" id="consentYes">Allow AI</button></div>
+</dialog>
+
 <dialog class="sheet replysheet" id="sheetReply" aria-modal="true" aria-labelledby="sheetReplyTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><button type="button" data-close class="rcancel">Cancel</button><span id="sheetReplyTitle">Reply</span><button type="button" id="replyDone" class="rdone" disabled>Done</button></h2>
@@ -1166,7 +1181,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
   // Updates the dot and label in Settings to show whether model lines are on.
   function setAiStatus() {
-    $("aiText").textContent = prefs.ai_off ? "AI lines: off. Built-in questions are shown." : sample ? "AI lines: on (your key)" : "AI lines: built-in (no key)";
+    $("aiText").textContent = prefs.ai_off ? "AI lines: off. Built-in questions are shown." : prefs.ai_consent !== true ? "AI lines: off until you allow AI." : sample ? "AI lines: on (your key)" : "AI lines: built-in (no key)";
   }
   function all() { return Object.keys(thoughts).map(function (k) { return thoughts[k]; }); }
   // Thoughts still in the deck (not shed).
@@ -2794,7 +2809,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     paintCollCount();
     $("whereToggle").setAttribute("aria-checked", String(showWhere()));
     $("tapToggle").setAttribute("aria-checked", String(tapMoves()));
-    $("aiToggle").setAttribute("aria-checked", String(!prefs.ai_off));
+    $("aiToggle").setAttribute("aria-checked", String(aiAllowed()));
     $("restOut").textContent = n + (n === 1 ? " day" : " days");
     $("restDown").disabled = n <= C.REST_MIN; $("restUp").disabled = n >= C.REST_MAX;
     var z = setSize(); $("setOut").textContent = z; $("setDown").disabled = z <= C.SET_MIN; $("setUp").disabled = z >= C.SET_MAX;
@@ -2816,7 +2831,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // Daily reminder: an iPhone Shortcuts automation that shows a notification. Opening a link would land
   // in Safari, whose storage is separate from the Home Screen app, so it is not offered.
   $("openShortcuts").onclick = function () { location.href = "shortcuts://"; };
-  $("aiToggle").onclick = function () { prefs.ai_off = !prefs.ai_off; savePrefs(); applyKey(); paintSettings(); };
+  $("aiToggle").onclick = function () {
+    if (prefs.ai_consent !== true) { askConsent(); return; }
+    prefs.ai_off = !prefs.ai_off; savePrefs(); applyKey(); paintSettings();
+  };
 
   // ---------- menu (1.30.0) ----------
   // Everything that is not one of the three moves: a frosted panel under the button at the top right. It is a
@@ -2925,16 +2943,24 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // model lines on immediately; removing it switches back to built-in lines.
   var savedKey = ""; try { savedKey = localStorage.getItem(LSK) || ""; } catch (e) {}
   // AI lines on or off (Settings): off uses the built-in questions even with a key saved.
+  function aiAllowed() { return prefs.ai_consent === true && !prefs.ai_off; }
   function applyKey() {
-    sample = prefs.ai_off ? null : makeSampler(savedKey); setAiStatus();
+    sample = aiAllowed() ? makeSampler(savedKey) : null; setAiStatus();
     if (current && thoughts[current] && thoughts[current].status === "active") requestLine(thoughts[current]);
   }
-  sample = prefs.ai_off ? null : makeSampler(savedKey); setAiStatus();
+  sample = aiAllowed() ? makeSampler(savedKey) : null; setAiStatus();
   if (savedKey) { $("apiKey").value = savedKey; if (current && sample) requestLine(thoughts[current]); }
+  // Ask once: someone with a key who has never been asked sees the question shortly after opening Scales.
+  function askConsent() {
+    show("sheetConsent", function () { if (prefs.ai_consent !== true) { prefs.ai_consent = false; savePrefs(); applyKey(); paintSettings(); } });
+  }
+  $("consentYes").onclick = function () { prefs.ai_consent = true; prefs.ai_off = false; savePrefs(); hide(); applyKey(); paintSettings(); toast("AI is on."); };
+  if (savedKey && prefs.ai_consent === undefined && prefs.onboarded) setTimeout(function () { if (!openSheet) askConsent(); }, 900);
   $("saveKey").onclick = function () {
     var k = $("apiKey").value.trim(); if (!k) return;
     try { localStorage.setItem(LSK, k); } catch (e) {}
     savedKey = k; applyKey(); toast("Key saved");
+    if (prefs.ai_consent !== true) askConsent();
   };
   $("clearKey").onclick = function () {
     try { localStorage.removeItem(LSK); } catch (e) {}
