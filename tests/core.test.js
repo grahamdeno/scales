@@ -992,7 +992,7 @@ test("two kept lines: reused until a test or a wording change; pushback sharpens
 test("long principles wrap normally and fold on push and reflect (1.34.1)", () => {
   const c = css(), html = read("index.html");
   assert.match(c, /\.thought\.small\.fold \{[^}]*-webkit-line-clamp:4;/);
-  assert.match(html, /var fold = phase !== "rest" && sizeClass\(t\.text\) !== "";/);
+  assert.match(html, /var fold = lifted && sizeClass\(t\.text\) !== "";/);
 });
 
 test("an update shows a bar with Reload that stays until tapped (1.34.2)", () => {
@@ -1179,7 +1179,7 @@ test("Later is offered on the skip screen and is not a skip (1.42.0)", () => {
   assert.doesNotMatch(save, /applySkip|skip_count|noteSkipDay|logActivity/, "no count, no weight, no rest");
   assert.match(html, /return C\.inCollection\(t, c\) && !t\.later;/, "waiting principles are left out of the deck");
   assert.match(html, /L\.later = null; L\.later_blocked = true; save\(L\);/);
-  assert.match(html, /fromLater = true; act\("keep"\);/, "it comes back straight to Sit with it");
+  assert.match(html, /fromLater = true; laterId = L\.id;/, "it comes back first, waiting for a choice (1.56.0)");
   assert.match(html, /\(fromLater \? "Saved from earlier" : "Sitting with it"\)/);
   assert.match(html, /if \(t\.later_blocked\) t\.later_blocked = false;/, "sitting with it for the full time lifts the block");
 });
@@ -1325,4 +1325,13 @@ test("sheets stop below the status bar fade and pin their title row", () => {
   assert.match(html, /max-height:calc\(100% - env\(safe-area-inset-top, 0px\) - var\(--fade\)\)/);
   assert.match(html, /dialog\.sheet > h2 \{ position:sticky;/);
   assert.match(html, /getComputedStyle\(\$\("vhProbe"\)\)\.paddingTop/);
+});
+
+// ---------- 1.56.0: Saved from earlier waits for a choice ----------
+test("a principle back from Later opens with its quote and counts nothing until you choose", () => {
+  const html = read("index.html");
+  assert.match(html, /fromLater = true; laterId = L\.id; phase = "rest";\s*renderDeck\(\); showLine\(L, "reflect"\);/);
+  assert.doesNotMatch(html, /fromLater = true; act\("keep"\);/);
+  assert.match(html, /if \(returned\(\)\) \{/);
+  assert.match(html, /Counted as Sit with it\./);
 });
