@@ -50,7 +50,8 @@ async function hold(page) {
 }
 // Advance the page clock in small steps until check() passes, so a slow machine does not fail a test.
 async function until(page, check, steps = 40) {
-  for (let i = 0; i < steps; i++) { if (await check()) return true; await page.clock.runFor(250); }
+  // Real time too (1.71.0): a mocked network answer needs the event loop, not just the page clock.
+  for (let i = 0; i < steps; i++) { if (await check()) return true; await page.clock.runFor(250); await page.waitForTimeout(50); }
   return check();
 }
 const rows = (page) => page.$$eval("#choices .pickrow span", (s) => s.map((x) => x.textContent));
