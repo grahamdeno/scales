@@ -198,3 +198,48 @@ test("Reply: without AI the reply is kept; with AI today's voice answers in the 
   assert.deepEqual(t.talks[0].turns.map((x) => x.me), [true, false]);
   assert.equal(await page.$eval("#talkForm", (e) => e.hidden), false, "you can keep going");
 });
+
+test("Scales Plus in the iPhone app: no server AI without it; buy, then AI requests carry the App Store record (1.72.0)", async () => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
+  const asked = [];
+  await ctx.route(/^https?:\/\//, (r) => {
+    const u = new URL(r.request().url());
+    if (u.hostname !== "scales.tangomike.app") return r.abort();
+    if (u.pathname === "/api/ai") {
+      asked.push(r.request().headers()["x-scales-plus"] || "");
+      const ok = r.request().headers()["x-scales-plus"] === "signed-record";
+      return r.fulfill({ status: ok ? 200 : 402, contentType: "application/json",
+        body: JSON.stringify(ok ? { content: [{ type: "text", text: "What would saying it before noon change?" }] } : { type: "error", error: { type: "plus_required", message: "x" } }) });
+    }
+    const p = path.join(root, u.pathname.replace(/^\/app\/?/, "/") === "/" ? "/index.html" : u.pathname.replace(/^\/app\//, "/"));
+    fs.readFile(p, (e, d) => e ? r.fulfill({ status: 404 }) : r.fulfill({ status: 200, contentType: types[path.extname(p)] || "application/octet-stream", body: d }));
+  });
+  const page = await ctx.newPage();
+  await page.clock.install({ time: new Date(2026, 9, 27, 9, 0) });
+  await page.addInitScript((t) => {
+    window.scalesNative = { version: 1, platform: "ios" };
+    window.__sent = []; window.webkit = { messageHandlers: { scales: { postMessage: (m) => window.__sent.push(m) } } };
+    localStorage.setItem("scales.prefs.v1", JSON.stringify({ onboarded: true, coach_seen: true }));
+    localStorage.setItem("scales.thoughts.v1", JSON.stringify(t));
+  }, { a: P("a", "Say the hard thing early.") });
+  await page.goto("https://scales.tangomike.app/app/?native=1"); await page.clock.runFor(500);
+  const sent = () => page.evaluate(() => window.__sent.map((m) => m.type));
+  // The app reports no Plus, with a trial on offer.
+  await page.evaluate(() => window.scalesStore({ active: false, price: "$19.99", trialDays: 14 }));
+  await page.click("#words"); await page.clock.runFor(1500);
+  assert.equal(asked.length, 0, "no server AI without Plus");
+  await page.click("#menuBtn"); await page.click('[data-m="settings"]'); await page.clock.runFor(300);
+  assert.equal(await page.$eval("#plusGroup", (e) => e.hidden), false);
+  assert.match(await page.textContent("#plusStatus"), /Try it free for 14 days/);
+  await page.click("#openPlus"); await page.clock.runFor(300);
+  assert.match(await page.textContent("#plusPrice"), /14 days free, then \$19\.99 a year\./);
+  assert.equal(await page.textContent("#plusBuy"), "Start free trial");
+  await page.click("#plusBuy");
+  assert.ok((await sent()).includes("purchase"), "asks the App Store");
+  // The App Store says yes: Plus is on, AI is asked for once, then lines come from the server with the record.
+  await page.evaluate(() => window.scalesStore({ active: true, jws: "signed-record", expires: Date.now() + 14 * 864e5, trial: true, renews: true, price: "$19.99", note: "bought" }));
+  assert.ok(await until(page, async () => await page.$eval("#sheetConsent", (e) => e.open)), "AI consent asked after buying");
+  await page.click("#consentYes");
+  assert.ok(await until(page, async () => asked.includes("signed-record")), "the record goes with AI requests");
+  assert.ok(asked.every((h) => h === "signed-record"));
+});

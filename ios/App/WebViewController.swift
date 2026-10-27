@@ -1,13 +1,19 @@
 import UIKit
 import WebKit
 import UserNotifications
+import StoreKit
 
-/// Shows Scales and answers what it asks of the phone: reminders, the badge, haptics, downloads.
+/// Shows Scales and answers what it asks of the phone: reminders, the badge, haptics, downloads, and
+/// Scales Plus through StoreKit (1.72.0).
 final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, WKDownloadDelegate {
     private let home = URL(string: "https://scales.tangomike.app/app/?native=1")!
     private var web: WKWebView!
     private var ready = false          // Scales has started and can take scripts
     private var queued: [String] = []  // scripts waiting for that
+    static let plusID = "com.grahamdeno.scales.plus.yearly"
+    private var storeUpdates: Task<Void, Never>?
+
+    deinit { storeUpdates?.cancel() }
 
     override func loadView() {
         let config = WKWebViewConfiguration()
@@ -34,6 +40,13 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         if #available(iOS 16.4, *) { web.isInspectable = true }
         view = web
         web.load(URLRequest(url: home))
+        // Renewals, refunds and purchases made elsewhere (another device, Ask to Buy) arrive here.
+        storeUpdates = Task { [weak self] in
+            for await result in Transaction.updates {
+                if case .verified(let t) = result { await t.finish() }
+                await self?.sendPlus()
+            }
+        }
     }
 
     /// Run a script in Scales now, or once it has started.
@@ -51,6 +64,18 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             ready = true
             queued.forEach { web.evaluateJavaScript($0, completionHandler: nil) }
             queued.removeAll()
+            Task { await sendPlus() }
+        case "plus":
+            Task { await sendPlus() }
+        case "purchase":
+            Task { await purchase() }
+        case "restore":
+            Task { await restore() }
+        case "manage":
+            Task {
+                if let scene = view.window?.windowScene { try? await AppStore.showManageSubscriptions(in: scene) }
+                await sendPlus()
+            }
         case "schedule":
             schedule(body["items"] as? [[String: Any]] ?? [])
         case "unschedule":
@@ -104,6 +129,77 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             guard settings.authorizationStatus == .authorized else { return }
             UNUserNotificationCenter.current().setBadgeCount(max(0, count)) { _ in }
         }
+    }
+
+    // MARK: Scales Plus
+
+    /// Tells Scales where Plus stands: whether it is active, the App Store's signed record of it (sent with
+    /// each AI request and checked by the server), the price, and the free trial if this Apple Account can
+    /// still have one. note says how a purchase or restore just ended.
+    private func sendPlus(note: String? = nil) async {
+        var state: [String: Any] = ["active": false]
+        for await result in Transaction.currentEntitlements {
+            guard case .verified(let t) = result, t.productID == Self.plusID, t.revocationDate == nil else { continue }
+            state["active"] = true
+            state["jws"] = result.jwsRepresentation
+            if let end = t.expirationDate { state["expires"] = end.timeIntervalSince1970 * 1000 }
+            state["trial"] = t.offerType == .introductory
+        }
+        if let product = try? await Product.products(for: [Self.plusID]).first {
+            state["price"] = product.displayPrice
+            if let sub = product.subscription {
+                if await sub.isEligibleForIntroOffer, let offer = sub.introductoryOffer, offer.paymentMode == .freeTrial {
+                    state["trialDays"] = Self.days(offer.period)
+                }
+                if let statuses = try? await sub.status {
+                    for status in statuses {
+                        if case .verified(let renewal) = status.renewalInfo, renewal.currentProductID == Self.plusID {
+                            state["renews"] = renewal.willAutoRenew
+                        }
+                    }
+                }
+            }
+        }
+        if let note { state["note"] = note }
+        guard let data = try? JSONSerialization.data(withJSONObject: state),
+              let json = String(data: data, encoding: .utf8) else { return }
+        run("window.scalesStore && window.scalesStore(\(json))")
+    }
+
+    private static func days(_ period: Product.SubscriptionPeriod) -> Int {
+        switch period.unit {
+        case .day: return period.value
+        case .week: return period.value * 7
+        case .month: return period.value * 30
+        case .year: return period.value * 365
+        @unknown default: return period.value
+        }
+    }
+
+    private func purchase() async {
+        guard let product = try? await Product.products(for: [Self.plusID]).first else {
+            await sendPlus(note: "unavailable"); return
+        }
+        do {
+            switch try await product.purchase() {
+            case .success(let result):
+                if case .verified(let t) = result { await t.finish(); await sendPlus(note: "bought") }
+                else { await sendPlus(note: "failed") }
+            case .pending:
+                await sendPlus(note: "pending")
+            case .userCancelled:
+                await sendPlus(note: "cancelled")
+            @unknown default:
+                await sendPlus()
+            }
+        } catch {
+            await sendPlus(note: "failed")
+        }
+    }
+
+    private func restore() async {
+        do { try await AppStore.sync(); await sendPlus(note: "restored") }
+        catch { await sendPlus(note: "failed") }
     }
 
     // MARK: Links and downloads

@@ -84,7 +84,7 @@ The name comes from scales falling from the eyes, and from Nietzsche's three met
 
 ## Privacy
 
-- Everything lives in the phone's browser storage. No account, no server, no analytics.
+- Everything you write lives on the phone. No account, no analytics. With Scales Plus, AI requests go through Scales' server (below), which keeps nothing.
 - The API key, if used, stays on the phone and is sent only to `api.anthropic.com`, with the principle, its skip count and anything you write to a voice.
 - Today's voice's name is sent to Wikiquote (`en.wikiquote.org`) for its quotes. Quotes are Wikiquote text under CC BY-SA 4.0 and link back to their page.
 - Settings > Your data says the same in one line.
@@ -192,6 +192,15 @@ Every release, patches included, gets a new version number. GitHub Actions adds 
 2. Run `node --test`.
 3. Push to `main`. GitHub Pages redeploys in about a minute, and once the tests pass, GitHub Actions tags the commit with the new version (`v1.21.0`).
 4. On the phone, tap Reload when the bar appears. Settings > Help shows the version.
+
+## Scales Plus and the AI server
+
+AI in the app (a question written for each principle, the quote that fits it best, and today's voice answering a Reply) is Scales Plus: $19.99 a year with a 14-day free trial, bought in the iPhone app through StoreKit (1.72.0). Free keeps everything else.
+
+- **The app.** `WebViewController.swift` reads Plus from StoreKit (`Transaction.currentEntitlements`, kept current by `Transaction.updates`) and sends the page where it stands: active or not, the App Store's signed record of the subscription (the transaction JWS), the price, and the free trial if the Apple Account can still have one. Settings > Scales Plus buys, restores and manages it. Product ID `com.grahamdeno.scales.plus.yearly`, subscription group Scales Plus.
+- **The server.** `server/ai.mjs` runs as a Cloudflare Pages Function at `scales.tangomike.app/api/ai`. Every request must carry the signed record in the `X-Scales-Plus` header. The server checks that it is signed by a key whose certificate chain ends at Apple Root CA - G3 (pinned by fingerprint, with Apple's marker extensions on the intermediate and leaf), for this app and product, unexpired and not refunded, before anything goes to Anthropic. Otherwise it answers 402. A record can only come from a purchase in the iPhone app, so the server serves paying or trialing users of the real app. Same-origin requests only, a Cloudflare rate limit, and a monthly spend limit on the Anthropic workspace stay in place. Nothing is stored or logged.
+- **Not done:** App Attest. A subscriber could copy their own record out of the app and use it elsewhere until it expires; the rate and spend limits cover that.
+- **Tests.** `tests/fixtures/store/` holds a test-only certificate chain shaped like Apple's, so the check runs in `node --test` without Apple.
 
 ## Roadmap
 

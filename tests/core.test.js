@@ -476,7 +476,7 @@ test("an undo point is a copy: later changes do not leak in, and applying it twi
 
 test("the page wires sheets as modal dialogs, Undo and the coach (1.26.0)", () => {
   const html = read("index.html");
-  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 14, "every sheet is a <dialog>");
+  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 15, "every sheet is a <dialog>");
   assert.doesNotMatch(html, /<section class="sheet/, "no sheet left as a hidden section");
   assert.match(html, /\.showModal\(\)/);
   for (const id of (html.match(/aria-labelledby="(sheet\w+Title)"/g) || []).map((m) => m.slice(17, -1))) {
@@ -1225,7 +1225,7 @@ test("Settings: most used first, help with support and privacy, Advanced only fo
   const html = read("index.html");
   const sheet = html.slice(html.indexOf('id="sheetSettings"'), html.indexOf("</dialog>", html.indexOf('id="sheetSettings"')));
   const groups = [...sheet.matchAll(/<h3 class="sec2"[^>]*>([^<]+)/g)].map(m => m[1].trim());
-  assert.deepEqual(groups, ["Reminders", "Your deck", "Voices", "Look", "Your data", "Help"]);
+  assert.deepEqual(groups, ["Reminders", "Your deck", "Voices", "Look", "Your data", "Scales Plus", "Help"]);
   const adv = sheet.slice(sheet.indexOf('<details class="adv" id="advanced"'));
   assert.match(adv, /id="apiKey"/);
   assert.doesNotMatch(adv, /id="aiToggle"|id="starterGroup"|id="versionText"/);
@@ -1380,22 +1380,7 @@ test("the old GitHub Pages address points to the new home and offers a backup", 
 test("at scales.tangomike.app the app uses its own AI server, no key", () => {
   const html = read("index.html");
   assert.match(html, /var PROXY = location\.hostname === "scales\.tangomike\.app" \? "\/api\/ai" : null;/);
-  assert.match(html, /if \(!PROXY && !key\) return null;/);
-});
-test("the AI server fixes the model and limits and only takes same-origin text messages", async () => {
-  const mod = await import("../server/ai.mjs");
-  const seen = [];
-  global.fetch = async (url, init) => { seen.push({ url, body: JSON.parse(init.body), key: init.headers["x-api-key"] }); return new Response(JSON.stringify({ content: [{ type: "text", text: "ok" }] }), { status: 200 }); };
-  const env = { ANTHROPIC_API_KEY: "sk-ant-server" };
-  const post = (body, origin) => mod.onRequestPost({ env, request: new Request("https://scales.tangomike.app/api/ai", { method: "POST", headers: origin ? { Origin: origin } : {}, body: JSON.stringify(body) }) });
-  assert.equal((await post({ messages: [{ role: "user", content: "hi" }] }, "https://evil.example")).status, 403);
-  assert.equal((await post({ messages: [{ role: "system", content: "x" }] }, "https://scales.tangomike.app")).status, 400);
-  const r = await post({ model: "claude-opus-5-5", max_tokens: 99999, system: "s", messages: [{ role: "user", content: "hi" }] }, "https://scales.tangomike.app");
-  assert.equal(r.status, 200);
-  assert.equal(seen[0].body.model, "claude-haiku-5-5");
-  assert.equal(seen[0].body.max_tokens, 1024);
-  assert.equal(seen[0].key, "sk-ant-server");
-  assert.equal((await mod.onRequestPost({ env: {}, request: new Request("https://scales.tangomike.app/api/ai", { method: "POST", headers: { Origin: "https://scales.tangomike.app" }, body: "{}" }) })).status, 503);
+  assert.match(html, /if \(PROXY \? !plusOn\(\) : !key\) return null;/, "the server only with Scales Plus (1.72.0)");
 });
 
 // ---------- 1.65.0: first run for the iPhone app ----------
@@ -1415,4 +1400,83 @@ test("one blue accent for the main action and selected states, and Match iPhone 
   assert.match(html, /\.toggle\[aria-checked="true"\] \{ background:var\(--accent\)/);
   assert.match(html, /data-look="auto"[^>]*>Match iPhone</);
   assert.match(html, /prefs = Object\.assign\(\{ look: savedPrefs \? "matte" : "auto" \}/);
+});
+
+// ---------- 1.72.0: Scales Plus, checked on the server ----------
+const storeDir = path.join(__dirname, "fixtures", "store");
+const nodeCrypto = require("crypto");
+const derOf = (f) => new nodeCrypto.X509Certificate(fs.readFileSync(path.join(storeDir, f))).raw;
+const testRoot = nodeCrypto.createHash("sha256").update(derOf("root.pem")).digest("hex");
+const b64u = (x) => Buffer.from(x).toString("base64url");
+// A StoreKit-style transaction JWS signed by the test leaf key.
+function plusJws(over = {}, keyPem = fs.readFileSync(path.join(storeDir, "leaf.key"))) {
+  const header = { alg: "ES256", x5c: ["leaf.pem", "mid.pem", "root.pem"].map((f) => derOf(f).toString("base64")) };
+  const body = Object.assign({ bundleId: "com.grahamdeno.scales", productId: "com.grahamdeno.scales.plus.yearly", environment: "Sandbox",
+    type: "Auto-Renewable Subscription", expiresDate: Date.now() + 864e5 }, over);
+  const input = b64u(JSON.stringify(header)) + "." + b64u(JSON.stringify(body));
+  const sig = nodeCrypto.sign("sha256", Buffer.from(input), { key: keyPem, dsaEncoding: "ieee-p1363" });
+  return input + "." + b64u(sig);
+}
+test("verifyPlus: an App Store signed record of an active Scales Plus subscription passes; anything else fails", async () => {
+  const { verifyPlus, APPLE_ROOT_G3 } = await import("../server/ai.mjs");
+  const roots = [testRoot];
+  assert.equal((await verifyPlus(plusJws(), { roots })).productId, "com.grahamdeno.scales.plus.yearly");
+  assert.equal((await verifyPlus(plusJws({ environment: "Production" }), { roots })).environment, "Production");
+  await assert.rejects(verifyPlus(plusJws()), /unknown root/, "only Apple's root by default");
+  assert.equal(APPLE_ROOT_G3, "63343abfb89a6a03ebb57e9b3f5fa7be7c4f5c756f3017b3a8c488c3653e9179");
+  await assert.rejects(verifyPlus(plusJws({ expiresDate: Date.now() - 1000 }), { roots }), /expired/);
+  await assert.rejects(verifyPlus(plusJws({ revocationDate: Date.now() - 1000 }), { roots }), /refunded/);
+  await assert.rejects(verifyPlus(plusJws({ bundleId: "com.other.app" }), { roots }), /wrong app/);
+  await assert.rejects(verifyPlus(plusJws({ productId: "com.grahamdeno.scales.other" }), { roots }), /wrong app/);
+  await assert.rejects(verifyPlus(plusJws({ environment: "Xcode" }), { roots }), /environment/);
+  const good = plusJws(), [h, p, sg] = good.split(".");
+  const forged = b64u(JSON.stringify(Object.assign(JSON.parse(Buffer.from(p, "base64url")), { expiresDate: Date.now() + 9e12 })));
+  await assert.rejects(verifyPlus(h + "." + forged + "." + sg, { roots }), /bad signature/, "a changed record fails");
+  // Signed by a key that is not the leaf in the chain.
+  const other = nodeCrypto.generateKeyPairSync("ec", { namedCurve: "P-256" }).privateKey.export({ type: "sec1", format: "pem" });
+  const bad = plusJws({}, other);
+  await assert.rejects(verifyPlus(bad, { roots }), /bad signature/);
+  // A chain without the intermediate's Apple marker.
+  const hdr = JSON.parse(Buffer.from(h, "base64url")); hdr.x5c[1] = hdr.x5c[2];
+  await assert.rejects(verifyPlus(b64u(JSON.stringify(hdr)) + "." + p + "." + sg, { roots }), /App Store certificate/);
+  await assert.rejects(verifyPlus("nope", { roots }), /not a JWS/);
+});
+test("the page sends the Plus record with every AI request and shows Scales Plus in Settings (1.72.0)", () => {
+  const html = read("index.html");
+  assert.match(html, /"X-Scales-Plus": plus\.jws/);
+  assert.match(html, /window\.scalesStore = function \(s\)/);
+  assert.match(html, /id="sheetPlus"/);
+  assert.match(html, /toNative\(\{ type: "purchase" \}\)/);
+  assert.match(html, /toNative\(\{ type: "restore" \}\)/);
+  assert.match(html, /https:\/\/www\.apple\.com\/legal\/internet-services\/itunes\/dev\/stdeula\//, "Terms of Use link next to the price");
+  assert.match(html, /https:\/\/scales\.tangomike\.app\/privacy/);
+  const swift = read("ios/App/WebViewController.swift");
+  assert.match(swift, /static let plusID = "com\.grahamdeno\.scales\.plus\.yearly"/);
+  assert.match(swift, /Transaction\.currentEntitlements/);
+  assert.match(swift, /Transaction\.updates/);
+  assert.match(swift, /AppStore\.sync\(\)/);
+});
+test("the AI server needs Scales Plus, fixes the model and limits, and only takes same-origin text messages", async () => {
+  const mod = await import("../server/ai.mjs");
+  const seen = [];
+  global.fetch = async (url, init) => { seen.push({ url, body: JSON.parse(init.body), key: init.headers["x-api-key"] }); return new Response(JSON.stringify({ content: [{ type: "text", text: "ok" }] }), { status: 200 }); };
+  const env = { ANTHROPIC_API_KEY: "sk-ant-server" }, site = "https://scales.tangomike.app";
+  const post = (body, origin, plus) => mod.onRequestPost({ env, request: new Request(site + "/api/ai", { method: "POST",
+    headers: Object.assign(origin ? { Origin: origin } : {}, plus ? { "X-Scales-Plus": plus } : {}), body: JSON.stringify(body) }) });
+  const hi = { messages: [{ role: "user", content: "hi" }] };
+  assert.equal((await post(hi, "https://evil.example")).status, 403);
+  assert.equal((await post(hi, site)).status, 402, "no Plus record");
+  mod.TRUSTED_ROOTS.push(testRoot);
+  try {
+    assert.equal((await post(hi, site, plusJws({ expiresDate: Date.now() - 1 }))).status, 402, "an expired one");
+    assert.equal(seen.length, 0, "nothing sent on without Plus");
+    const plus = plusJws();
+    assert.equal((await post({ messages: [{ role: "system", content: "x" }] }, site, plus)).status, 400);
+    const r = await post({ model: "claude-opus-5-5", max_tokens: 99999, system: "s", messages: [{ role: "user", content: "hi" }] }, site, plus);
+    assert.equal(r.status, 200);
+    assert.equal(seen[0].body.model, "claude-haiku-5-5");
+    assert.equal(seen[0].body.max_tokens, 1024);
+    assert.equal(seen[0].key, "sk-ant-server");
+  } finally { mod.TRUSTED_ROOTS.pop(); }
+  assert.equal((await mod.onRequestPost({ env: {}, request: new Request(site + "/api/ai", { method: "POST", headers: { Origin: site }, body: "{}" }) })).status, 503);
 });
