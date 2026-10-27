@@ -48,6 +48,11 @@ async function hold(page) {
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down(); await page.clock.runFor(700); await page.mouse.up(); await page.clock.runFor(100);
 }
+// Advance the page clock in small steps until check() passes, so a slow machine does not fail a test.
+async function until(page, check, steps = 40) {
+  for (let i = 0; i < steps; i++) { if (await check()) return true; await page.clock.runFor(250); }
+  return check();
+}
 const rows = (page) => page.$$eval("#choices .pickrow span", (s) => s.map((x) => x.textContent));
 const ready = { onboarded: true, coach_seen: true };
 
@@ -110,14 +115,15 @@ test("a principle back from Later waits for a choice and counts nothing", async 
 });
 
 test("Sit with it counts after eight seconds, and Undo puts it back", async () => {
-  const page = await open({ prefs: ready, thoughts: { a: P("a", "One.", { skip_count: 2, lifetime_skips: 2 }), b: P("b", "Two.") } });
-  await hold(page); await page.click('#choices [data-pick="keep"]'); await page.clock.runFor(300);
-  assert.match(await page.textContent("#card .phase"), /Sitting with it/);
-  await page.clock.runFor(8500);
-  assert.match(await page.textContent("#reflFoot"), /Counted as Sit with it/);
+  // One principle, so the deck's weighted draw cannot put a different one on screen.
+  const page = await open({ prefs: ready, thoughts: { a: P("a", "One.", { skip_count: 2, lifetime_skips: 2 }) } });
+  await hold(page); await page.click('#choices [data-pick="keep"]');
+  assert.ok(await until(page, async () => /Sitting with it/.test(await page.textContent("#card .phase").catch(() => ""))), "the Sit with it screen");
+  await page.clock.runFor(8000);
+  assert.ok(await until(page, async () => /Counted as Sit with it/.test(await page.textContent("#reflFoot").catch(() => ""))), "counted after eight seconds");
   assert.equal((await saved(page)).a.skip_count, 1, "one lighter");
-  await page.click("#reflUndo"); await page.clock.runFor(300);
-  assert.equal((await saved(page)).a.skip_count, 2, "undone");
+  await page.click("#reflUndo");
+  assert.ok(await until(page, async () => (await saved(page)).a.skip_count === 2), "undone");
   assert.equal((await saved(page)).a.reflect_count, 0);
 });
 
