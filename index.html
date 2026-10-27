@@ -3161,6 +3161,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       hadWorker = true;
     });
     if (NATIVE) toNative({ type: "ready" });
+    // Moved (1.63.0): the old GitHub Pages address keeps working, but a phone keeps data per address, so it says
+    // where Scales lives now and offers the backup to restore there. The bar stays until Back up is tapped.
+    if (location.hostname === "grahamdeno.github.io") setTimeout(function () {
+      toast("Scales has moved to the iPhone app and scales.tangomike.app/app. Back up here, then restore there.", null, { label: "Back up", fn: function () { backupNow(); } });
+    }, 1200);
     window.addEventListener("load", function () {
       navigator.serviceWorker.register("sw.js").then(function (reg) {
         document.addEventListener("visibilitychange", function () {
