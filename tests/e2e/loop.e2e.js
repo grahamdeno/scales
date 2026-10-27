@@ -75,6 +75,7 @@ test("the hold opens three choices; a quick tap on the hold area chooses nothing
   assert.equal(await page.$eval("#choices", (e) => e.hidden), true, "a tap does not open the choices");
   await hold(page);
   assert.deepEqual(await rows(page), ["Living it", "Sit with it", "Skip"]);
+  assert.equal(await page.$("#scrollHint"), null, "a short principle has no scroll hint");
 });
 
 test("Skip without the tap asks first; Skip it rests the principle", async () => {
