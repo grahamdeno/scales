@@ -1202,7 +1202,7 @@ test("a new deck opens on the welcome; an existing one never does; + opens Captu
   assert.match(html, /if \(!prefs\.welcoming && all\(\)\.length\) \{ prefs\.onboarded = true; savePrefs\(\); \}/, "someone with principles skips the welcome");
   assert.match(html, /function renderWelcome\(\)/);
   assert.match(html, /Best as an app: in Safari, tap Share, then Add to Home Screen/);
-  assert.match(html, /var finish = function \(\) \{\s*prefs\.onboarded = true;/); assert.match(html, /\$\("wDone"\)\.onclick = finish;/);
+  assert.match(html, /var finish = function \(\) \{[^}]*prefs\.onboarded = true;/); assert.match(html, /\$\("wDone"\)\.onclick = finish;/);
   assert.match(html, /var b = e\.target\.closest && e\.target\.closest\("\[data-starter\]"\)/, "starter decks work from the welcome too");
   assert.match(html, /id="addTop" aria-label="Capture a principle"/);
   assert.match(html, /\$\("addTop"\)\.onclick = function \(\) \{ closeMenu\(\); openCapture\(\); \};/);
