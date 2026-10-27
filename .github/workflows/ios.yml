@@ -1,0 +1,70 @@
+# Builds Scales for iPhone on a cloud Mac. Every change to ios/ is compiled;
+# with the App Store Connect key in the repo's secrets, it's signed and sent
+# to TestFlight (install from the TestFlight app on the iPhone).
+name: iPhone app
+on:
+  push:
+    branches: [main, ios]
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  workflow_dispatch:
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: macos-26
+    env:
+      HAS_KEY: ${{ secrets.ASC_KEY_P8 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pick Xcode
+        run: |
+          echo "::notice::Xcodes on this Mac: $(ls -d /Applications/Xcode_*.app | xargs -n1 basename | tr '\n' ' ')"
+          X="$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)"
+          sudo xcode-select -s "$X"
+          xcodebuild -version | head -1 | sed 's/^/::notice::Using /'
+      - name: Make the Xcode project
+        run: brew install xcodegen && cd ios && xcodegen generate
+      - name: Compile (simulator, unsigned)
+        run: |
+          cd ios
+          set +e
+          xcodebuild -project Scales.xcodeproj -scheme Scales -sdk iphoneos \
+            -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build > build.log 2>&1
+          code=$?
+          # Surface our own warnings and errors as annotations, so they can be read without the full log.
+          grep -E "ios/(App)/.*(warning|error):" build.log | sed -E 's#^.*/ios/##' | sort -u | head -40 | sed 's/^/::warning::/'
+          [ $code -ne 0 ] && tail -n 8 build.log | sed 's/^/::error::/'
+          exit $code
+      - name: Signing key
+        if: env.HAS_KEY == 'true' && github.ref == 'refs/heads/main'
+        run: |
+          printf '%s\n' "${{ secrets.ASC_KEY_P8 }}" | sed 's/\r$//' > "$RUNNER_TEMP/asc.p8"
+          chmod 600 "$RUNNER_TEMP/asc.p8"
+          mkdir -p ~/.appstoreconnect/private_keys && cp "$RUNNER_TEMP/asc.p8" ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+      - name: Archive and send to TestFlight
+        if: env.HAS_KEY == 'true' && github.ref == 'refs/heads/main'
+        run: |
+          cd ios
+          set +e
+          AUTH="-allowProvisioningUpdates -authenticationKeyPath $RUNNER_TEMP/asc.p8 -authenticationKeyID ${{ secrets.ASC_KEY_ID }} -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }}"
+          report() { grep -E "error:|Error|failed|No profiles|rovisioning|ertificate|not available|denied" "$1" | sort -u | head -25 | sed 's/^/::error::/'; tail -n 15 "$1"; }
+          # Automatic signing needs one registered iPhone for its development profile.
+          ASC_KEY_ID=${{ secrets.ASC_KEY_ID }} ASC_ISSUER_ID=${{ secrets.ASC_ISSUER_ID }} ASC_KEY_PATH=$RUNNER_TEMP/asc.p8 ruby register-device.rb || exit 1
+          # Archive unsigned, then let the export sign it for the App Store.
+          xcodebuild -project Scales.xcodeproj -scheme Scales -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Scales.xcarchive" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} CODE_SIGNING_ALLOWED=NO \
+            archive > archive.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then echo "::error::archive failed"; report archive.log; exit $code; fi
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Scales.xcarchive" \
+            -exportOptionsPlist ExportOptions.plist -exportPath "$RUNNER_TEMP/out" $AUTH > export.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then echo "::error::export failed"; report export.log; exit $code; fi
+          cd "$RUNNER_TEMP/out"
+          mkdir -p ~/.appstoreconnect/private_keys && cp "$RUNNER_TEMP/asc.p8" ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+          xcrun altool --upload-app -f *.ipa -t ios --apiKey ${{ secrets.ASC_KEY_ID }} --apiIssuer ${{ secrets.ASC_ISSUER_ID }} > upload.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then echo "::error::upload failed"; report upload.log; exit $code; fi
+          echo "::notice::Uploaded build ${{ github.run_number }} to TestFlight"
