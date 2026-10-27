@@ -669,7 +669,7 @@ test("Black and White: one face, two flat looks, no shadows, glass or rounded pa
   assert.match(c, /:root\[data-look="light"\] \{\s*--paper:#ECEAE5;[^}]*--ink:#141414;/);
   assert.doesNotMatch(c, /box-shadow:-?\d+px -?\d+px \d+px|backdrop-filter|radial-gradient|linear-gradient/, "no raised shadows, blur or gradients");
   assert.match(c, /--r-s:0; --r-m:0; --r-l:0; --r-xl:0;/, "square corners");
-  assert.match(rule(c, ".primary"), /background:var\(--ink\)/);
+  assert.match(rule(c, ".primary"), /background:var\(--accent\)/, "the main action carries the one accent (1.66.0)");
   assert.match(html, /data-look="matte" aria-pressed="true">Black<\/button><button type="button" data-look="light" aria-pressed="false">White<\/button>/);
   assert.match(html, /content="#121212" id="themeColor"/);
   assert.match(read("manifest.webmanifest"), /"background_color": "#121212"/);
@@ -1389,4 +1389,15 @@ test("first run: no Home Screen note in the app, a buttons choice, AI asked afte
   assert.match(html, /function standalone\(\) \{ return !!\(NATIVE \|\| navigator\.standalone/);
   assert.match(html, /id="wButtons">Use buttons instead of press and hold</);
   assert.match(html, /function remindOffer\(\) \{ return NATIVE && !prefs\.remind_on && !prefs\.remind_offered; \}/);
+});
+
+// ---------- 1.66.0: the blue accent and Match iPhone ----------
+test("one blue accent for the main action and selected states, and Match iPhone appearance", () => {
+  const html = read("index.html");
+  assert.match(html, /--accent:#6E9BF0; --onAccent:#121212;/);
+  assert.match(html, /--accent:#1F5FCC; --onAccent:#F4F3EF;/);
+  assert.match(html, /\.primary \{[^}]*background:var\(--accent\)/);
+  assert.match(html, /\.toggle\[aria-checked="true"\] \{ background:var\(--accent\)/);
+  assert.match(html, /data-look="auto"[^>]*>Match iPhone</);
+  assert.match(html, /prefs = Object\.assign\(\{ look: savedPrefs \? "matte" : "auto" \}/);
 });
