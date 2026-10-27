@@ -177,9 +177,6 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .banner button { min-height:40px; font-size:var(--t-sm); font-weight:500; color:var(--muted); white-space:nowrap; }
 .banner .yes { color:var(--ink); }
 /* Hold: the ring, then the three outcomes as plain buttons. */
-/* Today's set: a thin line along the top edge. */
-.setbar { position:fixed; z-index:3; top:env(safe-area-inset-top, 0px); left:0; right:0; height:2px; background:var(--line); pointer-events:none; }
-.setbar i { display:block; height:100%; width:0; background:var(--ink); transition:width .3s var(--ease-out); }
 /* The hold area: the bottom of the screen. The ring sits in the middle; the choices appear around it while held. */
 .hold { position:relative; flex:none; height:clamp(230px, 33dvh, 300px); margin:0 calc(-1 * var(--gutter)); padding:0 var(--gutter) max(20px, env(safe-area-inset-bottom, 0px));
   display:flex; flex-direction:column; align-items:center; justify-content:center; touch-action:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; cursor:pointer; }
@@ -567,8 +564,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <!-- Main screen. The top stays put; the deck and the Ledger swap in place below it. Everything that is not
      one of the three moves is in the menu at the top right. -->
 <div class="app">
-  <!-- Today's set as one thin line along the top edge (1.36.0). -->
-  <div class="setbar" id="setBar" role="progressbar" aria-label="Today’s set" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0"><i></i></div>
   <header class="top">
     <!-- On the deck: the collection Show is drawing from, when one is chosen; nothing otherwise. On the Ledger: the way back to the deck. -->
     <h1 class="date" id="todayLbl"></h1>
@@ -2239,13 +2234,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function refreshDay() { day = C.dayState(day || prefs.day, today()); }
   function saveDay() { prefs.day = day; savePrefs(); }
   function noteDay(t, move) { refreshDay(); C.noteDayMove(day, t.id, move); saveDay(); }
-  // The top of the deck: progress dots while the set is under way, the day and date otherwise.
-  // The top (1.36.0): no date. Today's set is a thin line along the top edge that fills with each move, full
-  // once the set is done. The only words are the collection Show is drawing from, when one is chosen.
+  // The top of the deck: no date and, since 1.62.0, no progress line (on trial from 1.36.0, it changed nothing).
+  // The only words are the collection Show is drawing from, when one is chosen.
   function paintTop(phase) {
-    var el = $("todayLbl"), n = setSize(), done = Math.min(day.moved.length, n), bar = $("setBar");
-    var frac = phase === "set" ? done / n : 1;
-    if (bar) { bar.firstChild.style.width = Math.round(frac * 100) + "%"; bar.setAttribute("aria-valuemax", String(n)); bar.setAttribute("aria-valuenow", String(phase === "set" ? done : n)); }
+    var el = $("todayLbl");
     el.className = "date"; el.removeAttribute("aria-label");
     var dc = deckColl();
     el.innerHTML = dc ? esc(dc) : '<span class="sr">Scales</span>';

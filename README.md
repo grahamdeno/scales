@@ -17,7 +17,7 @@ You write down a principle you want to live by ("the hard conversation is usuall
 
 **First run.** A new deck opens on a short welcome: what Scales is, a starter deck or one principle of your own, then the hold, shown once. The + next to the menu captures a principle anytime.
 
-**The deck.** Quiet until asked. At rest the screen holds one principle and a ring. Press and hold anywhere on the bottom of the screen: after half a second your three choices open above your thumb, Living it, Sit with it and Skip. Slide onto one and let go, or let go and tap one. Letting go never chooses by itself; slide off the list or tap outside it to close it. Today's set is a thin line along the top edge; there is no date. Messages sit at the bottom of the screen, near your thumb.
+**The deck.** Quiet until asked. At rest the screen holds one principle and a ring. Press and hold anywhere on the bottom of the screen: after half a second your three choices open above your thumb, Living it, Sit with it and Skip. Slide onto one and let go, or let go and tap one. Letting go never chooses by itself; slide off the list or tap outside it to close it. There is no date and no progress bar. Messages sit at the bottom of the screen, near your thumb.
 
 | Move | Choose | What happens |
 |---|---|---|
@@ -49,7 +49,7 @@ A quick tap on the ring does nothing, so a stray touch never rests a principle. 
 
 **Rest and the front of the stack.** Skip rests a principle for four days by default, so a reflex skip each morning can't become a habit. Settings > Deck > Rest after Skip changes it, from 1 to 7 days, starting with the next Skip. A Scales day runs from 4:00 AM to 4:00 AM, so a late-night session counts as the day it started in. On the morning it returns, every principle skipped since its last turn comes up first, once each: most avoided first, then the one waiting longest. After its turn it rejoins the weighted draw. If everything is resting, the deck says Nothing left today and when the next principle returns, with Show anyway to bring resting principles back until the day ends. Show on a Ledger row opens that principle on the deck, even while it rests.
 
-**Today's set.** Each day starts with a set of principles, five by default (Settings > Deck > Today's set, 1 to 20); a thin line at the top shows how far along you are. When the set is done, the deck says Done for today and sums up how it went. Keep going opens the deck again if you want more.
+**Today's set.** Each day starts with a set of principles, five by default (Settings > Deck > Today's set, 1 to 20). When the set is done, the deck says Done for today and sums up how it went. Keep going opens the deck again if you want more.
 
 **Caught it.** When you live a principle without the app, open it in the Ledger and log where it showed up: real-life evidence. Three catches within 30 days ask whether you are ready to call it Living it.
 
