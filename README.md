@@ -114,7 +114,7 @@ So use a key made only for Scales, and in the Anthropic Console give its workspa
 2. Share > Add to Home Screen.
 3. Open it from the home screen icon. It runs full screen and works offline.
 
-Optional: menu (top right) > Settings > Advanced > AI key > paste an Anthropic API key > Save key. See [About the API key](#about-the-api-key) first.
+In the iPhone app and at scales.tangomike.app, AI needs no key. Only on the old GitHub Pages address: Settings > Advanced > paste an Anthropic API key > Save key. See [About the API key](#about-the-api-key) first.
 
 To check the key, tap **Test key** under AI key. It sends one tiny request and reports the result in plain terms: working, key not recognized, no credit on the account, rate or spend limit reached, or no connection.
 
@@ -176,7 +176,7 @@ Then open `http://localhost:8000`. The service worker needs `localhost` or HTTPS
 node --test
 ```
 
-Node 18 or later, no dependencies. Covers weighting, the selection cooldown, answer cleanup and checks, and the version and offline-cache wiring. GitHub Actions runs the same command on every push.
+Node 18 or later, no dependencies. `node --test tests/e2e/loop.e2e.js` (needs Playwright) drives the real page at iPhone size through first run, the hold, Skip, tap to see the line, Later and its return, Sit with it and Undo, and Capture; CI runs both. The unit tests cover weighting, the selection cooldown, answer cleanup and checks, and the version and offline-cache wiring. GitHub Actions runs the same command on every push.
 
 ## Versioning
 
@@ -195,7 +195,7 @@ Every release, patches included, gets a new version number. GitHub Actions adds 
 1. Set `VERSION` (and `BUILT`) in `core.js` and the matching `CACHE` name in `sw.js` (`scales-v1.21.0`). The tests fail if they differ or if the version is not three numbers.
 2. Run `node --test`.
 3. Push to `main`. GitHub Pages redeploys in about a minute, and once the tests pass, GitHub Actions tags the commit with the new version (`v1.21.0`).
-4. On the phone, tap Reload when the bar appears. Settings > Advanced > About shows the version.
+4. On the phone, tap Reload when the bar appears. Settings > Help shows the version.
 
 ## Roadmap
 
