@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.59.0";
+  var VERSION = "1.60.0";
   var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -402,7 +402,7 @@ var ScalesCore = (function () {
   // After a hold through, the reflect screen shows a real quote from today's voice, taken from the sourced
   // quotes on its Wikiquote page. The model only chooses among them; it never writes one.
   var WQ_PAGE = { jung: "Carl Jung", nietzsche: "Friedrich Nietzsche", dostoevsky: "Fyodor Dostoevsky", epictetus: "Epictetus",
-    marcus: "Marcus Aurelius", perel: "Esther Perel", peterson: "Jordan Peterson", goggins: "David Goggins" };
+    marcus: "Marcus Aurelius" };
   function wqPage(voice) { return (voice && (WQ_PAGE[voice.id] || voice.name)) || ""; }
   function wqUrl(page) {
     return "https://en.wikiquote.org/w/api.php?action=parse&prop=wikitext&format=json&formatversion=2&redirects=1&origin=*&page=" + encodeURIComponent(String(page).replace(/ /g, "_"));
@@ -569,11 +569,10 @@ var ScalesCore = (function () {
     { id: "nietzsche", name: "Friedrich Nietzsche", short: "Nietzsche", living: false, lens: "self-overcoming, the will to power, becoming who you are, and contempt for comfortable mediocrity" },
     { id: "dostoevsky", name: "Fyodor Dostoevsky", short: "Dostoevsky", living: false, lens: "freedom and responsibility, self-deception, suffering, and the lies a person tells himself" },
     { id: "epictetus", name: "Epictetus", short: "Epictetus", living: false, lens: "what is in your control, judgment over events, and disciplined assent" },
-    { id: "marcus", name: "Marcus Aurelius", short: "Marcus Aurelius", living: false, lens: "duty, the brevity of life, acting well now, and the inner citadel" },
-    { id: "perel", name: "Esther Perel", short: "Perel", living: true, lens: "the stories we tell about ourselves, desire and security, and how relationships reveal us" },
-    { id: "peterson", name: "Jordan Peterson", short: "Peterson", living: true, lens: "responsibility, order and chaos, telling the truth, and aiming at something higher" },
-    { id: "goggins", name: "David Goggins", short: "Goggins", living: true, lens: "callousing the mind, accountability, refusing excuses, and doing the hard thing when you do not want to" }
+    { id: "marcus", name: "Marcus Aurelius", short: "Marcus Aurelius", living: false, lens: "duty, the brevity of life, acting well now, and the inner citadel" }
   ];
+  // 1.60.0: living people are no longer built in (App Store 5.2.1). A name the user adds is still written about
+  // in the third person unless they mark it as someone no longer living.
   var TALK_MAX = 6, REPLY_WORDS = 70;
   var MOVES = { skip: "Skip", keep: "Sit with it", shed: "Living it" };
 
@@ -588,7 +587,9 @@ var ScalesCore = (function () {
   function chosenVoices(chosen, custom) {
     var list = allVoices(custom);
     if (!chosen) return list.filter(function (v) { return !v.custom; });
-    return list.filter(function (v) { return chosen.indexOf(v.id) >= 0; });
+    var out = list.filter(function (v) { return chosen.indexOf(v.id) >= 0; });
+    // Every chosen voice gone (1.60.0 removed the living built-ins): fall back to the built-in voices.
+    return out.length || !chosen.length ? out : list.filter(function (v) { return !v.custom; });
   }
   // Today's voice: one per Scales day, rotating through the chosen voices in order.
   function voiceOfDay(voices, day) {
