@@ -481,7 +481,7 @@ test("an undo point is a copy: later changes do not leak in, and applying it twi
 
 test("the page wires sheets as modal dialogs, Undo and the coach (1.26.0)", () => {
   const html = read("index.html");
-  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 13, "every sheet is a <dialog>");
+  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 14, "every sheet is a <dialog>");
   assert.doesNotMatch(html, /<section class="sheet/, "no sheet left as a hidden section");
   assert.match(html, /\.showModal\(\)/);
   for (const id of (html.match(/aria-labelledby="(sheet\w+Title)"/g) || []).map((m) => m.slice(17, -1))) {
@@ -708,7 +708,7 @@ test("at rest only the principle and the ring; lines appear on push and reflect 
   assert.match(html, /function showWhere\(\) \{ return prefs\.show_where !== false; \}/, "on by default");
   assert.match(html, /id="whereToggle" role="switch"/);
   assert.match(html, /id="aiToggle" role="switch"/);
-  assert.match(html, /sample = prefs\.ai_off \? null : makeSampler\(savedKey\)/, "AI lines off uses the built-in questions");
+  assert.match(html, /sample = aiAllowed\(\) \? makeSampler\(savedKey\) : null/, "AI lines off (or not allowed) uses the built-in questions");
   assert.match(html, /if \(sample && !C\.lineFresh\(t, "push"\)\) fetchLine\(t, "push"\);\s*if \(!C\.lineFresh\(t, "reflect"\)\) fetchQuote\(t\);/, "the push line and the quote are fetched ahead, only when missing or stale");
   assert.match(html, /if \(live && live\.text === of\) \{ C\.keepLine\(live, kind, s\); save\(live\); \}/, "a written line is kept on the principle");
 });test("the Ledger: tabs with counts, one group at a time, two lines per principle (1.44.0)", () => {
@@ -1340,4 +1340,13 @@ test("a principle back from Later opens with its quote and counts nothing until 
 test("Tap to read it all shows only when the principle is cut off", () => {
   const html = read("index.html");
   assert.match(html, /if \(w\.scrollHeight <= w\.clientHeight \+ 1\) \{ w\.classList\.remove\("fold"\);/);
+});
+
+// ---------- 1.57.0: ask before anything goes to AI ----------
+test("nothing is sent to AI until the user allows it", () => {
+  const html = read("index.html");
+  assert.match(html, /<dialog class="sheet" id="sheetConsent"/);
+  assert.match(html, /function aiAllowed\(\) \{ return prefs\.ai_consent === true && !prefs\.ai_off; \}/);
+  assert.match(html, /sample = aiAllowed\(\) \? makeSampler\(savedKey\) : null;/);
+  assert.doesNotMatch(html, /sample = prefs\.ai_off \? null : makeSampler/);
 });
