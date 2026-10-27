@@ -1209,14 +1209,17 @@ test("a new deck opens on the welcome; an existing one never does; + opens Captu
 });
 
 // ---------- 1.48.0: Settings rebuilt ----------
-test("Settings has five groups and folds the rest under Advanced", () => {
+test("Settings: most used first, help with support and privacy, Advanced only for keys (1.67.0)", () => {
   const html = read("index.html");
   const sheet = html.slice(html.indexOf('id="sheetSettings"'), html.indexOf("</dialog>", html.indexOf('id="sheetSettings"')));
   const groups = [...sheet.matchAll(/<h3 class="sec2"[^>]*>([^<]+)/g)].map(m => m[1].trim());
-  assert.deepEqual(groups, ["Look", "Deck", "Voices", "Reminders", "Your data"]);
-  const adv = sheet.slice(sheet.indexOf('<details class="adv"'));
-  for (const id of ["apiKey", "csvExportBtn", "starterGroup", "howRest", "versionText"]) assert.match(adv, new RegExp('id="' + id + '"'));
-  assert.doesNotMatch(sheet, /today’s focus/);
+  assert.deepEqual(groups, ["Reminders", "Your deck", "Voices", "Look", "Your data", "Help"]);
+  const adv = sheet.slice(sheet.indexOf('<details class="adv" id="advanced"'));
+  assert.match(adv, /id="apiKey"/);
+  assert.doesNotMatch(adv, /id="aiToggle"|id="starterGroup"|id="versionText"/);
+  assert.match(sheet, /href="https:\/\/scales\.tangomike\.app\/privacy"/);
+  assert.match(sheet, /href="https:\/\/scales\.tangomike\.app\/support"/);
+  assert.doesNotMatch(sheet, /With a keyboard: the arrow keys|today’s focus/);
 });
 
 // ---------- 1.49.0: wording sweep, Wikiquote credit, privacy ----------
