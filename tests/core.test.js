@@ -814,19 +814,31 @@ test("talks are saved on the principle, newest last, five kept (Story 13)", () =
   assert.deepEqual(t.talks.map((x) => x.at), ["t2", "t3", "t4", "t5", "t6"]);
 });
 
-test("the page offers Weigh in only after a move, with a key, and keeps talks in the Ledger", () => {
+test("one way to talk back: Reply, and today's voice answers when AI is on; old talks still open from the Ledger (1.71.0)", () => {
   const html = read("index.html");
   assert.match(html, /<dialog class="sheet tall" id="sheetWeigh"/);
-  assert.match(html, /function canWeigh\(\) \{ return !!\(sample && lastMove && lastMove\.day === today\(\)/);
-  for (const m of ['noteMove(t, "skip")', 'noteMove(t, "keep")', 'noteMove(t, "shed")']) assert.ok(html.includes(m), m);
-  assert.match(html, /lastMove = null; \/\/ the move is undone/);
-  assert.match(html, /if \(!wTalk\(\)\.line\) askLine\(\);/, "the line is asked for only when Weigh in is tapped");
+  assert.doesNotMatch(html, /id="weighBtn"|id="talkRow"|Talk it through with/, "no Weigh in or Talk it through on the deck");
+  assert.match(html, /function replyVoice\(\) \{ return sample \? todayVoice\(\) : null; \}/, "the voice answers only with AI on");
+  assert.match(html, /if \(!v\) \{ hide\(\); toast\("Reply kept\."\); return; \}/, "without AI the reply is simply kept");
+  assert.match(html, /C\.addTalk\(t, \{ at: r\.at, day: today\(\), reply: true,/);
+  assert.match(html, /paintWeigh\(\); show\("sheetWeigh"\); askReply\(\);/);
+  assert.match(html, /id="replyRetry"/, "a failed answer can be asked for again");
   assert.match(html, /C\.voiceLabel\(v\)/, "every line carries its label");
-  assert.match(html, /openKeep\(t, k\.line\)/, "Keep works on these lines");
   assert.match(html, /data-r="talk">Talk/);
   assert.match(html, /undoable\("Talk deleted\.", u\)/);
-  assert.match(html, /id="voiceList"/);
   assert.match(html, /JSON\.stringify\(Object\.assign\(\{ model: MODEL, max_tokens: 1024 \}, req\)\)/, "one request path for lines and talks");
+});
+
+test("talkRequest from a Reply: the line replied to is in the system prompt, the messages start with you (1.71.0)", () => {
+  const g = C.allVoices([]).filter((v) => !v.living)[0], t = A("a", { text: "Say the hard thing early.", skip_count: 2 });
+  const r = C.talkRequest(g, t, { reply: true, line: "Where would this have changed something yesterday?", author: "", turns: [{ me: true, text: "In the meeting." }, { me: false, text: "Then why wait?" }, { me: true, text: "Fear." }] });
+  assert.match(r.system, /They are replying to this line: Where would this have changed something yesterday\?/);
+  assert.deepEqual(r.messages.map((m) => m.role), ["user", "assistant", "user"]);
+  assert.equal(r.messages[0].content, "In the meeting.");
+  const q = C.talkRequest(g, t, { reply: true, line: "Q.", author: "Epictetus", turns: [{ me: true, text: "x" }] });
+  assert.match(q.system, /line by Epictetus: Q\./);
+  const tl = C.timeline(Object.assign(A("b"), { talks: [{ at: "2026-10-27T09:00:00.000Z", day: "2026-10-27", reply: true, voice_name: "Epictetus", line: "Q.", turns: [] }] }));
+  assert.ok(tl.some((e) => e.kind === "talk" && e.text === "Talked with Epictetus"));
 });
 
 // ---------- 1.32.0: a day that ends, the evening check-in, Caught it, your week ----------
@@ -1145,7 +1157,7 @@ test("Reply opens a sheet above the keyboard; the choice is still waiting (1.40.
   assert.match(html, /<dialog class="sheet replysheet" id="sheetReply"/);
   assert.match(html, /id="replyDone" class="rdone" disabled>Done<\/button>/, "Done sits in the title row, never under the keyboard");
   assert.match(html, /var kb = Math\.max\(0, window\.innerHeight - vv\.height - vv\.offsetTop\);\s*d\.style\.bottom = kb \+ "px";/, "the sheet rides above the keyboard");
-  assert.match(html, /if \(!C\.addReply\(t, \$\("replyInput"\)\.value, f, today\(\)\)\) return;\s*save\(t\); hide\(\); paintReplies\(\);/, "saving does not render a new screen or make a move");
+  assert.match(html, /var r = C\.addReply\(t, \$\("replyInput"\)\.value, f, today\(\)\); if \(!r\) return;\s*save\(t\); paintReplies\(\);/, "saving does not render a new screen or make a move");
   assert.match(html, /id="replyBtn"/);
   assert.match(html, /if \(openSheet\) return; \/\/ a press and hold on the line opened Keep/);
   assert.match(html, /id="rowThread"/);

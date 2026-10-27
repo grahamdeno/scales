@@ -22,7 +22,7 @@ You write down a principle you want to live by ("the hard conversation is usuall
 | Move | Choose | What happens |
 |---|---|---|
 | Skip | from the choices | Scales pushes back once with a plain line, and offers Later. Skip it rests the principle: its count goes up by 1, it rests, then comes back first and set heavier. |
-| Sit with it | from the choices | A real quote from today's voice, where the principle came from, and Talk it through with that voice. After 8 seconds the test counts against Skip (the count drops by 1) and Next principle appears. Nothing moves on by itself. |
+| Sit with it | from the choices | A real quote from today's voice (or a question to sit with when no quote fits), where the principle came from, and Reply. After 8 seconds the test counts against Skip (the count drops by 1) and Next principle appears. Nothing moves on by itself. |
 | Living it | from the choices | Opens a short form for where it showed up, then moves the principle to your record. |
 
 A quick tap on the ring does nothing, so a stray touch never rests a principle. The three moves are also buttons for VoiceOver and the keyboard, and the arrow keys (left, up, right). Everything else (Capture, Edit, Show, the Ledger, Collections, Settings) is in the menu at the top right. With a keyboard, N captures, E edits, L switches between the deck and the Ledger, M opens the menu, and comma opens Settings.
@@ -76,11 +76,7 @@ A quick tap on the ring does nothing, so a stray touch never rests a principle. 
 
 Either one can be undone from the toast. Built-in questions have no Keep, since they are the same for every principle.
 
-**A thinker weighs in.** After a move, **Weigh in** appears under the keys. Tap it and today's voice gives one line on the move you just made: whether Skip was honest or evasive, whether Living it was earned. The voices are Carl Jung, Friedrich Nietzsche, Fyodor Dostoevsky, Epictetus and Marcus Aurelius, plus anyone you add in Settings > Voices. Living people are not built in (1.60.0). One voice weighs in each day, in turn, changing at 4:00 AM.
-
-The point is perspective, not quotation. The model reasons from each thinker's known ideas; nothing is copied from their writing, and every line is labeled as written by AI. Thinkers who have died speak in the first person ("In the spirit of Nietzsche"). Living people are written about in the third person, never voiced; a name you add is treated as living unless you mark it otherwise. The same checks as the AI line apply: short, no exclamation marks, nothing that softens the standard. **Keep** works on these lines too.
-
-**Talk it through.** From the Weigh in sheet you can answer back, up to six replies, and the voice presses on your reasoning. The exchange is saved on the principle; **Talk** on its Ledger row opens it again, where it can be deleted. Weigh in and Talk it through need an API key and send only the principle, the move, its counts and the exchange itself.
+**Reply, and today's voice answers (1.71.0).** Reply under any line keeps what you wrote with that line. With AI on, today's voice answers in a thread, and you can go back and forth, up to six replies. The voices are Carl Jung, Friedrich Nietzsche, Fyodor Dostoevsky, Epictetus and Marcus Aurelius, plus anyone you add in Settings > Voices. Living people are not built in (1.60.0). One voice each day, in turn, changing at 4:00 AM. The thread is saved on the principle; **Talk** on its Ledger row opens it again, where it can be deleted. Only the principle, its skip count, the line you replied to and the thread are sent. Weigh in and Talk it through, the older ways to do this, were folded into Reply; talks from before still open from the Ledger.
 
 ## Origin
 

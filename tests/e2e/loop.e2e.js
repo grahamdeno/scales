@@ -166,3 +166,33 @@ test("the welcome hides + and the menu; Sit with it shows a question when no quo
   assert.ok(await until(page, async () => ((await page.textContent("#aiLine").catch(() => "")) || "").endsWith("?")), "a question to sit with");
   assert.match(await page.getAttribute("#feedbackLink", "href"), /^mailto:support@tangomike\.app\?subject=Scales%20feedback/);
 });
+
+test("Reply: without AI the reply is kept; with AI today's voice answers in the thread (1.71.0)", async () => {
+  let page = await open({ prefs: ready, thoughts: { a: P("a", "One.") } });
+  await page.click("#words"); await page.clock.runFor(300);
+  await page.click("#replyBtn"); await page.fill("#replyInput", "In the meeting."); await page.click("#replyDone");
+  assert.ok(await until(page, async () => (await saved(page)).a.replies.length === 1), "kept");
+  assert.equal(await page.$eval("#sheetWeigh", (e) => e.open), false, "no thread without AI");
+
+  const answer = "Then say it before the meeting starts. What are you protecting by waiting?";
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
+  await ctx.route(/^https?:\/\/(?!localhost)/, (r) => /api\.anthropic\.com/.test(r.request().url())
+    ? r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ content: [{ type: "text", text: answer }], stop_reason: "end_turn" }) })
+    : r.abort());
+  page = await ctx.newPage();
+  await page.clock.install({ time: new Date(2026, 9, 27, 9, 0) });
+  await page.addInitScript(([p, t, k]) => {
+    localStorage.setItem("scales.prefs.v1", JSON.stringify(p)); localStorage.setItem("scales.thoughts.v1", JSON.stringify(t)); localStorage.setItem(k, "sk-ant-test");
+  }, [Object.assign({ ai_consent: true }, ready), { a: P("a", "One.") }, "scales.apikey.v1"]);
+  await page.goto(base); await page.clock.runFor(500);
+  await page.click("#words");
+  assert.ok(await until(page, async () => !!(await page.$("#replyBtn"))), "the line and Reply");
+  await page.click("#replyBtn");
+  assert.match(await page.textContent("#replyNote"), /answers\./);
+  await page.fill("#replyInput", "In the meeting."); await page.click("#replyDone");
+  assert.ok(await until(page, async () => ((await page.textContent("#talkLog").catch(() => "")) || "").includes(answer)), "the voice answered");
+  const t = (await saved(page)).a;
+  assert.equal(t.talks.length, 1); assert.equal(t.talks[0].reply, true);
+  assert.deepEqual(t.talks[0].turns.map((x) => x.me), [true, false]);
+  assert.equal(await page.$eval("#talkForm", (e) => e.hidden), false, "you can keep going");
+});
