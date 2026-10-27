@@ -1341,3 +1341,15 @@ test("lines are written for the principle on screen only, not the next one", () 
   assert.doesNotMatch(html, /if \(n && n\.id !== current\) ensureLines\(n\);/);
   assert.match(html, /function requestLine\(t\) \{ shown = null; ensureLines\(t\); prefetchNext\(\); \}/);
 });
+
+// ---------- 1.61.0: the iPhone app ----------
+test("inside the iPhone app, Scales hands the badge and a week of reminders to the shell", () => {
+  const html = read("index.html"), fs = require("fs"), path = require("path");
+  assert.match(html, /var NATIVE = !!window\.scalesNative;/);
+  assert.match(html, /toNative\(\{ type: "schedule", items: items \}\)/);
+  assert.match(html, /if \(NATIVE\) toNative\(\{ type: "ready" \}\);/);
+  const swift = fs.readFileSync(path.join(__dirname, "..", "ios", "App", "WebViewController.swift"), "utf8");
+  assert.match(swift, /https:\/\/scales\.tangomike\.app\/app\/\?native=1/);
+  for (const t of ["ready", "schedule", "unschedule", "badge"]) assert.match(swift, new RegExp('case "' + t + '"'));
+  assert.match(fs.readFileSync(path.join(__dirname, "..", "ios", "project.yml"), "utf8"), /PRODUCT_BUNDLE_IDENTIFIER: com\.grahamdeno\.scales/);
+});

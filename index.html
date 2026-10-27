@@ -390,6 +390,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
    title row stays pinned while the fields scroll. */
 dialog.sheet > h2 { position:sticky; top:-12px; z-index:2; margin:-10px calc(-1 * var(--gutter)) 0; padding:22px var(--gutter) 8px; background:var(--paper); }
 .sheet::backdrop { background:var(--scrim); }
+input.field.timefield { width:132px; min-width:0; flex:none; padding:8px 0; border-bottom:0; text-align:right; }
 .consentlist { margin:0; padding-left:20px; display:grid; gap:6px; font-size:var(--t-md); line-height:1.45; color:var(--ink); }
 /* Writing sheets (1.52.0): matte paper with black lettering on the Black look, and the reverse on White. */
 .sheet.inverse { --paper:#ECEAE5; --deep:#E2E0DA; --rise:#ECEAE5; --ink:#141414; --muted:#5A5955; --faint:#6A6965;
@@ -854,7 +855,14 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 
   <h3 class="sec2">Reminders</h3>
   <div class="panel raised" id="remindPanel">
-    <div class="setrow stack">
+    <div id="remindNative" hidden>
+      <div class="setrow"><span id="remindLbl">Remind me<small>Today’s set in the morning, anything saved for Later in the evening. The icon shows how many are waiting.</small></span>
+        <button type="button" class="toggle" id="remindToggle" role="switch" aria-checked="false" aria-labelledby="remindLbl"><i></i></button></div>
+      <div class="setrow"><label for="remindAm">Morning</label><input class="field timefield" type="time" id="remindAm" value="08:00"></div>
+      <div class="setrow"><label for="remindPm">Evening</label><input class="field timefield" type="time" id="remindPm" value="18:00"></div>
+      <p class="note" id="remindDenied" hidden>Notifications are off for Scales. Turn them on in iPhone Settings &gt; Notifications &gt; Scales.</p>
+    </div>
+    <div class="setrow stack" id="remindWeb">
       <p class="note">Reminders built into Scales come with the iPhone app. Until then, an iPhone automation can remind you. Set it up once in the morning for today’s set, and once after 6 PM for anything saved for Later.</p>
       <div class="steps"><div><b>1</b><span>In Shortcuts: Automation, New Automation, Time of Day. Pick a time, then Run Immediately.</span></div><div><b>2</b><span>Add the Show Notification action with the words: Scales, today’s set.</span></div><div><b>3</b><span>Repeat after 6 PM with: Scales, saved for later. Open Scales from the Home Screen when it arrives.</span></div></div>
       <p class="note">A link would open Safari, which keeps its own copy of the data, so the reminder points you to the Home Screen app instead.</p>
@@ -1008,11 +1016,33 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function badgeState() {
     if (!day) return null;
     var act_ = all().filter(function (t) { return t.status === "active"; });
-    return { day: day.day, left: day.more ? 0 : Math.max(0, setSize() - day.moved.length), size: setSize(), active: act_.length,
+    return { day: day.day, left: day.more ? 0 : Math.min(act_.length, Math.max(0, setSize() - day.moved.length)), size: setSize(), active: act_.length,
       laters: C.waiting(act_).map(function (t) { return t.later; }) };
   }
+  // The iPhone app (1.61.0): Scales runs inside a native shell that injects window.scalesNative and takes
+  // messages on webkit.messageHandlers.scales. The shell sets the badge and schedules reminders on the phone.
+  var NATIVE = !!window.scalesNative;
+  function toNative(msg) { try { window.webkit.messageHandlers.scales.postMessage(msg); } catch (_) {} }
+  function remindTimes() { return { am: prefs.remind_am || "08:00", pm: prefs.remind_pm || "18:00" }; }
+  // The next seven days of reminders, each with the words and badge count it will need when it fires.
+  function scheduleNative(s) {
+    if (!NATIVE) return;
+    if (!prefs.remind_on) { toNative({ type: "unschedule" }); return; }
+    var tm = remindTimes(), items = [], now = new Date();
+    for (var d = 0; d < 7; d++) {
+      [["morning", tm.am], ["evening", tm.pm]].forEach(function (k) {
+        var hm = String(k[1]).split(":"), at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d, +hm[0] || 0, +hm[1] || 0);
+        if (at <= now) return;
+        items.push({ id: k[0] + "-" + d, at: at.getTime(), title: "Scales", body: C.pushText(k[0], s, at), badge: C.badgeFrom(s, at) });
+      });
+    }
+    toNative({ type: "schedule", items: items });
+  }
+  window.scalesActive = function () { paintBadge(); };
+  window.scalesPermission = function (state) { prefs.remind_perm = state; savePrefs(); if (openSheet && openSheet.id === "sheetSettings") paintReminders(); };
   function paintBadge() {
     var s = badgeState(); if (!s) return;
+    if (NATIVE) { toNative({ type: "badge", count: prefs.remind_on ? C.badgeFrom(s, new Date()) : 0 }); scheduleNative(s); return; }
     try { if (window.caches) caches.open("scales-state").then(function (c) { return c.put("badge", new Response(JSON.stringify(s), { headers: { "Content-Type": "application/json" } })); }).catch(function () {}); } catch (_) {}
     if (!navigator.setAppBadge || !window.Notification || Notification.permission !== "granted") return;
     var n = C.badgeFrom(s, new Date());
@@ -2774,7 +2804,18 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     } else swap();
   }
   $("backDeck").onclick = function () { go("deck"); try { $("menuBtn").focus({ preventScroll: true }); } catch (e) {} };
-  function openSettings() { paintBackup(); paintSettings(); paintVoices(); show("sheetSettings", function () { if ($("v-ledger").hidden) { renderDeck(); } }); }
+  function paintReminders() {
+    $("remindNative").hidden = !NATIVE; $("remindWeb").hidden = NATIVE;
+    if (!NATIVE) return;
+    var tm = remindTimes();
+    $("remindToggle").setAttribute("aria-checked", String(!!prefs.remind_on));
+    $("remindAm").value = tm.am; $("remindPm").value = tm.pm;
+    $("remindDenied").hidden = !(prefs.remind_on && prefs.remind_perm === "denied");
+  }
+  $("remindToggle").onclick = function () { prefs.remind_on = !prefs.remind_on; savePrefs(); paintBadge(); paintReminders(); };
+  $("remindAm").onchange = function () { if (this.value) { prefs.remind_am = this.value; savePrefs(); } };
+  $("remindPm").onchange = function () { if (this.value) { prefs.remind_pm = this.value; savePrefs(); } };
+  function openSettings() { paintBackup(); paintReminders(); paintSettings(); paintVoices(); show("sheetSettings", function () { if ($("v-ledger").hidden) { renderDeck(); } }); }
   // Settings controls (1.30.0): look, Show where it came from, rest after Not today, AI lines on or off.
   function paintSettings() {
     var n = restDays();
@@ -3127,6 +3168,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       if (hadWorker) toast("Scales was updated.", null, { label: "Reload", fn: function () { location.reload(); } });
       hadWorker = true;
     });
+    if (NATIVE) toNative({ type: "ready" });
     window.addEventListener("load", function () {
       navigator.serviceWorker.register("sw.js").then(function (reg) {
         document.addEventListener("visibilitychange", function () {
