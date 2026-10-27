@@ -33,7 +33,7 @@ A quick tap on the ring does nothing, so a stray touch never rests a principle. 
 
 **Tap to see the line.** At rest, tap the principle to see the line Skip would show, and tap again to hide it. Nothing is chosen or counted. Once it has been read, Skip in the choices rests the principle straight away and Later is offered beside it. Skip without the tap still asks first, with the line.
 
-**Later.** On the skip screen, or after tapping to see the line, Later is for a principle that deserves more time than you have right now. It is not a skip: no count, no weight, no rest. It waits until after 6 PM that day, then comes back first, straight to Sit with it, headed Saved from earlier. Up to three can wait at once, and a principle that came back from Later is not offered Later again until you have sat with it for the full eight seconds.
+**Later.** On the skip screen, or after tapping to see the line, Later is for a principle that deserves more time than you have right now. It is not a skip: no count, no weight, no rest. It waits until after 6 PM that day, then comes back first, headed Saved from earlier, with its quote. Nothing is counted until you choose: press and hold for Living it, Sit with it or Skip it (which rests it straight away). Up to three can wait at once, and a principle that came back from Later is not offered Later again until you have sat with it for the full eight seconds.
 
 **Readable and reachable.** Text follows the iPhone's text size (Settings > Display & Brightness > Text Size). Undo stays for 8 seconds, or until your next move once VoiceOver or a keyboard reaches it. Settings > Deck > Buttons instead of press and hold puts Skip, Sit with it and Living it on the main screen as plain buttons, for anyone who cannot press and hold.
 

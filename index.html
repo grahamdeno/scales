@@ -140,6 +140,11 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 /* Centered with auto margins, not justify-content, so a tall column scrolls from its top in Safari. */
 .card .mid > :first-child { margin-top:auto; }
 .card .mid > :last-child { margin-bottom:auto; }
+/* 1.56.0: the principle sits above the scrolling part, so a long quote or reply never pushes it off screen. */
+.card .mid.under { margin-top:18px; }
+.card .mid.under > :first-child { margin-top:0; }
+.card.peek { justify-content:flex-start; }
+.card > .thought, .card > .foldhint, .card > .phase { flex:none; }
 .aside { font-size:0.7647rem; color:var(--faint); margin-top:-10px; }
 /* The AI line: the subject of the push and reflect screens. */
 .lineWrap { position:relative; flex:none; padding-top:20px; border-top:1px solid var(--line); -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
@@ -1492,10 +1497,12 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // Tap to see the line (1.53.0): a tap on the principle at rest shows the line Skip would show, and changes
   // nothing else. Once it has been read, Skip in the choices rests the principle straight away (the pushback
   // has been seen) and Later joins the choices. A principle skipped without tapping still asks first.
-  var peekId = null;
-  function peeked() { return phase === "rest" && !!current && peekId === current; }
+  var peekId = null, laterId = null;
+  function returned() { return phase === "rest" && !!current && laterId === current; }
+  // A returned Later counts as read: Skip rests it straight away.
+  function peeked() { return phase === "rest" && !!current && (peekId === current || laterId === current); }
   function togglePeek() {
-    var t = onCard(); if (!t || phase !== "rest") return;
+    var t = onCard(); if (!t || phase !== "rest" || returned()) return;
     coachSeen();
     peekId = peeked() ? null : t.id;
     renderDeck();
@@ -1708,7 +1715,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       L.later = null; L.later_blocked = true; save(L);
       current = L.id; currentLead = null; history.push(L.id); if (history.length > 20) history.shift();
       C.markShown(L, new Date(), false); save(L); shownAt = Date.now();
-      fromLater = true; act("keep");
+      // 1.56.0: it opens on the principle and its quote, and nothing is counted until you choose.
+      fromLater = true; laterId = L.id; phase = "rest";
+      renderDeck(); showLine(L, "reflect");
       return;
     }
     // First run (1.47.0): until it is finished, a new deck opens on the welcome. Someone who already has
@@ -1761,8 +1770,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var nudge = t.consecutive_reflects >= NUDGE_AT, coachOn = !prefs.coach_seen && phase === "rest";
     // At rest the words are one span each so the hold can ink them. On push and reflect the principle is plain
     // text: Safari laid the spans out one word per line there (1.34.3).
-    var fold = phase !== "rest" && sizeClass(t.text) !== "";
-    var words = '<div class="thought plain' + sizeClass(t.text) + (phase === "rest" ? "" : " small") + (fold ? " fold" : "") + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + esc(t.text) + "</div>" +
+    var lifted = phase !== "rest" || peeked();
+    var fold = lifted && sizeClass(t.text) !== "";
+    var words = '<div class="thought plain' + sizeClass(t.text) + (lifted ? " small" : "") + (fold ? " fold" : "") + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + esc(t.text) + "</div>" +
       (fold ? '<small class="foldhint" id="foldHint" aria-hidden="true">Tap to read it all</small>' : "");
     var line = '<div class="lineWrap"><p class="ai-p" id="aiLine"></p><small class="ai-src" id="aiSrc"></small>' +
       '<div class="replies" id="replies"></div></div>';
@@ -1770,7 +1780,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (phase === "reflect") {
       v.innerHTML = '<article class="card reflect" id="card" aria-label="Sit with it" aria-describedby="cardHow">' +
         '<div class="phase"><span>' + (fromLater ? "Saved from earlier" : "Sitting with it") + "</span></div>" +
-        '<div class="mid">' + words + line + whereHtml(t) +
+        words + '<div class="mid under">' + line + whereHtml(t) +
           (canWeigh() ? '<button type="button" class="crow talkrow" id="talkRow"><span class="tr"><b>Talk it through with ' + esc(todayVoice().short) + "</b><small>Today’s voice</small></span>" + ICON_NEXT + "</button>" : "") +
         "</div>" + how + "</article>" +
         (nudge ? '<div class="lived2"><span>Have you lived this yet?</span><div class="pair"><button type="button" class="btn3d" id="nudgeNo">Not yet</button><button type="button" class="btn3d" id="nudgeYes">Living it</button></div></div>' : "") +
@@ -1786,14 +1796,22 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (phase === "push") {
       v.innerHTML = '<article class="card push" id="card" aria-label="Skip this one?" aria-describedby="cardHow">' +
         '<div class="phase"><span>Skip this one?</span></div>' +
-        '<div class="mid">' + words + line + (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") + "</div>" + how + "</article>" +
+        words + '<div class="mid under">' + line + (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") + "</div>" + how + "</article>" +
         holdHtml("Press and hold to choose");
+      paintLine();
+      return;
+    }
+    if (returned()) {
+      v.innerHTML = '<article class="card reflect" id="card" aria-label="Saved from earlier" aria-describedby="cardHow">' +
+        '<div class="phase"><span>Saved from earlier</span></div>' +
+        words + '<div class="mid under">' + line + whereHtml(t) + "</div>" + how + "</article>" +
+        holdHtml(restCaption());
       paintLine();
       return;
     }
     if (peeked()) {
       v.innerHTML = '<article class="card peek" id="card" aria-label="Current principle, with its line" aria-describedby="cardHow">' +
-        '<div class="mid">' + words.replace('id="words"', 'id="words"').replace('class="thought plain', 'class="thought plain small') + line +
+        words + '<div class="mid under">' + line +
         (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") + "</div>" + how + "</article>" +
         holdHtml(restCaption());
       paintLine();
@@ -1810,7 +1828,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function paintReflectFoot() {
     var f = $("reflFoot"); if (!f) return;
     if (reflectDone) {
-      f.innerHTML = '<span>' + (reflectLighter ? "Counted. One lighter." : "Counted.") + '</span><div class="pair next"><button type="button" class="btn3d" id="reflUndo">Undo</button><button type="button" class="primary" id="reflNext">Next principle</button></div>';
+      f.innerHTML = '<span>' + (reflectLighter ? "Counted as Sit with it. One lighter." : "Counted as Sit with it.") + '</span><div class="pair next"><button type="button" class="btn3d" id="reflUndo">Undo</button><button type="button" class="primary" id="reflNext">Next principle</button></div>';
       $("reflNext").onclick = nextFromReflect;
       var w = $("words"), t = thoughts[current]; if (w && t) w.style.fontWeight = C.inkWeight(t);
     } else {
