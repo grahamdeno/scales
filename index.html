@@ -691,7 +691,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <dialog class="sheet" id="sheetConsent" aria-modal="true" aria-labelledby="sheetConsentTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetConsentTitle">Use AI in Scales?</span> <button type="button" data-close>Not now</button></h2>
-  <p class="note">To write a question for each principle, pick the quote that fits it best, and answer you in Talk it through, Scales sends these to Anthropic, an AI company:</p>
+  <p class="note">To write a question for each principle, pick the quote that fits it best, and answer you in Talk it through, Scales sends these, through its own server, to Anthropic, an AI company:</p>
   <ul class="consentlist">
     <li>the principle on screen and how many times you have skipped it</li>
     <li>the quotes it is choosing between</li>
@@ -869,23 +869,27 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <div class="panel raised">
     <div class="setrow"><span>Back up<small id="syncText">One file with everything, for iCloud Drive</small></span><button class="btn3d sm raised" type="button" id="exportBtn">Back up</button></div>
     <div class="setrow"><span>Restore<small>Merges a backup into this phone</small></span><button class="btn3d sm raised" type="button" id="importBtn">Restore</button></div>
-    <div class="setrow stack"><p class="note" id="privacyNote"><b>What leaves this phone.</b> No account, no server, no analytics. Today’s voice’s name goes to Wikiquote for its quotes. If you allow AI, the principle on screen, its skip count, the quotes being chosen between and anything you write to a voice go to Anthropic. Nothing else is sent.</p></div>
+    <div class="setrow stack"><p class="note" id="privacyNote"><b>What leaves this phone.</b> No account, no server, no analytics. Today’s voice’s name goes to Wikiquote for its quotes. If you allow AI, the principle on screen, its skip count, the quotes being chosen between and anything you write to a voice go through Scales' server, which keeps nothing, to Anthropic. Nothing else is sent.</p></div>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
     <input type="file" id="csvFile" accept=".csv,text/csv,text/plain" hidden>
   </div>
 
   <details class="adv" id="advanced">
     <summary>Advanced</summary>
-    <h4 class="sec3">AI key</h4>
+    <h4 class="sec3">AI</h4>
     <div class="panel raised">
-    <div class="setrow"><span id="aiLbl">Write a line for each principle<small>Your key stays on this phone</small></span>
+    <div class="setrow"><span id="aiLbl">Write a line for each principle<small id="aiSub">Your key stays on this phone</small></span>
       <button type="button" class="toggle" id="aiToggle" role="switch" aria-checked="true" aria-labelledby="aiLbl"><i></i></button></div>
-    <div class="setrow stack">
+    <div class="setrow stack" id="aiServer" hidden>
+      <div class="btnrow"><button class="btn3d sm raised" type="button" id="testAi">Test AI</button></div>
+      <p class="note" id="testAiResult" hidden></p>
+    </div>
+    <div class="setrow stack" id="keyBox">
       <input class="field" id="apiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Anthropic API key (sk-ant-...)" aria-label="Anthropic API key">
       <div class="btnrow"><button class="btn3d sm raised" type="button" id="saveKey">Save key</button><button class="btn3d sm raised" type="button" id="testKey">Test key</button><button class="btn3d sm raised" type="button" id="clearKey">Remove</button></div>
       <p class="note" id="testResult" hidden></p>
       <p class="status" id="aiText">AI lines: built-in (no key)</p>
-      <p class="note">The line on the Skip screen, and Talk it through, are written by AI. Only the principle and how often it was skipped are sent, and only to Anthropic. Without a key, built-in questions are used.</p>
+      <p class="note" id="aiNote">The line on the Skip screen, the quote pick and Talk it through are written by AI at Anthropic. Without AI, built-in questions are used.</p>
     </div>
     </div>
     <h4 class="sec3">CSV</h4>
@@ -1165,22 +1169,27 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // max_tokens covers the model's internal reasoning as well as the visible line.
   // Haiku 5.5 may reason before answering, so a small budget can be spent entirely
   // on reasoning and return no text. The prompt keeps the line itself short.
+  // AI through Scales' own server (1.64.0): at scales.tangomike.app the app posts to /api/ai, which holds the
+  // Anthropic key, so nobody pastes one. Anywhere else (the old GitHub Pages address) a saved key still works.
+  var PROXY = location.hostname === "scales.tangomike.app" ? "/api/ai" : null;
   function makeSampler(key) {
-    if (!key) return null;
+    if (!PROXY && !key) return null;
     // prompt is one user message, or { system, messages } for Talk it through.
     return function (prompt) {
       var req = typeof prompt === "string" ? { messages: [{ role: "user", content: prompt }] } : prompt;
-      return fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-        body: JSON.stringify(Object.assign({ model: MODEL, max_tokens: 1024 }, req))
-      }).then(function (r) {
+      var call = PROXY ? fetch(PROXY, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(req) })
+        : fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+          body: JSON.stringify(Object.assign({ model: MODEL, max_tokens: 1024 }, req))
+        });
+      return call.then(function (r) {
         if (r.ok) return r.json();
         // Read Anthropic's error body so the real reason can be shown in Settings.
         return r.json().catch(function () { return {}; }).then(function (j) {
           var e = new Error((j && j.error && j.error.message) || ("HTTP " + r.status));
           e.status = r.status;
-          if (r.status === 401 || r.status === 403) e.code = "not_granted";
+          if (!PROXY && (r.status === 401 || r.status === 403)) e.code = "not_granted";
           throw e;
         });
       }).then(function (j) {
@@ -1191,7 +1200,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
   // Updates the dot and label in Settings to show whether model lines are on.
   function setAiStatus() {
-    $("aiText").textContent = prefs.ai_off ? "AI lines: off. Built-in questions are shown." : prefs.ai_consent !== true ? "AI lines: off until you allow AI." : sample ? "AI lines: on (your key)" : "AI lines: built-in (no key)";
+    $("aiText").textContent = prefs.ai_off ? "AI lines: off. Built-in questions are shown." : prefs.ai_consent !== true ? "AI lines: off until you allow AI." : sample ? (PROXY ? "AI lines: on" : "AI lines: on (your key)") : "AI lines: built-in (no key)";
   }
   function all() { return Object.keys(thoughts).map(function (k) { return thoughts[k]; }); }
   // Thoughts still in the deck (not shed).
@@ -2807,7 +2816,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   $("remindToggle").onclick = function () { prefs.remind_on = !prefs.remind_on; savePrefs(); paintBadge(); paintReminders(); };
   $("remindAm").onchange = function () { if (this.value) { prefs.remind_am = this.value; savePrefs(); } };
   $("remindPm").onchange = function () { if (this.value) { prefs.remind_pm = this.value; savePrefs(); } };
-  function openSettings() { paintBackup(); paintReminders(); paintSettings(); paintVoices(); show("sheetSettings", function () { if ($("v-ledger").hidden) { renderDeck(); } }); }
+  function paintAiBox() {
+    $("keyBox").hidden = !!PROXY; $("aiServer").hidden = !PROXY;
+    if (PROXY) { $("aiSub").textContent = "Through Scales' server; nothing is kept"; $("aiText").hidden = false; }
+  }
+  function openSettings() { paintBackup(); paintReminders(); paintAiBox(); paintSettings(); paintVoices(); show("sheetSettings", function () { if ($("v-ledger").hidden) { renderDeck(); } }); }
   // Settings controls (1.30.0): look, Show where it came from, rest after Not today, AI lines on or off.
   function paintSettings() {
     var n = restDays();
@@ -2960,7 +2973,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     show("sheetConsent", function () { if (prefs.ai_consent !== true) { prefs.ai_consent = false; savePrefs(); applyKey(); paintSettings(); } });
   }
   $("consentYes").onclick = function () { prefs.ai_consent = true; prefs.ai_off = false; savePrefs(); hide(); applyKey(); paintSettings(); toast("AI is on."); };
-  if (savedKey && prefs.ai_consent === undefined && prefs.onboarded) setTimeout(function () { if (!openSheet) askConsent(); }, 900);
+  if ((savedKey || PROXY) && prefs.ai_consent === undefined && prefs.onboarded) setTimeout(function () { if (!openSheet) askConsent(); }, 900);
   $("saveKey").onclick = function () {
     var k = $("apiKey").value.trim(); if (!k) return;
     try { localStorage.setItem(LSK, k); } catch (e) {}
@@ -2975,6 +2988,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // explanation of the result. Maps Anthropic's status codes to the usual fixes.
   function explainError(e) {
     var m = (e && e.message) || "", st = e && e.status;
+    if (PROXY) {
+      if (!st) return "Could not reach Scales' AI server. Check the connection.";
+      if (st === 429) return "Too many AI requests right now. Try again in a minute.";
+      if (st === 503) return "The AI server is not set up yet.";
+      if (st >= 500) return "The AI service is busy. Try again in a few minutes.";
+      return "The AI server refused the request (HTTP " + st + ").";
+    }
     if (!st) return "Could not reach Anthropic. Check the connection, and turn off any content blocker or VPN filtering for this site.";
     if (st === 401) return "Key not recognized. Copy it again from the Anthropic Console (it starts with sk-ant-).";
     if (st === 403) return "Key is valid but not allowed to do this. Check the key's workspace permissions in the Console.";
@@ -2984,6 +3004,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (st >= 500) return "Anthropic is busy or down. Try again in a few minutes.";
     return "Request failed (HTTP " + st + ").";
   }
+  $("testAi").onclick = function () {
+    var out = $("testAiResult"); out.hidden = false; out.textContent = "Testing...";
+    var t0 = Date.now();
+    makeSampler("")("Reply with the single word: working").then(function (res) {
+      out.textContent = "AI works. It replied \u201c" + (res.text || "").trim() + "\u201d in " + (Date.now() - t0) + " ms.";
+    }).catch(function (e) { out.textContent = explainError(e); });
+  };
   $("testKey").onclick = function () {
     var k = $("apiKey").value.trim(); try { k = k || localStorage.getItem(LSK) || ""; } catch (e) {}
     var out = $("testResult"); out.hidden = false;

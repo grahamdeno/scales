@@ -1360,3 +1360,25 @@ test("the old GitHub Pages address points to the new home and offers a backup", 
   assert.match(html, /if \(location\.hostname === "grahamdeno\.github\.io"\)/);
   assert.match(html, /Scales has moved to the iPhone app and scales\.tangomike\.app\/app\./);
 });
+
+// ---------- 1.64.0: AI through Scales' own server ----------
+test("at scales.tangomike.app the app uses its own AI server, no key", () => {
+  const html = read("index.html");
+  assert.match(html, /var PROXY = location\.hostname === "scales\.tangomike\.app" \? "\/api\/ai" : null;/);
+  assert.match(html, /if \(!PROXY && !key\) return null;/);
+});
+test("the AI server fixes the model and limits and only takes same-origin text messages", async () => {
+  const mod = await import("../server/ai.mjs");
+  const seen = [];
+  global.fetch = async (url, init) => { seen.push({ url, body: JSON.parse(init.body), key: init.headers["x-api-key"] }); return new Response(JSON.stringify({ content: [{ type: "text", text: "ok" }] }), { status: 200 }); };
+  const env = { ANTHROPIC_API_KEY: "sk-ant-server" };
+  const post = (body, origin) => mod.onRequestPost({ env, request: new Request("https://scales.tangomike.app/api/ai", { method: "POST", headers: origin ? { Origin: origin } : {}, body: JSON.stringify(body) }) });
+  assert.equal((await post({ messages: [{ role: "user", content: "hi" }] }, "https://evil.example")).status, 403);
+  assert.equal((await post({ messages: [{ role: "system", content: "x" }] }, "https://scales.tangomike.app")).status, 400);
+  const r = await post({ model: "claude-opus-5-5", max_tokens: 99999, system: "s", messages: [{ role: "user", content: "hi" }] }, "https://scales.tangomike.app");
+  assert.equal(r.status, 200);
+  assert.equal(seen[0].body.model, "claude-haiku-5-5");
+  assert.equal(seen[0].body.max_tokens, 1024);
+  assert.equal(seen[0].key, "sk-ant-server");
+  assert.equal((await mod.onRequestPost({ env: {}, request: new Request("https://scales.tangomike.app/api/ai", { method: "POST", headers: { Origin: "https://scales.tangomike.app" }, body: "{}" }) })).status, 503);
+});
