@@ -1342,13 +1342,14 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     inflight[key] = p;
     return p;
   }
-  // Pick the next principle now and fetch its lines while this one is on screen.
+  // Pick the next principle now; its lines are written once it is on screen.
   function prefetchNext() {
     var n = pickNext();
     queued = n ? n.id : null;
-    if (n && n.id !== current) ensureLines(n);
+    // 1.59.0: no lines are written ahead for the next principle; most were never seen. The one on screen still
+    // starts writing as soon as it appears, so it is usually ready by the time it is tapped or skipped.
   }
-  // At rest: get both lines ready for the principle on screen and the one after it.
+  // At rest: get both lines ready for the principle on screen.
   function requestLine(t) { shown = null; ensureLines(t); prefetchNext(); }
   // Put one of the two lines on screen: the kept line, or a placeholder while it is written, or a built-in one.
   function showLine(t, kind) {
