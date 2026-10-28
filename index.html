@@ -89,9 +89,9 @@ button { cursor:pointer; border:0; background:none; padding:0; }
 #iconRow { flex-wrap:wrap; row-gap:12px; }
 /* Quiet (1.81.0): on the resting card, 3 seconds without a touch dims everything but the thought to 20%, so the
    eye stays on the words. The controls stay visible and working; any touch brings them back at once. */
-.top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .lineacts, #v-deck .phase, #v-deck .reflfoot, #v-deck .lived2, #v-deck .where, #v-deck .addwhy { transition:opacity .25s ease; }
-body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .lineacts, body.quiet #v-deck .phase, body.quiet #v-deck .reflfoot, body.quiet #v-deck .lived2, body.quiet #v-deck .where, body.quiet #v-deck .addwhy { opacity:.12; transition:opacity 1.2s ease; }
-@media (prefers-reduced-motion: reduce) { .top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .lineacts, #v-deck .phase, #v-deck .reflfoot, #v-deck .lived2, #v-deck .where, #v-deck .addwhy, body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .lineacts, body.quiet #v-deck .phase, body.quiet #v-deck .reflfoot, body.quiet #v-deck .lived2, body.quiet #v-deck .where, body.quiet #v-deck .addwhy { transition:none; } }
+.top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .pills, #v-deck .phase, #v-deck .lived2, #v-deck .where, #v-deck .addwhy { transition:opacity .25s ease; }
+body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .pills, body.quiet #v-deck .phase, body.quiet #v-deck .lived2, body.quiet #v-deck .where, body.quiet #v-deck .addwhy { opacity:.12; transition:opacity 1.2s ease; }
+@media (prefers-reduced-motion: reduce) { .top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .pills, #v-deck .phase, #v-deck .lived2, #v-deck .where, #v-deck .addwhy, body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .pills, body.quiet #v-deck .phase, body.quiet #v-deck .lived2, body.quiet #v-deck .where, body.quiet #v-deck .addwhy { transition:none; } }
 .iconpick { display:flex; gap:12px; flex:none; }
 .iconpick button { display:flex; flex-direction:column; align-items:center; gap:6px; min-width:56px; font-size:var(--t-xs); color:var(--muted); }
 .iconpick img { width:44px; height:44px; border-radius:10px; display:block; }
@@ -179,18 +179,23 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
    the thought sits a step back from the line. */
 /* The thought is one plain text node (1.34.4). Held, it steps back to --rest and darkens to full ink as the
    ring fills (paintHold sets the color). Per-word spans were dropped: Safari set them one word per line. */
-.card.push .thought.plain { color:var(--rest); }
+/* 1.84.0: the thought keeps its ink on every screen; grey read as disabled. */
 .thought.small { font-size:clamp(1.4118rem, 7.4vw, 1.7647rem); line-height:1.08; letter-spacing:-.025em; }
 .thought.small.mid { font-size:1.2941rem; line-height:1.15; }
 .thought.small.long { font-size:0.9412rem; line-height:1.4; }
 /* On push and reflect the line is the subject, so a long thought folds to four lines; tap to open it. */
 .thought.small.fold { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4; overflow:hidden; cursor:pointer; }
 #aiLine { position:relative; }
-.dwell { flex:none; margin-top:26px; min-height:250px; opacity:0; visibility:hidden; transition:opacity 1.2s ease, visibility 0s linear 1.2s; }
+.dwell { flex:none; margin-top:26px; min-height:190px; opacity:0; visibility:hidden; transition:opacity 1.2s ease, visibility 0s linear 1.2s; }
 .dwell.on { opacity:1; visibility:visible; transition:opacity 1.2s ease; }
-body.quiet #v-deck .dwell.fresh .lineacts, body.quiet #v-deck .dwell.fresh .qacts { opacity:1; transition:none; }
-.dwell.on .qacts { animation:qin 1.2s ease .9s backwards; }
-@keyframes qin { from { opacity:0; } to { opacity:1; } }
+body.quiet #v-deck .dwell.fresh .pills { opacity:1; transition:none; }
+.pills { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+.pill { display:inline-flex; align-items:center; gap:5px; min-height:44px; padding:0 14px; border-radius:22px; border:1px solid var(--line); color:var(--ink); font-size:.8125rem; white-space:nowrap; }
+.pill .i { width:15px; height:15px; }
+.pill .pn { min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--btn2); font-size:.6875rem; line-height:18px; text-align:center; color:var(--muted); }
+.pill:active { background:var(--btn2); }
+.choices.endmain { grid-template-columns:1fr 1fr 1.25fr; }
+
 #aiLine::after { content:""; position:absolute; left:0; right:0; bottom:-6px; height:2px; border-radius:1px; background:var(--ink); opacity:.5; transform:scaleX(0); transform-origin:0 50%; }
 #aiLine.holding::after { transform:scaleX(1); transition:transform .55s linear; }
 .foldhint { margin-top:6px; font-size:var(--t-xs); color:var(--faint); }
@@ -248,7 +253,9 @@ body.quiet #v-deck .dwell.fresh .lineacts, body.quiet #v-deck .dwell.fresh .qact
 .choice { display:flex; align-items:center; justify-content:center; min-height:56px; border-radius:14px; background:#2A2A28; color:var(--ink); font-size:1rem; font-weight:500; transition:transform .1s ease, filter .1s ease; }
 .choice.main { background:var(--accent); color:var(--onAccent); font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,.45), 0 8px 18px rgba(0,0,0,.45); }
 .choice:active { transform:scale(.97); filter:brightness(.92); }
-.choiceq { flex:none; margin:14px 0 0; font-size:var(--t-md); font-weight:500; color:var(--ink); text-align:center; }
+.choiceq { flex:none; margin:14px 0 0; font-size:1.3rem; line-height:1.2; letter-spacing:-.01em; font-weight:600; color:var(--ink); text-align:center; }
+/* 1.84.0: on Before you skip and The other side the question you answer leads; the line above it supports. */
+.card.push .ai-p { font-size:1.0588rem; line-height:1.4; color:var(--muted); }
 .choiceq + .choicenote { margin-top:4px; }
 .choicenote { flex:none; margin:12px 0 0; font-size:var(--t-sm); color:var(--muted); text-align:center; }
 .qacts { flex:none; display:flex; gap:8px; margin-top:22px; flex-wrap:wrap; }
@@ -659,7 +666,20 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 @keyframes vt-in { from { opacity:0; transform:translateX(24px); } }
 @keyframes vt-out-back { to { opacity:0; transform:translateX(18px); } }
 @keyframes vt-in-back { from { opacity:0; transform:translateX(-24px); } }
-@media (prefers-reduced-motion: reduce) { .dwell.on .qacts { animation:none; } .dwell, .dwell.on, .card, .card.spring, .ai-p, .raised, .toggle i, .thought { transition:none; } .reflfoot .bar { display:none; } }
+@media (prefers-reduced-motion: reduce) { .dwell, .dwell.on, .card, .card.spring, .ai-p, .raised, .toggle i, .thought { transition:none; } .reflfoot .bar { display:none; } }
+/* 1.84.0: short screens (iPhone SE, larger text) keep the whole screen in view: smaller type, tighter gaps. */
+@media (max-height:720px) {
+  .thought { font-size:1.75rem; } .thought.mid { font-size:1.5rem; }
+  .thought.small, .thought.small.mid { font-size:1.2rem; line-height:1.15; }
+  .ai-p { font-size:1rem; }
+  .card .mid.under { margin-top:8px; } .lineWrap { padding-top:12px; }
+  .phase { min-height:30px; } .card.push, .card.reflect { padding-top:10px; }
+  .dwell { margin-top:16px; min-height:150px; }
+  .choiceq { margin-top:4px; }
+  .pills { margin-top:8px; }
+  .card .mid { gap:12px; padding:0; } .ai-src { margin-top:6px; } .lineWrap { padding-top:10px; }
+  .thought.small.fold { -webkit-line-clamp:3; }
+}
 </style>
 </head>
 <body>
@@ -790,11 +810,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <!-- Keep this line (Story 10): add an AI line as a new thought, or let it replace the wording. -->
 <dialog class="sheet" id="sheetKeep" aria-modal="true" aria-labelledby="sheetKeepTitle">
   <div class="grabber" aria-hidden="true"></div>
-  <h2><span id="sheetKeepTitle">Keep this line</span> <button type="button" data-close>Cancel</button></h2>
+  <h2><span id="sheetKeepTitle">Add to my thoughts</span> <button type="button" data-close>Cancel</button></h2>
   <div class="quote" id="keepText"></div>
   <p class="note" id="keepFrom"></p>
   <div class="choice" role="radiogroup" aria-label="How to keep it">
-    <button type="button" class="opt raised" id="keepAdd" data-k="add" aria-pressed="true"><i class="radio" aria-hidden="true"></i><span><b>Add as a new thought</b><small id="keepAddNote"></small></span></button>
+    <button type="button" class="opt raised" id="keepAdd" data-k="add" aria-pressed="true"><i class="radio" aria-hidden="true"></i><span><b>Add it as a new thought</b><small id="keepAddNote"></small></span></button>
     <button type="button" class="opt raised" id="keepRep" data-k="replace" aria-pressed="false"><i class="radio" aria-hidden="true"></i><span><b>Replace my wording</b><small>The thought keeps its counts and dates; only the words change. Your earlier wording is saved in the Ledger.</small></span></button>
   </div>
   <p class="sheet-err" id="keepErr" role="alert" hidden></p>
@@ -1121,7 +1141,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.83.3"></script>
+<script src="core.js?v=1.84.0"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1673,7 +1693,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       return;
     }
     if (kind === "case") {
-      var cv = todayVoice(), by = cv ? cv.short + " pushes back" : "Written by AI";
+      var cv = todayVoice(), by = cv ? "Written by AI, as " + cv.short : "Written by AI"; // 1.84.0: AI is credited as AI
       var putCase = function (text, ai) { shown = ai ? { kind: kind, text: text, ai: true, by: by } : { kind: kind, text: testQuestion(t), ai: false, by: "A question to test it" }; paintLine(); };
       if (C.lineFresh(t, kind)) { putCase(t.lines[kind].text, true); return; }
       if (!sample) { putCase("", false); return; }
@@ -1720,11 +1740,23 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var box = $("replies"), t = thoughts[current]; if (!box || !t) return;
     var l = shown, r = C.lastReply(t);
     if (!l || l.none || l.pending) { box.innerHTML = ""; return; }
-    box.innerHTML = (r ? '<div class="bubble me"><p>' + esc(r.text) + "</p><small>You, " + esc(fmtDayKey(r.day)) + "</small></div>" : "") +
-      '<div class="lineacts"><button type="button" class="btn3d replybtn" id="replyBtn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Reply</button>' +
-      // 1.75.0: saving a quote or line as a thought is a button, not only a press and hold.
-      (l.ai ? '<button type="button" class="btn3d replybtn" data-move="save"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z"/></svg>Keep as a thought</button>' : "") + laterHtml() + "</div>";
+    // 1.84.0: one row of small options, each named for what it does, and only where it fits the moment.
+    var rk = replyKind(l), n = (t.replies || []).filter(function (x) { return x.line === String(l.text || "").trim(); }).length, p = [];
+    p.push('<button type="button" class="pill" id="replyBtn">' + REPLY[rk].pill + (n ? ' <span class="pn" aria-label="' + n + ' so far">' + n + "</span>" : "") + "</button>");
+    // A question is not something to live by: Add to my thoughts is for quotes and statements only.
+    if (l.ai && !/\?\s*$/.test(String(l.text || "")) && (phase === "rest" || phase === "reflect")) p.push('<button type="button" class="pill" data-move="save">+ Add to my thoughts</button>');
+    if (phase === "rest" && !returned()) p.push('<button type="button" class="pill" data-move="question">' + ICON_Q + "Not sure it\u2019s true?</button>");
+    if (phase === "push") p.push('<button type="button" class="pill" data-move="question">' + ICON_Q + "Not sure it\u2019s true?</button>");
+    if (phase === "question" && !t.why) p.push('<button type="button" class="pill" data-move="why">+ Why I believe it</button>');
+    box.innerHTML = '<div class="pills">' + p.join("") + "</div>";
   }
+  // What a reply is, named for the line it answers (1.84.0).
+  var REPLY = {
+    answer: { pill: "Answer it", title: "Your answer", hint: "Write your answer", done: "Answer kept." },
+    take: { pill: "Your take", title: "Your take", hint: "What does it say to you?", done: "Kept with the quote." },
+    argue: { pill: "Argue back", title: "Your argument", hint: "Where is it wrong?", done: "Argument kept." }
+  };
+  function replyKind(l) { return l && l.quote ? "take" : l && l.kind === "case" && l.ai ? "argue" : "answer"; }
   function fmtDayKey(d) { if (!d) return ""; var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
 
   // ---------- reply (1.40.0) ----------
@@ -1733,9 +1765,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var t = onCard(), l = shown; if (!t || !l || l.none || l.pending) return;
     replyFor = { id: t.id, kind: l.quote ? "reflect" : "push", line: l.text, author: l.quote ? l.author : "" };
     $("replyTo").innerHTML = "<p>" + esc(l.quote ? "\u201C" + l.text + "\u201D" : l.text) + "</p>" + (l.quote ? "<small>" + esc(l.author) + "</small>" : "");
+    var rw = REPLY[replyKind(l)]; replyFor.done = rw.done;
+    $("sheetReplyTitle").textContent = rw.title; $("replyInput").placeholder = rw.hint; $("replyInput").setAttribute("aria-label", rw.title);
     $("replyInput").value = ""; $("replyDone").disabled = true;
     var v = replyVoice();
-    $("replyNote").textContent = v ? "Kept with this line. " + v.short + " answers. Your choice is still waiting." : "Kept with this line. Your choice is still waiting.";
+    $("replyNote").textContent = v ? "Saved on this thought. AI answers as " + v.short + "." : "Saved on this thought.";
     show("sheetReply", function () { replyFor = null; unfitReply(); });
     fitReply();
     setTimeout(function () { $("replyInput").focus(); }, 60);
@@ -1746,7 +1780,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var r = C.addReply(t, $("replyInput").value, f, today()); if (!r) return;
     save(t); paintReplies();
     var v = replyVoice();
-    if (!v) { hide(); toast("Reply kept."); return; }
+    if (!v) { hide(); toast(f.done || "Kept."); return; }
     // 1.71.0: with AI on, today's voice answers in the thread, and you can keep going there.
     var k = C.addTalk(t, { at: r.at, day: today(), reply: true, move: "", voice: v.id, voice_name: v.name, living: v.living, line: f.line, author: f.author, turns: [{ me: true, text: r.text }] });
     save(t); wT = t.id; wAt = k.at; wFromLedger = false;
@@ -1836,13 +1870,15 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function requestSkip() {
     dropUndo();
     var t = onCard(); if (!t || phase === "reflect") return;
-    if (phase === "push" || peeked()) { act("skip"); return; }
-    coachSeen(); phase = "push"; renderDeck(); showLine(t, "push");
+    // 1.84.0: Skip asks once each time the thought is up, even after its question has faded in. Keep it on that
+    // screen, or a thought back from Later, and the next Skip goes straight through.
+    if (phase === "push" || askedId === current || returned()) { act("skip"); return; }
+    coachSeen(); askedId = t.id; phase = "push"; renderDeck(); showLine(t, "push");
   }
   // Tap to see the line (1.53.0): a tap on the thought at rest shows the line Skip would show, and changes
   // nothing else. Once it has been read, Skip in the choices rests the thought straight away (the pushback
   // has been seen) and Later joins the choices. A thought skipped without tapping still asks first.
-  var peekId = null, laterId = null;
+  var peekId = null, laterId = null, askedId = null;
   function returned() { return phase === "rest" && !!current && laterId === current; }
   // A returned Later counts as read: Skip rests it straight away.
   function peeked() { return phase === "rest" && !!current && (peekId === current || laterId === current); }
@@ -2041,31 +2077,28 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // The choices (1.73.0): always in view at the bottom, one tap each. Skip, Reflect and Lived at rest; on the
   // Skip screen, Skip anyway and Keep it. The press and hold menu that hid them until 1.72 is gone.
   function choicesHtml() {
+    // 1.84.0: each screen asks one question, and the choices answer it. What each choice means is in its
+    // label for VoiceOver only; a second line on the button read as clutter.
     if (phase === "push") {
-      var n = restDays();
-      return '<p class="choicenote">Skipping rests it for ' + n + (n === 1 ? " day" : " days") + ", then it comes back first.</p>" +
-        '<div class="choices two" id="keys" role="group" aria-label="Choose">' +
-        '<button type="button" class="choice" data-move="skip">Skip anyway</button>' +
-        '<button type="button" class="choice main" data-move="stay">Keep it</button></div>';
+      var n = restDays(), days = n + (n === 1 ? " day" : " days"), t = onCard(), later = t && C.canLater(all(), t);
+      return '<p class="choiceq">Set it down for ' + days + "?</p>" +
+        '<div class="choices' + (later ? " endmain" : " two") + '" id="keys" role="group" aria-label="Set it down for ' + days + '?">' +
+        (later ? choice("later", new Date().getHours() < C.CHECKIN_HOUR ? "Tonight" : "Later", "ask me later") : "") +
+        choice("skip", days, "set it down for " + days) + choice("stay", "Stay with it", "keep it in today", true) + "</div>";
     }
     if (phase === "question") {
-      // 1.83.1: the screen says what it is asking. The three choices answer one question.
-      return '<p class="choiceq">Does it still hold up?</p><p class="choicenote">Let go if not. Revise if partly. Keep it if it does.</p>' +
-        '<div class="choices" id="keys" role="group" aria-label="Choose">' +
-        '<button type="button" class="choice" data-move="letgo">Let go</button>' +
-        '<button type="button" class="choice" data-move="revise">Revise</button>' +
-        '<button type="button" class="choice main" data-move="qkeep">Keep it</button></div>';
+      return '<p class="choiceq">Does it still hold up?</p>' +
+        '<div class="choices endmain" id="keys" role="group" aria-label="Does it still hold up?">' +
+        choice("letgo", "Let go", "no") + choice("revise", "Revise", "partly") + choice("qkeep", "It holds", "yes", true) + "</div>";
     }
     return '<div class="choices" id="keys" role="group" aria-label="Choose">' +
-      '<button type="button" class="choice" data-move="skip">Skip</button>' +
-      '<button type="button" class="choice main" data-move="keep">Reflect</button>' +
-      '<button type="button" class="choice" data-move="shed">Lived</button></div>';
+      choice("skip", "Skip", "not today") + choice("keep", "Reflect", "sit with it", true) + choice("shed", "Lived", "I do this now") + "</div>";
   }
-  // Later, offered beside Reply once the line has been read (or on the Skip screen), when there is room for it.
-  function laterHtml() {
-    var t = onCard(); if (!t || !(phase === "push" || (peeked() && !returned())) || !C.canLater(all(), t)) return "";
-    return '<button type="button" class="linkbtn laterbtn" data-move="later">' + (new Date().getHours() < C.CHECKIN_HOUR ? "Later tonight" : "Later") + "</button>";
+  function choice(move, label, means, main) {
+    return '<button type="button" class="choice' + (main ? " main" : "") + '" data-move="' + move + '" aria-label="' + label + ", " + means + '">' +
+      label + "</button>";
   }
+  // Later (1.84.0) is a choice on the Skip screen, where it is the real alternative to skipping.
 
   function footHtml(left) {
     // After Keep going, the footer offers the way back to today's focus.
@@ -2077,6 +2110,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function renderDeck() {
     var v = $("v-deck");
     clearTimeout(dwellT);
+    if (askedId && askedId !== current) askedId = null;
     refreshDay();
     var dp = C.dayPhase(day, setSize());
     paintTop(dp);
@@ -2149,7 +2183,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       (fold ? '<small class="foldhint" id="foldHint" aria-hidden="true">Tap to read it all</small>' : "");
     var line = '<div class="lineWrap"><p class="ai-p" id="aiLine"></p><small class="ai-src" id="aiSrc"></small>' +
       '<div class="replies" id="replies"></div></div>';
-    var how = '<span class="sr" id="cardHow">Choose Skip, Reflect or Lived at the bottom of the screen. After a few seconds a question for it appears below. Show me the other side makes the case against it. Press and hold the thought to edit it.</span>';
+    var how = '<span class="sr" id="cardHow">Choose Skip, Reflect or Lived at the bottom of the screen. After a few seconds a question for it appears below, with ways to answer it, add it to your thoughts, or see the other side. Press and hold the thought to edit it.</span>';
     if (phase === "reflect") {
       v.innerHTML = '<article class="card reflect" id="card" aria-label="Reflect" aria-describedby="cardHow">' +
         '<div class="phase"><span>' + (fromLater ? "Saved from earlier" : "Reflecting") + "</span></div>" +
@@ -2164,11 +2198,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       return;
     }
     if (phase === "push") {
+      // 1.84.0: one question, Set it down?; doubting it is one small option under the line.
       v.innerHTML = '<article class="card push" id="card" aria-label="Before you skip" aria-describedby="cardHow">' +
-        '<div class="phase"><span>Before you skip</span></div>' +
-        words + '<div class="mid under">' + line + (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") +
-        // 1.79.0: doubting it isn't avoiding it.
-        '<button type="button" class="qbtn doubt" data-move="question">' + ICON_Q + "I\u2019m not sure it\u2019s true</button>" + "</div>" + how + "</article>" +
+        '<div class="phase"><span>Before you skip' + (t.skip_count > 0 ? " \u00b7 skipped " + times(t.skip_count) + " before" : "") + "</span></div>" +
+        words + '<div class="mid under">' + line + "</div>" + how + "</article>" +
         choicesHtml();
       paintLine();
       return;
@@ -2179,7 +2212,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       v.innerHTML = '<article class="card push" id="card" aria-label="The other side" aria-describedby="cardHow">' +
         '<div class="phase"><span>The other side</span></div>' +
         words + '<div class="mid under">' + line +
-        (notes ? '<div class="qnotes">' + notes + "</div>" : '<button type="button" class="linkbtn addwhy" data-move="why">Add why you believe it</button>') + "</div>" + how + "</article>" +
+        // 1.84.0: with no reasons yet, + Why I believe it is one of the small options under the case.
+        (notes ? '<div class="qnotes">' + notes + "</div>" : "") + "</div>" + how + "</article>" +
         choicesHtml();
       paintLine();
       return;
@@ -2198,9 +2232,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var pm = []; if (t.skip_count > 0) pm.push("Skipped " + times(t.skip_count)); if (String(t.collection || "").trim()) pm.push(esc(t.collection));
     v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current thought" aria-describedby="cardHow">' + words +
       (pm.length ? '<p class="pmeta">' + pm.join(" \u00b7 ") + "</p>" : "") +
-      // 1.83.3: Show me the other side fades in too, just after the question, under the same rules.
-      '<div class="dwell' + (peeked() ? " on" : "") + '" id="dwell">' + line +
-      '<div class="qacts"><button type="button" class="qbtn" data-move="question">' + ICON_Q + "Show me the other side</button></div></div>" + how + "</article>" +
+      // 1.84.0: the question fades in with its options (Answer it, Add to my thoughts, Other side) in one row.
+      '<div class="dwell' + (peeked() ? " on" : "") + '" id="dwell">' + line + "</div>" + how + "</article>" +
       choicesHtml();
     if (lineFor !== t.id || !shown || shown.kind !== "push") { lineFor = t.id; showLine(t, "push"); } else paintLine();
     // With VoiceOver on, nothing waits: the question and its buttons are there to be read straight away.
@@ -2220,7 +2253,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function paintReflectFoot() {
     var f = $("reflFoot"); if (!f) return;
     if (reflectDone) {
-      f.innerHTML = '<span>' + (reflectLighter ? "Counted as Reflect. One lighter." : "Counted as Reflect.") + '</span>' + (REFLECT_UNDO
+      f.innerHTML = '<span>' + (reflectLighter ? "Done. It\u2019s a little lighter now." : "Done.") + '</span>' + (REFLECT_UNDO
         ? '<div class="pair next"><button type="button" class="btn3d" id="reflUndo">Undo</button><button type="button" class="primary" id="reflNext">Next thought</button></div>'
         : '<button type="button" class="primary wide" id="reflNext">Next thought</button>');
       $("reflNext").onclick = nextFromReflect;
@@ -2318,7 +2351,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       err.hidden = false;
     } else err.hidden = true;
     $("keepSave").disabled = !!r.reason;
-    $("keepSave").textContent = keepMode === "add" ? "Add to the deck" : "Replace my wording";
+    $("keepSave").textContent = keepMode === "add" ? "Add to my thoughts" : "Replace my wording";
   }
   $("keepAdd").onclick = function () { keepMode = "add"; paintKeep(); };
   $("keepRep").onclick = function () { keepMode = "replace"; paintKeep(); };
@@ -2329,7 +2362,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       var r = C.keepAsNew(all(), t, keepLine, now); if (!r.thought) return;
       if (keepMeta) { r.thought.author = keepMeta.author || ""; r.thought.title = keepMeta.src || ""; r.thought.citation = "Quoted from Wikiquote"; }
       r.thought.id = newId(); save(r.thought);
-      hide(); undoable("Added to " + (String(t.collection || "").trim() || "the deck") + ".", u);
+      hide(); undoable("Added to your thoughts" + (String(t.collection || "").trim() ? ", in " + String(t.collection).trim() : "") + ".", u);
       paintStat();
     } else {
       var q = C.keepReplace(all(), t, keepLine, now); if (!q.thought) return;

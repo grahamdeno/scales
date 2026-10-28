@@ -40,8 +40,8 @@ test("Question it: keep, revise or let go, each counted as weighed (1.79.0)", ()
   assert.match(p, /strongest honest case against/); assert.match(p, /Why they believe it: My father said so\./);
   assert.equal(C.checkEdit([t], t, { why: "New reason" }).ok, true, "changing only the reasons can be saved");
   const html = read("index.html");
-  assert.match(html, /data-move="question">' \+ ICON_Q \+ "I\\u2019m not sure it\\u2019s true/, "doubt is offered before a skip");
-  assert.match(html, /data-move="letgo">Let go<\/button>' \+\s*'<button type="button" class="choice" data-move="revise">Revise<\/button>' \+\s*'<button type="button" class="choice main" data-move="qkeep">Keep it/);
+  assert.match(html, /if \(phase === "push"\) p\.push\('<button type="button" class="pill" data-move="question">' \+ ICON_Q \+ "Not sure it\\u2019s true\?/, "doubt is offered before a skip (1.84.0)");
+  assert.match(html, /choice\("letgo", "Let go", "no"\) \+ choice\("revise", "Revise", "partly"\) \+ choice\("qkeep", "It holds", "yes", true\)/);
   assert.match(html, /id="sheetLetGo"/);
   assert.match(html, /data-r="back">Bring it back/);
   assert.match(html, /id="capWhy"/); assert.match(html, /id="editChange"/);
@@ -97,11 +97,11 @@ test("quiet: the resting card dims everything but the thought after 3 seconds (1
 test("finding the line and keeping it: a cue under the thought, a named button, a fill while held (1.82.2)", () => {
   const html = read("index.html"), c = css();
   assert.doesNotMatch(html, /togglePeek\(\);\n  \}\);/, "no tap on the thought (1.82.3)");
-  assert.match(html, /<\/svg>Keep as a thought<\/button>/, "Save says what it does");
+  assert.match(html, /class="pill" data-move="save">\+ Add to my thoughts<\/button>/, "says what it does and where it goes (1.84.0)");
   assert.match(c, /#aiLine\.holding::after \{ transform:scaleX\(1\); transition:transform \.55s linear; \}/, "the fill matches HOLD_MS");
   assert.match(html, /var HOLD_MS = 550/);
   assert.match(html, /Press and hold a line Scales wrote to keep it as a thought\./, "the walkthrough says so");
-  assert.match(c, /body\.quiet #v-deck \.reflfoot/, "Reflect goes quiet too");
+  assert.doesNotMatch(c, /body\.quiet #v-deck \.reflfoot/, "Reflect goes quiet, but its timer and words stay (1.84.0)");
 });
 test("Close on Scales Plus returns to Settings when opened from there (1.82.4)", () => {
   const html = read("index.html");
@@ -716,7 +716,7 @@ test("the Keep sheet offers add or replace, and both can be undone", () => {
   assert.match(html, /id="keepRep" data-k="replace" aria-pressed="false"/);
   assert.match(html, /C\.keepAsNew\(all\(\), t, keepLine, now\)/);
   assert.match(html, /C\.keepReplace\(all\(\), t, keepLine, now\)/);
-  assert.match(html, /undoable\("Added to "/);
+  assert.match(html, /undoable\("Added to your thoughts"/);
   assert.match(html, /undoable\("Wording replaced\. Earlier wording kept\.", u\)/);
   assert.match(html, /e\.target\.closest\("#aiLine"\) && shown && shown\.ai\) \? "keep"/, "Keep is offered only on model lines, by pressing and holding the line");
   assert.match(html, /data-r="keep">Keep line/, "Keep is offered on the Ledger record too");
@@ -726,7 +726,7 @@ test("the Keep sheet offers add or replace, and both can be undone", () => {
 
 test("the three moves are buttons in view; Skip asks once; keys work (1.34.0, 1.73.0)", () => {
   const html = read("index.html");
-  for (const m of ["skip", "keep", "shed", "stay"]) assert.match(html, new RegExp('data-move="' + m + '"'), m + " button");
+  for (const m of ["skip", "keep", "shed", "stay", "later"]) assert.match(html, new RegExp('choice\\("' + m + '"'), m + " button");
   assert.match(html, /class="choices" id="keys" role="group" aria-label="Choose"/);
   assert.match(html, /if \(m === "skip"\) requestSkip\(\); else if \(m === "later"\) saveLater\(\); else if \(m === "peek"\) togglePeek\(\); else if \(m === "stay"\) keepIt\(\); else act\(m\);/);
   assert.match(html, /k === "ArrowLeft"\) requestSkip\(\)/);
@@ -736,8 +736,8 @@ test("the three moves are buttons in view; Skip asks once; keys work (1.34.0, 1.
   assert.match(html, /var HOLD_MS = 550;/);
   assert.match(html, /if \(m === "edit"\) openEdit\(t\); else if \(shown && shown\.ai\) openKeep\(t, shown\.text, shown\.quote \? \{ author: shown\.author, src: shown\.src \} : null\);/);
   assert.doesNotMatch(html, /id="holdZone"|id="holdRing"|function openChoices/, "the press and hold menu is gone");
-  assert.match(html, /if \(phase === "push" \|\| peeked\(\)\) \{ act\("skip"\); return; \}/);
-  assert.match(html, /coachSeen\(\); phase = "push"; renderDeck\(\); showLine\(t, "push"\);/);
+  assert.match(html, /if \(phase === "push" \|\| askedId === current \|\| returned\(\)\) \{ act\("skip"\); return; \}/, "Skip asks once each showing (1.84.0)");
+  assert.match(html, /coachSeen\(\); askedId = t\.id; phase = "push"; renderDeck\(\); showLine\(t, "push"\);/);
   assert.match(html, /phase = "rest"; peekId = t\.id; renderDeck\(\); showLine\(t, "push"\);/, "Keep it goes back with the line showing");
   assert.match(html, /reflectT = setTimeout\(finishReflect, C\.REFLECT_SEC \* 1000\)/);
   assert.match(html, /if \(t\.skip_count > 0\) \{ t\.skip_count--; reflectLighter = true; \}/);
@@ -752,7 +752,7 @@ test("the three moves are buttons in view; Skip asks once; keys work (1.34.0, 1.
   assert.doesNotMatch(html, /data-m="capture"|data-m="settings"|data-m="ledger"|id="backDeck"|id="voiceHead"/);
   assert.match(html, /if \(cb\) \{ closeMenu\(\); setColl\(cb\.getAttribute\("data-coll"\)\); return; \}/);
   assert.match(html, /menu\.showModal\(\)/);
-  assert.match(html, /class="qbtn" data-move="question">/, "Question it lives on the thought; hold the words to edit (1.79.0)");
+  assert.match(html, /p\.push\('<button type="button" class="pill" data-move="question">' \+ ICON_Q \+ "Not sure it\\u2019s true\?<\/button>"\);/, "the other side is one of the options under the question (1.84.0)");
   assert.match(html, /data-move="save">/, "Save is a button beside Reply");
 });
 
@@ -839,7 +839,7 @@ test("motion respects reduced motion", () => {
   assert.match(html, /document\.startViewTransition && !REDUCED\.matches/);
   assert.match(html, /function burst\(\) \{[^}]*REDUCED\.matches\) return;/);
   assert.match(html, /@media \(prefers-reduced-motion: no-preference\) \{ \.card\.enter/);
-  assert.match(html, /@media \(prefers-reduced-motion: reduce\) \{ \.dwell\.on \.qacts \{ animation:none; \} \.dwell, \.dwell\.on, \.card, \.card\.spring/);
+  assert.match(html, /@media \(prefers-reduced-motion: reduce\) \{ \.dwell, \.dwell\.on, \.card, \.card\.spring/);
 });
 
 test("touch targets: buttons a thumb can hit (1.36.0, 1.73.0)", () => {
@@ -926,7 +926,9 @@ test("one way to talk back: Reply, and today's voice answers when AI is on; old 
   assert.match(html, /<dialog class="sheet tall" id="sheetWeigh"/);
   assert.doesNotMatch(html, /id="weighBtn"|id="talkRow"|Talk it through with/, "no Weigh in or Talk it through on the deck");
   assert.match(html, /function replyVoice\(\) \{ return sample \? todayVoice\(\) : null; \}/, "the voice answers only with AI on");
-  assert.match(html, /if \(!v\) \{ hide\(\); toast\("Reply kept\."\); return; \}/, "without AI the reply is simply kept");
+  assert.match(html, /if \(!v\) \{ hide\(\); toast\(f\.done \|\| "Kept\."\); return; \}/, "without AI the reply is simply kept");
+  assert.match(html, /answer: \{ pill: "Answer it", title: "Your answer"/, "named for what it answers (1.84.0)");
+  assert.match(html, /take: \{ pill: "Your take"/); assert.match(html, /argue: \{ pill: "Argue back"/);
   assert.match(html, /C\.addTalk\(t, \{ at: r\.at, day: today\(\), reply: true,/);
   assert.match(html, /paintWeigh\(\); show\("sheetWeigh"\); askReply\(\);/);
   assert.match(html, /id="replyRetry"/, "a failed answer can be asked for again");
@@ -952,8 +954,8 @@ test("talkRequest from a Reply: the line replied to is in the system prompt, the
 test("the moves are named Skip, Reflect and Lived everywhere on screen (1.73.0)", () => {
   const html = read("index.html");
   assert.doesNotMatch(html, />Sit with it<|>Living it<|"Sitting with it"|Counted as Sit with it|Sat with/, "the old names are gone from the screen");
-  assert.match(html, />Reflect<\/button>/);
-  assert.match(html, />Lived<\/button>/);
+  assert.match(html, /choice\("keep", "Reflect", "sit with it", true\)/);
+  assert.match(html, /choice\("shed", "Lived", "I do this now"\)/);
   assert.match(html, /"Reflecting"/);
   assert.deepEqual([C.MOVES.skip, C.MOVES.keep, C.MOVES.shed], ["Skip", "Reflect", "Lived"]);
 });
@@ -1222,12 +1224,11 @@ test("a quote's source: its work, a book within a work, or its citation under a 
 });
 
 // ---------- 1.39.0: hold reveals the choices ----------
-test("Skip asks once, in plain buttons: Skip anyway or Keep it (1.73.0)", () => {
+test("Skip asks once: Set it down for 4 days? Tonight, 4 days or Stay with it (1.73.0, 1.84.0)", () => {
   const html = read("index.html"), c = css();
-  assert.match(html, /data-move="skip">Skip anyway<\/button>/);
-  assert.match(html, /class="choice main" data-move="stay">Keep it<\/button>/);
-  assert.match(html, /Skipping rests it for ' \+ n/);
-  assert.match(html, /'<div class="phase"><span>Before you skip<\/span><\/div>'/);
+  assert.match(html, /'<p class="choiceq">Set it down for ' \+ days \+ "\?<\/p>"/);
+  assert.match(html, /choice\("skip", days, "set it down for " \+ days\) \+ choice\("stay", "Stay with it", "keep it in today", true\)/);
+  assert.match(html, /'<div class="phase"><span>Before you skip' \+ \(t\.skip_count > 0/);
   assert.match(rule(c, ".choice.main"), /background:var\(--accent\)/, "the suggested choice is the one blue button");
   assert.doesNotMatch(html, /id="setAside"|class="hl hl-/);
 });
@@ -1282,10 +1283,9 @@ test("Later waits until the evening of the day it was saved; three at most; not 
   assert.equal(C.canLater([], A("7", { later: { day: "x" } })), false);
 });
 
-test("Later is offered beside Reply once the line is read, and is not a skip (1.42.0, 1.73.0)", () => {
+test("Later is a choice on the Skip screen, and is not a skip (1.42.0, 1.84.0)", () => {
   const html = read("index.html");
-  assert.match(html, /if \(!t \|\| !\(phase === "push" \|\| \(peeked\(\) && !returned\(\)\)\) \|\| !C\.canLater\(all\(\), t\)\) return "";/);
-  assert.match(html, /data-move="later">' \+ \(new Date\(\)\.getHours\(\) < C\.CHECKIN_HOUR \? "Later tonight" : "Later"\)/);
+  assert.match(html, /\(later \? choice\("later", new Date\(\)\.getHours\(\) < C\.CHECKIN_HOUR \? "Tonight" : "Later", "ask me later"\) : ""\)/);
   const save = html.slice(html.indexOf("  function saveLater()"), html.indexOf("  // After REFLECT_SEC on the reflect screen:"));
   assert.doesNotMatch(save, /applySkip|skip_count|noteSkipDay|logActivity/, "no count, no weight, no rest");
   assert.match(html, /return C\.inCollection\(t, c\) && !t\.later;/, "waiting thoughts are left out of the deck");
@@ -1428,7 +1428,6 @@ test("Capture and Edit are lifted above the keyboard like the reply sheet", () =
 // ---------- 1.53.0: tap to see the line ----------
 test("Today's question shows the line; once read, Skip commits and Later is offered", () => {
   const html = read("index.html");
-  assert.match(html, /if \(phase === "push" \|\| peeked\(\)\) \{ act\("skip"\); return; \}/);
   assert.match(html, /var DWELL_MS = 6000/, "the question comes on its own (1.83.0)");
   assert.doesNotMatch(html, /class="qbtn" data-move="peek"/);
 });
@@ -1447,7 +1446,7 @@ test("a thought back from Later opens with its quote and counts nothing until yo
   assert.match(html, /fromLater = true; laterId = L\.id; phase = "rest";\s*renderDeck\(\); showLine\(L, "reflect"\);/);
   assert.doesNotMatch(html, /fromLater = true; act\("keep"\);/);
   assert.match(html, /if \(returned\(\)\) \{/);
-  assert.match(html, /Counted as Reflect\./);
+  assert.match(html, /"Done\."/);
 });
 
 // ---------- 1.56.1: the fold hint only when cut off ----------
