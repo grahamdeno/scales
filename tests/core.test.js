@@ -119,6 +119,13 @@ test("haptics: named styles from the page, played natively, and a switch (1.84.1
   for (const st of ["medium", "success", "thud", "signature", "letgo"]) assert.match(sw, new RegExp('case "' + st + '"'));
   assert.match(vc, /haptics\.play\(body\["style"\] as\? String \?\? "tick"\)/);
 });
+test("the TestFlight preview arrives on its own message and survives App Store updates (1.84.3)", () => {
+  const html = read("index.html"), vc = fs.readFileSync(path.join(__dirname, "..", "ios", "App", "WebViewController.swift"), "utf8");
+  assert.match(vc, /Task \{ await sendPreview\(\) \}\n\s+Task \{ await sendPlus\(\) \}/, "sent first, apart from the product lookup");
+  assert.match(vc, /run\("window\.scalesPreview && window\.scalesPreview\(\\\(json\)\)"\)/);
+  assert.match(html, /plus = withPreview\(s \|\| \{ active: false \}\)/, "an App Store update keeps the preview");
+  assert.match(html, /\$\("plusPreviewBox"\)\.hidden = !\(plus\.preview \|\| plus\.previewFlag\) \|\| paidOn\(\);/);
+});
 test("the page asks for core.js at its own version, and the cache keeps it (1.77.2)", () => {
   const html = read("index.html"), sw = read("sw.js");
   assert.match(html, new RegExp('<script src="core\\.js\\?v=' + C.VERSION.replace(/\./g, "\\.") + '"></script>'), "bump the core.js address with VERSION");

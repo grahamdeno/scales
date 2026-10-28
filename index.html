@@ -1148,7 +1148,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.84.2"></script>
+<script src="core.js?v=1.84.3"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -3412,9 +3412,19 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   $("plusRestore").onclick = function () { busy(); toNative({ type: "restore" }); };
   $("plusManage").onclick = function () { toNative({ type: "manage" }); };
   // Where Plus stands, from the iPhone app: on start, on return to the app, and after a purchase or restore.
+  // TestFlight preview (1.84.3): its own message from the app, kept apart from the App Store state so either can
+  // arrive first.
+  var previewState = {};
+  function withPreview(p) { p.preview = previewState.preview || p.preview; p.previewFlag = previewState.previewFlag || p.previewFlag; p.previewWhy = previewState.previewWhy || p.previewWhy; return p; }
+  window.scalesPreview = function (p) {
+    var was = plusOn();
+    previewState = p || {}; withPreview(plus);
+    if (was !== plusOn()) applyKey();
+    paintPlus(); if (openSheet && openSheet.id === "sheetSettings") { paintAiBox(); paintSettings(); }
+  };
   window.scalesStore = function (s) {
     var was = plusOn();
-    plus = s || { active: false }; plusBusy = false; clearTimeout(plusBusyT);
+    plus = withPreview(s || { active: false }); plusBusy = false; clearTimeout(plusBusyT);
     if (was !== plusOn()) applyKey();
     paintPlus(); if (openSheet && openSheet.id === "sheetSettings") { paintAiBox(); paintSettings(); }
     var note = s && s.note;

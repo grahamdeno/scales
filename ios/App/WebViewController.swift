@@ -66,6 +66,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             ready = true
             queued.forEach { web.evaluateJavaScript($0, completionHandler: nil) }
             queued.removeAll()
+            Task { await sendPreview() }
             Task { await sendPlus() }
             sendIcon(); sendA11y()
         case "plus":
@@ -214,25 +215,36 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         }
         // TestFlight preview (1.82.0): a TestFlight copy can turn Plus on before the App Store approves it. The proof
         // is Apple's signed AppTransaction for this copy. Hidden unless the build's ScalesPlusPreview flag is on.
-        // 1.84.2: the page always hears that this build allows a preview, and why not when Apple's record is missing.
-        if Bundle.main.object(forInfoDictionaryKey: "ScalesPlusPreview") as? Bool == true {
-            state["previewFlag"] = true
-            var record = try? await AppTransaction.shared
-            if record == nil { record = try? await AppTransaction.refresh() }
-            switch record {
-            case .verified(let at)?:
-                if at.environment == .sandbox || at.environment == .xcode { state["preview"] = record!.jwsRepresentation }
-                else { state["previewWhy"] = "Apple reports this copy as " + at.environment.rawValue }
-            case .unverified(_, let error)?:
-                state["previewWhy"] = "Apple's record for this copy did not verify (" + error.localizedDescription + ")"
-            case nil:
-                state["previewWhy"] = "Apple did not return a record for this copy"
-            }
-        }
         if let note { state["note"] = note }
         guard let data = try? JSONSerialization.data(withJSONObject: state),
               let json = String(data: data, encoding: .utf8) else { return }
         run("window.scalesStore && window.scalesStore(\(json))")
+    }
+
+    /// TestFlight preview (1.82.0, own message since 1.84.3): told on its own, first, so a slow App Store product
+    /// lookup can never hold it back. Hidden unless the build's ScalesPlusPreview flag is on. The proof is Apple's
+    /// signed AppTransaction for this copy; when there is none, the page is told why.
+    private func sendPreview() async {
+        guard Bundle.main.object(forInfoDictionaryKey: "ScalesPlusPreview") as? Bool == true else { return }
+        var state: [String: Any] = ["previewFlag": true]
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
+        state["build"] = build
+        let record = try? await AppTransaction.shared
+        switch record {
+        case .verified(let at)?:
+            if at.environment == .sandbox || at.environment == .xcode {
+                state["preview"] = record!.jwsRepresentation
+            } else {
+                state["previewWhy"] = "Apple reports this copy as " + at.environment.rawValue
+            }
+        case .unverified(_, let error)?:
+            state["previewWhy"] = "Apple's record for this copy did not verify (" + error.localizedDescription + ")"
+        case nil:
+            state["previewWhy"] = "Apple did not return a record for this copy"
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: state),
+              let json = String(data: data, encoding: .utf8) else { return }
+        run("window.scalesPreview && window.scalesPreview(\(json))")
     }
 
     private static func days(_ period: Product.SubscriptionPeriod) -> Int {
