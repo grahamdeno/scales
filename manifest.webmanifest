@@ -1,7 +1,7 @@
 {
   "name": "Scales",
   "short_name": "Scales",
-  "description": "Weigh what you believe. One principle a day: skip it, reflect on it, or mark it lived.",
+  "description": "Weigh your thoughts. One a day: is it true, and do you live it?",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
