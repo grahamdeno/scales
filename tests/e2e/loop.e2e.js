@@ -190,6 +190,18 @@ test("in the iPhone app (no service worker) the page says it is ready, and the a
   assert.equal(await page.$eval("#iconRow", (e) => e.hidden), false, "the icon choice shows");
   await ctx.close();
 });
+test("Edit can delete, and Undo brings it back (1.84.6)", async () => {
+  const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
+  const first = await words(page);
+  await page.hover("#words"); await page.mouse.down(); await page.clock.runFor(700); await page.mouse.up();
+  assert.equal(await page.$eval("#sheetEdit", (e) => e.open), true, "hold opens Edit");
+  await page.click("#editDelete"); await page.clock.runFor(500);
+  assert.equal(Object.values(await saved(page)).some((t) => t.text === first), false, "deleted");
+  assert.notEqual(await words(page), first, "the next thought is up");
+  await page.click("#toastUndo"); await page.clock.runFor(500);
+  assert.equal(Object.values(await saved(page)).some((t) => t.text === first), true, "Undo brings it back");
+  assert.deepEqual(page.errors, []);
+});
 test("a thought back from Later waits for a choice and counts nothing", async () => {
   const page = await open({ prefs: ready, at: new Date(2026, 9, 27, 20, 50),
     thoughts: { a: P("a", "Back from earlier.", { later: { day: "2026-10-27", at: "" } }), b: P("b", "Other.") } });

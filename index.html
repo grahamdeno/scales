@@ -188,11 +188,11 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 #aiLine { position:relative; }
 .dwell { flex:none; margin-top:26px; min-height:190px; opacity:0; visibility:hidden; transition:opacity 1.2s ease, visibility 0s linear 1.2s; }
 .dwell.on { opacity:1; visibility:visible; transition:opacity 1.2s ease; }
-.pills { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
-.pill { display:inline-flex; align-items:center; gap:5px; min-height:44px; padding:0 14px; border-radius:22px; border:1px solid var(--line); color:var(--ink); font-size:.8125rem; white-space:nowrap; }
-.pill .i { width:15px; height:15px; }
-.pill .pn { min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--btn2); font-size:.6875rem; line-height:18px; text-align:center; color:var(--muted); }
-.pill:active { background:var(--btn2); }
+.lineWrap .pills { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+.lineWrap .pills .pill { display:inline-flex; align-items:center; gap:5px; min-height:44px; padding:0 14px; border-radius:22px; border:1px solid var(--line); color:var(--ink); font-size:.8125rem; white-space:nowrap; }
+.lineWrap .pill .i { width:15px; height:15px; }
+.lineWrap .pill .pn { min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--btn2); font-size:.6875rem; line-height:18px; text-align:center; color:var(--muted); }
+.lineWrap .pills .pill:active { background:var(--btn2); }
 .choices.endmain { grid-template-columns:1fr 1fr 1.25fr; }
 
 #aiLine::after { content:""; position:absolute; left:0; right:0; bottom:-6px; height:2px; border-radius:1px; background:var(--ink); opacity:.5; transform:scaleX(0); transform-origin:0 50%; }
@@ -457,6 +457,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .rowacts .primary { width:100%; min-height:52px; }
 .rowacts .more { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0, 1fr); gap:8px; }
 .rowacts .more .btn3d { padding:0 8px; font-size:var(--t-sm); }
+.editdel { display:block; width:100%; min-height:48px; margin:8px 0 max(12px, env(safe-area-inset-bottom, 0px)); border-radius:12px; border:1px solid var(--line); color:var(--danger); font-size:var(--t-md); }
 .rowacts .del { justify-self:end; min-height:44px; padding:0 4px; font-size:var(--t-sm); color:var(--danger); }
 .tl { display:grid; }
 .tl div { display:grid; grid-template-columns:14px 1fr auto; gap:10px; align-items:start; padding:9px 0; font-size:var(--t-sm); line-height:1.4; border-bottom:1px solid var(--line); overflow-wrap:anywhere; }
@@ -680,7 +681,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   .phase { min-height:30px; } .card.push, .card.reflect { padding-top:10px; }
   .dwell { margin-top:16px; min-height:150px; }
   .choiceq { margin-top:4px; }
-  .pills { margin-top:8px; }
+  .lineWrap .pills { margin-top:8px; }
   .card .mid { gap:12px; padding:0; } .ai-src { margin-top:6px; } .lineWrap { padding-top:10px; }
   .thought.small.fold { -webkit-line-clamp:3; }
 }
@@ -978,6 +979,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <span class="lbl">Kept on save</span>
     <div class="kept" id="editKept"></div>
   </div>
+  <!-- 1.84.6: delete from Edit. Undo in the toast brings it back. -->
+  <button type="button" class="editdel" id="editDelete">Delete thought</button>
 </dialog>
 
 <!-- Settings sheet -->
@@ -1149,7 +1152,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.84.5"></script>
+<script src="core.js?v=1.84.6"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -2812,6 +2815,17 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     }
   };
 
+  // Delete from Edit (1.84.6): like the Ledger, it deletes at once and the toast can undo it.
+  $("editDelete").onclick = function () {
+    var t = editTarget; if (!t) return;
+    var u = undoPoint(), id = t.id, wasOn = current === id;
+    if (wasOn) current = null;
+    if (lastMove && lastMove.id === id) lastMove = null;
+    editTarget = null; remove(id); hide(); buzz("thud");
+    if (!$("v-ledger").hidden) renderLedger(); else if (wasOn) { phase = "rest"; showNext(); } else renderDeck();
+    undoable("Deleted.", u);
+  };
+
   // ---------- evidence sheet ----------
   // Add or edit the evidence line on a lived thought. An empty save clears it.
   var evTarget = null;
@@ -2864,6 +2878,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function openEdit(t, revise, why) {
     if (!t) return;
     editTarget = t; reviseMode = !!revise; reviseUndo = revise ? undoPoint() : null;
+    $("editDelete").hidden = !!revise;
     $("sheetEditTitle").textContent = revise ? "Revise" : "Edit thought";
     var lived = t.status === "shed";
     $("editNote").textContent = lived
