@@ -48,9 +48,9 @@ jobs:
           if [ ! -x "$ICT" ]; then echo "::warning::ictool not found"; exit 0; fi
           "$ICT" --version | sed 's/^/::notice::ictool /' || true
           mkdir -p "$RUNNER_TEMP/prev"
-          for r in Default Dark TintedLight TintedDark; do
-            "$ICT" ios/App/AppIcon.icon --export-image --output-file "$RUNNER_TEMP/prev/$r.png" --platform iOS --rendition $r --width 1024 --height 1024 --scale 1 2>&1 | tail -3 | sed "s/^/::warning::$r /" || true
-          done
+          for i in AppIcon AppIcon-Light AppIcon-Black; do for r in Default Dark TintedLight TintedDark; do
+            "$ICT" ios/App/$i.icon --export-image --output-file "$RUNNER_TEMP/prev/$i-$r.png" --platform iOS --rendition $r --width 1024 --height 1024 --scale 1 >/dev/null 2>&1 || echo "::warning::$i $r failed"
+          done; done
           ls -la "$RUNNER_TEMP/prev" | sed 's/^/::notice::/'
           cd "$RUNNER_TEMP/prev" && git init -q && git checkout -q -b icon-previews && git add . && git -c user.name=grahamdeno -c user.email=grahamdeno@users.noreply.github.com commit -q -m "Icon previews for ${GITHUB_SHA::7}"
           git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" icon-previews && echo "::notice::Previews pushed to icon-previews"

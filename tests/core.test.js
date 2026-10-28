@@ -52,8 +52,15 @@ test("the app icon is an Icon Composer icon: light, dark and tinted follow the H
   for (const g of j.groups) { const l = g.layers[0]; assert.ok(fs.existsSync(path.join(dir, "Assets", l["image-name"]))); assert.deepEqual(l["fill-specializations"].map((x) => x.appearance || "light"), ["light", "dark", "tinted"], l.name); }
   assert.ok(fs.existsSync(path.join(__dirname, "..", "ios", "App", "Assets.xcassets", "AppIcon.appiconset", "icon-1024.png")), "the flat icon stays for iOS 17 and 18");
   const html = read("index.html"), yml = fs.readFileSync(path.join(__dirname, "..", "ios", "project.yml"), "utf8");
-  assert.doesNotMatch(html, /id="iconRow"/, "no in-app icon choice; iOS's Home Screen setting does it");
-  assert.doesNotMatch(yml, /ALTERNATE_APPICON/);
+  // 1.80.1: Settings offers Automatic (the main icon), Light and Black; the two fixed ones are alternates.
+  assert.match(html, /id="iconRow" hidden/);
+  for (const n of ["auto", "light", "black"]) assert.match(html, new RegExp('data-icon="' + n + '"'));
+  assert.match(yml, /ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: AppIcon-Light AppIcon-Black/);
+  for (const n of ["AppIcon-Light", "AppIcon-Black"]) {
+    assert.ok(fs.existsSync(path.join(__dirname, "..", "ios", "App", n + ".icon", "icon.json")), n + ".icon");
+    assert.ok(fs.existsSync(path.join(__dirname, "..", "ios", "App", "Assets.xcassets", n + ".appiconset", "icon-1024.png")), n + " for iOS 17 and 18");
+  }
+  for (const f of ["icon-auto-192.png", "icon-light-192.png", "icon-192.png"]) assert.ok(fs.existsSync(path.join(__dirname, "..", "icons", f)));
 });
 test("the website: landing, Support and Privacy (1.79.0)", () => {
   for (const f of ["index.html", "support.html", "privacy.html"]) {
