@@ -97,6 +97,9 @@ body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-d
 .iconpick img { width:44px; height:44px; border-radius:10px; display:block; }
 .iconpick [aria-checked="true"] { color:var(--ink); }
 .iconpick [aria-checked="true"] img { outline:2px solid var(--accent); outline-offset:2px; }
+.iconpick button { position:relative; }
+.iconpick .locked img { opacity:.45; }
+.plustag { position:absolute; top:-6px; right:-4px; padding:1px 5px; border-radius:6px; background:var(--accent); color:var(--onAccent); font-size:.625rem; font-weight:600; letter-spacing:.02em; }
 /* Question it (1.79.0) */
 .qnotes { display:grid; gap:12px; margin-top:22px; font-size:var(--t-sm); line-height:1.45; color:var(--muted); }
 .qnotes b { display:block; color:var(--ink); font-weight:500; margin-bottom:2px; }
@@ -817,6 +820,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <p class="plusprice" id="plusPrice"></p>
   <div class="plusbuy"><button class="primary" type="button" id="plusBuy">Start free trial</button></div>
   <p class="note" id="plusTerms">Renews automatically each year until you cancel. Cancel anytime in iPhone Settings &gt; your name &gt; Subscriptions, at least a day before the trial or year ends.</p>
+  <div class="panel" id="plusPreviewBox" hidden>
+    <div class="setrow"><span id="plusPreviewLbl">Preview Scales Plus<small>TestFlight only. Turns on everything in Plus, without buying it, until the App Store approves it.</small></span>
+      <button type="button" class="toggle" id="plusPreviewToggle" role="switch" aria-checked="false" aria-labelledby="plusPreviewLbl"><i></i></button></div>
+  </div>
   <div class="pluslinks"><button type="button" class="linkbtn" id="plusRestore">Restore purchase</button><button type="button" class="linkbtn" id="plusManage" hidden>Manage subscription</button>
     <a class="linkbtn" href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener">Terms of Use</a><a class="linkbtn" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener">Privacy</a></div>
 </dialog>
@@ -958,8 +965,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <!-- The app icon (1.80.1): Automatic follows the Home Screen style; Light and Black stay fixed. iPhone app only. -->
     <div class="setrow" id="iconRow" hidden><span>App icon</span><div class="iconpick" role="radiogroup" aria-label="App icon">
       <button type="button" role="radio" data-icon="auto" aria-checked="true"><img src="icons/icon-auto-192.png" alt="">Automatic</button>
-      <button type="button" role="radio" data-icon="light" aria-checked="false"><img src="icons/icon-light-192.png" alt="">Light</button>
-      <button type="button" role="radio" data-icon="black" aria-checked="false"><img src="icons/icon-192.png" alt="">Black</button></div></div>
+      <button type="button" role="radio" data-icon="light" data-plus aria-checked="false"><img src="icons/icon-light-192.png" alt="">Light</button>
+      <button type="button" role="radio" data-icon="black" data-plus aria-checked="false"><img src="icons/icon-192.png" alt="">Black</button></div></div>
     <button type="button" class="setrow nav" id="openData"><span>Your data</span><span class="val" id="dataVal"></span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
     <button type="button" class="setrow nav" id="openHelp"><span>Help and about</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
   </div>
@@ -1104,7 +1111,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.81.0"></script>
+<script src="core.js?v=1.82.0"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1365,13 +1372,17 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // Scales Plus (1.72.0): the iPhone app sends where the subscription stands (window.scalesStore). The server
   // answers only requests that carry the App Store's signed record of it, so without Plus there is no server AI.
   var plus = { active: false }, plusBusy = false;
-  function plusOn() { return !!(plus.active && plus.jws && (!plus.expires || plus.expires > Date.now())); }
+  function paidOn() { return !!(plus.active && plus.jws && (!plus.expires || plus.expires > Date.now())); }
+  // TestFlight preview (1.82.0): the app sends Apple's proof that this is a TestFlight copy; the switch is in the Plus sheet.
+  function previewOn() { return !paidOn() && !!plus.preview && prefs.plus_preview === true; }
+  function plusOn() { return paidOn() || previewOn(); }
+  function plusHeader() { return paidOn() ? { "X-Scales-Plus": plus.jws } : { "X-Scales-Preview": plus.preview || "" }; }
   function makeSampler(key) {
     if (PROXY ? !plusOn() : !key) return null;
     // prompt is one user message, or { system, messages } for Talk it through.
     return function (prompt) {
       var req = typeof prompt === "string" ? { messages: [{ role: "user", content: prompt }] } : prompt;
-      var call = PROXY ? fetch(PROXY, { method: "POST", headers: { "content-type": "application/json", "X-Scales-Plus": plus.jws }, body: JSON.stringify(req) })
+      var call = PROXY ? fetch(PROXY, { method: "POST", headers: Object.assign({ "content-type": "application/json" }, plusHeader()), body: JSON.stringify(req) })
         : fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
           headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
@@ -3244,6 +3255,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function longDate(ms) { return new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
   function paintPlus() {
     $("plusGroup").hidden = !(NATIVE && PROXY);
+    $("plusPreviewBox").hidden = !plus.preview || paidOn();
+    $("plusPreviewToggle").setAttribute("aria-checked", String(previewOn()));
+    if (previewOn()) {
+      $("plusStatus").textContent = "Preview on (TestFlight)"; $("plusPrice").textContent = "Scales Plus preview is on. Everything in Plus works on this copy.";
+      $("plusBuy").parentNode.hidden = true; $("plusTerms").hidden = true; $("plusRestore").hidden = true; $("plusManage").hidden = true;
+      paintIconPick(); return;
+    }
     var on = plusOn(), days = plus.trialDays, when = plus.expires ? longDate(plus.expires) : "";
     $("plusStatus").textContent = on ? (plus.trial ? "Free trial" : "On") + (when ? (plus.renews === false || plus.trial ? (plus.trial && plus.renews !== false ? " until " : ", ends ") : ", renews ") + when : "")
       : days ? "Try it free for " + days + " days" : "AI questions, the best quote, and answers when you reply";
@@ -3256,7 +3274,14 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     $("plusBuy").textContent = plusBusy ? "Waiting for the App Store…" : days ? "Start free trial" : "Subscribe";
     $("plusTerms").hidden = on || !plus.price;
     $("plusRestore").hidden = on; $("plusManage").hidden = !on;
+    paintIconPick();
   }
+  $("plusPreviewToggle").onclick = function () {
+    var was = plusOn();
+    prefs.plus_preview = !previewOn(); savePrefs();
+    if (was !== plusOn()) applyKey();
+    paintPlus(); if (plusOn()) { toast("Scales Plus preview is on."); if (prefs.ai_consent !== true) setTimeout(function () { if (!openSheet) askConsent(); }, 400); }
+  };
   function openPlus() { paintPlus(); show("sheetPlus"); }
   $("openPlus").onclick = openPlus;
   // A purchase or restore the App Store never answers (a sign-in left open, no connection) frees the button after a minute.
@@ -3510,9 +3535,19 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var row = $("iconRow"); if (!row) return;
     row.hidden = false;
     row.querySelectorAll("[data-icon]").forEach(function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-icon") === name)); });
+    paintIconPick();
   };
+  // Light and Black are part of Scales Plus (1.82.0); Automatic is for everyone.
+  function paintIconPick() {
+    document.querySelectorAll("#iconRow [data-plus]").forEach(function (b) {
+      var locked = !plusOn(); b.classList.toggle("locked", locked);
+      b.setAttribute("aria-label", b.textContent.replace(" Plus", "") + (locked ? ", needs Scales Plus" : ""));
+      var tag = b.querySelector(".plustag"); if (locked && !tag) b.insertAdjacentHTML("beforeend", '<span class="plustag">Plus</span>'); else if (!locked && tag) tag.remove();
+    });
+  }
   $("iconRow").addEventListener("click", function (e) {
     var b = e.target.closest("[data-icon]"); if (!b || b.getAttribute("aria-checked") === "true") return;
+    if (b.hasAttribute("data-plus") && !plusOn()) { openPlus(); return; }
     window.scalesIcon(b.getAttribute("data-icon"));
     toNative({ type: "icon", name: b.getAttribute("data-icon") });
   });

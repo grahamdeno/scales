@@ -1543,6 +1543,25 @@ test("verifyPlus: an App Store signed record of an active Scales Plus subscripti
   await assert.rejects(verifyPlus(b64u(JSON.stringify(hdr)) + "." + p + "." + sg, { roots }), /App Store certificate/);
   await assert.rejects(verifyPlus("nope", { roots }), /not a JWS/);
 });
+test("TestFlight preview: Apple's AppTransaction for a Sandbox copy of this app turns the server on (1.82.0)", async () => {
+  const { verifyPreview } = await import("../server/ai.mjs");
+  const roots = [testRoot];
+  const app = (o) => plusJws(Object.assign({ productId: undefined, expiresDate: undefined, environment: undefined, receiptType: "Sandbox", appAppleId: 1 }, o));
+  assert.equal((await verifyPreview(app(), { roots })).bundleId, "com.grahamdeno.scales");
+  assert.ok(await verifyPreview(app({ receiptType: undefined, environment: "Sandbox" }), { roots }));
+  await assert.rejects(verifyPreview(app({ receiptType: "Production" }), { roots }), /not a TestFlight copy/, "an App Store copy can't preview");
+  await assert.rejects(verifyPreview(app({ bundleId: "com.other.app" }), { roots }), /wrong app/);
+  await assert.rejects(verifyPreview(app()), /unknown root/, "only Apple's root by default");
+  const src = read("server/ai.mjs");
+  assert.match(src, /env\.PLUS_PREVIEW === "off"/, "the server can end the preview");
+  const html = read("index.html"), swift = read("ios/App/WebViewController.swift"), yml = read("ios/project.yml");
+  assert.match(html, /function previewOn\(\) \{ return !paidOn\(\) && !!plus\.preview && prefs\.plus_preview === true; \}/);
+  assert.match(html, /"X-Scales-Preview": plus\.preview/);
+  assert.match(html, /id="plusPreviewToggle"/);
+  assert.match(swift, /AppTransaction\.shared/); assert.match(swift, /ScalesPlusPreview/);
+  assert.match(yml, /ScalesPlusPreview: true/, "turn this off before the App Store submission");
+  assert.match(html, /if \(b\.hasAttribute\("data-plus"\) && !plusOn\(\)\) \{ openPlus\(\); return; \}/, "Light and Black icons are Plus");
+});
 test("the page sends the Plus record with every AI request and shows Scales Plus in Settings (1.72.0)", () => {
   const html = read("index.html");
   assert.match(html, /"X-Scales-Plus": plus\.jws/);

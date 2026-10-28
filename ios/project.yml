@@ -44,6 +44,8 @@ targets:
             NSUbiquitousContainerSupportedFolderLevels: None
         UIViewControllerBasedStatusBarAppearance: false
         UIStatusBarStyle: UIStatusBarStyleDarkContent
+        # Lets TestFlight copies turn on Scales Plus to try it (1.82.0). Set to false before submitting to the App Store.
+        ScalesPlusPreview: true
         CFBundleURLTypes:
           - CFBundleURLName: com.grahamdeno.scales
             CFBundleURLSchemes: [scales]

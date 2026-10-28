@@ -80,7 +80,8 @@ async function signedBy(cert, issuer) {
 
 // Check a StoreKit transaction JWS. Returns the transaction when it proves an active Scales Plus subscription,
 // otherwise throws with the reason. roots: allowed root fingerprints (tests pass their own).
-export async function verifyPlus(jws, { roots = TRUSTED_ROOTS, now = Date.now() } = {}) {
+// The chain and signature of any App Store signed record: a subscription transaction, or the app's own AppTransaction.
+async function appleRecord(jws, roots, now) {
   const parts = String(jws || "").split(".");
   if (parts.length !== 3) throw new Error("not a JWS");
   const header = JSON.parse(new TextDecoder().decode(b64(parts[0])));
@@ -93,11 +94,26 @@ export async function verifyPlus(jws, { roots = TRUSTED_ROOTS, now = Date.now() 
   const ok = leaf.curve && leaf.curve[0] === "P-256" &&
     await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, await key(leaf), b64(parts[2]), new TextEncoder().encode(parts[0] + "." + parts[1]));
   if (!ok) throw new Error("bad signature");
-  const t = JSON.parse(new TextDecoder().decode(b64(parts[1])));
+  return JSON.parse(new TextDecoder().decode(b64(parts[1])));
+}
+
+export async function verifyPlus(jws, { roots = TRUSTED_ROOTS, now = Date.now() } = {}) {
+  const t = await appleRecord(jws, roots, now);
   if (t.bundleId !== BUNDLE_ID || t.productId !== PLUS_PRODUCT) throw new Error("wrong app or product");
   if (t.environment !== "Production" && t.environment !== "Sandbox") throw new Error("wrong environment");
   if (t.revocationDate) throw new Error("refunded");
   if (!(t.expiresDate > now)) throw new Error("expired");
+  return t;
+}
+
+// TestFlight preview (1.82.0): until the App Store approves Scales Plus, a TestFlight copy can turn Plus on to try it.
+// The proof is the app's AppTransaction, signed by Apple: this app, in the Sandbox environment, which only TestFlight
+// and development copies have. PLUS_PREVIEW=off on the server ends it; the app's ScalesPlusPreview flag hides it.
+export async function verifyPreview(jws, { roots = TRUSTED_ROOTS, now = Date.now() } = {}) {
+  const t = await appleRecord(jws, roots, now);
+  if (t.bundleId !== BUNDLE_ID) throw new Error("wrong app");
+  const env = t.environment || t.receiptType;
+  if (env !== "Sandbox" && env !== "ProductionSandbox") throw new Error("not a TestFlight copy (" + env + ")");
   return t;
 }
 
@@ -114,13 +130,31 @@ async function plusOk(jws) {
     return true;
   } catch (e) { return false; }
 }
+const seenPreview = new Map();
+async function previewOk(jws) {
+  const id = hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(jws)));
+  const until = seenPreview.get(id);
+  if (until && until > Date.now()) return "";
+  try {
+    await verifyPreview(jws);
+    if (seenPreview.size > 2000) seenPreview.clear();
+    seenPreview.set(id, Date.now() + 36e5);
+    return "";
+  } catch (e) { return e.message || "not valid"; }
+}
 
 export async function onRequestPost({ request, env }) {
   const site = new URL(request.url).origin;
   if (request.headers.get("Origin") !== site) return reply(403, "forbidden", "Requests must come from the Scales app.");
   if (!env.ANTHROPIC_API_KEY) return reply(503, "not_configured", "The AI key is not set on the server.");
-  const plus = request.headers.get("X-Scales-Plus");
-  if (!plus || plus.length > 12000 || !(await plusOk(plus))) return reply(402, "plus_required", "AI in Scales needs Scales Plus.");
+  const plus = request.headers.get("X-Scales-Plus"), preview = request.headers.get("X-Scales-Preview");
+  const paid = !!plus && plus.length <= 12000 && await plusOk(plus);
+  if (!paid) {
+    if (!preview || preview.length > 12000) return reply(402, "plus_required", "AI in Scales needs Scales Plus.");
+    if (env.PLUS_PREVIEW === "off") return reply(402, "plus_required", "The Scales Plus preview has ended.");
+    const why = await previewOk(preview);
+    if (why) return reply(402, "plus_required", "Preview not accepted: " + why + ".");
+  }
   const text = await request.text();
   if (text.length > MAX_BODY) return reply(413, "too_large", "Request too large.");
   let body;
