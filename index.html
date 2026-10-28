@@ -87,11 +87,11 @@ button { cursor:pointer; border:0; background:none; padding:0; }
 :focus-visible { outline:2px solid var(--ink); outline-offset:3px; }
 .sheet:focus, .sheet:focus-visible { outline:0; }
 #iconRow { flex-wrap:wrap; row-gap:12px; }
-/* Quiet (1.81.0): on the resting card, 3 seconds without a touch dims everything but the thought to 20%, so the
-   eye stays on the words. The controls stay visible and working; any touch brings them back at once. */
-.top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .pills, #v-deck .phase, #v-deck .lived2, #v-deck .where, #v-deck .addwhy { transition:opacity .25s ease; }
-body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .pills, body.quiet #v-deck .phase, body.quiet #v-deck .lived2, body.quiet #v-deck .where, body.quiet #v-deck .addwhy { opacity:.12; transition:opacity 1.2s ease; }
-@media (prefers-reduced-motion: reduce) { .top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .pills, #v-deck .phase, #v-deck .lived2, #v-deck .where, #v-deck .addwhy, body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .pills, body.quiet #v-deck .phase, body.quiet #v-deck .lived2, body.quiet #v-deck .where, body.quiet #v-deck .addwhy { transition:none; } }
+/* Quiet (1.81.0, 1.84.1): 3 seconds without a touch dims the top bar, progress and small print to 12%. The thought,
+   its question, the options under it and the choices stay at full strength and answer the first touch. */
+.top, #setBand, #v-deck .pmeta, #v-deck .foot, #v-deck .phase, #v-deck .where, #v-deck .ai-src { transition:opacity .25s ease; }
+body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .foot, body.quiet #v-deck .phase, body.quiet #v-deck .where, body.quiet #v-deck .ai-src { opacity:.12; transition:opacity 1.2s ease; }
+@media (prefers-reduced-motion: reduce) { .top, #setBand, #v-deck .pmeta, #v-deck .foot, #v-deck .phase, #v-deck .where, #v-deck .ai-src, body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .foot, body.quiet #v-deck .phase, body.quiet #v-deck .where, body.quiet #v-deck .ai-src { transition:none; } }
 .iconpick { display:flex; gap:12px; flex:none; }
 .iconpick button { display:flex; flex-direction:column; align-items:center; gap:6px; min-width:56px; font-size:var(--t-xs); color:var(--muted); }
 .iconpick img { width:44px; height:44px; border-radius:10px; display:block; }
@@ -188,7 +188,6 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 #aiLine { position:relative; }
 .dwell { flex:none; margin-top:26px; min-height:190px; opacity:0; visibility:hidden; transition:opacity 1.2s ease, visibility 0s linear 1.2s; }
 .dwell.on { opacity:1; visibility:visible; transition:opacity 1.2s ease; }
-body.quiet #v-deck .dwell.fresh .pills { opacity:1; transition:none; }
 .pills { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
 .pill { display:inline-flex; align-items:center; gap:5px; min-height:44px; padding:0 14px; border-radius:22px; border:1px solid var(--line); color:var(--ink); font-size:.8125rem; white-space:nowrap; }
 .pill .i { width:15px; height:15px; }
@@ -572,6 +571,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 .done h1 { margin:0; font-size:var(--d-lg); line-height:1.04; letter-spacing:-.03em; font-weight:600; }
 .note.big { font-size:var(--t-md); margin-top:10px; }
 .done .choice { margin-top:12px; }
+.done .backtm { margin-top:6px; color:var(--muted); }
 .done .primary { margin-top:20px; }
 .optp { font-weight:500 !important; font-size:0.8824rem !important; }
 .plusprice { margin:14px 0 0; font-size:var(--t-md); color:var(--ink); }
@@ -1038,6 +1038,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       <button type="button" class="toggle" id="aiToggle" role="switch" aria-checked="true" aria-labelledby="aiLbl"><i></i></button></div>
     <div class="setrow"><span id="whereLbl">Show where it came from<small>Collection, origin and author on Reflect</small></span>
       <button type="button" class="toggle" id="whereToggle" role="switch" aria-checked="true" aria-labelledby="whereLbl"><i></i></button></div>
+    <!-- 1.84.1: haptics, iPhone app only. Also follows Settings, Sounds & Haptics on the iPhone. -->
+    <div class="setrow" id="hapticsRow" hidden><span id="hapticsLbl">Haptics<small>A tap when you choose, a buzz when you finish</small></span>
+      <button type="button" class="toggle" id="hapticsToggle" role="switch" aria-checked="true" aria-labelledby="hapticsLbl"><i></i></button></div>
     <button type="button" class="setrow nav" id="openCollections"><span>Collections</span><span class="val" id="collCount">0</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
   </div>
 </dialog>
@@ -1141,7 +1144,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.84.0"></script>
+<script src="core.js?v=1.84.1"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1828,10 +1831,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     coachSeen();
     if (kind === "skip") {
       // Not today: counted, rested until the next day, and owed one turn at the front.
-      var u = undoPoint();
+      var u = undoPoint(), canL = phase === "rest" && C.canLater(all(), t);
       C.applySkip(t, today(), restDays()); C.noteSkipDay(t, today()); noteMove(t, "skip"); noteDay(t, "skip");
       save(t); logActivity("skip"); flyOut("left");
-      undoable("Skipped. " + backText(t.rest_until), u); return;
+      // Tonight instead (1.84.1): the skip comes back off, and the thought waits for this evening.
+      toast("Skipped. " + backText(t.rest_until), function () { restore(u); toast("Undone."); }, null,
+        canL ? { label: new Date().getHours() < C.CHECKIN_HOUR ? "Tonight" : "Later", fn: function () { restore(u); setTimeout(saveLater, 0); } } : null);
+      return;
     }
     if (kind === "keep") {
       if (phase === "reflect") return;
@@ -1872,17 +1878,19 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var t = onCard(); if (!t || phase === "reflect") return;
     // 1.84.0: Skip asks once each time the thought is up, even after its question has faded in. Keep it on that
     // screen, or a thought back from Later, and the next Skip goes straight through.
-    if (phase === "push" || askedId === current || returned()) { act("skip"); return; }
+    // 1.84.1: the check is for a pattern, not a single skip. Under SKIP_ASK_AT skips it goes straight through, with
+    // Undo and Tonight in the toast.
+    if (phase === "push" || askedId === current || returned() || (t.skip_count || 0) < SKIP_ASK_AT) { act("skip"); return; }
     coachSeen(); askedId = t.id; phase = "push"; renderDeck(); showLine(t, "push");
   }
   // Tap to see the line (1.53.0): a tap on the thought at rest shows the line Skip would show, and changes
   // nothing else. Once it has been read, Skip in the choices rests the thought straight away (the pushback
   // has been seen) and Later joins the choices. A thought skipped without tapping still asks first.
-  var peekId = null, laterId = null, askedId = null;
+  var peekId = null, laterId = null, askedId = null, SKIP_ASK_AT = 2;
   function returned() { return phase === "rest" && !!current && laterId === current; }
   // A returned Later counts as read: Skip rests it straight away.
   function peeked() { return phase === "rest" && !!current && (peekId === current || laterId === current); }
-  var DWELL_MS = 6000, dwellT = 0, lineFor = null;
+  var DWELL_MS = 3000, dwellT = 0, lineFor = null;
   function dwell(t) {
     if (phase !== "rest" || onCard() !== t || peeked()) return;
     if (openSheet || menu.open) { dwellT = setTimeout(function () { dwell(t); }, 2000); return; }
@@ -1916,7 +1924,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (t.skip_count > 0) { t.skip_count--; reflectLighter = true; }
     if (t.later_blocked) t.later_blocked = false;
     save(t);
-    reflectDone = true; paintReflectFoot();
+    reflectDone = true; paintReflectFoot(); buzz("success");
   }
   // Next thought: the lines this one had are spent, so new ones are written next time it comes up.
   function nextFromReflect() {
@@ -1938,6 +1946,12 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     refreshDay(); p.day = JSON.parse(JSON.stringify(day)); p.tests = prefs.tests || 0;
     return p;
   }
+  // Haptics (1.84.1), iPhone app only. A buzz confirms something you did or rewards something you earned:
+  //   tick      a choice or an option          medium    press and hold opened Edit or Add
+  //   success   Reflect counted                thud      Lived: a weight set down
+  //   letgo     Let go: firm, then fading      signature the day's set done: rising, then a zip (once a day)
+  // Nothing buzzes for Skip's rest, the screen going quiet, the question fading in, or an error.
+  function buzz(style) { if (NATIVE && prefs.haptics !== false) toNative({ type: "haptic", style: style }); }
   function undoable(msg, point) { toast(msg, function () { restore(point); toast("Undone."); }); }
   function restore(point) {
       fromLater = false;
@@ -1997,7 +2011,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var u = undoPoint();
     t.status = "shed"; t.shed_at = new Date().toISOString(); t.evidence = $("evidenceInput").value.trim();
     noteMove(t, "shed"); noteDay(t, "shed");
-    save(t); logActivity("shed"); shedDone = true; hide(); burst(); flyOut("right");
+    save(t); logActivity("shed"); shedDone = true; hide(); burst(); flyOut("right"); buzz("thud");
     undoable("Lived. Moved to your record.", u);
   });
 
@@ -2018,7 +2032,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var u = undoPoint();
     C.letGo(t, $("letInput").value, today());
     noteMove(t, "letgo"); noteDay(t, "letgo");
-    save(t); logActivity("letgo"); letTarget = null; hide(); phase = "rest"; flyOut("left");
+    save(t); logActivity("letgo"); letTarget = null; hide(); phase = "rest"; flyOut("left"); buzz("letgo");
     undoable("Let go. Kept in your Ledger.", u);
   });
 
@@ -2253,7 +2267,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function paintReflectFoot() {
     var f = $("reflFoot"); if (!f) return;
     if (reflectDone) {
-      f.innerHTML = '<span>' + (reflectLighter ? "Done. It\u2019s a little lighter now." : "Done.") + '</span>' + (REFLECT_UNDO
+      f.innerHTML = '<span>' + "Done. Reflected " + times((thoughts[current] || {}).reflect_count || 1) + "." + (reflectLighter ? " A little lighter now." : "") + '</span>' + (REFLECT_UNDO
         ? '<div class="pair next"><button type="button" class="btn3d" id="reflUndo">Undo</button><button type="button" class="primary" id="reflNext">Next thought</button></div>'
         : '<button type="button" class="primary wide" id="reflNext">Next thought</button>');
       $("reflNext").onclick = nextFromReflect;
@@ -2275,7 +2289,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   $("v-deck").addEventListener("click", function (e) {
     var k = e.target.closest("[data-move]"); if (!k || !onCard()) return;
     var m = k.getAttribute("data-move");
-    if (NATIVE) toNative({ type: "haptic" });
+    buzz("tick");
     if (m === "edit") { openEdit(onCard()); return; }
     if (m === "question") { questionIt(); return; }
     if (m === "qkeep") { questionKeep(); return; }
@@ -2307,7 +2321,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         var m = mode; if (m !== "edit" && m !== "keep") return; mode = "";
         var al2 = $("aiLine"); if (al2) al2.classList.remove("holding");
         if (wakingTouch()) return;
-        if (NATIVE) toNative({ type: "haptic" });
+        buzz("medium");
         var t = onCard(); if (!t) return;
         if (m === "edit") openEdit(t); else if (shown && shown.ai) openKeep(t, shown.text, shown.quote ? { author: shown.author, src: shown.src } : null);
       }, HOLD_MS);
@@ -2611,7 +2625,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // Later owns the evening.
   function renderDone(note) {
     var v = $("v-deck");
-    v.innerHTML = '<div class="done"><h1>Done for today.</h1><p class="note big">' + esc(note || C.daySummary(day)) + "</p>" +
+    // 1.84.1: what you did, and what comes back tomorrow, so there is a reason to open it again. The day's one
+    // signature buzz plays here, once.
+    var n = setSize(), m = Math.min(day.moved.length, n), tm = C.addDays(today(), 1);
+    var back = all().filter(function (x) { return x.status === "active" && x.rest_until === tm; })[0];
+    if (prefs.sig_day !== today()) { prefs.sig_day = today(); savePrefs(); buzz("signature"); }
+    v.innerHTML = '<div class="done"><h1>' + (m >= n && n > 1 ? n + " of " + n + ". Done for today." : "Done for today.") + '</h1><p class="note big">' + esc(note || C.daySummary(day)) + "</p>" +
+      (back ? '<p class="note backtm">Back tomorrow: \u201C' + esc(clip(back.text, 70)) + "\u201D</p>" : "") +
       '<div class="widewrap"><button type="button" class="btn3d wide" id="keepGoing">Keep going</button></div>' + (remindOffer() ? remindOfferHtml() : backupHtml()) + "</div>" + footHtml(footLeft(""));
     $("keepGoing").onclick = keepGoing;
     if ($("roYes")) {
@@ -2733,8 +2753,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // button or start a press and hold; the next touch does. wokeAt is when that waking touch went down.
   var wokeAt = 0;
   function wake(e) {
-    // 1.83.2: one rule, no exceptions. Even the question's buttons, shown at full strength as it fades in, only wake.
-    if (e && e.type === "pointerdown") wokeAt = document.body.classList.contains("quiet") ? Date.now() : 0;
+    // 1.84.1: only what is dimmed (the top bar and progress) wakes on the first touch; everything at full strength acts.
+    if (e && e.type === "pointerdown") wokeAt = document.body.classList.contains("quiet") && e.target.closest && e.target.closest(".top, #setBand") ? Date.now() : 0;
     clearTimeout(quietT); document.body.classList.remove("quiet");
     quietT = setTimeout(function () { if (quietOk()) document.body.classList.add("quiet"); }, QUIET_MS);
   }
@@ -3299,6 +3319,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var n = restDays();
     paintCollCount();
     $("whereToggle").setAttribute("aria-checked", String(showWhere()));
+    $("hapticsRow").hidden = !NATIVE; $("hapticsToggle").setAttribute("aria-checked", String(prefs.haptics !== false));
     $("aiToggle").setAttribute("aria-checked", String(aiAllowed() && (!PROXY || plusOn())));
     $("restOut").textContent = n + (n === 1 ? " day" : " days");
     $("restDown").disabled = n <= C.REST_MIN; $("restUp").disabled = n >= C.REST_MAX;
@@ -3308,6 +3329,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   Array.prototype.forEach.call(document.querySelectorAll(".seg [data-look]"), function (b) {
     b.onclick = function () { prefs.look = b.getAttribute("data-look"); savePrefs(); applyLook(); };
   });
+  $("hapticsToggle").onclick = function () { prefs.haptics = prefs.haptics === false; savePrefs(); paintSettings(); buzz("tick"); };
   $("whereToggle").onclick = function () { prefs.show_where = !showWhere(); savePrefs(); paintSettings(); if (onCard()) renderDeck(); };
   function setRest(n) { prefs.rest_days = C.restDays(n); savePrefs(); paintSettings(); }
   $("restDown").onclick = function () { setRest(restDays() - 1); };
@@ -3460,10 +3482,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // stay (1.34.2): an action other than Undo, { label, fn }, and the bar stays until it is tapped. Used for Reload.
   var staying = false, undoOpen = false;
   function dropUndo() { if (!undoOpen) return; undoOpen = false; clearTimeout(toastTimer); popHide(); pop.innerHTML = ""; $("toastHost").textContent = ""; }
-  function toast(msg, onUndo, stay) {
+  function toast(msg, onUndo, stay, alt) {
     if (staying && !stay) return; // the update notice is not replaced by a passing message
     var label = stay ? stay.label : "Undo";
-    pop.innerHTML = '<div class="toast frost"><span aria-hidden="true">' + esc(msg) + "</span>" + (onUndo || stay ? '<button type="button" id="toastUndo">' + esc(label) + "</button>" : "") + "</div>";
+    pop.innerHTML = '<div class="toast frost"><span aria-hidden="true">' + esc(msg) + "</span>" + (alt ? '<button type="button" id="toastAlt">' + esc(alt.label) + "</button>" : "") + (onUndo || stay ? '<button type="button" id="toastUndo">' + esc(label) + "</button>" : "") + "</div>";
+    if (alt) $("toastAlt").onclick = function () { clearTimeout(toastTimer); undoOpen = false; popHide(); buzz("tick"); alt.fn(); };
     $("toastHost").textContent = msg + (onUndo ? " Undo is available for a few seconds." : stay ? " " + label + " button available." : "");
     popShow();
     clearTimeout(toastTimer);
@@ -3473,7 +3496,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     undoOpen = !!onUndo;
     if (!stay) toastTimer = setTimeout(function () { undoOpen = false; popHide(); pop.innerHTML = ""; $("toastHost").textContent = ""; }, onUndo ? UNDO_MS : 1800);
     if (onUndo) $("toastUndo").addEventListener("focus", function () { clearTimeout(toastTimer); });
-    if (onUndo || stay) $("toastUndo").onclick = function () { clearTimeout(toastTimer); staying = false; undoOpen = false; popHide(); (stay ? stay.fn : onUndo)(); };
+    if (onUndo || stay) $("toastUndo").onclick = function () { clearTimeout(toastTimer); staying = false; undoOpen = false; popHide(); buzz("tick"); (stay ? stay.fn : onUndo)(); };
   }
 
   // ---------- boot ----------

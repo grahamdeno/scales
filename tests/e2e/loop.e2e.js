@@ -53,7 +53,7 @@ async function until(page, check, steps = 40) {
 const rows = (page) => page.$$eval("#keys .choice", (s) => s.map((x) => x.textContent));
 // 1.83.0: the question fades in after DWELL_MS on the thought; no button.
 // The screen is quiet by then; one touch on the thought wakes it (1.83.2).
-const reveal = async (page) => { await page.clock.runFor(6200); await page.click("#words"); await page.clock.runFor(100); };
+const reveal = async (page) => { await page.clock.runFor(3200); await page.click("#words"); await page.clock.runFor(100); };
 const ready = { onboarded: true, coach_seen: true };
 
 test("first run: welcome, a starter deck, the three choices, then the deck", async () => {
@@ -77,35 +77,30 @@ test("the three choices are in view; Today's question shows the line (1.73.0)", 
   assert.equal(await page.$("#scrollHint"), null, "a short thought has no scroll hint");
 });
 
-test("Skip asks once: Set it down for 4 days? Stay with it goes back; the next Skip rests it (1.84.0)", async () => {
-  const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
-  const first = await words(page);
+test("Skip asks first only for a thought skipped twice: Tonight, 4 days or Stay with it (1.84.1)", async () => {
+  const page = await open({ prefs: ready, thoughts: { a: P("a", "One.", { skip_count: 2, lifetime_skips: 2 }) } });
   await choose(page, "skip");
   assert.match(await page.textContent("#card .phase"), /Before you skip/);
   assert.deepEqual(await rows(page), ["Tonight", "4 days", "Stay with it"]);
   assert.match(await page.textContent(".choiceq"), /Set it down for 4 days\?/);
   await choose(page, "stay");
   assert.deepEqual(await rows(page), ["Skip", "Reflect", "Lived"], "Stay with it goes back to the choices");
-  assert.equal(await words(page), first, "the same thought");
-  assert.ok((await page.textContent("#aiLine")).length > 5, "with the line still showing");
   await choose(page, "skip"); await page.clock.runFor(500);
-  const t = Object.values(await saved(page)).find((x) => x.text === first);
-  assert.equal(t.skip_count, 1);
-  assert.notEqual(await words(page), first, "the next thought is up");
+  assert.equal((await saved(page)).a.skip_count, 3, "the next Skip goes straight through");
 });
 
-test("after the question fades in, Skip still asks once, and Tonight saves it for later (1.84.0)", async () => {
+test("a first Skip goes straight through; the toast offers Undo and Tonight (1.84.1)", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
   const first = await words(page);
   await reveal(page);
-  assert.ok((await page.textContent("#aiLine")).length > 5, "the line shows");
-  assert.deepEqual(await rows(page), ["Skip", "Reflect", "Lived"]);
-  await choose(page, "skip");
-  assert.match(await page.textContent("#card .phase"), /Before you skip/, "reading the question does not skip the check");
-  await choose(page, "later");
+  await choose(page, "skip"); await page.clock.runFor(300);
+  assert.equal(await page.$("#card .phase"), null, "no check screen");
+  assert.equal(Object.values(await saved(page)).find((x) => x.text === first).skip_count, 1);
+  assert.equal(await page.textContent("#toastAlt"), "Tonight");
+  await page.click("#toastAlt"); await page.clock.runFor(500);
   const t = Object.values(await saved(page)).find((x) => x.text === first);
-  assert.ok(t.later, "saved for later");
-  assert.equal(t.skip_count, 0, "Later is not a skip");
+  assert.equal(t.skip_count, 0, "the skip comes back off");
+  assert.ok(t.later, "and it waits for tonight");
 });
 
 test("the touch that wakes a quiet screen only wakes it; the next one presses (1.82.1)", async () => {
@@ -198,7 +193,7 @@ test("Capture adds a thought from the + button", async () => {
 test("Undo goes away after five seconds (1.83.3)", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
   await reveal(page);
-  await choose(page, "skip"); await choose(page, "later");
+  await choose(page, "skip");
   assert.ok(await page.$("#toastUndo"), "Undo is there");
   await page.clock.runFor(8500);
   assert.equal(await page.$("#toastUndo"), null, "and gone");
@@ -305,7 +300,7 @@ test("Scales Plus in the iPhone app: no server AI without it; buy, then AI reque
 
 test("Question it: the case against, then Let go puts it in the Ledger with the reason (1.79.0)", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "Never complain. Never explain.", { why: "Excuses cost more than they buy." }), b: P("b", "Be present, need little.") } });
-  if ((await words(page)) !== "Never complain. Never explain.") { await choose(page, "skip"); await choose(page, "skip"); }
+  if ((await words(page)) !== "Never complain. Never explain.") { await choose(page, "skip"); }
   await reveal(page); await page.click('[data-move="question"]'); await page.clock.runFor(300);
   assert.match(await page.textContent(".phase"), /The other side/);
   assert.match(await page.textContent(".qnotes"), /Excuses cost more than they buy\./, "your reason sits under the case");
