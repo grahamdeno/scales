@@ -89,9 +89,9 @@ button { cursor:pointer; border:0; background:none; padding:0; }
 #iconRow { flex-wrap:wrap; row-gap:12px; }
 /* Quiet (1.81.0): on the resting card, 3 seconds without a touch dims everything but the thought to 20%, so the
    eye stays on the words. The controls stay visible and working; any touch brings them back at once. */
-.top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .lineacts { transition:opacity .25s ease; }
-body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .lineacts { opacity:.12; transition:opacity 1.2s ease; }
-@media (prefers-reduced-motion: reduce) { .top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .lineacts, body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .lineacts { transition:none; } }
+.top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .lineacts, #v-deck .peekcue, #v-deck .phase, #v-deck .reflfoot, #v-deck .lived2, #v-deck .where, #v-deck .addwhy { transition:opacity .25s ease; }
+body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .lineacts, body.quiet #v-deck .peekcue, body.quiet #v-deck .phase, body.quiet #v-deck .reflfoot, body.quiet #v-deck .lived2, body.quiet #v-deck .where, body.quiet #v-deck .addwhy { opacity:.12; transition:opacity 1.2s ease; }
+@media (prefers-reduced-motion: reduce) { .top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .lineacts, #v-deck .peekcue, #v-deck .phase, #v-deck .reflfoot, #v-deck .lived2, #v-deck .where, #v-deck .addwhy, body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .lineacts, body.quiet #v-deck .peekcue, body.quiet #v-deck .phase, body.quiet #v-deck .reflfoot, body.quiet #v-deck .lived2, body.quiet #v-deck .where, body.quiet #v-deck .addwhy { transition:none; } }
 .iconpick { display:flex; gap:12px; flex:none; }
 .iconpick button { display:flex; flex-direction:column; align-items:center; gap:6px; min-width:56px; font-size:var(--t-xs); color:var(--muted); }
 .iconpick img { width:44px; height:44px; border-radius:10px; display:block; }
@@ -185,6 +185,11 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .thought.small.long { font-size:0.9412rem; line-height:1.4; }
 /* On push and reflect the line is the subject, so a long thought folds to four lines; tap to open it. */
 .thought.small.fold { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4; overflow:hidden; cursor:pointer; }
+.peekcue { display:flex; align-items:center; gap:10px; margin-top:12px; font-size:var(--t-xs); color:var(--faint); pointer-events:none; }
+.peekcue i { flex:none; width:22px; height:3px; border-radius:2px; background:var(--line); }
+#aiLine { position:relative; }
+#aiLine::after { content:""; position:absolute; left:0; right:0; bottom:-6px; height:2px; border-radius:1px; background:var(--ink); opacity:.5; transform:scaleX(0); transform-origin:0 50%; }
+#aiLine.holding::after { transform:scaleX(1); transition:transform .55s linear; }
 .foldhint { margin-top:6px; font-size:var(--t-xs); color:var(--faint); }
 .where { flex:none; margin-top:16px; display:flex; flex-wrap:wrap; gap:4px 8px; font-size:var(--t-sm); color:var(--faint); }
 .where b { color:var(--faint); font-weight:400; }
@@ -1111,7 +1116,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.82.1"></script>
+<script src="core.js?v=1.82.2"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1709,7 +1714,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     box.innerHTML = (r ? '<div class="bubble me"><p>' + esc(r.text) + "</p><small>You, " + esc(fmtDayKey(r.day)) + "</small></div>" : "") +
       '<div class="lineacts"><button type="button" class="btn3d replybtn" id="replyBtn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Reply</button>' +
       // 1.75.0: saving a quote or line as a thought is a button, not only a press and hold.
-      (l.ai ? '<button type="button" class="btn3d replybtn" data-move="save"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z"/></svg>Save</button>' : "") + laterHtml() + "</div>";
+      (l.ai ? '<button type="button" class="btn3d replybtn" data-move="save"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z"/></svg>Keep as a thought</button>' : "") + laterHtml() + "</div>";
   }
   function fmtDayKey(d) { if (!d) return ""; var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
 
@@ -1836,6 +1841,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var t = onCard(); if (!t || phase !== "rest" || returned()) return;
     coachSeen();
     peekId = peeked() ? null : t.id;
+    if (peekId && (prefs.peeks || 0) < 3) { prefs.peeks = (prefs.peeks || 0) + 1; savePrefs(); }
     renderDeck();
     if (peeked()) showLine(t, "push");
   }
@@ -2177,7 +2183,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     }
     // 1.73.0: the question Scales has for the thought is a button, not a tap nobody finds.
     var pm = []; if (t.skip_count > 0) pm.push("Skipped " + times(t.skip_count)); if (String(t.collection || "").trim()) pm.push(esc(t.collection));
-    v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current thought" aria-describedby="cardHow">' + words +
+    // 1.82.2: a cue under the thought that it opens. Words for the first three times, then the handle alone.
+    var cue = '<div class="peekcue" aria-hidden="true"><i></i>' + ((prefs.peeks || 0) < 3 ? "<span>Tap your thought for today\u2019s question</span>" : "") + "</div>";
+    v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current thought" aria-describedby="cardHow">' + words + cue +
       (pm.length ? '<p class="pmeta">' + pm.join(" \u00b7 ") + "</p>" : "") +
       '<div class="qacts"><button type="button" class="qbtn" data-move="peek"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.3M12 13.6v.01"/></svg>Today’s question</button>' +
       '<button type="button" class="qbtn" data-move="question">' + ICON_Q + "Question it</button></div>" + how + "</article>" +
@@ -2197,6 +2205,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (reflectDone) {
       f.innerHTML = '<span>' + (reflectLighter ? "Counted as Reflect. One lighter." : "Counted as Reflect.") + '</span><div class="pair next"><button type="button" class="btn3d" id="reflUndo">Undo</button><button type="button" class="primary" id="reflNext">Next thought</button></div>';
       $("reflNext").onclick = nextFromReflect;
+      wake();
       var w = $("words"), t = thoughts[current]; if (w && t) w.style.fontWeight = C.inkWeight(t);
     } else {
       var left = Math.max(0, C.REFLECT_SEC * 1000 - (Date.now() - reflectAt));
@@ -2243,19 +2252,24 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       if (e.button > 0 || !onCard()) return;
       var press = e.target.closest("#words") ? "edit" : (e.target.closest("#aiLine") && shown && shown.ai) ? "keep" : "";
       if (!press) return;
+      if (wakingTouch()) return;
       mode = press; sx = e.clientX; sy = e.clientY;
       clearTimeout(holdT);
+      // 1.82.2: a line fills under the AI line while it is held, so holding shows it is doing something.
+      var al = $("aiLine"); if (press === "keep" && al) al.classList.add("holding");
       holdT = setTimeout(function () {
         var m = mode; if (m !== "edit" && m !== "keep") return; mode = "";
+        var al2 = $("aiLine"); if (al2) al2.classList.remove("holding");
         if (wakingTouch()) return;
+        if (NATIVE) toNative({ type: "haptic" });
         var t = onCard(); if (!t) return;
         if (m === "edit") openEdit(t); else if (shown && shown.ai) openKeep(t, shown.text, shown.quote ? { author: shown.author, src: shown.src } : null);
       }, HOLD_MS);
     });
     deck.addEventListener("pointermove", function (e) {
-      if (mode && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) { mode = ""; clearTimeout(holdT); }
+      if (mode && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) { end(); }
     });
-    function end() { clearTimeout(holdT); mode = ""; }
+    function end() { clearTimeout(holdT); mode = ""; var al = $("aiLine"); if (al) al.classList.remove("holding"); }
     deck.addEventListener("pointerup", end); deck.addEventListener("pointercancel", end);
     deck.addEventListener("contextmenu", function (e) { if (e.target.closest("#card")) e.preventDefault(); });
   })();
@@ -2533,6 +2547,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         '<ul class="wchoices"><li><b>Skip</b> rests it for a few days. It comes back first, and Scales asks why once.</li>' +
         "<li><b>Reflect</b> shows a quote from today’s voice. After a few seconds it counts, and the thought gets lighter.</li>" +
         "<li><b>Lived</b> moves it out of the deck and into your record.</li></ul>" +
+        '<p class="note">Tap your thought for today\u2019s question. Press and hold a line Scales wrote to keep it as a thought.</p>' +
         '<p class="note">The screen goes quiet so you can read. Touch anywhere to bring it back.</p>' +
         '<div class="widewrap"><button type="button" class="primary" id="wDone">Got it</button></div></div>';
       // 1.65.0: the AI question comes right after the welcome, where it has a reason, not on a later launch.
@@ -2658,12 +2673,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     show("sheetRow");
   }
   // ---------- quiet (1.81.0) ----------
+  // 1.82.2: also on Reflect and the case against (Question it). Next thought wakes the screen when it appears.
   // 1.82.1: also while the line shows beside the thought; the line and its credit stay, Reply and Save dim.
   // Only on the resting card: not while its question shows, not on Skip, Reflect or Question it, not with a sheet,
   // the collection list or the Ledger open, not while a control has keyboard focus, and never with VoiceOver on.
   var QUIET_MS = 3000, quietT = 0, voiceOver = false;
   function quietOk() {
-    if (document.hidden || voiceOver || openSheet || menu.open || !$("v-ledger").hidden || phase !== "rest" || returned() || !onCard()) return false;
+    if (document.hidden || voiceOver || openSheet || menu.open || !$("v-ledger").hidden || (phase !== "rest" && phase !== "reflect" && phase !== "question") || returned() || !onCard()) return false;
     var a = document.activeElement;
     return !(a && a !== document.body && a.closest && a.closest(".top, #setBand, #v-deck .qacts, #v-deck #keys"));
   }
