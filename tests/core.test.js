@@ -22,6 +22,16 @@ test("version is MAJOR.MINOR.PATCH", () => {
   assert.match(C.VERSION, /^\d+\.\d+\.\d+$/);
 });
 
+test("the app icon can be black or light (1.78.0)", () => {
+  const html = read("index.html"), swift = fs.readFileSync(path.join(__dirname, "..", "ios", "App", "WebViewController.swift"), "utf8");
+  const yml = fs.readFileSync(path.join(__dirname, "..", "ios", "project.yml"), "utf8");
+  assert.match(html, /id="iconRow" hidden/, "only the app shows it");
+  assert.match(html, /toNative\(\{ type: "icon", name: b\.getAttribute\("data-icon"\) \}\)/);
+  assert.match(swift, /setAlternateIconName\(name\)/);
+  assert.match(yml, /ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: AppIcon-Light/);
+  assert.ok(fs.existsSync(path.join(__dirname, "..", "ios", "App", "Assets.xcassets", "AppIcon-Light.appiconset", "icon-1024.png")));
+  assert.ok(fs.existsSync(path.join(__dirname, "..", "icons", "icon-light-192.png")));
+});
 test("the page asks for core.js at its own version, and the cache keeps it (1.77.2)", () => {
   const html = read("index.html"), sw = read("sw.js");
   assert.match(html, new RegExp('<script src="core\\.js\\?v=' + C.VERSION.replace(/\./g, "\\.") + '"></script>'), "bump the core.js address with VERSION");
