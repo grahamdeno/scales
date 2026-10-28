@@ -37,6 +37,15 @@ jobs:
           # Surface our own warnings and errors as annotations, so they can be read without the full log.
           grep -E "ios/(App)/.*(warning|error):" build.log | sed -E 's#^.*/ios/##' | sort -u | head -40 | sed 's/^/::warning::/'
           [ $code -ne 0 ] && tail -n 8 build.log | sed 's/^/::error::/'
+          # 1.86.1: say which icons the built app declares and carries, so the icon choice can be checked here.
+          if [ $code -eq 0 ]; then
+            APP="$(find ~/Library/Developer/Xcode/DerivedData -path '*Release-iphoneos/Scales.app' -o -path '*Debug-iphoneos/Scales.app' | head -1)"
+            echo "::notice::App: $APP"
+            /usr/libexec/PlistBuddy -c 'Print :CFBundleIcons' "$APP/Info.plist" 2>&1 | tr -s ' \n' ' ' | sed 's/^/::notice::CFBundleIcons /'
+            ls "$APP" | grep -i -E "icon|\.car" | tr '\n' ' ' | sed 's/^/::notice::Files /'; echo
+            xcrun assetutil --info "$APP/Assets.car" 2>/dev/null | grep -E '"Name"' | sort -u | tr -s ' \n' ' ' | sed 's/^/::notice::Assets.car names /'; echo
+            grep -E "AppIcon|alternate|\.icon" build.log | grep -i -E "warning|error|note" | sort -u | head -12 | sed 's/^/::warning::actool /'
+          fi
           exit $code
       # The Icon Composer icon (1.80.0), rendered the way iOS draws it in each Home Screen style, and pushed to
       # the icon-previews branch so it can be checked before a build goes out. Only on the ios branch.
