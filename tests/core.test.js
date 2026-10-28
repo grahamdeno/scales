@@ -22,6 +22,13 @@ test("version is MAJOR.MINOR.PATCH", () => {
   assert.match(C.VERSION, /^\d+\.\d+\.\d+$/);
 });
 
+test("the page asks for core.js at its own version, and the cache keeps it (1.77.2)", () => {
+  const html = read("index.html"), sw = read("sw.js");
+  assert.match(html, new RegExp('<script src="core\\.js\\?v=' + C.VERSION.replace(/\./g, "\\.") + '"></script>'), "bump the core.js address with VERSION");
+  assert.match(sw, new RegExp('"core\\.js\\?v=' + C.VERSION.replace(/\./g, "\\.") + '"'));
+  assert.match(sw, /caches\.match\(req, \{ ignoreSearch: true \}\)/);
+  assert.match(html, /a\.tagName === "BUTTON"\) \{ openSheet\.setAttribute\("tabindex", "-1"\);/, "no focus ring on a sheet's first button when it opens");
+});
 test("version matches the service worker cache name", () => {
   const m = read("sw.js").match(/const CACHE = "scales-v([^"]+)"/);
   assert.ok(m, "CACHE constant not found in sw.js");
@@ -29,7 +36,7 @@ test("version matches the service worker cache name", () => {
 });
 
 test("core.js is loaded by the page and cached for offline use", () => {
-  assert.match(read("index.html"), /<script src="core\.js"><\/script>\s*<script>/);
+  assert.match(read("index.html"), /<script src="core\.js\?v=[\d.]+"><\/script>\s*<script>/);
   assert.match(read("sw.js"), /"core\.js"/);
 });
 
