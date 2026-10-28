@@ -735,7 +735,7 @@ test("motion respects reduced motion", () => {
 
 test("touch targets: buttons a thumb can hit (1.36.0, 1.73.0)", () => {
   const c = css();
-  assert.match(rule(c, ".iconbtn"), /width:48px; height:48px;/);
+  assert.match(rule(c, ".iconbtn"), /width:44px; height:44px;.*border-radius:10px/, "rounded 44px buttons on the band (1.74.0)");
   assert.match(rule(c, ".choice"), /min-height:52px;/, "the choices are a thumb's width (1.73.0)");
   assert.match(rule(c, ".btn3d.wide"), /min-height:56px;/);
   assert.match(rule(c, ".pair .btn3d"), /min-height:52px;/);
@@ -1471,4 +1471,23 @@ test("the AI server needs Scales Plus, fixes the model and limits, and only take
     assert.equal(seen[0].key, "sk-ant-server");
   } finally { mod.TRUSTED_ROOTS.pop(); }
   assert.equal((await mod.onRequestPost({ env: {}, request: new Request(site + "/api/ai", { method: "POST", headers: { Origin: site }, body: "{}" }) })).status, 503);
+});
+
+// ---------- 1.74.0: the layered look ----------
+test("the layered look: a band with today's voice and the set as tiles, a black panel, one button system", () => {
+  const html = read("index.html"), c = css();
+  assert.match(c, /--band:#DCD9D3; --bandCtl:#ECEAE5;/, "smoke band in White");
+  assert.match(c, /--band:#2A2A28;/, "charcoal band in Black");
+  assert.match(rule(c, "body"), /background:var\(--band\)/);
+  assert.match(html, /<section class="view onblack" id="v-deck"/, "the deck sits on the black panel");
+  assert.match(rule(c, "#v-deck"), /border-radius:12px 12px 0 0; box-shadow:0 -1\.5px 3\.5px/, "12px top corners, shadow on the top edge only");
+  assert.match(rule(c, ".onblack"), /--paper:#121212;.*--accent:#1F5FCC; --onAccent:#FFFFFF;/, "blue primary with white text on black");
+  assert.match(html, /<div class="lpanel onblack">/, "the Ledger list sits on the panel too");
+  assert.match(html, /id="voiceHead"/);
+  assert.match(html, /function paintBand\(phase\)/);
+  assert.match(html, /i < m \? '<div class="tile done">'/, "done tiles carry a check");
+  assert.match(rule(c, ".btn3d"), /border:0; border-radius:10px; background:var\(--btn2\)/, "gray secondary buttons");
+  assert.match(rule(c, ".primary"), /border-radius:12px;/);
+  assert.match(rule(c, ".choice"), /border-radius:12px;/);
+  assert.doesNotMatch(c, /backdrop-filter:blur\(18px\)/, "no glass");
 });
