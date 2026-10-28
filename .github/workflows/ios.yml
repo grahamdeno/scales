@@ -13,6 +13,8 @@ concurrency:
 jobs:
   build:
     runs-on: macos-26
+    permissions:
+      contents: write
     env:
       HAS_KEY: ${{ secrets.ASC_KEY_P8 != '' }}
     steps:
@@ -36,6 +38,22 @@ jobs:
           grep -E "ios/(App)/.*(warning|error):" build.log | sed -E 's#^.*/ios/##' | sort -u | head -40 | sed 's/^/::warning::/'
           [ $code -ne 0 ] && tail -n 8 build.log | sed 's/^/::error::/'
           exit $code
+      # The Icon Composer icon (1.80.0), rendered the way iOS draws it in each Home Screen style, and pushed to
+      # the icon-previews branch so it can be checked before a build goes out. Only on the ios branch.
+      - name: Icon previews
+        if: github.ref == 'refs/heads/ios'
+        run: |
+          ICT="$(xcode-select -p)/../Applications/Icon Composer.app/Contents/Executables/ictool"
+          [ -x "$ICT" ] || ICT="$(find /Applications -path '*Icon Composer.app/Contents/Executables/ictool' 2>/dev/null | head -1)"
+          if [ ! -x "$ICT" ]; then echo "::warning::ictool not found"; exit 0; fi
+          "$ICT" --version | sed 's/^/::notice::ictool /' || true
+          mkdir -p "$RUNNER_TEMP/prev"
+          for r in Default Dark TintedLight TintedDark; do
+            "$ICT" ios/App/AppIcon.icon --export-image --output-file "$RUNNER_TEMP/prev/$r.png" --platform iOS --rendition $r --width 1024 --height 1024 --scale 1 2>&1 | tail -3 | sed "s/^/::warning::$r /" || true
+          done
+          ls -la "$RUNNER_TEMP/prev" | sed 's/^/::notice::/'
+          cd "$RUNNER_TEMP/prev" && git init -q && git checkout -q -b icon-previews && git add . && git -c user.name=grahamdeno -c user.email=grahamdeno@users.noreply.github.com commit -q -m "Icon previews for ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" icon-previews && echo "::notice::Previews pushed to icon-previews"
       - name: Signing key
         if: env.HAS_KEY == 'true' && github.ref == 'refs/heads/main'
         run: |
