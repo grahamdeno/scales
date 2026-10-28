@@ -41,7 +41,8 @@ test("Question it: keep, revise or let go, each counted as weighed (1.79.0)", ()
   assert.equal(C.checkEdit([t], t, { why: "New reason" }).ok, true, "changing only the reasons can be saved");
   const html = read("index.html");
   assert.match(html, /if \(phase === "push"\) p\.push\('<button type="button" class="pill" data-move="question">' \+ ICON_Q \+ "Not sure it\\u2019s true\?/, "doubt is offered before a skip (1.84.0)");
-  assert.match(html, /choice\("letgo", "Let go", "no"\) \+ choice\("revise", "Revise", "partly"\) \+ choice\("qkeep", "It holds", "yes", true\)/);
+  assert.match(html, /<p class="choiceq">Where does this leave you\?<\/p>/);
+  assert.match(html, /choice\("qkeep", "Not done yet", "keep it in the deck", true\)/);
   assert.match(html, /id="sheetLetGo"/);
   assert.match(html, /data-r="back">Bring it back/);
   assert.match(html, /id="capWhy"/); assert.match(html, /id="editChange"/);
