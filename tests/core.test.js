@@ -1676,3 +1676,11 @@ test("the layered look: a band with today's voice and the set as tiles, a black 
   assert.match(rule(c, ".toggle i"), /border-radius:8px;/, "and so are their knobs");
   assert.doesNotMatch(c, /backdrop-filter:blur\(18px\)/, "no glass");
 });
+
+test("no screen zooms or slides under a stray touch (1.87.0)", () => {
+  const html = read("index.html"), swift = fs.readFileSync(path.join(__dirname, "..", "ios", "App", "WebViewController.swift"), "utf8");
+  assert.match(html, /name="viewport" content="[^"]*maximum-scale=1,user-scalable=no/);
+  assert.match(html, /html, body \{ touch-action:pan-x pan-y; \}/);
+  assert.match(swift, /scrollView\.isScrollEnabled = false/);
+  assert.match(swift, /pinchGestureRecognizer\?\.isEnabled = false/);
+});

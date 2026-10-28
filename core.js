@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.86.1";
+  var VERSION = "1.87.0";
   var BUILT = "2026-10-28";
 
   // CAP        highest weight a thought can reach (4x as likely as a fresh one)
@@ -700,7 +700,7 @@ var ScalesCore = (function () {
     var later = (s.laters || []).filter(function (l) { return laterDue({ later: l }, now); }).length;
     return Math.max(0, left) + later;
   }
-  // 1.86.1: the Home Screen badge is never a count. A reminder that fires with something waiting sets a plain 1,
+  // 1.87.0: the Home Screen badge is never a count. A reminder that fires with something waiting sets a plain 1,
   // and opening Scales clears it; nothing else ever sets it. No climbing number calling you back.
   function remindBadge(s, now) { return badgeFrom(s, now) > 0 ? 1 : 0; }
   function pushText(kind, s, now) {
