@@ -98,6 +98,9 @@ body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-d
 .iconpick [aria-checked="true"] { color:var(--ink); }
 .iconpick [aria-checked="true"] img { outline:2px solid var(--accent); outline-offset:2px; }
 .iconpick button { position:relative; }
+/* 1.85.0: five icons take their own line under the label and spread across it, so none runs off a 375 px screen. */
+#iconRow .iconpick { flex:1 1 100%; justify-content:space-between; gap:4px; }
+#iconRow .iconpick button { min-width:52px; }
 .iconpick .locked img { opacity:.45; }
 .plustag { position:absolute; top:-6px; right:-4px; padding:1px 5px; border-radius:6px; background:var(--accent); color:var(--onAccent); font-size:.625rem; font-weight:600; letter-spacing:.02em; }
 /* Question it (1.79.0) */
@@ -1001,11 +1004,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <button type="button" class="setrow nav" id="openVoices"><span>Voices</span><span class="val" id="voiceCount"></span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
   </div>
   <div class="panel">
-    <!-- The app icon (1.80.1): Automatic follows the Home Screen style; Light and Black stay fixed. iPhone app only. -->
+    <!-- The app icon (1.80.1): Automatic follows the Home Screen style; Light, Black, Paper and Glass stay fixed. iPhone app only. -->
     <div class="setrow" id="iconRow" hidden><span>App icon</span><div class="iconpick" role="radiogroup" aria-label="App icon">
       <button type="button" role="radio" data-icon="auto" aria-checked="true"><img src="icons/icon-auto-192.png" alt="">Automatic</button>
       <button type="button" role="radio" data-icon="light" data-plus aria-checked="false"><img src="icons/icon-light-192.png" alt="">Light</button>
-      <button type="button" role="radio" data-icon="black" data-plus aria-checked="false"><img src="icons/icon-192.png" alt="">Black</button></div></div>
+      <button type="button" role="radio" data-icon="black" data-plus aria-checked="false"><img src="icons/icon-192.png" alt="">Black</button>
+      <button type="button" role="radio" data-icon="paper" data-plus aria-checked="false"><img src="icons/icon-paper-192.png" alt="">Paper</button>
+      <button type="button" role="radio" data-icon="glass" data-plus aria-checked="false"><img src="icons/icon-glass-192.png" alt="">Glass</button></div></div>
     <button type="button" class="setrow nav" id="openData"><span>Your data</span><span class="val" id="dataVal"></span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
     <button type="button" class="setrow nav" id="openHelp"><span>Help and about</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
   </div>
@@ -1153,7 +1158,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.84.9"></script>
+<script src="core.js?v=1.85.0"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1877,7 +1882,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var t = onCard(); if (!t) return;
     dropUndo(); coachSeen(); phase = "question"; renderDeck(); showLine(t, "case");
   }
-  // Not done with it (1.84.9; was It holds): kept as it is, counted as weighed for the day.
+  // Not done with it (1.85.0; was It holds): kept as it is, counted as weighed for the day.
   function questionKeep() {
     var t = onCard(); if (!t || phase !== "question") return;
     var u = undoPoint();
@@ -2113,7 +2118,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         choice("skip", days, "set it down for " + days) + choice("stay", "Stay with it", "keep it in today", true) + "</div>";
     }
     if (phase === "question") {
-      // 1.84.9: keeping it is not a verdict that it is true; it means you are still working on it.
+      // 1.85.0: keeping it is not a verdict that it is true; it means you are still working on it.
       return '<p class="choiceq">Where does this leave you?</p>' +
         '<div class="choices endmain" id="keys" role="group" aria-label="Where does this leave you?">' +
         choice("letgo", "Let go", "I'm done with it") + choice("revise", "Revise", "change the words") + choice("qkeep", "Not done yet", "keep it in the deck", true) + "</div>";
@@ -3704,7 +3709,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     row.querySelectorAll("[data-icon]").forEach(function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-icon") === name)); });
     paintIconPick();
   };
-  // Light and Black are part of Scales Plus (1.82.0); Automatic is for everyone.
+  // Light, Black, Paper and Glass are part of Scales Plus (1.82.0, 1.85.0); Automatic is for everyone.
   function paintIconPick() {
     document.querySelectorAll("#iconRow [data-plus]").forEach(function (b) {
       var locked = !plusOn(); b.classList.toggle("locked", locked);

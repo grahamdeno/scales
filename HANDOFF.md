@@ -21,7 +21,7 @@ questions, the best quote from today's voice, and replies.
 - `site/`: scales.tangomike.app landing, support and privacy pages. Strict CSP: no inline styles.
 - `ios/`: the iPhone app, a WKWebView shell (`WebViewController.swift`) loading
   `https://scales.tangomike.app/app/?native=1`. `Haptics.swift` plays named haptics. XcodeGen (`project.yml`).
-  Icons are Icon Composer bundles (`AppIcon.icon`, `AppIcon-Light.icon`, `AppIcon-Black.icon`).
+  Icons are Icon Composer bundles (`AppIcon.icon` plus the fixed `AppIcon-Light`, `-Black`, `-Paper`, `-Glass`).
 - Tests: `node --test` (unit, string and logic checks) and `node --test tests/e2e/loop.e2e.js` (Playwright,
   iPhone-sized). The e2e tests that play the iPhone app delete `navigator.serviceWorker`, because WKWebView has none.
 
@@ -58,7 +58,8 @@ questions, the best quote from today's voice, and replies.
 
 ## Open items
 
-- Icon choices beyond Automatic / Light / Black: the owner disliked Blue, Paper and Graphite; nothing chosen.
+- App icons: Automatic, Light, Black, Paper and Glass (1.85.0; all but Automatic need Plus). Ember, Blue and Graphite
+  were drawn and are on hold, not rejected. Glass's point could be a brighter blue at small sizes (a reviewer's note).
 - Whether to extend the quiet fade further, or tune DWELL_MS (3 s) and SKIP_ASK_AT (2).
 - Reflect without Undo is a trial (`REFLECT_UNDO = false` in index.html).
 - Shoebox song-question fix (separate repo) is waiting on the owner.
