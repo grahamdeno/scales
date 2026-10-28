@@ -87,7 +87,8 @@ test("the website is published whole: strict styles, and the app passed through 
 test("quiet: the resting card dims everything but the thought after 3 seconds (1.81.0)", () => {
   const html = read("index.html"), c = css(), swift = fs.readFileSync(path.join(__dirname, "..", "ios", "App", "WebViewController.swift"), "utf8");
   assert.match(html, /var QUIET_MS = 3000/);
-  assert.match(c, /body\.quiet[^{]*#v-deck #keys[^{]*\{ opacity:\.12;/, "dimmed, not hidden");
+  assert.match(c, /body\.quiet \.top[^{]*\{ opacity:\.12;/, "the top bar dims, not hidden");
+  assert.doesNotMatch(c, /body\.quiet[^{]*#keys/, "the choices never dim (1.84.1)");
   assert.doesNotMatch(c, /body\.quiet[^{]*#words/, "the thought never dims");
   assert.match(html, /if \(document\.hidden \|\| voiceOver \|\| openSheet \|\| menu\.open \|\| !\$\("v-ledger"\)\.hidden \|\| \(phase !== "rest" && phase !== "reflect" && phase !== "question"\) \|\| returned\(\)/);
   assert.match(html, /\["pointerdown", "keydown", "wheel", "touchstart", "focusin"\]\.forEach/, "any touch brings it back");
@@ -107,6 +108,16 @@ test("Close on Scales Plus returns to Settings when opened from there (1.82.4)",
   const html = read("index.html");
   assert.match(html, /id="plusBack" hidden>/);
   assert.match(html, /\$\("plusClose"\)\.onclick = function \(\) \{ if \(plusFromSettings\) openSettings\(\); else hide\(\); \};/);
+});
+test("haptics: named styles from the page, played natively, and a switch (1.84.1)", () => {
+  const html = read("index.html"), sw = fs.readFileSync(path.join(__dirname, "..", "ios", "App", "Haptics.swift"), "utf8"),
+    vc = fs.readFileSync(path.join(__dirname, "..", "ios", "App", "WebViewController.swift"), "utf8");
+  assert.match(html, /function buzz\(style\) \{ if \(NATIVE && prefs\.haptics !== false\) toNative\(\{ type: "haptic", style: style \}\); \}/);
+  for (const st of ["tick", "medium", "success", "thud", "letgo", "signature"]) assert.match(html, new RegExp('buzz\\("' + st + '"\\)'), st + " is used");
+  assert.match(html, /if \(prefs\.sig_day !== today\(\)\) \{ prefs\.sig_day = today\(\); savePrefs\(\); buzz\("signature"\); \}/, "the signature plays once a day");
+  assert.match(html, /id="hapticsToggle" role="switch"/);
+  for (const st of ["medium", "success", "thud", "signature", "letgo"]) assert.match(sw, new RegExp('case "' + st + '"'));
+  assert.match(vc, /haptics\.play\(body\["style"\] as\? String \?\? "tick"\)/);
 });
 test("the page asks for core.js at its own version, and the cache keeps it (1.77.2)", () => {
   const html = read("index.html"), sw = read("sw.js");
@@ -736,7 +747,7 @@ test("the three moves are buttons in view; Skip asks once; keys work (1.34.0, 1.
   assert.match(html, /var HOLD_MS = 550;/);
   assert.match(html, /if \(m === "edit"\) openEdit\(t\); else if \(shown && shown\.ai\) openKeep\(t, shown\.text, shown\.quote \? \{ author: shown\.author, src: shown\.src \} : null\);/);
   assert.doesNotMatch(html, /id="holdZone"|id="holdRing"|function openChoices/, "the press and hold menu is gone");
-  assert.match(html, /if \(phase === "push" \|\| askedId === current \|\| returned\(\)\) \{ act\("skip"\); return; \}/, "Skip asks once each showing (1.84.0)");
+  assert.match(html, /if \(phase === "push" \|\| askedId === current \|\| returned\(\) \|\| \(t\.skip_count \|\| 0\) < SKIP_ASK_AT\) \{ act\("skip"\); return; \}/, "Skip asks once each showing (1.84.0)");
   assert.match(html, /coachSeen\(\); askedId = t\.id; phase = "push"; renderDeck\(\); showLine\(t, "push"\);/);
   assert.match(html, /phase = "rest"; peekId = t\.id; renderDeck\(\); showLine\(t, "push"\);/, "Keep it goes back with the line showing");
   assert.match(html, /reflectT = setTimeout\(finishReflect, C\.REFLECT_SEC \* 1000\)/);
@@ -1044,7 +1055,7 @@ test("the page wires the day: moves counted, undo restores the day; focus, check
   for (const m of ['noteDay(t, "skip")', 'noteDay(t, "keep")', 'noteDay(t, "shed")']) assert.ok(html.includes(m), m);
   assert.match(html, /p\.day = JSON\.parse\(JSON\.stringify\(day\)\)/, "the undo point holds the day");
   assert.match(html, /if \(point\.day\) \{ day = JSON\.parse/);
-  assert.match(html, /<h1>Done for today\.<\/h1>/);
+  assert.match(html, /m >= n && n > 1 \? n \+ " of " \+ n \+ "\. Done for today\." : "Done for today\."/);
   assert.doesNotMatch(html, /renderCheckin|renderFocus|openAct|id="sheetAct"|id="sheetWeek"|openWeek|data-m="caught"/);
   assert.match(html, /<b>This week<\/b> · ' \+ said/, "the week heads the Ledger (1.77.0)");
   assert.match(html, /data-r="caught"/, "Caught it stays in each thought's history");
@@ -1428,7 +1439,7 @@ test("Capture and Edit are lifted above the keyboard like the reply sheet", () =
 // ---------- 1.53.0: tap to see the line ----------
 test("Today's question shows the line; once read, Skip commits and Later is offered", () => {
   const html = read("index.html");
-  assert.match(html, /var DWELL_MS = 6000/, "the question comes on its own (1.83.0)");
+  assert.match(html, /var DWELL_MS = 3000/, "the question comes on its own (1.83.0)");
   assert.doesNotMatch(html, /class="qbtn" data-move="peek"/);
 });
 
@@ -1446,7 +1457,7 @@ test("a thought back from Later opens with its quote and counts nothing until yo
   assert.match(html, /fromLater = true; laterId = L\.id; phase = "rest";\s*renderDeck\(\); showLine\(L, "reflect"\);/);
   assert.doesNotMatch(html, /fromLater = true; act\("keep"\);/);
   assert.match(html, /if \(returned\(\)\) \{/);
-  assert.match(html, /"Done\."/);
+  assert.match(html, /"Done\. Reflected " \+ times\(/);
 });
 
 // ---------- 1.56.1: the fold hint only when cut off ----------

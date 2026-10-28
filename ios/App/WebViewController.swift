@@ -9,6 +9,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     private let home = URL(string: "https://scales.tangomike.app/app/?native=1")!
     private var web: WKWebView!
     private var ready = false          // Scales has started and can take scripts
+    private let haptics = Haptics()
     private var queued: [String] = []  // scripts waiting for that
     static let plusID = "com.grahamdeno.scales.plus.yearly"
     private var storeUpdates: Task<Void, Never>?
@@ -85,7 +86,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         case "badge":
             setBadge(body["count"] as? Int ?? 0)
         case "haptic":
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            // 1.84.1: a named style (Haptics.swift); older pages send none and get a tick.
+            haptics.play(body["style"] as? String ?? "tick")
         case "icon":
             // Automatic is the main icon, which follows the Home Screen's Light, Dark or Tinted style.
             // Light and Black stay fixed (1.80.1). iOS says the icon changed itself.
