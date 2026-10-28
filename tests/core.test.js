@@ -96,8 +96,7 @@ test("quiet: the resting card dims everything but the thought after 3 seconds (1
 });
 test("finding the line and keeping it: a cue under the thought, a named button, a fill while held (1.82.2)", () => {
   const html = read("index.html"), c = css();
-  assert.match(html, /Tap your thought for today\\u2019s question/, "the cue's words, for the first three times");
-  assert.match(html, /\(prefs\.peeks \|\| 0\) < 3/);
+  assert.doesNotMatch(html, /togglePeek\(\);\n  \}\);/, "no tap on the thought (1.82.3)");
   assert.match(html, /<\/svg>Keep as a thought<\/button>/, "Save says what it does");
   assert.match(c, /#aiLine\.holding::after \{ transform:scaleX\(1\); transition:transform \.55s linear; \}/, "the fill matches HOLD_MS");
   assert.match(html, /var HOLD_MS = 550/);
