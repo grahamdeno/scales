@@ -1,4 +1,4 @@
-# Scales: Weigh what you believe
+# Scales: Weigh your thoughts
 
 A small phone app for weighing the thoughts you collect until they become how you actually live.
 
