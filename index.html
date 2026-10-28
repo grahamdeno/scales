@@ -3719,6 +3719,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       var tag = b.querySelector(".plustag"); if (locked && !tag) b.insertAdjacentHTML("beforeend", '<span class="plustag">Plus</span>'); else if (!locked && tag) tag.remove();
     });
   }
+  // 1.86.1: when the phone refuses an icon, say so rather than snapping back without a word.
+  window.scalesIconError = function (why) { toast("The icon didn\u2019t change (" + String(why || "unknown") + ")."); };
   $("iconRow").addEventListener("click", function (e) {
     var b = e.target.closest("[data-icon]"); if (!b || b.getAttribute("aria-checked") === "true") return;
     if (b.hasAttribute("data-plus") && !plusOn()) { openPlus(); return; }
