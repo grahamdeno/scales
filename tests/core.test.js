@@ -670,8 +670,8 @@ test("Black and White: one face, two flat looks, no shadows, glass or rounded pa
   assert.doesNotMatch(c, /box-shadow:-?\d+px -?\d+px \d+px|backdrop-filter|radial-gradient|linear-gradient/, "no raised shadows, blur or gradients");
   assert.match(c, /--r-s:0; --r-m:0; --r-l:0; --r-xl:0;/, "square corners");
   assert.match(rule(c, ".primary"), /background:var\(--accent\)/, "the main action carries the one accent (1.66.0)");
-  assert.match(html, /content="#121212" id="themeColor"/);
-  assert.match(read("manifest.webmanifest"), /"background_color": "#121212"/);
+  assert.match(html, /content="#DCD9D3" id="themeColor"/);
+  assert.match(read("manifest.webmanifest"), /"background_color": "#DCD9D3"/, "smoke while loading (1.77.0)");
   // Geist only, self-hosted, preloaded and cached.
   assert.ok(fs.statSync(path.join(root, "fonts/geist-latin.woff2")).size > 10000);
   assert.match(html, /font-family:"Geist"; font-style:normal; font-weight:100 900; font-display:swap; src:url\("fonts\/geist-latin\.woff2"\)/);
@@ -705,19 +705,33 @@ test("at rest only the principle and the ring; lines appear on push and reflect 
   assert.match(html, /sample = aiAllowed\(\) \? makeSampler\(savedKey\) : null/, "AI lines off (or not allowed) uses the built-in questions");
   assert.match(html, /if \(sample && !C\.lineFresh\(t, "push"\)\) fetchLine\(t, "push"\);\s*if \(!C\.lineFresh\(t, "reflect"\)\) fetchQuote\(t\);/, "the push line and the quote are fetched ahead, only when missing or stale");
   assert.match(html, /if \(live && live\.text === of\) \{ C\.keepLine\(live, kind, s\); save\(live\); \}/, "a written line is kept on the principle");
-});test("the Ledger: tabs with counts, one group at a time, two lines per principle (1.44.0)", () => {
+});test("the Ledger: one list by stage, the week and the stages in the band (1.77.0)", () => {
   const html = read("index.html"), c = css();
-  for (const id of ["lSummary", "ledgerTabs", "cal", "ledgerList", "sheetRow", "rowTl", "rowActs", "rowHist"]) assert.match(html, new RegExp('id="' + id + '"'), id);
-  assert.doesNotMatch(html, /class="wkey"|id="livedBtn"|id="gauge"|class="pbc/, "the Aa key and the Lived fold are gone");
-  assert.match(html, /\{ id: "avoiding", name: "Avoiding", note: "Skipped three or more times", fw: 800 \}/, "one weight per group");
-  assert.match(html, /\{ id: "lived", name: "Lived",/);
-  assert.match(html, /var tab = prefs\.ledger_tab && byGroup\[prefs\.ledger_tab\] \? prefs\.ledger_tab : "avoiding";/, "opens on Avoiding");
-  assert.match(html, /'<div class="lrows" style="--fw:' \+ g\.fw \+ '">'/);
-  assert.match(rule(c, ".lrow2 .lt"), /-webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:1rem;/, "two lines per principle");
-  assert.match(html, /return C\.isResting\(t, td\) \? f \+ "\\nresting" : f;/, "resting is said in words, not only by dimming");
+  for (const id of ["lWeek", "lStage", "cal", "ledgerList", "sheetRow", "rowStage", "rowNums", "rowTl", "rowActs", "rowHist"]) assert.match(html, new RegExp('id="' + id + '"'), id);
+  assert.doesNotMatch(html, /id="ledgerTabs"|id="lSummary"|id="ledgerBk"|ledger_tab|class="ltab/, "no tabs, no summary sentence, no backup prompt");
+  assert.match(html, /\{ id: "avoiding", name: "Avoiding", note: "Skipped three or more times" \}/);
+  assert.match(html, /if \(g\.id === "avoiding" && most\) \{ html \+= avoidedHtml\(most\); rows = rows\.filter/, "Avoided most leads Avoiding, not repeated below");
+  assert.match(html, /class="lfold" id="sec-lived" data-fold aria-expanded="' \+ livedOpen/, "Lived folds to one line");
+  assert.match(html, /data-today="' \+ esc\(t\.id\) \+ '">Put it on Today/);
+  assert.match(rule(c, ".lrow3 .lt"), /-webkit-line-clamp:2;/, "two lines per principle");
+  assert.match(html, /"Resting until " \+ weekdayOf/, "resting is said in words, not only by dimming");
   assert.match(html, /C\.timeline\(t\)/);
   for (const r of ["show", "caught", "edit", "ev", "keep", "talk", "del"]) assert.match(html, new RegExp('data-r="' + r + '"'), r + " action");
-  assert.match(html, /var cls = a && \(a\.s \|\| a\.c\) \? "lv" : n >= 3 \? "on2" : n \? "on" : "";/);
+  assert.match(html, /class="primary" data-r="show">Put it on Today/, "one blue action on a principle");
+  assert.match(html, /class="del" data-r="del">Delete/, "Delete is a quiet text button");
+  assert.match(html, /var cls = a && \(a\.s \|\| a\.c\) \? "lv" : k >= 3 \? "on2" : k \? "on" : "";/, "the 12 weeks stay");
+});
+test("moves are kept per principle for the Ledger marks (1.77.0)", () => {
+  const t = { reflect_count: 2, skips_on: ["2026-10-01", "2026-10-05"], caught: [{ day: "2026-10-03" }] };
+  assert.deepEqual(C.recentMoves(t, 5).map((m) => m.m), ["keep", "keep", "skip", "caught", "skip"], "older principles: undated Reflects, then dated skips and catches");
+  C.noteSkipDay(t, "2026-10-10"); C.noteMoveOf(t, "2026-10-11", "keep"); C.addCatch(t, "2026-10-12", "");
+  assert.deepEqual(t.moves.map((m) => m.m), ["skip", "keep", "caught"]);
+  assert.deepEqual(C.recentMoves(t, 5).map((m) => m.m), ["caught", "skip", "skip", "keep", "caught"]);
+  assert.equal(C.recentMoves({}, 5).length, 0);
+  assert.ok(C.timeline(t).some((e) => e.kind === "keep" && e.text === "Reflected"), "Reflects show in what happened");
+  const L = [{ id: "a", status: "active", skip_count: 3 }, { id: "b", status: "active", skip_count: 5 }, { id: "c", status: "shed", skip_count: 9 }, { id: "d", status: "active", skip_count: 2 }];
+  assert.equal(C.avoidedMost(L).id, "b");
+  assert.equal(C.avoidedMost([{ status: "active", skip_count: 2 }]), null);
 });
 test("the top: Today | Ledger shows where you are", () => {
   const html = read("index.html");
@@ -742,7 +756,8 @@ test("touch targets: buttons a thumb can hit (1.36.0, 1.73.0)", () => {
   assert.match(rule(c, ".btn3d.wide"), /min-height:56px;/);
   assert.match(rule(c, ".pair .btn3d"), /min-height:52px;/);
   assert.match(rule(c, ".menu button"), /min-height:48px;/);
-  assert.match(rule(c, ".lrow2"), /min-height:52px;/);
+  assert.match(rule(c, ".lrow3"), /min-height:56px;/);
+  assert.match(rule(c, ".scount button"), /min-height:48px;/);
   const html = read("index.html");
   assert.match(html, /class="btn3d" id="reflUndo">Undo<\/button><button type="button" class="primary" id="reflNext">Next principle/, "Undo sits beside Next");
   assert.doesNotMatch(html, /id="setBar"/, "no progress line at the top (1.62.0)");
@@ -936,7 +951,7 @@ test("the page wires the day: moves counted, undo restores the day; focus, check
   assert.match(html, /if \(point\.day\) \{ day = JSON\.parse/);
   assert.match(html, /<h1>Done for today\.<\/h1>/);
   assert.doesNotMatch(html, /renderCheckin|renderFocus|openAct|id="sheetAct"|id="sheetWeek"|openWeek|data-m="caught"/);
-  assert.match(html, /This week: ' \+ wk\.weighed/, "the week is one line in the Ledger");
+  assert.match(html, /<b>This week<\/b> · ' \+ said/, "the week heads the Ledger (1.77.0)");
   assert.match(html, /data-r="caught"/, "Caught it stays in each principle's history");
   for (const id of ["sheetCaught", "setOut", "openShortcuts"]) assert.match(html, new RegExp('id="' + id + '"'), id);
   assert.match(html, /if \(kind === "shed"\) d\.s\+\+; else if \(kind === "caught"\) d\.c = \(d\.c \|\| 0\) \+ 1; else d\.i\+\+;/);
@@ -1256,11 +1271,18 @@ test("a backup is asked for weekly once the deck has something in it", () => {
   assert.equal(C.backupAgo("2026-10-25T11:00:00Z", now), "yesterday");
   assert.equal(C.backupAgo("2026-10-16T12:00:00Z", now), "10 days ago");
 });
-test("the backup reminder shows on Done for today and in the Ledger, not on the deck", () => {
-  const html = read("index.html");
-  assert.match(html, /id="ledgerBk"/);
+test("the iPhone app saves everything each day; the reminder is for the web (1.77.0)", () => {
+  const html = read("index.html"), swift = fs.readFileSync(path.join(__dirname, "..", "ios", "App", "WebViewController.swift"), "utf8");
+  assert.doesNotMatch(html, /id="ledgerBk"/, "no backup prompt in the Ledger");
   assert.match(html, /id="keepGoing">Keep going<\/button><\/div>' \+ \(remindOffer\(\) \? remindOfferHtml\(\) : backupHtml\(\)\)/);
   assert.match(html, /prefs\.last_backup = new Date\(\)\.toISOString\(\)/);
+  assert.match(html, /toNative\(\{ type: "save", json: JSON\.stringify\(backupData\(\)\), day: dayKey\(\) \}\)/);
+  assert.match(html, /if \(NATIVE && prefs\.save_where\) return false;/, "no reminder once a daily save is confirmed");
+  assert.match(swift, /case "save":/);
+  assert.match(swift, /forUbiquityContainerIdentifier: nil/);
+  assert.match(swift, /"Scales backup\.json"/);
+  assert.match(swift, /dated\.dropLast\(14\)/, "the last 14 dated copies are kept");
+  assert.match(fs.readFileSync(path.join(__dirname, "..", "ios", "project.yml"), "utf8"), /UIFileSharingEnabled: true\n\s+LSSupportsOpeningDocumentsInPlace: true/);
 });
 
 // ---------- 1.51.0: reminders and the badge ----------
@@ -1359,7 +1381,7 @@ test("inside the iPhone app, Scales hands the badge and a week of reminders to t
   const html = read("index.html"), fs = require("fs"), path = require("path");
   assert.match(html, /var NATIVE = !!window\.scalesNative;/);
   assert.match(html, /toNative\(\{ type: "schedule", items: items \}\)/);
-  assert.match(html, /if \(NATIVE\) toNative\(\{ type: "ready" \}\);/);
+  assert.match(html, /if \(NATIVE\) \{ toNative\(\{ type: "ready" \}\);/);
   const swift = fs.readFileSync(path.join(__dirname, "..", "ios", "App", "WebViewController.swift"), "utf8");
   assert.match(swift, /https:\/\/scales\.tangomike\.app\/app\/\?native=1/);
   for (const t of ["ready", "schedule", "unschedule", "badge"]) assert.match(swift, new RegExp('case "' + t + '"'));

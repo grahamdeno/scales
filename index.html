@@ -16,7 +16,7 @@ img { max-width: 100%; }
 <meta name="apple-mobile-web-app-title" content="Scales">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#121212" id="themeColor">
+<meta name="theme-color" content="#DCD9D3" id="themeColor">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -360,34 +360,66 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .ev::before { content:"Where it showed up. "; color:var(--muted); }
 .was { margin-top:8px; font-size:var(--t-xs); line-height:1.4; color:var(--muted); }
 .kfrom { color:var(--muted); }
-/* A row: the principle at its weight, a short count on the right. */
-.lrow2 { display:flex; justify-content:space-between; align-items:baseline; gap:16px; width:100%; min-height:52px; padding:14px 0; border-bottom:1px solid var(--line); text-align:left; color:var(--ink); }
-.lrow2 > span { min-width:0; }
-.lrow2 .lt { min-width:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:1rem; line-height:1.3; letter-spacing:-.005em; font-weight:var(--fw, 450); }
-.lrow2 small { flex:none; text-align:right; font-size:var(--t-sm); line-height:1.35; color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums; }
-.lrow2.lived .lt { color:var(--muted); }
-.lrow2 small { white-space:pre; }
-/* Ledger tabs (1.43.0): one group at a time, each count under its name so all four fit a phone. */
-.ltabs { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; margin-top:20px; }
-.ltab { display:flex; flex-direction:column-reverse; justify-content:space-between; align-items:flex-start; min-height:76px; padding:10px 9px; border-radius:12px; background:var(--bandTile); font-size:0.6765rem; color:var(--muted); white-space:nowrap; text-align:left; letter-spacing:-.01em; }
-.ltab b { font-weight:500; font-size:1.4118rem; line-height:1; color:var(--ink); font-variant-numeric:tabular-nums; }
-.ltab[aria-selected="true"] { background:#121212; color:#A3A29D; }
-.ltab[aria-selected="true"] b { color:#ECEAE5; }
-#ledgerList .gl { margin:14px 0 4px; font-size:var(--t-sm); color:var(--faint); }
-.lgroup { margin-top:28px; }
-.lgroup h3 { margin:0; font-size:var(--t-xs); font-weight:500; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
-.lgroup p.gl { margin:4px 0 0; font-size:var(--t-sm); color:var(--faint); }
-.livedbtn { display:flex; justify-content:space-between; align-items:center; width:100%; min-height:52px; margin-top:16px; border-bottom:1px solid var(--line); font-size:var(--t-xs); font-weight:500; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
-.livedbtn span { letter-spacing:0; text-transform:none; font-size:var(--t-sm); }
+/* The Ledger (1.77.0). The band: this week, a day to a bar (blue when you caught one or lived one), and how
+   your principles split across the four stages; each count jumps to its section. */
+.lcap { display:flex; justify-content:space-between; gap:12px; margin-top:6px; font-size:var(--t-sm); color:var(--muted); }
+.lcap b { color:var(--ink); font-weight:550; }
+.wkbars { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:6px; margin-top:10px; }
+.wkbars div { display:flex; flex-direction:column; align-items:center; gap:6px; font-size:var(--t-xs); color:var(--muted); }
+.wkbars i { position:relative; display:block; width:100%; height:32px; border-radius:8px; background:rgba(20,20,20,.08); overflow:hidden; }
+.wkbars em { position:absolute; inset:auto 0 0 0; background:#121212; }
+.wkbars i.c em { background:var(--accent); }
+.wkbars .td span { color:var(--ink); font-weight:600; }
+.sbar { display:flex; gap:3px; height:8px; margin-top:20px; border-radius:4px; overflow:hidden; }
+.sbar i { min-width:0; border-radius:2px; }
+.sbar .avoiding { background:#121212; } .sbar .working { background:rgba(20,20,20,.38); } .sbar .nearly { background:var(--accent); } .sbar .lived { background:rgba(20,20,20,.14); }
+.scount { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; margin-top:4px; }
+.scount button { display:flex; flex-direction:column; align-items:flex-start; min-height:48px; padding:4px 0; text-align:left; font-size:var(--t-xs); color:var(--muted); white-space:nowrap; }
+.scount b { font-size:1.25rem; font-weight:500; line-height:1.25; color:var(--ink); font-variant-numeric:tabular-nums; }
+/* The panel: a section per stage, Lived folded to one line. A row is the principle, two lines at most,
+   and its last five moves, oldest to newest: hollow skipped, gray reflected, blue caught it. */
+.lsh { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin:22px 0 2px; scroll-margin-top:12px; }
+.lsh h3 { margin:0; font-size:var(--t-sm); font-weight:600; color:var(--ink); }
+.lsh span { font-size:var(--t-xs); color:var(--faint); }
+.lrow3 { display:flex; justify-content:space-between; align-items:center; gap:16px; width:100%; min-height:56px; padding:12px 0; border-bottom:1px solid var(--line); text-align:left; color:var(--ink); }
+.lrow3 .tx { min-width:0; }
+.lrow3 .lt { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:1rem; line-height:1.3; font-weight:450; white-space:normal; }
+.lrow3 small { display:block; margin-top:3px; font-size:var(--t-xs); color:var(--muted); }
+.lrow3.resting .lt, .lrow3.lived .lt { color:var(--muted); }
+.lrow3 .dt { flex:none; font-size:var(--t-xs); color:var(--muted); font-variant-numeric:tabular-nums; }
+.marks { display:flex; gap:3px; flex:none; }
+.marks i { width:7px; height:16px; border-radius:2px; background:color-mix(in srgb, var(--ink) 10%, transparent); }
+.marks i.m-keep { background:color-mix(in srgb, var(--ink) 55%, transparent); }
+.marks i.m-skip { background:transparent; box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 38%, transparent); }
+.marks i.m-caught { background:var(--accent); }
+/* Avoided most: the one skipped most, first in Avoiding, with a way to act on it. */
+.amost { display:grid; gap:6px; margin:10px 0 4px; padding:16px; border-radius:16px; background:var(--card); }
+.amost .k { font-size:var(--t-xs); color:var(--muted); }
+.amost .q { font-size:1.125rem; line-height:1.3; font-weight:500; text-align:left; color:var(--ink); }
+.amost p { margin:0 0 6px; font-size:var(--t-sm); color:var(--muted); }
+.lfold { display:flex; justify-content:space-between; align-items:center; width:100%; min-height:52px; margin-top:14px; border-bottom:1px solid var(--line); font-size:var(--t-sm); color:var(--muted); }
+.lfold .i { width:18px; height:18px; transition:transform .2s; } .lfold[aria-expanded="true"] .i { transform:rotate(90deg); }
 #ledgerList { margin-top:0; }
+#ledgerList .none { margin:22px 0 4px; }
+/* A principle, opened (1.77.0). */
+.rstage { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px 4px; }
+.rstage i { height:6px; border-radius:2px; background:var(--track); }
+.rstage i.now { background:var(--accent); }
+.rstage span { font-size:var(--t-xs); color:var(--faint); white-space:nowrap; } .rstage span.now { color:var(--ink); }
+.rnums { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); padding:14px 0; border-radius:16px; background:var(--card); text-align:center; font-size:var(--t-xs); color:var(--muted); }
+.rnums b { display:block; font-size:1.25rem; font-weight:500; color:var(--ink); font-variant-numeric:tabular-nums; }
+.tlh { margin:4px 0 -12px; }
+.rowacts { display:grid; gap:8px; margin-top:6px; }
+.rowacts .primary { width:100%; min-height:52px; }
+.rowacts .more { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0, 1fr); gap:8px; }
+.rowacts .more .btn3d { padding:0 8px; font-size:var(--t-sm); }
+.rowacts .del { justify-self:end; min-height:44px; padding:0 4px; font-size:var(--t-sm); color:var(--danger); }
 .tl { display:grid; }
 .tl div { display:grid; grid-template-columns:14px 1fr auto; gap:10px; align-items:start; padding:9px 0; font-size:var(--t-sm); line-height:1.4; border-bottom:1px solid var(--line); overflow-wrap:anywhere; }
 .tl div:last-child { border-bottom:0; }
 .tl i { width:6px; height:6px; border-radius:50%; margin-top:7px; background:var(--faint); }
-.tl i.b { background:var(--ink); } .tl i.v { background:var(--muted); }
+.tl i.b { background:var(--ink); } .tl i.v { background:var(--muted); } .tl i.k { background:var(--accent); } .tl i.o { background:transparent; box-shadow:inset 0 0 0 1.5px var(--faint); }
 .tl span { color:var(--muted); font-size:var(--t-xs); white-space:nowrap; }
-.acts3 { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
-.acts3 .btn3d { padding:0 8px; font-size:var(--t-sm); }
 .btn3d.danger { color:var(--danger); }
 
 /* ---------- Sheets ---------- */
@@ -619,13 +651,12 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <!-- Deck view. Empty here on purpose: renderDeck() builds the collection keys, the principle, the three keys and the footer. -->
   <section class="view onblack" id="v-deck" aria-label="Deck"></section>
 
-<!-- Ledger view: a summary, tabs for the groups (one shown at a time),
-     then Your week and the last 12 weeks. Filled by renderLedger(). -->
+<!-- Ledger view (1.77.0): the band is your week and where your principles stand; the panel is every
+     principle on one scroll, by stage, then the last 12 weeks. Filled by renderLedger(). -->
   <section class="view onsmoke" id="v-ledger" aria-label="Ledger" hidden>
     <h2 class="sr">Ledger</h2>
-    <div id="ledgerBk"></div>
-    <p class="summary" id="lSummary"></p>
-    <div class="ltabs" id="ledgerTabs" role="tablist" aria-label="Groups"></div>
+    <div id="lWeek"></div>
+    <div id="lStage"></div>
     <div class="lpanel onblack">
     <div id="ledgerList"></div>
     <h3 class="sec2">Last 12 weeks<span>Each dot is a day</span></h3>
@@ -798,12 +829,16 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <h2><span id="sheetRowTitle">Principle</span> <button type="button" data-close>Done</button></h2>
   <div class="quote" id="rowText"></div>
   <div class="where" id="rowWhere" style="margin-top:-6px"></div>
+  <!-- 1.77.0: where it stands, its numbers, then what happened, newest first. One blue action. -->
+  <div class="rstage" id="rowStage"></div>
+  <div class="rnums" id="rowNums"></div>
   <div class="glass" id="rowLine" hidden></div>
   <div class="ev" id="rowEv" hidden></div>
   <div id="rowHist"></div>
   <div class="thread" id="rowThread" hidden></div>
+  <h3 class="sec2 tlh">What happened</h3>
   <div class="tl" id="rowTl"></div>
-  <div class="acts3" id="rowActs"></div>
+  <div class="rowacts" id="rowActs"></div>
 </dialog>
 
 <!-- Show: which collection the deck draws from. -->
@@ -1653,7 +1688,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (kind === "keep") {
       if (phase === "reflect") return;
       reflectUndo = undoPoint();
-      t.reflect_count++; t.consecutive_reflects++;
+      t.reflect_count++; t.consecutive_reflects++; C.noteMoveOf(t, today(), "keep");
       noteMove(t, "keep"); noteDay(t, "keep");
       prefs.tests = (prefs.tests || 0) + 1; savePrefs();
       save(t); logActivity("keep");
@@ -2409,7 +2444,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 
   // ---------- a principle in full (the Ledger row) ----------
   var rowT = null;
-  var TL_DOT = { caught: "b", lived: "b", talk: "v", act: "b" };
+  var TL_DOT = { caught: "k", lived: "b", talk: "v", act: "b", keep: "v", skip: "o" };
   function openRow(t) {
     if (!t) return;
     rowT = t;
@@ -2434,20 +2469,38 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     $("rowTl").innerHTML = C.timeline(t).slice(0, 30).map(function (e) {
       return '<div><i class="' + (TL_DOT[e.kind] || "") + '"></i>' + esc(clip(e.text, 120)) + "<span>" + esc(f(e.at)) + "</span></div>";
     }).join("");
-    var b = [];
-    if (!lived) b.push('<button type="button" class="btn3d raised" data-r="show">Open on deck</button>', '<button type="button" class="btn3d raised" data-r="caught">Caught it</button>');
-    b.push('<button type="button" class="btn3d raised" data-r="edit">Edit</button>');
-    if (lived) b.push('<button type="button" class="btn3d raised" data-r="ev">' + (t.evidence ? "Evidence" : "Add evidence") + "</button>");
-    if (l) b.push('<button type="button" class="btn3d raised" data-r="keep">Keep line</button>');
-    if ((t.talks || []).some(function (x) { return x.line; })) b.push('<button type="button" class="btn3d raised" data-r="talk">Talk</button>');
-    b.push('<button type="button" class="btn3d raised danger" data-r="del">Delete</button>');
-    $("rowActs").innerHTML = b.join("");
+    // Where it stands and its numbers (1.77.0).
+    var g = lived ? "lived" : C.ledgerGroup(t, today());
+    $("rowStage").innerHTML = GROUPS.map(function (x) { return '<i class="' + (x.id === g ? "now" : "") + '"></i>'; }).join("") +
+      GROUPS.map(function (x) { return '<span class="' + (x.id === g ? "now" : "") + '">' + x.name + "</span>"; }).join("");
+    $("rowStage").setAttribute("aria-label", "Stage: " + GROUPS.filter(function (x) { return x.id === g; })[0].name);
+    $("rowStage").setAttribute("role", "img");
+    var end = lived && t.shed_at ? new Date(t.shed_at) : new Date(), days = Math.max(1, Math.round((end - new Date(t.created_at)) / 86400000));
+    $("rowNums").innerHTML = "<div><b>" + days + "</b>" + (days === 1 ? "day" : "days") + "</div><div><b>" + (t.lifetime_skips || t.skip_count || 0) + "</b>skipped</div><div><b>" +
+      (t.reflect_count || 0) + "</b>reflected</div><div><b>" + (t.caught || []).length + "</b>caught</div>";
+    // One blue action: Put it on Today, or for a lived principle, its evidence. Delete is a quiet text button.
+    var more = [];
+    if (!lived) more.push('<button type="button" class="btn3d" data-r="caught">Caught it</button>');
+    more.push('<button type="button" class="btn3d" data-r="edit">Edit</button>');
+    if (l) more.push('<button type="button" class="btn3d" data-r="keep">Keep line</button>');
+    if ((t.talks || []).some(function (x) { return x.line; })) more.push('<button type="button" class="btn3d" data-r="talk">Talk</button>');
+    $("rowActs").innerHTML = (lived ? '<button type="button" class="primary" data-r="ev">' + (t.evidence ? "Edit evidence" : "Add evidence") + "</button>"
+      : '<button type="button" class="primary" data-r="show">Put it on Today</button>') +
+      '<div class="more">' + more.join("") + "</div>" + '<button type="button" class="del" data-r="del">Delete</button>';
     show("sheetRow");
+  }
+  // Put it on Today: the principle goes to the front of today's deck, in the collection that holds it.
+  function putOnToday(t) {
+    if (!t) return;
+    if (openSheet) hide();
+    if (!C.inCollection(t, deckColl())) { prefs.deck_coll = ""; savePrefs(); }
+    refreshDay(); if (day.closed || C.dayPhase(day, setSize()) === "done") { day.more = true; saveDay(); }
+    go("deck"); showThought(t);
   }
   $("rowActs").onclick = function (e) {
     var b = e.target.closest("[data-r]"), t = rowT; if (!b || !t) return;
     var r = b.getAttribute("data-r");
-    if (r === "show") { hide(); if (!C.inCollection(t, deckColl())) { prefs.deck_coll = ""; savePrefs(); } refreshDay(); if (day.closed || C.dayPhase(day, setSize()) === "done") { day.more = true; saveDay(); } go("deck"); showThought(t); }
+    if (r === "show") putOnToday(t);
     else if (r === "caught") openCaught(t, false);
     else if (r === "edit") openEdit(t);
     else if (r === "ev") openEvidence(t);
@@ -2671,69 +2724,101 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var s = p.join(", ");
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
-  // The Ledger (1.43.0): one group at a time, chosen from tabs with counts (Avoiding, Working on, Nearly
-  // lived, Lived), opening on Avoiding. Two lines per principle (1.44.0); tap a row for the full text and its history.
-  // Each group has one type weight, so the weight always means the group. Resting principles are dimmed.
+  // The Ledger (1.77.0): every principle on one scroll, by stage. Avoiding opens with the one avoided most;
+  // Lived folds to one line. The band above is this week and how the principles split across the stages.
   var GROUPS = [
-    { id: "avoiding", name: "Avoiding", note: "Skipped three or more times", fw: 800 },
-    { id: "working", name: "Working on", note: "In the deck, still in practice", fw: 450 },
-    { id: "nearly", name: "Nearly lived", note: "No skips left, and reflected on or caught", fw: 250 },
-    { id: "lived", name: "Lived", note: "You act on these without prompting", fw: 250 }
+    { id: "avoiding", name: "Avoiding", note: "Skipped three or more times" },
+    { id: "working", name: "Working on", note: "In the deck, still in practice" },
+    { id: "nearly", name: "Nearly lived", note: "No skips left, reflected on or caught" },
+    { id: "lived", name: "Lived", note: "You act on these without prompting" }
   ];
-  // The one fact on the right of a row.
-  function rowCount(t, g, td) {
-    if (g === "lived") return fmtDate(t.shed_at);
-    var c = C.catchCount(t, td), s = t.skip_count || 0, r = t.reflect_count || 0;
-    if (g === "nearly") { var nf = c ? "caught " + c + "×" : r + "× reflected"; return C.isResting(t, td) ? nf + "\nresting" : nf; }
-    var f = s ? s + "× skipped" : r ? r + "× reflected" : "new";
-    return C.isResting(t, td) ? f + "\nresting" : f;
+  var livedOpen = false;
+  var MARK = { skip: "skipped", keep: "reflected", caught: "caught it" };
+  function marksHtml(t) {
+    var mv = C.recentMoves(t, 5), out = [];
+    for (var i = 0; i < 5 - mv.length; i++) out.push("<i></i>");
+    mv.forEach(function (m) { out.push('<i class="m-' + m.m + '"></i>'); });
+    return '<span class="marks" aria-hidden="true">' + out.join("") + "</span>";
+  }
+  function rowNote(t, g, td) {
+    if (g === "lived") return "";
+    if (t.later) return "Saved for tonight";
+    if (C.isResting(t, td)) return "Resting until " + weekdayOf(t.rest_until, { weekday: "long" });
+    return "";
   }
   function ledgerRow(t, g, td) {
-    var rest = g !== "lived" && C.isResting(t, td);
-    return '<button type="button" class="lrow2 ' + g + (rest ? " resting" : "") + '" data-row="' + esc(t.id) + '" aria-label="' + esc(clip(t.text, 80) + ". " + rowState(t, td)) + '">' +
-      '<span class="lt">' + esc(String(t.text).replace(/\s*\n\s*/g, " ")) + "</span><small>" + esc(rowCount(t, g, td)) + "</small></button>";
+    var rest = g !== "lived" && C.isResting(t, td), note = rowNote(t, g, td), mv = C.recentMoves(t, 5);
+    var said = mv.length ? " Last moves: " + mv.map(function (m) { return MARK[m.m]; }).join(", ") + "." : "";
+    return '<button type="button" class="lrow3 ' + g + (rest ? " resting" : "") + '" data-row="' + esc(t.id) + '" aria-label="' + esc(clip(t.text, 80) + ". " + rowState(t, td) + "." + said) + '">' +
+      '<span class="tx"><span class="lt">' + esc(String(t.text).replace(/\s*\n\s*/g, " ")) + "</span>" + (note ? "<small>" + esc(note) + "</small>" : "") + "</span>" +
+      (g === "lived" ? '<span class="dt">' + esc(fmtDate(t.shed_at)) + "</span>" : marksHtml(t)) + "</button>";
+  }
+  function avoidedHtml(t) {
+    var r = t.reflect_count || 0;
+    return '<div class="amost"><span class="k">Avoided most</span><button type="button" class="q" data-row="' + esc(t.id) + '">' + esc(t.text) + "</button>" +
+      "<p>Skipped " + times(t.skip_count) + (r ? ", reflected " + times(r) : "") + ".</p>" +
+      '<div class="pair"><button type="button" class="btn3d" data-row="' + esc(t.id) + '">Open</button><button type="button" class="primary" data-today="' + esc(t.id) + '">Put it on Today</button></div></div>';
+  }
+  function weekHtml(items, td) {
+    var wk = C.weekStats(items, activity, td), days = C.weekDays(td);
+    var md = function (d) { var p = d.split("-"); return { m: new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", { month: "short" }), d: +p[2] }; };
+    var a0 = md(days[0]), a6 = md(days[6]), range = a0.m + " " + a0.d + "\u2013" + (a0.m === a6.m ? "" : a6.m + " ") + a6.d;
+    var bars = days.map(function (d, i) {
+      var a = activity[d] || {}, w = (a.i || 0) + (a.s || 0) + (a.c || 0), c = (a.c || 0) + (a.s || 0) > 0;
+      return '<div' + (i === 6 ? ' class="td"' : "") + '><i' + (c ? ' class="c"' : "") + '><em style="height:' + Math.min(100, w * 25) + '%"></em></i><span>' + weekdayOf(d, { weekday: "narrow" }) + "</span></div>";
+    }).join("");
+    var said = wk.weighed + (wk.weighed === 1 ? " move" : " moves") + (wk.caught ? ", " + wk.caught + " caught" : "") + (wk.living ? ", " + wk.living + " lived" : "");
+    return '<div class="lcap"><span><b>This week</b> · ' + said + "</span><span>" + range + "</span></div>" +
+      '<div class="wkbars" role="img" aria-label="This week: ' + esc(said) + '">' + bars + "</div>";
   }
   function renderLedger() {
     var items = all(), td = today();
     var act_ = items.filter(function (t) { return t.status === "active"; }).sort(function (a, b) { return weight(b) - weight(a) || b.lifetime_skips - a.lifetime_skips; });
     var shed = items.filter(function (t) { return t.status === "shed"; }).sort(function (a, b) { return (b.shed_at || "").localeCompare(a.shed_at || ""); });
-    var resting = act_.filter(function (t) { return C.isResting(t, td); }).length;
-    var wk = C.weekStats(items, activity, td);
-    var lb = $("ledgerBk"); if (lb) lb.innerHTML = backupHtml();
-    $("lSummary").innerHTML = "<b>" + act_.length + " in the deck</b>" + (resting ? ", " + resting + " resting" : "") + ", <b>" + shed.length + " lived</b>." +
-      // Your week (1.46.0): one line here instead of its own sheet.
-      '<span class="wk">This week: ' + wk.weighed + (wk.weighed === 1 ? " move" : " moves") + (wk.caught ? ", " + wk.caught + " caught" : "") + (wk.living ? ", " + wk.living + " now living" : "") + ".</span>";
-    paintStat();
     var byGroup = { avoiding: [], working: [], nearly: [], lived: shed };
     act_.forEach(function (t) { byGroup[C.ledgerGroup(t, td)].push(t); });
-    // The open tab: the one last chosen, or Avoiding, or the first group with anything in it.
-    var tab = prefs.ledger_tab && byGroup[prefs.ledger_tab] ? prefs.ledger_tab : "avoiding";
-    if (!byGroup[tab].length && !prefs.ledger_tab) tab = (GROUPS.filter(function (g) { return byGroup[g.id].length; })[0] || GROUPS[0]).id;
-    $("ledgerTabs").innerHTML = GROUPS.map(function (g) {
-      var on = g.id === tab;
-      return '<button type="button" role="tab" class="ltab" data-tab="' + g.id + '" aria-selected="' + on + '"><span>' + g.name + "</span><b>" + byGroup[g.id].length + "</b></button>";
-    }).join("");
-    var g = GROUPS.filter(function (x) { return x.id === tab; })[0], rows = byGroup[tab];
-    $("ledgerList").innerHTML = '<p class="gl">' + g.note + "</p>" + (rows.length ? '<div class="lrows" style="--fw:' + g.fw + '">' + rows.map(function (t) { return ledgerRow(t, tab, td); }).join("") + "</div>"
-      : '<p class="none">' + (tab === "lived" ? "Nothing here yet. A principle moves here once you live it without prompting." : "Nothing here right now.") + "</p>");
+    paintStat();
+    $("lWeek").innerHTML = weekHtml(items, td);
+    var n = items.filter(function (t) { return t.status === "active" || t.status === "shed"; }).length;
+    $("lStage").innerHTML = (n ? '<div class="sbar" aria-hidden="true">' + GROUPS.map(function (g) { return byGroup[g.id].length ? '<i class="' + g.id + '" style="flex:' + byGroup[g.id].length + '"></i>' : ""; }).join("") + "</div>" : "") +
+      '<div class="scount">' + GROUPS.map(function (g) { return '<button type="button" data-jump="' + g.id + '"><b>' + byGroup[g.id].length + "</b>" + g.name + "</button>"; }).join("") + "</div>";
+    var most = C.avoidedMost(act_), html = "";
+    GROUPS.forEach(function (g) {
+      var rows = byGroup[g.id]; if (!rows.length) return;
+      if (g.id === "lived") {
+        html += '<button type="button" class="lfold" id="sec-lived" data-fold aria-expanded="' + livedOpen + '"><span>' + rows.length + " lived</span>" + CHEV + "</button>" +
+          (livedOpen ? rows.map(function (t) { return ledgerRow(t, "lived", td); }).join("") : "");
+        return;
+      }
+      html += '<div class="lsh" id="sec-' + g.id + '"><h3>' + g.name + "</h3><span>" + g.note + "</span></div>";
+      if (g.id === "avoiding" && most) { html += avoidedHtml(most); rows = rows.filter(function (t) { return t !== most; }); }
+      html += rows.map(function (t) { return ledgerRow(t, g.id, td); }).join("");
+    });
+    $("ledgerList").innerHTML = html || '<p class="none">Nothing here yet. Add a principle with + and it shows here.</p>';
 
     var cells = [], now = new Date();
     for (var i = 83; i >= 0; i--) {
       var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-      var a = activity[dayKey(d)], n = a ? (a.i || 0) : 0;
-      var cls = a && (a.s || a.c) ? "lv" : n >= 3 ? "on2" : n ? "on" : "";
+      var a = activity[dayKey(d)], k = a ? (a.i || 0) : 0;
+      var cls = a && (a.s || a.c) ? "lv" : k >= 3 ? "on2" : k ? "on" : "";
       if (i === 0) cls += " today";
       cells.push('<i class="' + cls + '" title="' + d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + '"></i>');
     }
     $("cal").innerHTML = cells.join("");
   }
+  var CHEV = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
   $("ledgerList").addEventListener("click", function (e) {
+    var td_ = e.target.closest("[data-today]"); if (td_) { putOnToday(thoughts[td_.getAttribute("data-today")]); return; }
+    if (e.target.closest("[data-fold]")) { livedOpen = !livedOpen; renderLedger(); var f = $("sec-lived"); if (f) { try { f.focus({ preventScroll: true }); } catch (_) {} } return; }
     var b = e.target.closest("[data-row]"); if (b) openRow(thoughts[b.getAttribute("data-row")]);
   });
-  $("ledgerTabs").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-tab]"); if (!b) return;
-    prefs.ledger_tab = b.getAttribute("data-tab"); savePrefs(); renderLedger();
-    var nb = document.querySelector('#ledgerTabs [data-tab="' + prefs.ledger_tab + '"]'); if (nb) { try { nb.focus({ preventScroll: true }); } catch (_) {} }
+  $("lStage").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-jump]"); if (!b) return;
+    var id = b.getAttribute("data-jump");
+    if (id === "lived" && !livedOpen) { livedOpen = true; renderLedger(); }
+    // Scroll the Ledger itself, never the page (see resetScroll).
+    var el = $("sec-" + id), v = $("v-ledger");
+    if (el) v.scrollTo({ top: v.scrollTop + el.getBoundingClientRect().top - v.getBoundingClientRect().top - 12, behavior: REDUCED.matches ? "auto" : "smooth" });
   });
 
   // ---------- capture ----------
@@ -2921,7 +3006,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var tm = remindTimes();
     $("remindVal").textContent = NATIVE ? (prefs.remind_on ? clock(tm.am) + ", " + clock(tm.pm) : "Off") : "Shortcuts";
     $("deckVal").textContent = setSize() + " a day";
-    $("dataVal").textContent = prefs.last_backup ? "Backed up " + C.backupAgo(prefs.last_backup) : "Not backed up";
+    $("dataVal").textContent = NATIVE && prefs.save_where ? "Saved " + C.backupAgo(prefs.last_backup) : prefs.last_backup ? "Backed up " + C.backupAgo(prefs.last_backup) : "Not backed up";
   }
   // The pages behind the index; Settings comes back with the way back at the top left. Anything changed shows on the index.
   $("openReminders").onclick = function () { paintReminders(); show("sheetReminders"); };
@@ -3196,8 +3281,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // when available (so it can go to iCloud Drive), otherwise a normal download.
   // Backup reminders (1.50.0): a backup is recorded when the share sheet finishes (or the download starts);
   // cancelling the share sheet records nothing. Resolves true when it was backed up.
+  function backupData() { return { app: "scales", version: 1, exported_at: new Date().toISOString(), thoughts: thoughts, activity: activity, prefs: prefs }; }
   function backupNow() {
-    var data = { app: "scales", version: 1, exported_at: new Date().toISOString(), thoughts: thoughts, activity: activity, prefs: prefs };
+    var data = backupData();
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     var name = "scales-backup-" + dayKey() + ".json";
     var file = null; try { file = new File([blob], name, { type: "application/json" }); } catch (e) {}
@@ -3210,13 +3296,32 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     return Promise.resolve(done());
   }
   // 1.69.1: no backup reminder in someone's first three days; a starter deck alone is not worth nagging about.
+  // Daily save (1.77.0): on the iPhone, Scales saves everything to one file without asking, at the first open
+  // of the day and whenever it goes to the background (at most every ten minutes). The app answers with
+  // where it went: iCloud Drive when that's set up, otherwise Files, On My iPhone, Scales. Once one is
+  // confirmed, the backup reminder stops; Back up in Settings still makes a copy you choose where to keep.
+  var lastAuto = 0;
+  function autoSave(force) {
+    if (!NATIVE || !all().length) return;
+    if (!force && Date.now() - lastAuto < 10 * 60000) return;
+    lastAuto = Date.now();
+    toNative({ type: "save", json: JSON.stringify(backupData()), day: dayKey() });
+  }
+  window.scalesSaved = function (r) {
+    if (!r || !r.ok) return;
+    prefs.last_backup = new Date().toISOString(); prefs.backup_snooze = null; prefs.save_where = r.where === "icloud" ? "icloud" : "files"; savePrefs();
+    paintBackup(); var b = $("bk"); if (b) b.remove();
+  };
+  function saveWhere() { return prefs.save_where === "icloud" ? "iCloud Drive, Scales" : "Files, On My iPhone, Scales"; }
   function backupDue() {
+    if (NATIVE && prefs.save_where) return false;
     var first = all().reduce(function (m, t) { var d = Date.parse(t.created_at) || Date.now(); return Math.min(m, d); }, Date.now());
     if (!prefs.last_backup && Date.now() - first < 3 * 86400000) return false;
     return C.needsBackup(all().length, prefs.last_backup, prefs.backup_snooze);
   }
   function paintBackup() {
-    var s = $("syncText"); if (s) s.textContent = (prefs.last_backup ? "Last backup " + C.backupAgo(prefs.last_backup) : "Not backed up yet") + ". One file, for iCloud Drive";
+    var s = $("syncText"); if (s) s.textContent = NATIVE && prefs.save_where ? "Saved each day to " + saveWhere() + ". Last saved " + C.backupAgo(prefs.last_backup) + "."
+      : (prefs.last_backup ? "Last backup " + C.backupAgo(prefs.last_backup) : "Not backed up yet") + ". One file, for iCloud Drive";
   }
   function backupHtml() {
     if (!backupDue()) return "";
@@ -3357,7 +3462,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       if (hadWorker) toast("Scales was updated.", null, { label: "Reload", fn: function () { location.reload(); } });
       hadWorker = true;
     });
-    if (NATIVE) toNative({ type: "ready" });
+    if (NATIVE) { toNative({ type: "ready" }); setTimeout(function () { autoSave(true); }, 1500); }
+    document.addEventListener("visibilitychange", function () { if (document.hidden) autoSave(false); });
     // Moved (1.63.0): the old GitHub Pages address keeps working, but a phone keeps data per address, so it says
     // where Scales lives now and offers the backup to restore there. The bar stays until Back up is tapped.
     if (location.hostname === "grahamdeno.github.io") setTimeout(function () {

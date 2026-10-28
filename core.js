@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.76.0";
+  var VERSION = "1.77.0";
   var BUILT = "2026-10-28";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -750,7 +750,27 @@ var ScalesCore = (function () {
   // ---------- caught it ----------
   // Real-life evidence for a principle still in the deck: a one-line note of when you lived it
   // without the app. CATCH_SUGGEST catches within CATCH_WINDOW days suggest it may be Lived.
-  function addCatch(t, day, text) { t.caught = (t.caught || []).concat([{ day: day, text: String(text || "").trim().slice(0, 280) }]).slice(-30); return t; }
+  function addCatch(t, day, text) { t.caught = (t.caught || []).concat([{ day: day, text: String(text || "").trim().slice(0, 280) }]).slice(-30); noteMoveOf(t, day, "caught"); return t; }
+  // Moves (1.77.0): each principle keeps its last 30 moves with their day (skip, keep for Reflect, caught),
+  // for the marks on its Ledger row and for its history.
+  function noteMoveOf(t, day, m) { t.moves = (t.moves || []).concat([{ day: day, m: m }]).slice(-30); return t; }
+  // The last n moves, oldest first. Before 1.77.0 only skip and caught days were kept, and Reflect only as a
+  // count, so older principles start with their undated Reflects, then their dated skips and catches.
+  function recentMoves(t, n) {
+    n = n || 5;
+    var mv = (t.moves || []).slice(), first = mv.length ? mv[0].day : "9999-99-99", old = [];
+    (t.skips_on || []).forEach(function (d) { if (d < first) old.push({ day: d, m: "skip" }); });
+    (t.caught || []).forEach(function (c) { if (c.day < first) old.push({ day: c.day, m: "caught" }); });
+    old.sort(function (a, b) { return a.day < b.day ? -1 : a.day > b.day ? 1 : 0; });
+    var keeps = Math.max(0, (t.reflect_count || 0) - mv.filter(function (x) { return x.m === "keep"; }).length), pre = [];
+    for (var i = 0; i < Math.min(keeps, n); i++) pre.push({ day: "", m: "keep" });
+    return pre.concat(old, mv).slice(-n);
+  }
+  // The one principle avoided most: skipped three or more times, most skips first, then most over its life.
+  function avoidedMost(list) {
+    return list.filter(function (t) { return t.status === "active" && (+t.skip_count || 0) >= 3; })
+      .sort(function (a, b) { return (b.skip_count - a.skip_count) || ((b.lifetime_skips || 0) - (a.lifetime_skips || 0)); })[0] || null;
+  }
   function catchCount(t, today, windowDays) {
     var from = addDays(today, -((windowDays || CATCH_WINDOW) - 1));
     return (t.caught || []).filter(function (c) { return c.day >= from && c.day <= today; }).length;
@@ -770,7 +790,7 @@ var ScalesCore = (function () {
   }
   function waiting(list) { return (list || []).filter(function (t) { return t.status === "active" && t.later; }); }
   function canLater(list, t) { return !!t && !t.later && !t.later_blocked && waiting(list).length < LATER_MAX; }
-  function noteSkipDay(t, day) { t.skips_on = (t.skips_on || []).concat([day]).slice(-20); return t; }
+  function noteSkipDay(t, day) { t.skips_on = (t.skips_on || []).concat([day]).slice(-20); noteMoveOf(t, day, "skip"); return t; }
 
   // Replies (1.40.0). On the skip and sit-with screens you can reply to the line or quote shown. A reply is
   // kept on the principle with the words it answered: { at, day, kind, line, author, text }. kind is "push"
@@ -834,12 +854,13 @@ var ScalesCore = (function () {
     var ev = [], d = function (iso) { return iso ? dayOf(new Date(iso)) : ""; };
     if (t.created_at) ev.push({ at: d(t.created_at), kind: "start", text: t.kept_from ? "Kept from an AI line" : "Captured" });
     (t.skips_on || []).forEach(function (x) { ev.push({ at: x, kind: "skip", text: "Skipped" }); });
+    (t.moves || []).forEach(function (x) { if (x.m === "keep") ev.push({ at: x.day, kind: "keep", text: "Reflected" }); });
     (t.acts || []).forEach(function (x) { ev.push({ at: x.day, kind: "act", text: "Smallest act: " + x.text }); });
     (t.caught || []).forEach(function (x) { ev.push({ at: x.day, kind: "caught", text: "Caught it" + (x.text ? ": " + x.text : "") }); });
     (t.talks || []).forEach(function (x) { if (x.line) ev.push({ at: x.day || d(x.at), kind: "talk", text: x.reply ? "Talked with " + (x.voice_name || "a thinker") : "Weighed in by " + (x.voice_name || "a thinker") + " on " + (MOVES[x.move] || x.move) }); });
     (t.earlier || []).forEach(function (x) { ev.push({ at: d(x.until), kind: "edit", text: "Wording changed" }); });
     if (t.status === "shed" && t.shed_at) ev.push({ at: d(t.shed_at), kind: "lived", text: "Lived" + (t.evidence ? ": " + t.evidence : "") });
-    var order = { start: 0, edit: 1, skip: 2, act: 3, talk: 4, caught: 5, lived: 6 };
+    var order = { start: 0, edit: 1, skip: 2, keep: 3, act: 4, talk: 5, caught: 6, lived: 7 };
     return ev.sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : order[b.kind] - order[a.kind]; });
   }
 
@@ -854,7 +875,7 @@ var ScalesCore = (function () {
     undoPoint: undoPoint, applyUndo: applyUndo,
     inCollection: inCollection, deckCollections: deckCollections, deckFilter: deckFilter, outcomeMix: outcomeMix,
     SWIPE: SWIPE, swipeIntent: swipeIntent,
-    HOLD_FULL: HOLD_FULL, HOLD_TAP: HOLD_TAP, HOLD_LIFT: HOLD_LIFT, HOLD_REVEAL: HOLD_REVEAL, holdOutcome: holdOutcome, inkWeight: inkWeight, ledgerGroup: ledgerGroup,
+    HOLD_FULL: HOLD_FULL, HOLD_TAP: HOLD_TAP, HOLD_LIFT: HOLD_LIFT, HOLD_REVEAL: HOLD_REVEAL, holdOutcome: holdOutcome, inkWeight: inkWeight, ledgerGroup: ledgerGroup, noteMoveOf: noteMoveOf, recentMoves: recentMoves, avoidedMost: avoidedMost,
     lineFresh: lineFresh, keepLine: keepLine, spendLines: spendLines, REFLECT_SEC: REFLECT_SEC,
     WQ_PAGE: WQ_PAGE, wqPage: wqPage, wqUrl: wqUrl, wqClean: wqClean, parseQuotes: parseQuotes, rankQuotes: rankQuotes, quotePrompt: quotePrompt, readPick: readPick,
     shortDate: shortDate, keepAsNew: keepAsNew, keepReplace: keepReplace,

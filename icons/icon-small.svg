@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- The same mark, heavier, for 64 px and below. -->
+  <rect width="1024" height="1024" fill="#DCD9D3"/>
+  <path d="M0 640 Q0 552 88 552 H936 Q1024 552 1024 640 V1024 H0 Z" fill="#121212"/>
+  <rect x="200" y="330" width="624" height="120" rx="60" fill="#121212"/>
+  <path d="M512 466 L640 700 H384 Z" fill="#1F5FCC" stroke="#1F5FCC" stroke-width="40" stroke-linejoin="round"/>
+</svg>
