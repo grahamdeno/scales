@@ -15,13 +15,37 @@ function lcg(seed) {
   let x = seed >>> 0;
   return () => ((x = (1664525 * x + 1013904223) >>> 0) / 4294967296);
 }
-const item = (id, skip_count = 0, text = "Principle " + id) => ({ id, skip_count, text });
+const item = (id, skip_count = 0, text = "Thought " + id) => ({ id, skip_count, text });
 
 test("version is MAJOR.MINOR.PATCH", () => {
   assert.equal(typeof C.VERSION, "string");
   assert.match(C.VERSION, /^\d+\.\d+\.\d+$/);
 });
 
+test("Question it: keep, revise or let go, each counted as weighed (1.79.0)", () => {
+  const t = { id: "a", text: "Never complain. Never explain.", status: "active", skip_count: 2, reflect_count: 0 };
+  C.questionKeep(t, "2026-10-28");
+  assert.equal(t.skip_count, 1, "it held up: one lighter");
+  assert.equal(t.questioned, 1);
+  C.noteRevise(t, "Never complain.", "2026-10-29");
+  assert.equal(t.earlier[t.earlier.length - 1].text, "Never complain.", "the earlier wording is kept");
+  C.letGo(t, "Explaining is how my team learns why.", "2026-10-30");
+  assert.equal(t.status, "letgo"); assert.equal(t.letgo_why, "Explaining is how my team learns why.");
+  assert.deepEqual(C.recentMoves(t, 5).map((m) => m.m), ["question", "revise", "letgo"]);
+  const tl = C.timeline(t).map((e) => e.text);
+  assert.ok(tl.indexOf("Questioned it, and kept it") >= 0 && tl.indexOf("Questioned it, and revised it") >= 0 && tl.some((x) => /^Let go: Explaining/.test(x)));
+  C.bringBack(t);
+  assert.equal(t.status, "active"); assert.equal(t.let_go.length, 1, "the letting go stays in its history");
+  const p = C.casePrompt({ name: "Marcus Aurelius", short: "Marcus", lens: "duty" }, { text: "Rest is weakness.", why: "My father said so." });
+  assert.match(p, /strongest honest case against/); assert.match(p, /Why they believe it: My father said so\./);
+  assert.equal(C.checkEdit([t], t, { why: "New reason" }).ok, true, "changing only the reasons can be saved");
+  const html = read("index.html");
+  assert.match(html, /data-move="question">' \+ ICON_Q \+ "I\\u2019m not sure it\\u2019s true/, "doubt is offered before a skip");
+  assert.match(html, /data-move="letgo">Let go<\/button>' \+\s*'<button type="button" class="choice" data-move="revise">Revise<\/button>' \+\s*'<button type="button" class="choice main" data-move="qkeep">Keep it/);
+  assert.match(html, /id="sheetLetGo"/);
+  assert.match(html, /data-r="back">Bring it back/);
+  assert.match(html, /id="capWhy"/); assert.match(html, /id="editChange"/);
+});
 test("the app icon can be black or light (1.78.0)", () => {
   const html = read("index.html"), swift = fs.readFileSync(path.join(__dirname, "..", "ios", "App", "WebViewController.swift"), "utf8");
   const yml = fs.readFileSync(path.join(__dirname, "..", "ios", "project.yml"), "utf8");
@@ -86,7 +110,7 @@ test("pickFrom falls back to the whole deck when everything is on cooldown", () 
   assert.equal(C.pickFrom(pool, ["a"], lcg(3)).id, "a");
 });
 
-test("pickFrom shows avoided principles more often, in proportion to weight", () => {
+test("pickFrom shows avoided thoughts more often, in proportion to weight", () => {
   const pool = [item("fresh", 0), item("avoided", 6)]; // weights 1 and 4
   const rand = lcg(4), n = 20000;
   let avoided = 0;
@@ -108,7 +132,7 @@ test("fit trims long answers to whole sentences", () => {
   assert.equal(C.fit("Short enough."), "Short enough.");
 });
 
-test("vet accepts a line that names a short principle (regression)", () => {
+test("vet accepts a line that names a short thought (regression)", () => {
   const t = { text: "Discipline is freedom" };
   const v = C.vet("If discipline is freedom, what are you choosing to stay bound by?", t);
   assert.ok(v.line, "rejected: " + v.reason);
@@ -151,7 +175,7 @@ function starters() {
   return new Function(html.slice(from, to) + "\nreturn STARTERS;")();
 }
 
-test("starter decks hold unique principles, each with a button", () => {
+test("starter decks hold unique thoughts, each with a button", () => {
   const html = read("index.html"), S = starters();
   assert.deepEqual(Object.keys(S), ["stoic", "leadership", "athletic", "overcoming"]);
   const seen = new Set();
@@ -165,7 +189,7 @@ test("starter decks hold unique principles, each with a button", () => {
   }
 });
 
-test("every starter principle fills every field (Story 8)", () => {
+test("every starter thought fills every field (Story 8)", () => {
   const S = starters();
   for (const k of Object.keys(S)) for (const it of S[k].items) {
     for (const f of C.STARTER_FIELDS) assert.ok(String(it[f] || "").trim(), k + ": '" + it.text.slice(0, 30) + "' has no " + f);
@@ -211,7 +235,7 @@ test("loadStarter adds once, fills empty fields, keeps user values, replaces old
   assert.deepEqual([mine.status, mine.evidence, mine.recent_lines], ["shed", "kept", ["final"]]);
 });
 
-test("capture and edit share the principle length limit", () => {
+test("capture and edit share the thought length limit", () => {
   const html = read("index.html");
   for (const id of ["thoughtInput", "editInput"]) {
     const m = html.match(new RegExp('id="' + id + '"[^>]*maxlength="(\\d+)"'));
@@ -235,7 +259,7 @@ test("checkEdit blocks empty, unchanged, overlong and duplicate wording", () => 
   assert.ok(C.checkEdit(list, a, "y".repeat(C.MAX_TEXT)).ok);
 });
 
-test("applyEdit keeps history and clears model lines only for deck principles", () => {
+test("applyEdit keeps history and clears model lines only for deck thoughts", () => {
   const active = { id: "a", text: "Old", status: "active", skip_count: 2, lifetime_skips: 3, reflect_count: 6,
     created_at: "2026-09-20T12:00:00.000Z", recent_lines: ["one", "two"] };
   C.applyEdit(active, "  New wording ");
@@ -252,7 +276,7 @@ test("applyEdit keeps history and clears model lines only for deck principles", 
 });
 
 // ---------- 1.22.0: details, labels, collections ----------
-const P = (id, extra = {}) => Object.assign({ id, text: "Principle " + id, status: "active", collection: "", title: "", author: "", origin: "",
+const P = (id, extra = {}) => Object.assign({ id, text: "Thought " + id, status: "active", collection: "", title: "", author: "", origin: "",
   skip_count: 1, lifetime_skips: 2, reflect_count: 3, created_at: "2026-09-01T12:00:00.000Z", recent_lines: ["line"] }, extra);
 
 test("collections are counted case-insensitively, most used first", () => {
@@ -294,11 +318,11 @@ test("details are cut to their limits", () => {
   assert.equal(v.author.length, C.LIMITS.author);
 });
 
-test("card label shows collection over origin, with Principle as the fallback", () => {
+test("card label shows collection over origin, with Thought as the fallback", () => {
   assert.deepEqual(C.label(P("a", { collection: "Athletic mindset", origin: "Handed to me" })), { line1: "Athletic mindset", line2: "Handed to me" });
   assert.deepEqual(C.label(P("a", { collection: "Poems" })), { line1: "Poems", line2: "" });
-  assert.deepEqual(C.label(P("a", { origin: "Not sure" })), { line1: "Principle", line2: "Not sure" });
-  assert.deepEqual(C.label(P("a")), { line1: "Principle", line2: "" });
+  assert.deepEqual(C.label(P("a", { origin: "Not sure" })), { line1: "Thought", line2: "Not sure" });
+  assert.deepEqual(C.label(P("a")), { line1: "Thought", line2: "" });
 });
 
 test("rename moves a whole collection; merging keeps the target's spelling", () => {
@@ -315,7 +339,7 @@ test("rename moves a whole collection; merging keeps the target's spelling", () 
   assert.equal(JSON.stringify(list.map(({ collection, ...rest }) => rest)), before, "only collection changed");
 });
 
-test("remove clears a collection and leaves the principles", () => {
+test("remove clears a collection and leaves the thoughts", () => {
   const list = [P("a", { collection: "Explore This" }), P("b", { collection: "explore this" }), P("c", { collection: "Poems" })];
   assert.equal(C.removeCollection(list, "Explore This"), 2);
   assert.deepEqual(list.map((t) => [t.id, t.collection]), [["a", ""], ["b", ""], ["c", "Poems"]]);
@@ -363,7 +387,7 @@ test("the 4:00 AM boundary holds across daylight saving", () => {
   assert.equal(C.dayOf(new Date(2026, 2, 8, 4, 0)), "2026-03-08");
 });
 
-test("Not today rests a principle until the next Scales day and owes it one turn at the front", () => {
+test("Not today rests a thought until the next Scales day and owes it one turn at the front", () => {
   const t = card("a");
   C.applySkip(t, "2026-10-13");
   assert.deepEqual([t.skip_count, t.lifetime_skips, t.rest_until, t.lead_due], [1, 1, "2026-10-17", true]);
@@ -374,7 +398,7 @@ test("Not today rests a principle until the next Scales day and owes it one turn
   assert.equal(C.frontQueue([t], "2026-10-17").length, 1, "takes its turn the day it returns");
 });
 
-test("resting principles are never drawn, unless Show anyway is on", () => {
+test("resting thoughts are never drawn, unless Show anyway is on", () => {
   const list = [card("a", { rest_until: "2026-10-14" }), card("b")];
   for (let i = 0; i < 50; i++) assert.equal(C.nextCard(list, [], "2026-10-13", false).card.id, "b");
   const all = [card("a", { rest_until: "2026-10-14" }), card("b", { rest_until: "2026-10-14" })];
@@ -415,7 +439,7 @@ test("skipping a card at the front rests it and owes it tomorrow's turn", () => 
   assert.equal(C.frontQueue([t], "2026-10-18").length, 1);
 });
 
-test("principles saved before 1.24.0 neither rest nor lead", () => {
+test("thoughts saved before 1.24.0 neither rest nor lead", () => {
   const old = card("a", { skip_count: 3 });
   assert.equal(C.isResting(old, "2026-10-13"), false);
   assert.equal(C.frontQueue([old], "2026-10-13").length, 0);
@@ -430,7 +454,7 @@ test("Nothing left today names the earliest return; existing rests keep their da
 
 // ---------- undo (1.26.0) ----------
 const deckOf = (...ts) => Object.fromEntries(ts.map((t) => [t.id, t]));
-const full = (id, extra = {}) => Object.assign({ id, text: "Principle " + id, status: "active", skip_count: 0, lifetime_skips: 0,
+const full = (id, extra = {}) => Object.assign({ id, text: "Thought " + id, status: "active", skip_count: 0, lifetime_skips: 0,
   reflect_count: 0, consecutive_reflects: 0, recent_lines: [], created_at: "2026-10-01T12:00:00.000Z" }, extra);
 
 test("undo after Not today restores counts, rest, the turn at the front, activity and history", () => {
@@ -456,7 +480,7 @@ test("undo after Still working on it restores the reflect counts and skip step",
   assert.deepEqual([r.thoughts.a.reflect_count, r.thoughts.a.consecutive_reflects, r.thoughts.a.skip_count], [4, 0, 2]);
 });
 
-test("undo after Living it returns the principle to the deck and clears the record", () => {
+test("undo after Living it returns the thought to the deck and clears the record", () => {
   const thoughts = deckOf(full("a"));
   const activity = {};
   const u = C.undoPoint(thoughts, activity, ["a"], "a");
@@ -469,7 +493,7 @@ test("undo after Living it returns the principle to the deck and clears the reco
   assert.deepEqual(r.activity, {});
 });
 
-test("undo after Delete brings the principle back with its history", () => {
+test("undo after Delete brings the thought back with its history", () => {
   const thoughts = deckOf(full("a", { skip_count: 3, recent_lines: ["x"] }), full("b"));
   const u = C.undoPoint(thoughts, {}, ["a", "b"], "b");
   delete thoughts.a;
@@ -486,14 +510,14 @@ test("an undo point is a copy: later changes do not leak in, and applying it twi
   const r1 = C.applyUndo(u);
   r1.thoughts.a.skip_count = 9;
   const r2 = C.applyUndo(u);
-  assert.equal(r2.thoughts.a.text, "Principle a");
+  assert.equal(r2.thoughts.a.text, "Thought a");
   assert.equal(r2.thoughts.a.skip_count, 0);
   assert.equal(r2.current, null);
 });
 
 test("the page wires sheets as modal dialogs, Undo and the coach (1.26.0)", () => {
   const html = read("index.html");
-  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 22, "every sheet is a <dialog>");
+  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 23, "every sheet is a <dialog>");
   assert.doesNotMatch(html, /<section class="sheet/, "no sheet left as a hidden section");
   assert.match(html, /\.showModal\(\)/);
   for (const id of (html.match(/aria-labelledby="(sheet\w+Title)"/g) || []).map((m) => m.slice(17, -1))) {
@@ -529,7 +553,7 @@ test("the saved deck filter follows the collection's spelling and falls back to 
   assert.equal(C.deckFilter(list, "stoic"), "Stoic");
   assert.equal(C.deckFilter(list, ""), "");
   assert.equal(C.deckFilter(list, undefined), "");
-  assert.equal(C.deckFilter(list, "Poems"), "", "every principle in it is lived");
+  assert.equal(C.deckFilter(list, "Poems"), "", "every thought in it is lived");
   assert.equal(C.deckFilter(list, "Renamed away"), "");
 });
 
@@ -540,10 +564,10 @@ test("a filtered deck draws only from its collection, front of the stack include
   const pool = list.filter((t) => C.inCollection(t, "Stoic"));
   const r = lcg(3);
   for (let i = 0; i < 40; i++) assert.notEqual(C.nextCard(pool, [], today, false, r).card.id, "l1");
-  assert.equal(C.nextCard(list, [], today, false, r).card.id, "l1", "unfiltered, the principle owed a turn leads");
+  assert.equal(C.nextCard(list, [], today, false, r).card.id, "l1", "unfiltered, the thought owed a turn leads");
 });
 
-test("outcomeMix counts every principle once and its percentages add up to 100", () => {
+test("outcomeMix counts every thought once and its percentages add up to 100", () => {
   const list = [A("a", { status: "shed" }), A("b", { status: "shed" }), A("c"), A("d"), A("e", { skip_count: 1 }), A("f", { skip_count: 2 }), A("g", { skip_count: 4 })];
   const m = C.outcomeMix(list);
   assert.deepEqual([m.live, m.work, m.skip, m.total], [2, 2, 3, 7]);
@@ -602,7 +626,7 @@ test("keepAsNew adds the line beside the original, cited and linked, with fresh 
   const orig = full("o", { collection: "Self-overcoming", skip_count: 2, author: "Someone" });
   const now = new Date(2026, 9, 17, 9);
   const r = C.keepAsNew([orig], orig, "  What comfort are you buying today?  ", now);
-  const n = r.principle;
+  const n = r.thought;
   assert.equal(n.text, "What comfort are you buying today?");
   assert.equal(n.collection, "Self-overcoming");
   assert.equal(n.citation, "Kept from an AI line on Oct 17, 2026");
@@ -623,12 +647,12 @@ test("keepReplace changes only the wording and saves the earlier one (Story 10)"
   assert.equal(C.keepReplace([t, other], t, "taken", now).reason, "duplicate");
   assert.equal(C.keepReplace([t, other], t, "Old words", now).reason, "unchanged");
   const r = C.keepReplace([t, other], t, "Better words", now);
-  assert.equal(r.principle, t);
+  assert.equal(r.thought, t);
   assert.equal(t.text, "Better words");
   assert.deepEqual([t.skip_count, t.lifetime_skips, t.reflect_count, t.created_at], [3, 4, 5, "2026-10-01T12:00:00.000Z"]);
   assert.deepEqual(t.earlier, [{ text: "Old words", until: now.toISOString() }]);
   assert.equal(t.worded_from_ai, now.toISOString());
-  assert.deepEqual(t.recent_lines, [], "a deck principle gets a line for its new wording");
+  assert.deepEqual(t.recent_lines, [], "a deck thought gets a line for its new wording");
   for (let i = 0; i < 6; i++) C.keepReplace([t], t, "Words " + i, now);
   assert.equal(t.earlier.length, 5, "the last five wordings are kept");
 });
@@ -644,7 +668,7 @@ test("the Keep sheet offers add or replace, and both can be undone", () => {
   assert.match(html, /undoable\("Wording replaced\. Earlier wording kept\.", u\)/);
   assert.match(html, /e\.target\.closest\("#aiLine"\) && shown && shown\.ai\) \? "keep"/, "Keep is offered only on model lines, by pressing and holding the line");
   assert.match(html, /data-r="keep">Keep line/, "Keep is offered on the Ledger record too");
-  assert.match(html, /Earlier wording: /, "the Ledger shows the wording a principle had");
+  assert.match(html, /Earlier wording: /, "the Ledger shows the wording a thought had");
   assert.match(html, /Kept from an AI line on /);
 });
 
@@ -665,7 +689,7 @@ test("the three moves are buttons in view; Skip asks once; keys work (1.34.0, 1.
   assert.match(html, /phase = "rest"; peekId = t\.id; renderDeck\(\); showLine\(t, "push"\);/, "Keep it goes back with the line showing");
   assert.match(html, /reflectT = setTimeout\(finishReflect, C\.REFLECT_SEC \* 1000\)/);
   assert.match(html, /if \(t\.skip_count > 0\) \{ t\.skip_count--; reflectLighter = true; \}/);
-  assert.match(html, /id="reflNext">Next principle</);
+  assert.match(html, /id="reflNext">Next thought</);
   assert.match(html, /if \(t\) \{ C\.spendLines\(t\); save\(t\); \}/, "moving on spends the lines");
   assert.match(html, /aria-describedby="cardHow"/);
 });test("no menu: Today | Ledger, Capture and Settings are in view; the chip lists collections (1.75.0)", () => {
@@ -676,7 +700,7 @@ test("the three moves are buttons in view; Skip asks once; keys work (1.34.0, 1.
   assert.doesNotMatch(html, /data-m="capture"|data-m="settings"|data-m="ledger"|id="backDeck"|id="voiceHead"/);
   assert.match(html, /if \(cb\) \{ closeMenu\(\); setColl\(cb\.getAttribute\("data-coll"\)\); return; \}/);
   assert.match(html, /menu\.showModal\(\)/);
-  assert.match(html, /class="qbtn" data-move="edit"/, "Edit lives on the principle");
+  assert.match(html, /class="qbtn" data-move="question">/, "Question it lives on the thought; hold the words to edit (1.79.0)");
   assert.match(html, /data-move="save">/, "Save is a button beside Reply");
 });
 
@@ -703,14 +727,14 @@ test("Black and White: one face, two flat looks, no shadows, glass or rounded pa
   assert.match(html, /function applyLook\(\)/);
   assert.match(html, /\.seg \[data-look\]/);
 });
-test("at rest only the principle and the ring; lines appear on push and reflect (1.34.0)", () => {
+test("at rest only the thought and the ring; lines appear on push and reflect (1.34.0)", () => {
   const c = css(), html = read("index.html");
   const card = rule(c, ".card");
   assert.doesNotMatch(card, /background|box-shadow|border-radius|border:/, "no card chrome");
   assert.match(html, /id="words" style="font-weight:' \+ C\.inkWeight\(t\)/, "weight from the record");
   assert.doesNotMatch(html, /function wordsHtml|class="w"/, "no per-word spans: Safari set them one word per line");
   const rest = html.slice(html.indexOf("    v.innerHTML = '<article class=\"card' + (enter"), html.indexOf("  // The reflect screen's foot"));
-  assert.doesNotMatch(rest, /aiLine|whereHtml|chipsHtml|footHtml/, "nothing but the principle and the ring at rest");
+  assert.doesNotMatch(rest, /aiLine|whereHtml|chipsHtml|footHtml/, "nothing but the thought and the ring at rest");
   assert.doesNotMatch(html, /id="chips"|class="chips-row"/, "collections are off the home screen");
   assert.match(html, /id="chipLbl">All</, "the collection is a chip in the band (1.75.0)");
   assert.match(html, /<dialog class="sheet" id="sheetFocus"/);
@@ -721,7 +745,7 @@ test("at rest only the principle and the ring; lines appear on push and reflect 
   assert.match(html, /id="aiToggle" role="switch"/);
   assert.match(html, /sample = aiAllowed\(\) \? makeSampler\(savedKey\) : null/, "AI lines off (or not allowed) uses the built-in questions");
   assert.match(html, /if \(sample && !C\.lineFresh\(t, "push"\)\) fetchLine\(t, "push"\);\s*if \(!C\.lineFresh\(t, "reflect"\)\) fetchQuote\(t\);/, "the push line and the quote are fetched ahead, only when missing or stale");
-  assert.match(html, /if \(live && live\.text === of\) \{ C\.keepLine\(live, kind, s\); save\(live\); \}/, "a written line is kept on the principle");
+  assert.match(html, /if \(live && live\.text === of\) \{ C\.keepLine\(live, kind, s\); save\(live\); \}/, "a written line is kept on the thought");
 });test("the Ledger: one list by stage, the week and the stages in the band (1.77.0)", () => {
   const html = read("index.html"), c = css();
   for (const id of ["lWeek", "lStage", "cal", "ledgerList", "sheetRow", "rowStage", "rowNums", "rowTl", "rowActs", "rowHist"]) assert.match(html, new RegExp('id="' + id + '"'), id);
@@ -730,17 +754,17 @@ test("at rest only the principle and the ring; lines appear on push and reflect 
   assert.match(html, /if \(g\.id === "avoiding" && most\) \{ html \+= avoidedHtml\(most\); rows = rows\.filter/, "Avoided most leads Avoiding, not repeated below");
   assert.match(html, /class="lfold" id="sec-lived" data-fold aria-expanded="' \+ livedOpen/, "Lived folds to one line");
   assert.match(html, /data-today="' \+ esc\(t\.id\) \+ '">Put it on Today/);
-  assert.match(rule(c, ".lrow3 .lt"), /-webkit-line-clamp:2;/, "two lines per principle");
+  assert.match(rule(c, ".lrow3 .lt"), /-webkit-line-clamp:2;/, "two lines per thought");
   assert.match(html, /"Resting until " \+ weekdayOf/, "resting is said in words, not only by dimming");
   assert.match(html, /C\.timeline\(t\)/);
   for (const r of ["show", "caught", "edit", "ev", "keep", "talk", "del"]) assert.match(html, new RegExp('data-r="' + r + '"'), r + " action");
-  assert.match(html, /class="primary" data-r="show">Put it on Today/, "one blue action on a principle");
+  assert.match(html, /class="primary" data-r="show">Put it on Today/, "one blue action on a thought");
   assert.match(html, /class="del" data-r="del">Delete/, "Delete is a quiet text button");
   assert.match(html, /var cls = a && \(a\.s \|\| a\.c\) \? "lv" : k >= 3 \? "on2" : k \? "on" : "";/, "the 12 weeks stay");
 });
-test("moves are kept per principle for the Ledger marks (1.77.0)", () => {
+test("moves are kept per thought for the Ledger marks (1.77.0)", () => {
   const t = { reflect_count: 2, skips_on: ["2026-10-01", "2026-10-05"], caught: [{ day: "2026-10-03" }] };
-  assert.deepEqual(C.recentMoves(t, 5).map((m) => m.m), ["keep", "keep", "skip", "caught", "skip"], "older principles: undated Reflects, then dated skips and catches");
+  assert.deepEqual(C.recentMoves(t, 5).map((m) => m.m), ["keep", "keep", "skip", "caught", "skip"], "older thoughts: undated Reflects, then dated skips and catches");
   C.noteSkipDay(t, "2026-10-10"); C.noteMoveOf(t, "2026-10-11", "keep"); C.addCatch(t, "2026-10-12", "");
   assert.deepEqual(t.moves.map((m) => m.m), ["skip", "keep", "caught"]);
   assert.deepEqual(C.recentMoves(t, 5).map((m) => m.m), ["caught", "skip", "skip", "keep", "caught"]);
@@ -776,7 +800,7 @@ test("touch targets: buttons a thumb can hit (1.36.0, 1.73.0)", () => {
   assert.match(rule(c, ".lrow3"), /min-height:56px;/);
   assert.match(rule(c, ".scount button"), /min-height:48px;/);
   const html = read("index.html");
-  assert.match(html, /class="btn3d" id="reflUndo">Undo<\/button><button type="button" class="primary" id="reflNext">Next principle/, "Undo sits beside Next");
+  assert.match(html, /class="btn3d" id="reflUndo">Undo<\/button><button type="button" class="primary" id="reflNext">Next thought/, "Undo sits beside Next");
   assert.doesNotMatch(html, /id="setBar"/, "no progress line at the top (1.62.0)");
   assert.match(html, /el\.innerHTML = parts\.length \? parts\.join\(" \\u00b7 "\) : '<span class="sr">Scales<\/span>';/, "the deck heading is never empty");
 });
@@ -839,7 +863,7 @@ test("Talk it through: the request carries the line and turns, replies are check
   assert.equal(C.vetReply("One\n\nparagraph.").reply, "One paragraph.");
 });
 
-test("talks are saved on the principle, newest last, five kept (Story 13)", () => {
+test("talks are saved on the thought, newest last, five kept (Story 13)", () => {
   const t = {};
   for (let i = 0; i < 7; i++) C.addTalk(t, { at: "t" + i, line: "l", turns: [] });
   assert.deepEqual(t.talks.map((x) => x.at), ["t2", "t3", "t4", "t5", "t6"]);
@@ -896,7 +920,7 @@ test("today's set: a size you choose, then done, then focus or more (1.32.0)", (
   assert.deepEqual(C.dayState(s, "2026-10-18"), C.freshDay("2026-10-18"), "a new Scales day starts fresh");
 });
 
-test("focus choices are today's principles, newest first, once each; the summary reads as a sentence", () => {
+test("focus choices are today's thoughts, newest first, once each; the summary reads as a sentence", () => {
   const s = C.freshDay("2026-10-17");
   [["a", "keep"], ["b", "skip"], ["a", "keep"], ["gone", "skip"], ["c", "shed"]].forEach(([id, m]) => C.noteDayMove(s, id, m));
   assert.deepEqual(C.focusChoices(s, { a: { id: "a" }, b: { id: "b" }, c: { id: "c" } }).map((x) => x.t.id), ["c", "a", "b"]);
@@ -924,7 +948,7 @@ test("Testing it asks for the smallest act every third time; acts are kept by da
   assert.equal(C.actToday(t, "2026-10-18"), "");
 });
 
-test("Caught it: three catches in 30 days suggest Living it, for deck principles only", () => {
+test("Caught it: three catches in 30 days suggest Living it, for deck thoughts only", () => {
   const t = { status: "active" };
   C.addCatch(t, "2026-09-10", "too old");
   C.addCatch(t, "2026-10-01", "one"); C.addCatch(t, "2026-10-10", "two");
@@ -951,7 +975,7 @@ test("your week: seven days, counts from the activity log, and what pushed back 
   assert.match(p, /first person as Friedrich Nietzsche/); assert.match(p, /Pushed back most, skipped 2 times: A/);
 });
 
-test("a principle's timeline lists what happened, newest first", () => {
+test("a thought's timeline lists what happened, newest first", () => {
   const t = { created_at: new Date(2026, 8, 20, 12).toISOString(), skips_on: ["2026-10-14"], caught: [{ day: "2026-10-17", text: "Phone stayed in the kitchen" }],
     acts: [{ day: "2026-10-16", text: "Leave the phone" }], talks: [{ at: new Date(2026, 9, 17, 9).toISOString(), day: "2026-10-17", voice_name: "David Goggins", move: "skip", line: "x" }] };
   const tl = C.timeline(t);
@@ -969,7 +993,7 @@ test("the page wires the day: moves counted, undo restores the day; focus, check
   assert.match(html, /<h1>Done for today\.<\/h1>/);
   assert.doesNotMatch(html, /renderCheckin|renderFocus|openAct|id="sheetAct"|id="sheetWeek"|openWeek|data-m="caught"/);
   assert.match(html, /<b>This week<\/b> · ' \+ said/, "the week heads the Ledger (1.77.0)");
-  assert.match(html, /data-r="caught"/, "Caught it stays in each principle's history");
+  assert.match(html, /data-r="caught"/, "Caught it stays in each thought's history");
   for (const id of ["sheetCaught", "setOut", "openShortcuts"]) assert.match(html, new RegExp('id="' + id + '"'), id);
   assert.match(html, /if \(kind === "shed"\) d\.s\+\+; else if \(kind === "caught"\) d\.c = \(d\.c \|\| 0\) \+ 1; else d\.i\+\+;/);
 });
@@ -978,7 +1002,7 @@ test("the page wires the day: moves counted, undo restores the day; focus, check
 test("holdOutcome: a tap does nothing, early is Not today, through is Testing it, lift is Living it", () => {
   assert.deepEqual([C.HOLD_FULL, C.HOLD_TAP, C.HOLD_LIFT], [2400, 300, 70]);
   assert.equal(C.holdOutcome(0, 0).move, "");
-  assert.equal(C.holdOutcome(299, 0).move, "", "a stray touch never rests a principle");
+  assert.equal(C.holdOutcome(299, 0).move, "", "a stray touch never rests a thought");
   assert.equal(C.holdOutcome(300, 0).move, "skip");
   assert.equal(C.holdOutcome(2399, 0).move, "skip");
   assert.equal(C.holdOutcome(2400, 0).move, "keep");
@@ -1000,7 +1024,7 @@ test("ledgerGroup: avoiding at three Not today, nearly lived once worked clear a
   const td = "2026-10-25";
   assert.equal(C.ledgerGroup(A("a", { skip_count: 3 }), td), "avoiding");
   assert.equal(C.ledgerGroup(A("a", { skip_count: 2, reflect_count: 9 }), td), "working");
-  assert.equal(C.ledgerGroup(A("a"), td), "working", "a new principle is being worked on");
+  assert.equal(C.ledgerGroup(A("a"), td), "working", "a new thought is being worked on");
   assert.equal(C.ledgerGroup(A("a", { reflect_count: 3 }), td), "nearly");
   assert.equal(C.ledgerGroup(A("a", { reflect_count: 2, consecutive_reflects: 2 }), td), "nearly");
   assert.equal(C.ledgerGroup(A("a", { caught: [{ day: "2026-10-20", text: "" }] }), td), "nearly");
@@ -1030,7 +1054,7 @@ test("two kept lines: reused until a test or a wording change; pushback sharpens
   assert.equal(C.REFLECT_SEC, 8);
 });
 
-test("long principles wrap normally and fold on push and reflect (1.34.1)", () => {
+test("long thoughts wrap normally and fold on push and reflect (1.34.1)", () => {
   const c = css(), html = read("index.html");
   assert.match(c, /\.thought\.small\.fold \{[^}]*-webkit-line-clamp:4;/);
   assert.match(html, /var fold = lifted && sizeClass\(t\.text\) !== "";/);
@@ -1047,7 +1071,7 @@ test("an update shows a bar with Reload that stays until tapped (1.34.2)", () =>
   assert.match(sw, /self\.clients\.claim\(\)/, "the new worker takes over, which fires controllerchange");
 });
 
-test("push and reflect show the principle as plain text, not word spans (1.34.3)", () => {
+test("push and reflect show the thought as plain text, not word spans (1.34.3)", () => {
   const html = read("index.html");
   assert.match(html, /var words = '<div class="thought plain' \+ sizeClass\(t\.text\)[^\n]*esc\(t\.text\) \+ "<\/div>"/);
 });
@@ -1087,7 +1111,7 @@ test("wqClean strips links, templates, references and markup", () => {
   assert.equal(C.wqClean("See [https://example.com the page] now"), "See the page now");
 });
 
-test("rankQuotes puts the quotes sharing the most words with the principle first", () => {
+test("rankQuotes puts the quotes sharing the most words with the thought first", () => {
   const q = C.parseQuotes(WT);
   const r = C.rankQuotes("Stop avoiding the hard conversation; facing it is the work of the soul", q, 5);
   assert.equal(r[0].i, 1);
@@ -1108,7 +1132,7 @@ test("the model only picks a number from the list, or none", () => {
   assert.match(C.wqUrl("Carl Jung"), /^https:\/\/en\.wikiquote\.org\/w\/api\.php\?action=parse&prop=wikitext&.*origin=\*&page=Carl_Jung$/);
 });
 
-test("a quote, or that none fit, is kept on the principle like a line", () => {
+test("a quote, or that none fit, is kept on the thought like a line", () => {
   const t = A("a", { text: "Face it." });
   C.keepLine(t, "reflect", "", { none: true, voice: "jung" });
   assert.equal(C.lineFresh(t, "reflect"), true, "none fit is remembered, so the search is not repeated");
@@ -1125,7 +1149,7 @@ test("the reflect screen shows the quote or nothing; the push line is plain (1.3
   assert.match(html, /ranked\[0\]\.score >= 2 \? 0 : -1/, "without a key, only a close match is shown");
   assert.match(html, /Never invent anything about the user's day, schedule, hours, plans, people or circumstances\./);
   assert.match(html, /No metaphors or imagery/);
-  assert.match(html, /r\.principle\.citation = "Quoted from Wikiquote";/, "a kept quote carries its author and work");
+  assert.match(html, /r\.thought\.citation = "Quoted from Wikiquote";/, "a kept quote carries its author and work");
   assert.match(html, /var LSQ = "scales\.quotes\.v1", QUOTE_DAYS = 30/);
 });
 
@@ -1212,7 +1236,7 @@ test("Later is offered beside Reply once the line is read, and is not a skip (1.
   assert.match(html, /data-move="later">' \+ \(new Date\(\)\.getHours\(\) < C\.CHECKIN_HOUR \? "Later tonight" : "Later"\)/);
   const save = html.slice(html.indexOf("  function saveLater()"), html.indexOf("  // After REFLECT_SEC on the reflect screen:"));
   assert.doesNotMatch(save, /applySkip|skip_count|noteSkipDay|logActivity/, "no count, no weight, no rest");
-  assert.match(html, /return C\.inCollection\(t, c\) && !t\.later;/, "waiting principles are left out of the deck");
+  assert.match(html, /return C\.inCollection\(t, c\) && !t\.later;/, "waiting thoughts are left out of the deck");
   assert.match(html, /L\.later = null; L\.later_blocked = true; save\(L\);/);
   assert.match(html, /fromLater = true; laterId = L\.id;/, "it comes back first, waiting for a choice (1.56.0)");
   assert.match(html, /\(fromLater \? "Saved from earlier" : "Reflecting"\)/);
@@ -1237,12 +1261,12 @@ test("text follows the iPhone text size; contrast passes; Undo waits (1.45.0)", 
 // ---------- 1.47.0: first run and a visible capture ----------
 test("a new deck opens on the welcome; an existing one never does; + opens Capture (1.47.0)", () => {
   const html = read("index.html");
-  assert.match(html, /if \(!prefs\.welcoming && all\(\)\.length\) \{ prefs\.onboarded = true; savePrefs\(\); \}/, "someone with principles skips the welcome");
+  assert.match(html, /if \(!prefs\.welcoming && all\(\)\.length\) \{ prefs\.onboarded = true; savePrefs\(\); \}/, "someone with thoughts skips the welcome");
   assert.match(html, /function renderWelcome\(\)/);
   assert.match(html, /Best as an app: in Safari, tap Share, then Add to Home Screen/);
   assert.match(html, /var finish = function \(\) \{[^}]*prefs\.onboarded = true;/); assert.match(html, /\$\("wDone"\)\.onclick = finish;/);
   assert.match(html, /var b = e\.target\.closest && e\.target\.closest\("\[data-starter\]"\)/, "starter decks work from the welcome too");
-  assert.match(html, /id="addTop" aria-label="Capture a principle"/);
+  assert.match(html, /id="addTop" aria-label="Capture a thought"/);
   assert.match(html, /\$\("addTop"\)\.onclick = function \(\) \{ closeMenu\(\); openCapture\(\); \};/);
 });
 
@@ -1267,7 +1291,7 @@ test("Settings is an index: each part and what it is set to, the controls one ta
 // ---------- 1.49.0: wording sweep, Wikiquote credit, privacy ----------
 test("no leftover old names in the app's words", () => {
   const html = read("index.html").replace(/\/\/[^\n]*/g, "").replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
-  for (const w of [/>Tested</, /Testing it/, /evening check-in/i, /today’s focus/, /sets a principle aside/, /You keep setting this aside/]) assert.doesNotMatch(html, w);
+  for (const w of [/>Tested</, /Testing it/, /evening check-in/i, /today’s focus/, /sets a thought aside/, /You keep setting this aside/]) assert.doesNotMatch(html, w);
 });
 test("quotes credit Wikiquote and Settings says what leaves the phone", () => {
   const html = read("index.html");
@@ -1316,8 +1340,8 @@ test("the badge counts today's set left plus Later that is back", () => {
 });
 test("reminder text says what is waiting", () => {
   const at = (h) => new Date(2026, 9, 26, h, 0);
-  assert.equal(C.pushText("morning", { day: "2026-10-25", left: 0, size: 5, active: 9, laters: [] }, at(8)), "Today’s set is ready: 5 principles.");
-  assert.equal(C.pushText("evening", { day: "2026-10-26", left: 0, size: 5, active: 9, laters: [{ day: "2026-10-26" }] }, at(18)), "One principle saved for later is back.");
+  assert.equal(C.pushText("morning", { day: "2026-10-25", left: 0, size: 5, active: 9, laters: [] }, at(8)), "Today’s set is ready: 5 thoughts.");
+  assert.equal(C.pushText("evening", { day: "2026-10-26", left: 0, size: 5, active: 9, laters: [{ day: "2026-10-26" }] }, at(18)), "One thought saved for later is back.");
   assert.equal(C.pushText("evening", { day: "2026-10-26", left: 2, size: 5, active: 9, laters: [] }, at(18)), "2 left in today’s set.");
   assert.equal(C.pushText("evening", { day: "2026-10-26", left: 0, size: 5, active: 9, laters: [] }, at(18)), "Done for today. Nothing is waiting.");
 });
@@ -1366,7 +1390,7 @@ test("sheets stop below the status bar fade and pin their title row", () => {
 });
 
 // ---------- 1.56.0: Saved from earlier waits for a choice ----------
-test("a principle back from Later opens with its quote and counts nothing until you choose", () => {
+test("a thought back from Later opens with its quote and counts nothing until you choose", () => {
   const html = read("index.html");
   assert.match(html, /fromLater = true; laterId = L\.id; phase = "rest";\s*renderDeck\(\); showLine\(L, "reflect"\);/);
   assert.doesNotMatch(html, /fromLater = true; act\("keep"\);/);
@@ -1375,7 +1399,7 @@ test("a principle back from Later opens with its quote and counts nothing until 
 });
 
 // ---------- 1.56.1: the fold hint only when cut off ----------
-test("Tap to read it all shows only when the principle is cut off", () => {
+test("Tap to read it all shows only when the thought is cut off", () => {
   const html = read("index.html");
   assert.match(html, /if \(w\.scrollHeight <= w\.clientHeight \+ 1\) \{ w\.classList\.remove\("fold"\);/);
 });
@@ -1389,8 +1413,8 @@ test("nothing is sent to AI until the user allows it", () => {
   assert.doesNotMatch(html, /sample = prefs\.ai_off \? null : makeSampler/);
 });
 
-// ---------- 1.59.0: lines only for the principle on screen ----------
-test("lines are written for the principle on screen only, not the next one", () => {
+// ---------- 1.59.0: lines only for the thought on screen ----------
+test("lines are written for the thought on screen only, not the next one", () => {
   const html = read("index.html");
   assert.doesNotMatch(html, /if \(n && n\.id !== current\) ensureLines\(n\);/);
   assert.match(html, /function requestLine\(t\) \{ shown = null; ensureLines\(t\); prefetchNext\(\); \}/);

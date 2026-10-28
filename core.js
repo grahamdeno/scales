@@ -11,23 +11,23 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.78.0";
+  var VERSION = "1.79.0";
   var BUILT = "2026-10-28";
 
-  // CAP        highest weight a principle can reach (4x as likely as a fresh one)
+  // CAP        highest weight a thought can reach (4x as likely as a fresh one)
   // MAX_WORDS  longest consideration the app will show. Long enough for one complete
   //            thought, short enough to read at a glance on the card.
-  // MAX_TEXT   longest principle that can be captured or edited. Covers long imported
+  // MAX_TEXT   longest thought that can be captured or edited. Covers long imported
   //            entries such as short poems; the card shrinks its type for long text.
   var CAP = 4, MAX_WORDS = 25, MAX_TEXT = 1500;
-  // Limits for a principle's details, and the fixed origin choices.
-  var LIMITS = { collection: 40, title: 120, author: 80 };
+  // Limits for a thought's details, and the fixed origin choices.
+  var LIMITS = { collection: 40, title: 120, author: 80, why: 280 };
   var ORIGINS = ["Handed to me", "Chosen", "Not sure"];
 
   // Maps a not today (skip) count to a prompt and built-in line tier: 0, 1 or 3.
   function tier(s) { return s >= 3 ? 3 : (s >= 1 ? 1 : 0); }
 
-  // How likely a principle is to be picked: 1 + 0.5 per skip, capped at CAP.
+  // How likely a thought is to be picked: 1 + 0.5 per skip, capped at CAP.
   function weight(t) { return Math.min(1 + 0.5 * t.skip_count, CAP); }
 
   function words(s) { return s.trim().split(/\s+/).filter(Boolean).length; }
@@ -75,7 +75,7 @@ var ScalesCore = (function () {
   var SOFT = /\b(be (gentle|kind|easy) (with|on|to) yourself|give yourself (grace|permission|a break|time)|self[- ]compassion|it'?s (ok|okay|alright|fine)\b|no shame|you deserve (rest|a break)|that'?s (ok|okay)|allow yourself|it is (ok|okay|fine))/i;
 
   // Check a model answer. Returns { line } when usable, or { reason } when not.
-  // The echo check only applies to longer principles: a short one ("Discipline is
+  // The echo check only applies to longer thoughts: a short one ("Discipline is
   // freedom") is naturally named inside a good line, so containing it is not a sign
   // of a lazy answer.
   function vet(raw, t) {
@@ -88,7 +88,7 @@ var ScalesCore = (function () {
     return { line: s };
   }
 
-  // Principle texts are compared ignoring case, surrounding spaces and runs of spaces.
+  // Thought texts are compared ignoring case, surrounding spaces and runs of spaces.
   function normText(s) { return String(s || "").trim().replace(/\s+/g, " ").toLowerCase(); }
 
   // Collections in use across list, most used first, then by name. Each entry is
@@ -115,7 +115,7 @@ var ScalesCore = (function () {
   }
 
   // Turn an edit (a string for wording only, or an object with any of text, collection,
-  // title, author, origin) into the full set of values it would save for principle t.
+  // title, author, origin) into the full set of values it would save for thought t.
   function editValues(list, t, edit) {
     if (typeof edit === "string") edit = { text: edit };
     edit = edit || {};
@@ -126,18 +126,22 @@ var ScalesCore = (function () {
       collection: canonCollection(list, pick("collection", t.collection || "")),
       title: String(pick("title", t.title || "") || "").trim().slice(0, LIMITS.title),
       author: String(pick("author", t.author || "") || "").trim().slice(0, LIMITS.author),
-      origin: ORIGINS.indexOf(origin) >= 0 ? origin : ""
+      origin: ORIGINS.indexOf(origin) >= 0 ? origin : "",
+      // 1.79.0: why you believe it, and what would change your mind. Optional.
+      why: String(pick("why", t.why || "") || "").trim().slice(0, LIMITS.why),
+      change: String(pick("change", t.change || "") || "").trim().slice(0, LIMITS.why)
     };
   }
 
-  // Check an edit to principle t against every principle in list.
-  // Returns { ok: true, values } or { reason, conflict } where conflict is the other principle.
+  // Check an edit to thought t against every thought in list.
+  // Returns { ok: true, values } or { reason, conflict } where conflict is the other thought.
   function checkEdit(list, t, edit) {
     var v = editValues(list, t, edit);
     if (!v.text) return { reason: "empty" };
     if (v.text.length > MAX_TEXT) return { reason: "too long" };
     var same = v.text === t.text.trim() && v.collection === String(t.collection || "").trim() &&
-      v.title === String(t.title || "").trim() && v.author === String(t.author || "").trim() && v.origin === (t.origin || "");
+      v.title === String(t.title || "").trim() && v.author === String(t.author || "").trim() && v.origin === (t.origin || "") &&
+      v.why === String(t.why || "").trim() && v.change === String(t.change || "").trim();
     if (same) return { reason: "unchanged" };
     var key = normText(v.text);
     for (var i = 0; i < list.length; i++) {
@@ -147,21 +151,21 @@ var ScalesCore = (function () {
   }
 
   // Apply a checked edit. Counts, dates, weight, status and evidence are kept.
-  // Only a change of wording on a principle still in the deck drops its saved model
+  // Only a change of wording on a thought still in the deck drops its saved model
   // lines, so the next line is written for the new wording. Detail-only edits keep them,
-  // and a lived principle always keeps them: its last line is part of the record.
+  // and a lived thought always keeps them: its last line is part of the record.
   function applyEdit(t, edit, list) {
     var v = editValues(list || [], t, edit);
     var reworded = v.text !== t.text.trim();
-    t.text = v.text; t.collection = v.collection; t.title = v.title; t.author = v.author; t.origin = v.origin;
+    t.text = v.text; t.collection = v.collection; t.title = v.title; t.author = v.author; t.origin = v.origin; t.why = v.why; t.change = v.change;
     if (reworded && t.status === "active") t.recent_lines = [];
     t.edited_at = new Date().toISOString();
     return t;
   }
 
-  // The two lines at the top of a card: the collection (or "Principle") and the origin.
+  // The two lines at the top of a card: the collection (or "Thought") and the origin.
   function label(t) {
-    return { line1: String(t.collection || "").trim() || "Principle", line2: t.origin || "" };
+    return { line1: String(t.collection || "").trim() || "Thought", line2: t.origin || "" };
   }
 
   // Check renaming the collection named from to the name to. Returns
@@ -179,8 +183,8 @@ var ScalesCore = (function () {
     return { ok: true, merge: false, target: s, moving: src.count, total: src.count };
   }
 
-  // Rename or merge: every principle in collection from moves to the checked target.
-  // Returns the number moved. Nothing else on a principle changes.
+  // Rename or merge: every thought in collection from moves to the checked target.
+  // Returns the number moved. Nothing else on a thought changes.
   function renameCollection(list, from, to) {
     var r = checkRename(list, from, to); if (!r.ok) return 0;
     var k = String(from).toLowerCase(), n = 0;
@@ -188,23 +192,23 @@ var ScalesCore = (function () {
     return n;
   }
 
-  // Clear collection name from every principle in it. Returns the number cleared.
+  // Clear collection name from every thought in it. Returns the number cleared.
   function removeCollection(list, name) {
     var k = String(name).trim().toLowerCase(), n = 0;
     list.forEach(function (t) { if (String(t.collection || "").trim().toLowerCase() === k) { t.collection = ""; n++; } });
     return n;
   }
 
-  // Fields every starter principle carries, as a worked example of each.
+  // Fields every starter thought carries, as a worked example of each.
   var STARTER_FIELDS = ["text", "title", "author", "origin", "tags", "link", "citation"];
 
-  // Merge one starter deck into list. Returns { add, updated }: add is the new principles
+  // Merge one starter deck into list. Returns { add, updated }: add is the new thoughts
   // to save (without ids), updated is how many existing ones changed. Rules:
   //   - A starter line already in the deck is never added twice.
   //   - An older wording listed in an item's "replaces" is updated in place to the new
-  //     wording, keeping counts, dates and status; a principle still in the deck drops its
+  //     wording, keeping counts, dates and status; a thought still in the deck drops its
   //     saved AI lines, as with any change of wording.
-  //   - On a principle that matches a starter line, empty fields are filled from the deck;
+  //   - On a thought that matches a starter line, empty fields are filled from the deck;
   //     values the user set are never overwritten. The collection is filled the same way.
   function loadStarter(list, deckName, items, base) {
     var byText = {}; list.forEach(function (t) { byText[normText(t.text)] = t; });
@@ -238,7 +242,7 @@ var ScalesCore = (function () {
   // ---------- days, rest and the front of the stack ----------
   // DAY_START_HOUR  a Scales day runs from 4:00 AM to 4:00 AM local time, so a late-night
   //                 session still belongs to the day it started in.
-  // REST_DAYS       how long Not today sets a principle aside. Four days, so a reflex skip
+  // REST_DAYS       how long Not today sets a thought aside. Four days, so a reflex skip
   //                 each morning cannot turn into a daily habit (1.25.0; was one day in 1.24.0).
   // REST_MIN/MAX   the range offered in Settings (1.30.0). REST_DAYS stays the default.
   var DAY_START_HOUR = 4, REST_DAYS = 4, REST_MIN = 1, REST_MAX = 7;
@@ -270,7 +274,7 @@ var ScalesCore = (function () {
     return t;
   }
 
-  // Principles waiting for their turn at the front: set aside since they last led, and no
+  // Thoughts waiting for their turn at the front: set aside since they last led, and no
   // longer resting. Most avoided first; ties go to the one waiting longest since last shown.
   function frontQueue(list, today, excludeId) {
     return list.filter(function (t) { return t.lead_due && !isResting(t, today) && t.id !== excludeId; })
@@ -280,7 +284,7 @@ var ScalesCore = (function () {
   }
 
   // Choose the next card. Returns { card, lead, resting } where lead says it is taking its
-  // turn at the front and resting counts principles set aside today. card is null when the
+  // turn at the front and resting counts thoughts set aside today. card is null when the
   // deck is empty, or when everything is resting and showAnyway is off.
   function nextCard(list, history, today, showAnyway, rand) {
     var current = history.length ? history[history.length - 1] : null;
@@ -291,7 +295,7 @@ var ScalesCore = (function () {
     return { card: pickFrom(pool, history, rand), lead: false, resting: resting };
   }
 
-  // The earliest day a resting principle returns, or "" when none is resting.
+  // The earliest day a resting thought returns, or "" when none is resting.
   function nextReturn(list, today) {
     return list.filter(function (t) { return isResting(t, today); })
       .map(function (t) { return t.rest_until; }).sort()[0] || "";
@@ -304,7 +308,7 @@ var ScalesCore = (function () {
     return t;
   }
 
-  // Undo (1.26.0). undoPoint copies everything a move or a delete can change: every principle
+  // Undo (1.26.0). undoPoint copies everything a move or a delete can change: every thought
   // (the move itself, plus the next card's turn at the front being used up when it is shown),
   // the activity grid, the card history and the card on screen. applyUndo hands back fresh
   // copies, so the same point can be applied again and later changes never leak into it.
@@ -320,13 +324,13 @@ var ScalesCore = (function () {
   // Matching ignores capitalization and spacing, like collections() and canonCollection().
   function collKey(n) { return String(n || "").trim().replace(/\s+/g, " ").toLowerCase(); }
   function inCollection(t, name) { return !collKey(name) || collKey(t && t.collection) === collKey(name); }
-  // Chips for the deck: the collections that still have principles in the deck, most used first.
-  // Empty when no deck principle has a collection, so the row is not drawn at all.
+  // Chips for the deck: the collections that still have thoughts in the deck, most used first.
+  // Empty when no deck thought has a collection, so the row is not drawn at all.
   function deckCollections(list) {
     return collections(list.filter(function (t) { return t.status === "active"; }));
   }
   // The saved filter, spelled as the collection is now, or "" when that collection is gone from the
-  // deck (renamed, removed, or every principle in it lived), so the deck falls back to all.
+  // deck (renamed, removed, or every thought in it lived), so the deck falls back to all.
   function deckFilter(list, name) {
     if (!collKey(name)) return "";
     var hit = deckCollections(list).filter(function (c) { return collKey(c.name) === collKey(name); })[0];
@@ -355,7 +359,7 @@ var ScalesCore = (function () {
 
   // Hold (1.33.0): the deck's one gesture. The ring is held down; how long and where the finger
   // goes on release decide the move. A press shorter than HOLD_TAP is a tap and does nothing, so a
-  // stray touch never rests a principle for days. Lifting the finger HOLD_LIFT px or more toward
+  // stray touch never rests a thought for days. Lifting the finger HOLD_LIFT px or more toward
   // the top before release is Lived at any point; holding the full HOLD_FULL is Testing it;
   // letting go in between is Not today. ms is how long the ring was held, dy the vertical offset
   // in pixels (negative going up). progress (0 to 1) drives the ring and how many words are inked.
@@ -370,18 +374,18 @@ var ScalesCore = (function () {
     return { move: move, progress: Math.round(progress * 1000) / 1000 };
   }
 
-  // Type weight (1.33.0): how heavy a principle is set, from its current Not today count. A fresh
-  // principle is 400; each Not today adds 125, to 900 at four or more. Testing it lowers the count,
+  // Type weight (1.33.0): how heavy a thought is set, from its current Not today count. A fresh
+  // thought is 400; each Not today adds 125, to 900 at four or more. Testing it lowers the count,
   // so the words lighten as the avoidance is worked off.
   function inkWeight(t) { return 400 + Math.min(Math.max(+(t && t.skip_count) || 0, 0), 4) * 125; }
 
-  // Two lines per principle (1.34.0), kept on it in t.lines and reused every time it comes up:
+  // Two lines per thought (1.34.0), kept on it in t.lines and reused every time it comes up:
   //   push     shown when you let go early, to make you think twice about Not today
   //   reflect  shown after you hold through, to sit with while Testing it
   // A kept line is fresh while it was written for the current wording. A push line written before
-  // the principle reached Avoiding (three or more Not today) is refreshed once when it gets there,
+  // the thought reached Avoiding (three or more Not today) is refreshed once when it gets there,
   // so the pushback sharpens instead of repeating. Testing it spends both lines (spendLines): the
-  // next time the principle comes up, new ones are written. Only model lines are kept.
+  // next time the thought comes up, new ones are written. Only model lines are kept.
   // A reflect line is a quote (1.35.0): { text, author, src, voice } or { none: true } when no quote fit,
   // which is kept too so the search is not repeated.
   function lineFresh(t, kind) {
@@ -458,7 +462,7 @@ var ScalesCore = (function () {
     else if (h2 && !GENERIC.test(h2)) work = h2.replace(year, "");
     return (work || cite || "").slice(0, 90).replace(/[,;:\s]+$/, "");
   }
-  // Rough topical overlap between a principle and a quote: shared word stems of four letters or more.
+  // Rough topical overlap between a thought and a quote: shared word stems of four letters or more.
   var STOP = " that this with from have they them their what when where which while your yours about would could should there these those been being into than then over only also just very more most such some like make made does done will shall must ever every never always other another because ";
   function stems(s) {
     var o = {};
@@ -468,7 +472,7 @@ var ScalesCore = (function () {
     });
     return o;
   }
-  // The quotes most likely to speak to a principle, best first: [{ i, score }], n of them at most.
+  // The quotes most likely to speak to a thought, best first: [{ i, score }], n of them at most.
   function rankQuotes(text, quotes, n) {
     var p = stems(text);
     return (quotes || []).map(function (x, i) {
@@ -478,9 +482,9 @@ var ScalesCore = (function () {
     }).sort(function (a, b) { return b.score - a.score || quotes[a.i].q.length - quotes[b.i].q.length; }).slice(0, n || 20);
   }
   // The prompt that asks the model to choose, and reading its answer: a number from the list, or 0 for none.
-  function quotePrompt(principle, voiceName, list) {
-    return "A user has written this principle to live by:\n" + principle + "\n\n" +
-      "Below are numbered quotes by " + voiceName + ". Choose the one quote that most directly speaks to this principle, so that reading it deepens, sharpens or challenges it. " +
+  function quotePrompt(thought, voiceName, list) {
+    return "A user has written this thought to live by:\n" + thought + "\n\n" +
+      "Below are numbered quotes by " + voiceName + ". Choose the one quote that most directly speaks to this thought, so that reading it deepens, sharpens or challenges it. " +
       "If none clearly speaks to it, answer 0. A loose or generic fit is a 0.\n" +
       "Answer with the number only.\n\n" + list.map(function (q, i) { return (i + 1) + ". " + q.q; }).join("\n");
   }
@@ -493,7 +497,7 @@ var ScalesCore = (function () {
   // Seconds on the reflect screen before Next appears and the Testing it lowers the Not today count.
   var REFLECT_SEC = 8;
 
-  // Ledger groups (1.33.0), for a principle still in the deck:
+  // Ledger groups (1.33.0), for a thought still in the deck:
   //   avoiding      set aside three or more times and not yet worked back down
   //   nearly        no Not today left and either caught in the last 30 days, tested twice running,
   //                 or tested three or more times
@@ -505,7 +509,7 @@ var ScalesCore = (function () {
     return "working";
   }
 
-  // Ledger bars (1.27.0): every principle counted once. Lived = lived; Not today = still in the
+  // Ledger bars (1.27.0): every thought counted once. Lived = lived; Not today = still in the
   // deck and currently set aside more than worked through (skip_count above 0); Testing it = the
   // rest of the deck. Percentages are whole numbers that add up to 100 (largest remainder), or all 0
   // for an empty deck.
@@ -527,36 +531,36 @@ var ScalesCore = (function () {
   }
 
   // ---------- keep an AI line (1.30.0) ----------
-  // A model line can be better worded than the principle it was written for. It can be kept
-  // as a new principle beside the original, or replace the original's wording.
+  // A model line can be better worded than the thought it was written for. It can be kept
+  // as a new thought beside the original, or replace the original's wording.
   var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   function shortDate(d) { return MONTHS[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear(); }
 
-  // Add: a new principle in the same collection, citing the line it came from and linked to
+  // Add: a new thought in the same collection, citing the line it came from and linked to
   // the original by kept_from. Counts start at zero; no author is set, since the words came
-  // from the model. Returns { principle } (without an id) or { reason, conflict }.
+  // from the model. Returns { thought } (without an id) or { reason, conflict }.
   function keepAsNew(list, t, line, now) {
     var text = String(line || "").trim();
     if (!text) return { reason: "empty" };
     if (text.length > MAX_TEXT) return { reason: "too long" };
     var key = normText(text);
     for (var i = 0; i < list.length; i++) if (normText(list[i].text) === key) return { reason: "duplicate", conflict: list[i] };
-    return { principle: { text: text, collection: String(t.collection || "").trim(), title: "", author: "", origin: "", tags: "", link: "",
+    return { thought: { text: text, collection: String(t.collection || "").trim(), title: "", author: "", origin: "", tags: "", link: "",
       citation: "Kept from an AI line on " + shortDate(now), kept_from: t.id, kept_at: now.toISOString(),
       created_at: now.toISOString(), status: "active", skip_count: 0, lifetime_skips: 0, reflect_count: 0,
       consecutive_reflects: 0, recent_lines: [] } };
   }
 
-  // Replace: the line becomes the principle's wording, as an edit would make it. Counts, dates,
+  // Replace: the line becomes the thought's wording, as an edit would make it. Counts, dates,
   // status and evidence stay; the earlier wording is saved in earlier (last five) so the Ledger
-  // can show it. Returns { principle } or { reason, conflict }.
+  // can show it. Returns { thought } or { reason, conflict }.
   function keepReplace(list, t, line, now) {
     var r = checkEdit(list, t, { text: line });
     if (!r.ok) return { reason: r.reason, conflict: r.conflict };
     t.earlier = (t.earlier || []).concat([{ text: t.text, until: now.toISOString() }]).slice(-5);
     applyEdit(t, { text: line }, list);
     t.worded_from_ai = now.toISOString();
-    return { principle: t };
+    return { thought: t };
   }
 
   // ---------- voices: a thinker weighs in (1.31.0) ----------
@@ -605,33 +609,33 @@ var ScalesCore = (function () {
       ? "Write in the third person about how " + v.name + " would see this, for example: " + v.short + " would ask... Never write as " + v.short + " speaking, and never invent a quotation."
       : "Speak in the first person as " + v.name + " would, from the ideas in their published work. Do not quote; say it fresh, in plain modern English.";
   }
-  // One line weighing the move just made on principle t.
+  // One line weighing the move just made on thought t.
   function weighPrompt(v, t, move, daysIn) {
-    return "You give the user a perspective from " + v.name + " on a move they just made in Scales, an app for living by chosen principles.\n" +
-      "In Scales, Skip sets a principle aside for now, Reflect keeps it in practice in daily life, and Lived says they now act on it without prompting.\n" +
+    return "You give the user a perspective from " + v.name + " on a move they just made in Scales, an app for living by chosen thoughts.\n" +
+      "In Scales, Skip sets a thought aside for now, Reflect keeps it in practice in daily life, and Lived says they now act on it without prompting.\n" +
       (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "Draw on what " + v.name + " is known to think and value.\n") +
       voiceRule(v) + "\n" +
       "Weigh the move itself: was it honest, evasive, earned, premature? Hold the standard; no flattery, no permission to wait.\n" +
-      "Rules:\n- " + MAX_WORDS + " words or fewer.\n- One or two sentences. No exclamation marks, quotation marks, emoji, em-dashes or lists.\n- Do not repeat the principle verbatim.\n" +
+      "Rules:\n- " + MAX_WORDS + " words or fewer.\n- One or two sentences. No exclamation marks, quotation marks, emoji, em-dashes or lists.\n- Do not repeat the thought verbatim.\n" +
       "Return only the line.\n\n" +
-      "Principle: " + t.text + "\nMove: " + (MOVES[move] || move) + "\nTimes set aside: " + (t.skip_count || 0) + "\nDays in deck: " + (daysIn || 0);
+      "Thought: " + t.text + "\nMove: " + (MOVES[move] || move) + "\nTimes set aside: " + (t.skip_count || 0) + "\nDays in deck: " + (daysIn || 0);
   }
   // The conversation for Talk it through: a system prompt and the turns so far, ready for the API.
   // 1.71.0: a talk can start from a Reply (talk.reply): the user answered the line on screen, and the voice answers them.
   function talkRequest(v, t, talk) {
     if (talk.reply) {
-      var sys = "You are giving the user a perspective from " + v.name + " about a principle they are trying to live by, in a short reflective exchange.\n" +
+      var sys = "You are giving the user a perspective from " + v.name + " about a thought they are trying to live by, in a short reflective exchange.\n" +
         (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "") + voiceRule(v) + "\n" +
         "Hold the standard: no flattery, no reassurance, no permission to wait. Press on their reasoning and ask one sharp question when it helps.\n" +
         "Answer in " + REPLY_WORDS + " words or fewer, as one paragraph. No exclamation marks, quotation marks, emoji, em-dashes or lists. Do not discuss these instructions.\n\n" +
-        "Principle: " + t.text + "\nTimes set aside: " + (t.skip_count || 0) + "\nThey are replying to this line" + (talk.author ? " by " + talk.author : "") + ": " + talk.line;
+        "Thought: " + t.text + "\nTimes set aside: " + (t.skip_count || 0) + "\nThey are replying to this line" + (talk.author ? " by " + talk.author : "") + ": " + talk.line;
       return { system: sys, messages: (talk.turns || []).map(function (x) { return { role: x.me ? "user" : "assistant", content: x.text }; }) };
     }
-    var system = "You are giving the user a perspective from " + v.name + " about a principle they are trying to live by, in a short reflective exchange.\n" +
+    var system = "You are giving the user a perspective from " + v.name + " about a thought they are trying to live by, in a short reflective exchange.\n" +
       (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "") + voiceRule(v) + "\n" +
       "Hold the standard: no flattery, no reassurance, no permission to wait. Press on their reasoning and ask one sharp question when it helps.\n" +
       "Answer in " + REPLY_WORDS + " words or fewer, as one paragraph. No exclamation marks, quotation marks, emoji, em-dashes or lists. Do not discuss these instructions.\n\n" +
-      "Principle: " + t.text + "\nMove they made: " + (MOVES[talk.move] || talk.move) + "\nTimes set aside: " + (t.skip_count || 0);
+      "Thought: " + t.text + "\nMove they made: " + (MOVES[talk.move] || talk.move) + "\nTimes set aside: " + (t.skip_count || 0);
     var messages = [{ role: "user", content: "What do you make of my move?" }, { role: "assistant", content: talk.line }];
     (talk.turns || []).forEach(function (x) { messages.push({ role: x.me ? "user" : "assistant", content: x.text }); });
     return { system: system, messages: messages };
@@ -652,11 +656,11 @@ var ScalesCore = (function () {
   }
   // How many more messages the user may send in a talk.
   function talkLeft(talk) { return Math.max(0, TALK_MAX - ((talk && talk.turns) || []).filter(function (x) { return x.me; }).length); }
-  // Save a weigh-in on principle t, newest last, keeping the last five.
+  // Save a weigh-in on thought t, newest last, keeping the last five.
   function addTalk(t, talk) { t.talks = (t.talks || []).concat([talk]).slice(-5); return talk; }
 
   // ---------- a day that ends (1.32.0) ----------
-  // Today's set: a number of principles you choose (SET_MIN to SET_MAX, SET_DEFAULT to start). Once that
+  // Today's set: a number of thoughts you choose (SET_MIN to SET_MAX, SET_DEFAULT to start). Once that
   // many moves are made, the deck closes with Done for today and asks which one you will act on: today's
   // focus. The day's state lives in one small object, reset when a new Scales day starts.
   var SET_MIN = 1, SET_MAX = 20, SET_DEFAULT = 5, CHECKIN_HOUR = 18, CATCH_WINDOW = 30, CATCH_SUGGEST = 3, ACT_EVERY = 3;
@@ -664,7 +668,7 @@ var ScalesCore = (function () {
   function freshDay(day) { return { day: day, moved: [], focus: null, closed: false, more: false, checkin: null }; }
   // The saved state if it is today's, otherwise a fresh day.
   function dayState(saved, day) { return saved && saved.day === day ? saved : freshDay(day); }
-  // Record a move in today's set. moved keeps the order; a principle moved twice counts twice.
+  // Record a move in today's set. moved keeps the order; a thought moved twice counts twice.
   function noteDayMove(state, id, move) { state.moved.push({ id: id, move: move }); return state; }
   // Where the day stands: "set" (still weighing), "done" (set finished, focus not chosen),
   // "focus" (focus chosen, deck closed), or "more" (kept going after Done for today).
@@ -673,7 +677,7 @@ var ScalesCore = (function () {
     if (state.closed) return "focus";
     return state.moved.length >= setSize(size) ? "done" : "set";
   }
-  // The principles to choose today's focus from: the ones moved today, newest first, once each,
+  // The thoughts to choose today's focus from: the ones moved today, newest first, once each,
   // leaving out any that no longer exist.
   function focusChoices(state, byId) {
     var seen = {}, out = [];
@@ -701,10 +705,10 @@ var ScalesCore = (function () {
     var left = s ? (s.day === dayOf(now) ? (+s.left || 0) : Math.min(+s.size || 0, +s.active || 0)) : 0;
     var later = s ? (s.laters || []).filter(function (l) { return laterDue({ later: l }, now); }).length : 0;
     if (kind === "evening") {
-      if (later) return later === 1 ? "One principle saved for later is back." : later + " principles saved for later are back.";
+      if (later) return later === 1 ? "One thought saved for later is back." : later + " thoughts saved for later are back.";
       return left ? left + " left in today’s set." : "Done for today. Nothing is waiting.";
     }
-    return left ? "Today’s set is ready: " + left + (left === 1 ? " principle." : " principles.") : "Today’s set is ready.";
+    return left ? "Today’s set is ready: " + left + (left === 1 ? " thought." : " thoughts.") : "Today’s set is ready.";
   }
   // ---------- backup reminders (1.50.0) ----------
   // As in The Road: once the deck has something in it, ask for a backup when there has never been one or
@@ -748,14 +752,54 @@ var ScalesCore = (function () {
   function addAct(t, day, text) { t.acts = (t.acts || []).concat([{ day: day, text: String(text || "").trim().slice(0, 200) }]).slice(-10); return t; }
 
   // ---------- caught it ----------
-  // Real-life evidence for a principle still in the deck: a one-line note of when you lived it
+  // Real-life evidence for a thought still in the deck: a one-line note of when you lived it
   // without the app. CATCH_SUGGEST catches within CATCH_WINDOW days suggest it may be Lived.
   function addCatch(t, day, text) { t.caught = (t.caught || []).concat([{ day: day, text: String(text || "").trim().slice(0, 280) }]).slice(-30); noteMoveOf(t, day, "caught"); return t; }
-  // Moves (1.77.0): each principle keeps its last 30 moves with their day (skip, keep for Reflect, caught),
+  // Moves (1.77.0): each thought keeps its last 30 moves with their day (skip, keep for Reflect, caught),
   // for the marks on its Ledger row and for its history.
   function noteMoveOf(t, day, m) { t.moves = (t.moves || []).concat([{ day: day, m: m }]).slice(-30); return t; }
+  // Question it (1.79.0). Weighing a thought ends one of three ways, and each counts as a move for the day.
+  //   keep:   it held up. Counted like a Reflect against its skips.
+  //   revise: the wording changed; the earlier wording is kept in its history.
+  //   let go: it didn't hold. It leaves the deck with the reason, and can be brought back.
+  function questionKeep(t, day) {
+    t.questioned = (t.questioned || 0) + 1;
+    if ((t.skip_count || 0) > 0) t.skip_count--;
+    noteMoveOf(t, day, "question");
+    return t;
+  }
+  function noteRevise(t, oldText, day, now) {
+    t.questioned = (t.questioned || 0) + 1;
+    t.earlier = (t.earlier || []).concat([{ text: oldText, until: (now || new Date()).toISOString() }]).slice(-5);
+    noteMoveOf(t, day, "revise");
+    return t;
+  }
+  function letGo(t, why, day, now) {
+    t.status = "letgo"; t.letgo_at = (now || new Date()).toISOString(); t.letgo_why = String(why || "").trim().slice(0, LIMITS.why);
+    t.later = null;
+    noteMoveOf(t, day, "letgo");
+    return t;
+  }
+  // Bring it back: into the deck with its counts; the last letting go stays in its history.
+  function bringBack(t, now) {
+    if (t.status !== "letgo") return t;
+    t.let_go = (t.let_go || []).concat([{ at: t.letgo_at, why: t.letgo_why || "" }]).slice(-5);
+    t.status = "active"; t.letgo_at = null; t.letgo_why = ""; t.back_at = (now || new Date()).toISOString();
+    return t;
+  }
+  // The case against (Scales Plus): the strongest honest argument against the thought, in the voice's terms.
+  function casePrompt(v, t) {
+    return "You make the strongest honest case against a thought the user holds, so they can weigh it. The app is Scales.\n" +
+      (v ? (v.lens ? "Argue as " + v.name + " might, drawing on " + v.short + "'s ideas about " + v.lens + ".\n" : "Argue as " + v.name + " might, from what " + v.name + " is known to think and value.\n") + voiceRule(v) + "\n" : "") +
+      "Rules:\n- Argue against the thought itself, not the person. Find where it fails, overreaches or costs something real.\n" +
+      "- 45 words or fewer. Two or three plain sentences. No questions at the end, no hedging, no both-sides summary.\n" +
+      "- No exclamation marks, quotation marks, emoji, em-dashes or lists. Do not repeat the thought verbatim.\n" +
+      "Return only the argument.\n\n" +
+      "Thought: " + t.text + (t.why ? "\nWhy they believe it: " + t.why : "") + (t.change ? "\nWhat would change their mind: " + t.change : "");
+  }
+
   // The last n moves, oldest first. Before 1.77.0 only skip and caught days were kept, and Reflect only as a
-  // count, so older principles start with their undated Reflects, then their dated skips and catches.
+  // count, so older thoughts start with their undated Reflects, then their dated skips and catches.
   function recentMoves(t, n) {
     n = n || 5;
     var mv = (t.moves || []).slice(), first = mv.length ? mv[0].day : "9999-99-99", old = [];
@@ -766,7 +810,7 @@ var ScalesCore = (function () {
     for (var i = 0; i < Math.min(keeps, n); i++) pre.push({ day: "", m: "keep" });
     return pre.concat(old, mv).slice(-n);
   }
-  // The one principle avoided most: skipped three or more times, most skips first, then most over its life.
+  // The one thought avoided most: skipped three or more times, most skips first, then most over its life.
   function avoidedMost(list) {
     return list.filter(function (t) { return t.status === "active" && (+t.skip_count || 0) >= 3; })
       .sort(function (a, b) { return (b.skip_count - a.skip_count) || ((b.lifetime_skips || 0) - (a.lifetime_skips || 0)); })[0] || null;
@@ -776,11 +820,11 @@ var ScalesCore = (function () {
     return (t.caught || []).filter(function (c) { return c.day >= from && c.day <= today; }).length;
   }
   function suggestLiving(t, today) { return t.status === "active" && catchCount(t, today) >= CATCH_SUGGEST; }
-  // Days a principle was set aside, kept for the weekly review (last 20).
-  // Later (1.42.0): a principle that deserves more time than you have right now. Chosen from the skip screen,
+  // Days a thought was set aside, kept for the weekly review (last 20).
+  // Later (1.42.0): a thought that deserves more time than you have right now. Chosen from the skip screen,
   // it is not a skip: no count, no weight, no rest. It waits until the evening (CHECKIN_HOUR) of the day it
   // was saved, or any later day, then opens straight to Reflect. At most LATER_MAX wait at once, and a
-  // principle that came back from Later is not offered Later again until you have sat with it for the full
+  // thought that came back from Later is not offered Later again until you have sat with it for the full
   // reflect time (t.later_blocked).
   var LATER_MAX = 3;
   function laterDue(t, now) {
@@ -793,7 +837,7 @@ var ScalesCore = (function () {
   function noteSkipDay(t, day) { t.skips_on = (t.skips_on || []).concat([day]).slice(-20); noteMoveOf(t, day, "skip"); return t; }
 
   // Replies (1.40.0). On the skip and sit-with screens you can reply to the line or quote shown. A reply is
-  // kept on the principle with the words it answered: { at, day, kind, line, author, text }. kind is "push"
+  // kept on the thought with the words it answered: { at, day, kind, line, author, text }. kind is "push"
   // for the line shown on Skip, "reflect" for the quote shown on Reflect. Replying never makes or changes
   // a move. The last 40 are kept.
   var REPLY_MAX = 280;
@@ -805,7 +849,7 @@ var ScalesCore = (function () {
     t.replies = (t.replies || []).concat([r]).slice(-40);
     return r;
   }
-  // The whole thread on a principle, oldest first: replies, plus any thoughts written in 1.37.0 (t.notes),
+  // The whole thread on a thought, oldest first: replies, plus any thoughts written in 1.37.0 (t.notes),
   // which were replies to the skip line under another name.
   function thread(t) {
     var out = (t && t.replies || []).slice();
@@ -820,7 +864,7 @@ var ScalesCore = (function () {
   function weekday(day) { var p = day.split("-"); return new Date(+p[0], +p[1] - 1, +p[2], 12).getDay(); }
   // The review opens itself on Sundays, once a week.
   function isReviewDay(day) { return weekday(day) === 0; }
-  // Counts for the week from the activity log ({ i, s, c } per day) and the principles.
+  // Counts for the week from the activity log ({ i, s, c } per day) and the thoughts.
   function weekStats(list, activity, today) {
     var days = weekDays(today), from = days[0];
     var per = days.map(function (d) {
@@ -838,29 +882,35 @@ var ScalesCore = (function () {
       weighed: per.reduce(function (a, d) { return a + d.weighed; }, 0), caught: per.reduce(function (a, d) { return a + d.caught; }, 0) };
   }
   function weekPrompt(v, w) {
-    return "You give the user a perspective from " + v.name + " on their week in Scales, an app for living by chosen principles.\n" +
+    return "You give the user a perspective from " + v.name + " on their week in Scales, an app for living by chosen thoughts.\n" +
       (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "") +
       (v.living ? "Write in the third person about how " + v.name + " would see this week. Never write as " + v.short + " speaking, and never invent a quotation." :
         "Speak in the first person as " + v.name + " would. Do not quote; say it fresh, in plain modern English.") + "\n" +
       "Hold the standard; no flattery, no permission to wait. Point at the one thing that matters most for the coming week.\n" +
       "Rules:\n- " + MAX_WORDS + " words or fewer.\n- One or two sentences. No exclamation marks, quotation marks, emoji, em-dashes or lists.\nReturn only the line.\n\n" +
-      "Principles weighed: " + w.weighed + "\nTimes caught living a principle without the app: " + w.caught + "\nNewly living: " + w.living +
+      "Thoughts weighed: " + w.weighed + "\nTimes caught living a thought without the app: " + w.caught + "\nNewly living: " + w.living +
       (w.pushed ? "\nPushed back most, skipped " + w.pushedTimes + " times: " + w.pushed.text : "");
   }
 
-  // ---------- a principle's history, for the Ledger ----------
+  // ---------- a thought's history, for the Ledger ----------
   // Everything that happened to t, newest first: { at (YYYY-MM-DD), kind, text }.
   function timeline(t) {
     var ev = [], d = function (iso) { return iso ? dayOf(new Date(iso)) : ""; };
     if (t.created_at) ev.push({ at: d(t.created_at), kind: "start", text: t.kept_from ? "Kept from an AI line" : "Captured" });
     (t.skips_on || []).forEach(function (x) { ev.push({ at: x, kind: "skip", text: "Skipped" }); });
-    (t.moves || []).forEach(function (x) { if (x.m === "keep") ev.push({ at: x.day, kind: "keep", text: "Reflected" }); });
+    (t.moves || []).forEach(function (x) {
+      if (x.m === "keep") ev.push({ at: x.day, kind: "keep", text: "Reflected" });
+      else if (x.m === "question") ev.push({ at: x.day, kind: "question", text: "Questioned it, and kept it" });
+      else if (x.m === "revise") ev.push({ at: x.day, kind: "question", text: "Questioned it, and revised it" });
+    });
+    (t.let_go || []).forEach(function (x) { ev.push({ at: d(x.at), kind: "letgo", text: "Let go" + (x.why ? ": " + x.why : "") }); });
+    if (t.status === "letgo" && t.letgo_at) ev.push({ at: d(t.letgo_at), kind: "letgo", text: "Let go" + (t.letgo_why ? ": " + t.letgo_why : "") });
     (t.acts || []).forEach(function (x) { ev.push({ at: x.day, kind: "act", text: "Smallest act: " + x.text }); });
     (t.caught || []).forEach(function (x) { ev.push({ at: x.day, kind: "caught", text: "Caught it" + (x.text ? ": " + x.text : "") }); });
     (t.talks || []).forEach(function (x) { if (x.line) ev.push({ at: x.day || d(x.at), kind: "talk", text: x.reply ? "Talked with " + (x.voice_name || "a thinker") : "Weighed in by " + (x.voice_name || "a thinker") + " on " + (MOVES[x.move] || x.move) }); });
     (t.earlier || []).forEach(function (x) { ev.push({ at: d(x.until), kind: "edit", text: "Wording changed" }); });
     if (t.status === "shed" && t.shed_at) ev.push({ at: d(t.shed_at), kind: "lived", text: "Lived" + (t.evidence ? ": " + t.evidence : "") });
-    var order = { start: 0, edit: 1, skip: 2, keep: 3, act: 4, talk: 5, caught: 6, lived: 7 };
+    var order = { start: 0, edit: 1, skip: 2, keep: 3, question: 4, act: 5, talk: 6, caught: 7, letgo: 8, lived: 9 };
     return ev.sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : order[b.kind] - order[a.kind]; });
   }
 
@@ -875,7 +925,7 @@ var ScalesCore = (function () {
     undoPoint: undoPoint, applyUndo: applyUndo,
     inCollection: inCollection, deckCollections: deckCollections, deckFilter: deckFilter, outcomeMix: outcomeMix,
     SWIPE: SWIPE, swipeIntent: swipeIntent,
-    HOLD_FULL: HOLD_FULL, HOLD_TAP: HOLD_TAP, HOLD_LIFT: HOLD_LIFT, HOLD_REVEAL: HOLD_REVEAL, holdOutcome: holdOutcome, inkWeight: inkWeight, ledgerGroup: ledgerGroup, noteMoveOf: noteMoveOf, recentMoves: recentMoves, avoidedMost: avoidedMost,
+    HOLD_FULL: HOLD_FULL, HOLD_TAP: HOLD_TAP, HOLD_LIFT: HOLD_LIFT, HOLD_REVEAL: HOLD_REVEAL, holdOutcome: holdOutcome, inkWeight: inkWeight, ledgerGroup: ledgerGroup, noteMoveOf: noteMoveOf, recentMoves: recentMoves, avoidedMost: avoidedMost, questionKeep: questionKeep, noteRevise: noteRevise, letGo: letGo, bringBack: bringBack, casePrompt: casePrompt,
     lineFresh: lineFresh, keepLine: keepLine, spendLines: spendLines, REFLECT_SEC: REFLECT_SEC,
     WQ_PAGE: WQ_PAGE, wqPage: wqPage, wqUrl: wqUrl, wqClean: wqClean, parseQuotes: parseQuotes, rankQuotes: rankQuotes, quotePrompt: quotePrompt, readPick: readPick,
     shortDate: shortDate, keepAsNew: keepAsNew, keepReplace: keepReplace,
