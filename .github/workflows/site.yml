@@ -33,11 +33,12 @@ jobs:
             [ -f "$f" ] || missing="$missing $f"
           done
           if [ -n "$missing" ]; then echo "::warning::Not publishing: missing$missing"; echo "ok=false" >> "$GITHUB_OUTPUT"; exit 0; fi
-          rm -rf out && mkdir -p out/functions/api out/functions/app
+          # Wrangler takes the static files from out/ and the Functions from ./functions next to where it runs.
+          rm -rf out functions && mkdir -p out functions/api functions/app
           cp -R site/. out/
-          cp server/ai.mjs out/functions/api/ai.js
-          cp server/app-proxy.js "out/functions/app/[[path]].js"
-          find out -type f | sort | sed 's/^/  /'
+          cp server/ai.mjs functions/api/ai.js
+          cp server/app-proxy.js "functions/app/[[path]].js"
+          find out functions -type f | sort | sed 's/^/  /'
           echo "ok=true" >> "$GITHUB_OUTPUT"
       - name: Publish to Cloudflare Pages
         if: steps.build.outputs.ok == 'true' && env.HAS_TOKEN == 'true'
