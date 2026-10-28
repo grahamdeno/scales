@@ -51,6 +51,7 @@ async function until(page, check, steps = 40) {
   return check();
 }
 const rows = (page) => page.$$eval("#keys .choice", (s) => s.map((x) => x.textContent));
+const PEEK = '#v-deck [data-move="peek"]';
 const ready = { onboarded: true, coach_seen: true };
 
 test("first run: welcome, a starter deck, the three choices, then the deck", async () => {
@@ -93,7 +94,7 @@ test("Skip asks once; Keep it goes back; Skip after reading rests the thought", 
 test("tap to see the line: then Skip it rests straight away and Later is offered", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
   const first = await words(page);
-  await page.click("#words"); await page.clock.runFor(300);
+  await page.click(PEEK); await page.clock.runFor(300);
   assert.ok((await page.textContent("#aiLine")).length > 5, "the line shows");
   assert.deepEqual(await rows(page), ["Skip", "Reflect", "Lived"]);
   assert.match(await page.textContent(".laterbtn"), /^Later/);
@@ -103,24 +104,19 @@ test("tap to see the line: then Skip it rests straight away and Later is offered
   assert.equal(t.skip_count, 0, "Later is not a skip");
 });
 
-test("the touch that wakes a quiet screen only wakes it; the next one shows the line (1.82.1)", async () => {
+test("the touch that wakes a quiet screen only wakes it; the next one presses (1.82.1)", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
   await page.clock.runFor(3500);
   assert.ok(await page.evaluate(() => document.body.classList.contains("quiet")), "quiet after 3 seconds");
-  await page.click("#words"); await page.clock.runFor(300);
+  await page.click(PEEK); await page.clock.runFor(300);
   assert.ok(!(await page.evaluate(() => document.body.classList.contains("quiet"))), "awake");
   assert.ok(!(await page.isVisible("#aiLine")), "the waking touch does not show the line");
-  await page.click("#words"); await page.clock.runFor(300);
+  await page.click(PEEK); await page.clock.runFor(300);
   assert.ok(await page.isVisible("#aiLine"), "the next touch does");
   await page.clock.runFor(3500);
-  await page.click("#words"); await page.clock.runFor(300);
-  assert.ok(await page.isVisible("#aiLine"), "a waking touch leaves the line in place");
-});
-test("the cue under the thought loses its words after three looks (1.82.2)", async () => {
-  const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
-  assert.match(await page.textContent(".peekcue"), /Tap your thought/);
-  for (let i = 0; i < 6; i++) { await page.click("#words"); await page.clock.runFor(300); }
-  assert.equal((await page.textContent(".peekcue")).trim(), "", "the handle alone");
+  await page.click("#replyBtn"); await page.clock.runFor(300);
+  assert.equal(await page.$eval("#sheetReply", (e) => e.open).catch(() => false), false, "a waking touch presses nothing");
+  assert.ok(await page.isVisible("#aiLine"), "and leaves the line in place");
 });
 test("Reflect goes quiet as well (1.82.2)", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
@@ -161,7 +157,7 @@ test("Capture adds a thought from the + button", async () => {
 
 test("Undo goes away after eight seconds", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
-  await page.click("#words"); await page.clock.runFor(200);
+  await page.click(PEEK); await page.clock.runFor(200);
   await page.click(".laterbtn"); await page.clock.runFor(500);
   assert.ok(await page.$("#toastUndo"), "Undo is there");
   await page.clock.runFor(8500);
@@ -192,7 +188,7 @@ test("the welcome hides +, the switch and Settings; Reflect shows a question whe
 
 test("Reply: without AI the reply is kept; with AI today's voice answers in the thread (1.71.0)", async () => {
   let page = await open({ prefs: ready, thoughts: { a: P("a", "One.") } });
-  await page.click("#words"); await page.clock.runFor(300);
+  await page.click(PEEK); await page.clock.runFor(300);
   await page.click("#replyBtn"); await page.fill("#replyInput", "In the meeting."); await page.click("#replyDone");
   assert.ok(await until(page, async () => (await saved(page)).a.replies.length === 1), "kept");
   assert.equal(await page.$eval("#sheetWeigh", (e) => e.open), false, "no thread without AI");
@@ -209,7 +205,7 @@ test("Reply: without AI the reply is kept; with AI today's voice answers in the 
     localStorage.setItem("scales.prefs.v1", JSON.stringify(p)); localStorage.setItem("scales.thoughts.v1", JSON.stringify(t)); localStorage.setItem(k, "sk-ant-test");
   }, [Object.assign({ ai_consent: true }, ready), { a: P("a", "One.") }, "scales.apikey.v1"]);
   await page.goto(base); await page.clock.runFor(500);
-  await page.click("#words");
+  await page.click(PEEK);
   assert.ok(await until(page, async () => !!(await page.$("#replyBtn"))), "the line and Reply");
   await page.click("#replyBtn");
   assert.match(await page.textContent("#replyNote"), /answers\./);
@@ -248,7 +244,7 @@ test("Scales Plus in the iPhone app: no server AI without it; buy, then AI reque
   const sent = () => page.evaluate(() => window.__sent.map((m) => m.type));
   // The app reports no Plus, with a trial on offer.
   await page.evaluate(() => window.scalesStore({ active: false, price: "$19.99", trialDays: 14 }));
-  await page.click("#words"); await page.clock.runFor(1500);
+  await page.click(PEEK); await page.clock.runFor(1500);
   assert.equal(asked.length, 0, "no server AI without Plus");
   await page.click("#setBtn"); await page.clock.runFor(300);
   assert.equal(await page.$eval("#plusGroup", (e) => e.hidden), false);

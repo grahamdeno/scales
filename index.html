@@ -89,9 +89,9 @@ button { cursor:pointer; border:0; background:none; padding:0; }
 #iconRow { flex-wrap:wrap; row-gap:12px; }
 /* Quiet (1.81.0): on the resting card, 3 seconds without a touch dims everything but the thought to 20%, so the
    eye stays on the words. The controls stay visible and working; any touch brings them back at once. */
-.top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .lineacts, #v-deck .peekcue, #v-deck .phase, #v-deck .reflfoot, #v-deck .lived2, #v-deck .where, #v-deck .addwhy { transition:opacity .25s ease; }
-body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .lineacts, body.quiet #v-deck .peekcue, body.quiet #v-deck .phase, body.quiet #v-deck .reflfoot, body.quiet #v-deck .lived2, body.quiet #v-deck .where, body.quiet #v-deck .addwhy { opacity:.12; transition:opacity 1.2s ease; }
-@media (prefers-reduced-motion: reduce) { .top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .lineacts, #v-deck .peekcue, #v-deck .phase, #v-deck .reflfoot, #v-deck .lived2, #v-deck .where, #v-deck .addwhy, body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .lineacts, body.quiet #v-deck .peekcue, body.quiet #v-deck .phase, body.quiet #v-deck .reflfoot, body.quiet #v-deck .lived2, body.quiet #v-deck .where, body.quiet #v-deck .addwhy { transition:none; } }
+.top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .lineacts, #v-deck .phase, #v-deck .reflfoot, #v-deck .lived2, #v-deck .where, #v-deck .addwhy { transition:opacity .25s ease; }
+body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .lineacts, body.quiet #v-deck .phase, body.quiet #v-deck .reflfoot, body.quiet #v-deck .lived2, body.quiet #v-deck .where, body.quiet #v-deck .addwhy { opacity:.12; transition:opacity 1.2s ease; }
+@media (prefers-reduced-motion: reduce) { .top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .lineacts, #v-deck .phase, #v-deck .reflfoot, #v-deck .lived2, #v-deck .where, #v-deck .addwhy, body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .lineacts, body.quiet #v-deck .phase, body.quiet #v-deck .reflfoot, body.quiet #v-deck .lived2, body.quiet #v-deck .where, body.quiet #v-deck .addwhy { transition:none; } }
 .iconpick { display:flex; gap:12px; flex:none; }
 .iconpick button { display:flex; flex-direction:column; align-items:center; gap:6px; min-width:56px; font-size:var(--t-xs); color:var(--muted); }
 .iconpick img { width:44px; height:44px; border-radius:10px; display:block; }
@@ -185,8 +185,6 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .thought.small.long { font-size:0.9412rem; line-height:1.4; }
 /* On push and reflect the line is the subject, so a long thought folds to four lines; tap to open it. */
 .thought.small.fold { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4; overflow:hidden; cursor:pointer; }
-.peekcue { display:flex; align-items:center; gap:10px; margin-top:12px; font-size:var(--t-xs); color:var(--faint); pointer-events:none; }
-.peekcue i { flex:none; width:22px; height:3px; border-radius:2px; background:var(--line); }
 #aiLine { position:relative; }
 #aiLine::after { content:""; position:absolute; left:0; right:0; bottom:-6px; height:2px; border-radius:1px; background:var(--ink); opacity:.5; transform:scaleX(0); transform-origin:0 50%; }
 #aiLine.holding::after { transform:scaleX(1); transition:transform .55s linear; }
@@ -1037,7 +1035,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <details class="adv inner helpbox">
       <summary>How Scales works</summary>
       <ul class="howlist">
-        <li>One thought at a time. <b>Today’s question</b> shows the line Scales has for it.</li>
+        <li>One thought at a time. <b>Help me think</b> gives you a question to carry today. <b>Show me the other side</b> makes the case against it.</li>
         <li>Choose at the bottom of the screen: <b>Skip</b>, <b>Reflect</b> or <b>Lived</b>.</li>
         <li><b>Reflect</b> shows a real quote from today’s voice. After eight seconds it counts, and the thought gets lighter.</li>
         <li id="howRest"><b>Skip</b> rests a thought for a few days. It comes back first, set heavier, until you live it.</li>
@@ -1116,7 +1114,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.82.2"></script>
+<script src="core.js?v=1.82.3"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1763,7 +1761,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   if (window.visualViewport) { visualViewport.addEventListener("resize", fitReply); visualViewport.addEventListener("scroll", fitReply); }
   $("v-deck").addEventListener("click", function (e) {
     if (openSheet) return; // a press and hold on the line opened Keep; its release is not a tap
-    if (e.target.closest("#replyBtn") || (e.target.closest("#aiLine") && !e.target.closest(".pending"))) openReply();
+    if (e.target.closest("#replyBtn")) openReply();
   });
 
   // ---------- actions ----------
@@ -1841,7 +1839,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var t = onCard(); if (!t || phase !== "rest" || returned()) return;
     coachSeen();
     peekId = peeked() ? null : t.id;
-    if (peekId && (prefs.peeks || 0) < 3) { prefs.peeks = (prefs.peeks || 0) + 1; savePrefs(); }
     renderDeck();
     if (peeked()) showLine(t, "push");
   }
@@ -2130,7 +2127,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       (fold ? '<small class="foldhint" id="foldHint" aria-hidden="true">Tap to read it all</small>' : "");
     var line = '<div class="lineWrap"><p class="ai-p" id="aiLine"></p><small class="ai-src" id="aiSrc"></small>' +
       '<div class="replies" id="replies"></div></div>';
-    var how = '<span class="sr" id="cardHow">Choose Skip, Reflect or Lived at the bottom of the screen. Today’s question shows the line Scales has for it. Press and hold the thought to edit it.</span>';
+    var how = '<span class="sr" id="cardHow">Choose Skip, Reflect or Lived at the bottom of the screen. Help me think gives you a question to carry today. Show me the other side makes the case against it. Press and hold the thought to edit it.</span>';
     if (phase === "reflect") {
       v.innerHTML = '<article class="card reflect" id="card" aria-label="Reflect" aria-describedby="cardHow">' +
         '<div class="phase"><span>' + (fromLater ? "Saved from earlier" : "Reflecting") + "</span></div>" +
@@ -2183,12 +2180,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     }
     // 1.73.0: the question Scales has for the thought is a button, not a tap nobody finds.
     var pm = []; if (t.skip_count > 0) pm.push("Skipped " + times(t.skip_count)); if (String(t.collection || "").trim()) pm.push(esc(t.collection));
-    // 1.82.2: a cue under the thought that it opens. Words for the first three times, then the handle alone.
-    var cue = '<div class="peekcue" aria-hidden="true"><i></i>' + ((prefs.peeks || 0) < 3 ? "<span>Tap your thought for today\u2019s question</span>" : "") + "</div>";
-    v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current thought" aria-describedby="cardHow">' + words + cue +
+    v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current thought" aria-describedby="cardHow">' + words +
       (pm.length ? '<p class="pmeta">' + pm.join(" \u00b7 ") + "</p>" : "") +
-      '<div class="qacts"><button type="button" class="qbtn" data-move="peek"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.3M12 13.6v.01"/></svg>Today’s question</button>' +
-      '<button type="button" class="qbtn" data-move="question">' + ICON_Q + "Question it</button></div>" + how + "</article>" +
+      '<div class="qacts"><button type="button" class="qbtn" data-move="peek"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.3M12 13.6v.01"/></svg>Help me think</button>' +
+      '<button type="button" class="qbtn" data-move="question">' + ICON_Q + "Show me the other side</button></div>" + how + "</article>" +
       choicesHtml();
     wake();
     // A thought too long for the screen scrolls; a quiet hint says so until the end is reached (1.69.0).
@@ -2218,13 +2213,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var w = e.target.closest("#words.fold"); if (!w) return;
     w.classList.remove("fold"); var h = $("foldHint"); if (h) h.remove();
   });
-  // A tap on the thought at rest shows its line; a second tap hides it. Taps on the line (Reply), its
-  // links and buttons keep their own meaning, and the release of a press and hold (Edit) is not a tap.
-  $("v-deck").addEventListener("click", function (e) {
-    if (openSheet || phase !== "rest") return;
-    if (!e.target.closest("#card") || e.target.closest(".lineWrap, a, button, #coach")) return;
-    togglePeek();
-  });
+  // 1.82.3: tapping the thought or the line does nothing; the buttons say what they do. Press and hold stays.
   // The buttons do what the ring does.
   $("v-deck").addEventListener("click", function (e) {
     var k = e.target.closest("[data-move]"); if (!k || !onCard()) return;
@@ -2547,7 +2536,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         '<ul class="wchoices"><li><b>Skip</b> rests it for a few days. It comes back first, and Scales asks why once.</li>' +
         "<li><b>Reflect</b> shows a quote from today’s voice. After a few seconds it counts, and the thought gets lighter.</li>" +
         "<li><b>Lived</b> moves it out of the deck and into your record.</li></ul>" +
-        '<p class="note">Tap your thought for today\u2019s question. Press and hold a line Scales wrote to keep it as a thought.</p>' +
+        '<p class="note">Press and hold a line Scales wrote to keep it as a thought.</p>' +
         '<p class="note">The screen goes quiet so you can read. Touch anywhere to bring it back.</p>' +
         '<div class="widewrap"><button type="button" class="primary" id="wDone">Got it</button></div></div>';
       // 1.65.0: the AI question comes right after the welcome, where it has a reason, not on a later launch.
