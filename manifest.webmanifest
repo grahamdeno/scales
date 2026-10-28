@@ -1,13 +1,13 @@
 {
   "name": "Scales",
   "short_name": "Scales",
-  "description": "Capture thoughts and inspect them until they become beliefs you live.",
+  "description": "Live your principles. One a day: skip it, reflect on it, or mark it lived.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#121212",
-  "theme_color": "#121212",
+  "background_color": "#DCD9D3",
+  "theme_color": "#DCD9D3",
   "icons": [
     {
       "src": "icons/icon-192.png",

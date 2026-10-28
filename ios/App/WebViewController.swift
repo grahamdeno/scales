@@ -82,8 +82,36 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             setBadge(body["count"] as? Int ?? 0)
         case "haptic":
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        case "save":
+            save(json: body["json"] as? String ?? "", day: body["day"] as? String ?? "")
         default:
             break
+        }
+    }
+
+    /// Daily save (1.77.0): Scales sends everything as one JSON file and it is written without asking, as
+    /// "Scales backup.json" plus a dated copy (the last 14 kept). It goes to iCloud Drive, Scales, when the app
+    /// has an iCloud container, otherwise to Files, On My iPhone, Scales (also in the phone's iCloud Backup).
+    private func save(json: String, day: String) {
+        guard !json.isEmpty else { return }
+        DispatchQueue.global(qos: .utility).async {
+            let fm = FileManager.default
+            var place = "files"
+            var dir = fm.urls(for: .documentDirectory, in: .userDomainMask).first
+            if let cloud = fm.url(forUbiquityContainerIdentifier: nil) { dir = cloud.appendingPathComponent("Documents"); place = "icloud" }
+            guard let folder = dir else { return }
+            try? fm.createDirectory(at: folder, withIntermediateDirectories: true)
+            let data = Data(json.utf8)
+            let ok = (try? data.write(to: folder.appendingPathComponent("Scales backup.json"), options: .atomic)) != nil
+            let stamp = String(day.filter { $0.isNumber || $0 == "-" }.prefix(10))
+            if ok && !stamp.isEmpty {
+                try? data.write(to: folder.appendingPathComponent("Scales \(stamp).json"), options: .atomic)
+                if let names = try? fm.contentsOfDirectory(atPath: folder.path) {
+                    let dated = names.filter { $0.hasPrefix("Scales 2") && $0.hasSuffix(".json") }.sorted()
+                    for name in dated.dropLast(14) { try? fm.removeItem(at: folder.appendingPathComponent(name)) }
+                }
+            }
+            DispatchQueue.main.async { self.run("window.scalesSaved && window.scalesSaved({ ok: \(ok), where: '\(place)' })") }
         }
     }
 

@@ -8,7 +8,7 @@ You write down a principle you want to live by ("the hard conversation is usuall
   <img src="docs/deck.png" width="200" alt="The deck at rest: one principle and the ring">
   <img src="docs/deck-push.png" width="200" alt="After letting go early: a line pushing back, and the ring again">
   <img src="docs/deck-reflect.png" width="200" alt="Reflect: a question to sit with, then Next principle">
-  <img src="docs/ledger.png" width="200" alt="Ledger view: the weight key and principles grouped as Avoiding, Working on and Nearly lived">
+  <img src="docs/ledger.png" width="200" alt="Ledger view: this week, the four stages, and principles listed by stage">
 </p>
 
 ## How it works
@@ -53,13 +53,13 @@ A quick tap on the ring does nothing, so a stray touch never rests a principle. 
 
 **Caught it.** When you live a principle without the app, open it in the Ledger and log where it showed up: real-life evidence. Three catches within 30 days ask whether you are ready to mark it Lived.
 
-**This week.** One line under the Ledger summary: moves this week, catches, and anything now living.
+**This week.** The top of the Ledger: a bar for each of the last seven days (blue when you caught one or lived one), with the count of moves, catches and anything now lived.
 
 **Reminders.** Reminders built into Scales come with the iPhone app, scheduled on the device. Until then, Settings > Reminders walks through an iPhone Shortcuts automation: one in the morning for today's set, one after 6 PM for anything saved for Later. It does not open a link, because a link opens Safari, which keeps a separate copy of the data from the Home Screen app. (1.51.0 to 1.57.0 sent web push from a GitHub schedule; 1.58.0 removed it, since it could only ever reach one phone.)
 
 **Weighting.** What you skip comes back more often. A principle's chance of showing up is `1 + 0.5 x skip count`, capped at 4x. A short cooldown keeps the same principle from repeating back to back.
 
-**Pushing back.** The Ledger opens on Avoiding, the principles you skip most, so resistance is visible instead of hidden.
+**Pushing back.** The Ledger lists Avoiding first, led by the one principle you avoid most, with Put it on Today beside it, so resistance is visible instead of hidden.
 
 **Undo.** Skip, Reflect, Lived, Later and Delete each show a toast with Undo that puts everything back, counts, rest days, the activity grid and the Ledger included. It goes after 8 seconds or at your next move, whichever comes first.
 
@@ -116,13 +116,16 @@ To check the key, tap **Test key** under AI key. It sends one tiny request and r
 
 ## Your data
 
-- **Back up / Restore** (Settings): a JSON file of the whole deck. Keep it in iCloud Drive. Restore merges, it does not overwrite.
+- **Daily save (iPhone app, 1.77.0).** The app saves everything to one file without asking: at the first open of the day and whenever it goes to the background (at most every ten minutes). The files are "Scales backup.json" plus a dated copy for each day, the last 14 kept, in Files > On My iPhone > Scales, which is also part of the phone's iCloud Backup. When the app has an iCloud container, the same files go to iCloud Drive > Scales instead, which survives deleting the app. Once a save is confirmed the backup reminder stops; Settings > Your data shows where and when.
+- **Back up / Restore** (Settings): a JSON file of the whole deck, saved where you choose. Restore merges, it does not overwrite.
 - **Import / Export CSV** (Settings): columns `text,title,author,creationDate,tags,collection,link,citation`, which matches common highlight and quote exports. Export adds `scales_*` columns (status, skips, reflects, shed date, evidence, last model line) so a re-import keeps progress. Import leaves out principles already in the deck. Internal field names (`shed`, `skips`) are unchanged so older exports still import.
-- Deleting the home screen icon deletes the data. Back up first.
-- **Backup reminders** (as in The Road): once the deck has a principle, Done for today and the Ledger ask for a backup when there has never been one or the last is more than a week old. Not now waits two days. Settings shows when the last backup was. A cancelled share sheet does not count.
+- Deleting the app deletes its data, and the copy in On My iPhone with it. Keep a backup in iCloud Drive.
+- **Backup reminders** (as in The Road, web only from 1.77.0): once the deck has a principle, Done for today asks for a backup when there has never been one or the last is more than a week old. Not now waits two days. Settings shows when the last backup was. A cancelled share sheet does not count.
 - Updates: opening Scales loads the newest release. If it was only resumed from the background, a bar says Scales was updated and stays until you tap Reload.
 
 ## The look
+
+**The Ledger and a new icon (1.77.0).** The Ledger is one scroll. The band shows this week, a bar a day, and a bar of how your principles split across Avoiding, Working on, Nearly lived and Lived, with counts that jump to each section. The panel lists every principle by stage. Avoiding opens with the one avoided most and Put it on Today. Each row shows its last five moves, oldest to newest: a hollow mark for skipped, gray for reflected, blue for caught it. Lived folds to one line, and the last 12 weeks stay at the bottom. A principle, opened, shows its stage, four numbers (days, skipped, reflected, caught) and what happened, newest first, with Put it on Today as the one blue action and Delete as quiet text. Each principle now keeps its last 30 moves with their dates; older Reflects, kept only as a count, show as undated. The icon is a balance: a black beam on the smoke band, held by a blue fulcrum rising from the black panel. A heavier version of the same mark is used at 64 px and below, and the iPhone app opens on smoke instead of black.
 
 **One look, Settings as an index (1.76.0).** Sheets and menus are black like the panel in every look; the band stays smoke. The Black and White choice is gone. Settings opens on an index: Scales Plus, then Reminders, Your deck and Voices, then Your data and Help and about, each showing what it is set to ("8:00 AM, 6:00 PM", "5 a day", "Backed up 3 days ago"). The switches and buttons sit one tap in, each page with the way back to Settings. Almost everything there is set once and left alone, so the first page is short.
 
