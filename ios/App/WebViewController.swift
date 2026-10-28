@@ -94,8 +94,12 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             // Light, Black, Paper and Glass stay fixed (1.80.1, 1.85.0). iOS says the icon changed itself.
             let pick = body["name"] as? String ?? ""
             let name: String? = Self.fixedIcons[pick]
-            guard UIApplication.shared.supportsAlternateIcons, UIApplication.shared.alternateIconName != name else { sendIcon(); return }
-            UIApplication.shared.setAlternateIconName(name) { _ in DispatchQueue.main.async { self.sendIcon() } }
+            // 1.86.1: when iOS refuses, the page is told why instead of the choice quietly snapping back.
+            guard UIApplication.shared.supportsAlternateIcons else { sendIcon(error: "this build has no alternate icons"); return }
+            guard UIApplication.shared.alternateIconName != name else { sendIcon(); return }
+            UIApplication.shared.setAlternateIconName(name) { err in
+                DispatchQueue.main.async { self.sendIcon(error: err.map { "\(pick): \($0.localizedDescription)" }) }
+            }
         case "save":
             save(json: body["json"] as? String ?? "", day: body["day"] as? String ?? "")
         default:
@@ -112,10 +116,13 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     private static let fixedIcons = ["light": "AppIcon-Light", "black": "AppIcon-Black", "paper": "AppIcon-Paper", "glass": "AppIcon-Glass"]
 
     /// Which icon is on the Home Screen, for the choice in Settings.
-    private func sendIcon() {
+    private func sendIcon(error: String? = nil) {
         let n = UIApplication.shared.alternateIconName
         let on = Self.fixedIcons.first { $0.value == n }?.key ?? "auto"
         run("window.scalesIcon && window.scalesIcon('\(on)')")
+        if let error, let data = try? JSONSerialization.data(withJSONObject: [error]), let json = String(data: data, encoding: .utf8) {
+            run("window.scalesIconError && window.scalesIconError(\(json)[0])")
+        }
     }
 
     /// Daily save (1.77.0): Scales sends everything as one JSON file and it is written without asking, as
