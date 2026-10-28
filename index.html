@@ -237,6 +237,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .setaside { min-height:44px; padding:0 12px; font-size:var(--t-sm); font-weight:500; color:var(--ink); text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px; }
 .date .coll, .dots .coll { margin-left:10px; color:var(--ink); }
 .ai-p.pending { opacity:.5; }
+.ai-p.longline { font-size:1.0588rem; line-height:1.4; }
 .ai-row { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:4px; min-height:40px; }
 .ai-row small { font-size:var(--t-xs); color:var(--faint); }
 .keep { flex:none; min-height:40px; padding:0; font-size:var(--t-sm); font-weight:500; color:var(--ink); border:0 !important; background:none !important; text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px; }
@@ -1148,7 +1149,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.84.3"></script>
+<script src="core.js?v=1.84.4"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1735,6 +1736,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     el.textContent = l.quote ? "\u201C" + l.text + "\u201D" : l.text;
     el.classList.toggle("pending", !!l.pending);
     el.classList.toggle("quote", !!l.quote);
+    el.classList.toggle("longline", String(l.text || "").length > 90); // 1.84.4: a long line takes less room
     var src = $("aiSrc");
     // Quotes credit Wikiquote (1.49.0), whose text is CC BY-SA 4.0, with a link to the voice's page.
     if (src) src.innerHTML = l.pending ? "" : l.quote ? esc(l.author + (l.src ? ", " + l.src : "")) +
@@ -2274,6 +2276,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     w.onscroll = function () { w.classList.toggle("overflow", w.scrollTop + w.clientHeight < w.scrollHeight - 4); };
   }
   window.addEventListener("resize", function () { requestAnimationFrame(fitThought); });
+  // 1.84.4: on a phone the font arrives after the first fit and makes the words wider; fit again when it does,
+  // and whenever the card changes size (the line arriving, a sheet closing).
+  if (document.fonts) { document.fonts.ready.then(function () { requestAnimationFrame(fitThought); }); document.fonts.addEventListener("loadingdone", function () { requestAnimationFrame(fitThought); }); }
+  if (window.ResizeObserver) new ResizeObserver(function () { requestAnimationFrame(fitThought); }).observe($("v-deck"));
   // The reflect screen's foot: a thin line filling for REFLECT_SEC, then Next.
   // 1.83.2 trial: no Undo on Reflect. Set REFLECT_UNDO to true to bring both Undo buttons back.
   var REFLECT_UNDO = false;

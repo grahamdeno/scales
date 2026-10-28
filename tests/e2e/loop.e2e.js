@@ -159,6 +159,18 @@ test("Scales Plus opened from Settings closes back to Settings (1.82.4)", async 
   assert.equal(await page.$eval("#sheetSettings", (e) => e.open), true, "back on Settings");
   await ctx.close();
 });
+test("a long thought is never cut, even when the font arrives late (1.84.4)", async () => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
+  await ctx.route(/^https?:\/\/(?!localhost)/, (r) => r.abort());
+  await ctx.route(/\.woff2/, (r) => setTimeout(() => r.continue().catch(() => {}), 1500));
+  const page = await ctx.newPage();
+  await page.addInitScript((t) => { localStorage.setItem("scales.prefs.v1", JSON.stringify({ onboarded: true, coach_seen: true })); localStorage.setItem("scales.thoughts.v1", JSON.stringify(t)); },
+    { a: P("a", "Strong minds discuss ideas. Average minds discuss events. Weak minds discuss people.", { collection: "Stoicism" }) });
+  await page.goto(base);
+  const cut = () => page.$eval("#words", (w) => w.scrollHeight - w.clientHeight > 4 && !w.classList.contains("overflow"));
+  for (const ms of [300, 1000, 1500, 1500]) { await page.waitForTimeout(ms); assert.equal(await cut(), false, "not cut at " + ms + "ms steps"); }
+  await ctx.close();
+});
 test("a thought back from Later waits for a choice and counts nothing", async () => {
   const page = await open({ prefs: ready, at: new Date(2026, 9, 27, 20, 50),
     thoughts: { a: P("a", "Back from earlier.", { later: { day: "2026-10-27", at: "" } }), b: P("b", "Other.") } });
