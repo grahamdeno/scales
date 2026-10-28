@@ -61,6 +61,6 @@ jobs:
           check /privacy "Privacy."
           check /site.css "site.css\|--smoke"
           check /app/ "Scales"
-          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "content-type: application/json" -d '{}' https://scales.tangomike.app/api/ai)
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "content-type: application/json" -H "Origin: https://scales.tangomike.app" -d '{}' https://scales.tangomike.app/api/ai)
           [ "$code" = "402" ] && echo "::notice::/api/ai asks for Scales Plus (402)" || { echo "::error::/api/ai answered $code, expected 402"; fail=1; }
           exit $fail
