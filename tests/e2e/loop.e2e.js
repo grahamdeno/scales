@@ -113,7 +113,7 @@ test("the touch that wakes a quiet screen only wakes it; the next one presses (1
   assert.ok(!(await page.evaluate(() => document.body.classList.contains("quiet"))), "awake");
   assert.equal(await page.$("#card .phase"), null, "the waking touch presses nothing");
   await page.click('[data-move="question"]'); await page.clock.runFor(300);
-  assert.match(await page.textContent("#card .phase"), /The case against/, "the next touch does");
+  assert.match(await page.textContent("#card .phase"), /The other side/, "the next touch does");
 });
 test("the question fades in after a few seconds; its buttons show, then go quiet (1.83.0)", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
@@ -303,7 +303,7 @@ test("Question it: the case against, then Let go puts it in the Ledger with the 
   const page = await open({ prefs: ready, thoughts: { a: P("a", "Never complain. Never explain.", { why: "Excuses cost more than they buy." }), b: P("b", "Be present, need little.") } });
   if ((await words(page)) !== "Never complain. Never explain.") { await choose(page, "skip"); await choose(page, "skip"); }
   await page.click('[data-move="question"]'); await page.clock.runFor(300);
-  assert.match(await page.textContent(".phase"), /The case against/);
+  assert.match(await page.textContent(".phase"), /The other side/);
   assert.match(await page.textContent(".qnotes"), /Excuses cost more than they buy\./, "your reason sits under the case");
   assert.deepEqual(await rows(page), ["Let go", "Revise", "Keep it"]);
   assert.ok((await page.textContent("#aiSrc")).length > 0, "a test question without Plus");
