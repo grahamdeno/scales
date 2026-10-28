@@ -89,9 +89,9 @@ button { cursor:pointer; border:0; background:none; padding:0; }
 #iconRow { flex-wrap:wrap; row-gap:12px; }
 /* Quiet (1.81.0): on the resting card, 3 seconds without a touch dims everything but the thought to 20%, so the
    eye stays on the words. The controls stay visible and working; any touch brings them back at once. */
-.top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot { transition:opacity .25s ease; }
-body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot { opacity:.2; transition:opacity 1.2s ease; }
-@media (prefers-reduced-motion: reduce) { .top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot { transition:none; } }
+.top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .lineacts { transition:opacity .25s ease; }
+body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .lineacts { opacity:.12; transition:opacity 1.2s ease; }
+@media (prefers-reduced-motion: reduce) { .top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, #v-deck .lineacts, body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot, body.quiet #v-deck .lineacts { transition:none; } }
 .iconpick { display:flex; gap:12px; flex:none; }
 .iconpick button { display:flex; flex-direction:column; align-items:center; gap:6px; min-width:56px; font-size:var(--t-xs); color:var(--muted); }
 .iconpick img { width:44px; height:44px; border-radius:10px; display:block; }
@@ -1111,7 +1111,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.82.0"></script>
+<script src="core.js?v=1.82.1"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -2247,6 +2247,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       clearTimeout(holdT);
       holdT = setTimeout(function () {
         var m = mode; if (m !== "edit" && m !== "keep") return; mode = "";
+        if (wakingTouch()) return;
         var t = onCard(); if (!t) return;
         if (m === "edit") openEdit(t); else if (shown && shown.ai) openKeep(t, shown.text, shown.quote ? { author: shown.author, src: shown.src } : null);
       }, HOLD_MS);
@@ -2657,19 +2658,29 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     show("sheetRow");
   }
   // ---------- quiet (1.81.0) ----------
+  // 1.82.1: also while the line shows beside the thought; the line and its credit stay, Reply and Save dim.
   // Only on the resting card: not while its question shows, not on Skip, Reflect or Question it, not with a sheet,
   // the collection list or the Ledger open, not while a control has keyboard focus, and never with VoiceOver on.
   var QUIET_MS = 3000, quietT = 0, voiceOver = false;
   function quietOk() {
-    if (document.hidden || voiceOver || openSheet || menu.open || !$("v-ledger").hidden || phase !== "rest" || peeked() || returned() || !onCard()) return false;
+    if (document.hidden || voiceOver || openSheet || menu.open || !$("v-ledger").hidden || phase !== "rest" || returned() || !onCard()) return false;
     var a = document.activeElement;
     return !(a && a !== document.body && a.closest && a.closest(".top, #setBand, #v-deck .qacts, #v-deck #keys"));
   }
-  function wake() {
+  // 1.82.1: the touch that wakes a quiet screen only wakes it. It does not show or hide the line, press a
+  // button or start a press and hold; the next touch does. wokeAt is when that waking touch went down.
+  var wokeAt = 0;
+  function wake(e) {
+    if (e && e.type === "pointerdown") wokeAt = document.body.classList.contains("quiet") ? Date.now() : 0;
     clearTimeout(quietT); document.body.classList.remove("quiet");
     quietT = setTimeout(function () { if (quietOk()) document.body.classList.add("quiet"); }, QUIET_MS);
   }
+  function wakingTouch() { return wokeAt && Date.now() - wokeAt < 2000; }
   ["pointerdown", "keydown", "wheel", "touchstart", "focusin"].forEach(function (ev) { document.addEventListener(ev, wake, { capture: true, passive: true }); });
+  document.addEventListener("click", function (e) {
+    if (!wakingTouch()) return;
+    wokeAt = 0; e.stopPropagation(); e.preventDefault();
+  }, true);
   document.addEventListener("visibilitychange", wake);
   window.scalesA11y = function (s) { voiceOver = !!(s && s.voiceOver); if (voiceOver) document.body.classList.remove("quiet"); };
 

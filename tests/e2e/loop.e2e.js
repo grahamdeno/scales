@@ -103,6 +103,19 @@ test("tap to see the line: then Skip it rests straight away and Later is offered
   assert.equal(t.skip_count, 0, "Later is not a skip");
 });
 
+test("the touch that wakes a quiet screen only wakes it; the next one shows the line (1.82.1)", async () => {
+  const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
+  await page.clock.runFor(3500);
+  assert.ok(await page.evaluate(() => document.body.classList.contains("quiet")), "quiet after 3 seconds");
+  await page.click("#words"); await page.clock.runFor(300);
+  assert.ok(!(await page.evaluate(() => document.body.classList.contains("quiet"))), "awake");
+  assert.ok(!(await page.isVisible("#aiLine")), "the waking touch does not show the line");
+  await page.click("#words"); await page.clock.runFor(300);
+  assert.ok(await page.isVisible("#aiLine"), "the next touch does");
+  await page.clock.runFor(3500);
+  await page.click("#words"); await page.clock.runFor(300);
+  assert.ok(await page.isVisible("#aiLine"), "a waking touch leaves the line in place");
+});
 test("a thought back from Later waits for a choice and counts nothing", async () => {
   const page = await open({ prefs: ready, at: new Date(2026, 9, 27, 20, 50),
     thoughts: { a: P("a", "Back from earlier.", { later: { day: "2026-10-27", at: "" } }), b: P("b", "Other.") } });
