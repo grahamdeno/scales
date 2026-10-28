@@ -87,12 +87,22 @@ test("the website is published whole: strict styles, and the app passed through 
 test("quiet: the resting card dims everything but the thought after 3 seconds (1.81.0)", () => {
   const html = read("index.html"), c = css(), swift = fs.readFileSync(path.join(__dirname, "..", "ios", "App", "WebViewController.swift"), "utf8");
   assert.match(html, /var QUIET_MS = 3000/);
-  assert.match(c, /body\.quiet[^{]*#v-deck #keys[^{]*\.lineacts \{ opacity:\.12;/, "dimmed, not hidden");
+  assert.match(c, /body\.quiet[^{]*#v-deck #keys[^{]*\{ opacity:\.12;/, "dimmed, not hidden");
   assert.doesNotMatch(c, /body\.quiet[^{]*#words/, "the thought never dims");
-  assert.match(html, /if \(document\.hidden \|\| voiceOver \|\| openSheet \|\| menu\.open \|\| !\$\("v-ledger"\)\.hidden \|\| phase !== "rest" \|\| returned\(\)/);
+  assert.match(html, /if \(document\.hidden \|\| voiceOver \|\| openSheet \|\| menu\.open \|\| !\$\("v-ledger"\)\.hidden \|\| \(phase !== "rest" && phase !== "reflect" && phase !== "question"\) \|\| returned\(\)/);
   assert.match(html, /\["pointerdown", "keydown", "wheel", "touchstart", "focusin"\]\.forEach/, "any touch brings it back");
   assert.match(swift, /UIAccessibility\.isVoiceOverRunning/);
   assert.match(html, /The screen goes quiet so you can read\. Touch anywhere to bring it back\./);
+});
+test("finding the line and keeping it: a cue under the thought, a named button, a fill while held (1.82.2)", () => {
+  const html = read("index.html"), c = css();
+  assert.match(html, /Tap your thought for today\\u2019s question/, "the cue's words, for the first three times");
+  assert.match(html, /\(prefs\.peeks \|\| 0\) < 3/);
+  assert.match(html, /<\/svg>Keep as a thought<\/button>/, "Save says what it does");
+  assert.match(c, /#aiLine\.holding::after \{ transform:scaleX\(1\); transition:transform \.55s linear; \}/, "the fill matches HOLD_MS");
+  assert.match(html, /var HOLD_MS = 550/);
+  assert.match(html, /Press and hold a line Scales wrote to keep it as a thought\./, "the walkthrough says so");
+  assert.match(c, /body\.quiet #v-deck \.reflfoot/, "Reflect goes quiet too");
 });
 test("the page asks for core.js at its own version, and the cache keeps it (1.77.2)", () => {
   const html = read("index.html"), sw = read("sw.js");

@@ -116,6 +116,17 @@ test("the touch that wakes a quiet screen only wakes it; the next one shows the 
   await page.click("#words"); await page.clock.runFor(300);
   assert.ok(await page.isVisible("#aiLine"), "a waking touch leaves the line in place");
 });
+test("the cue under the thought loses its words after three looks (1.82.2)", async () => {
+  const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
+  assert.match(await page.textContent(".peekcue"), /Tap your thought/);
+  for (let i = 0; i < 6; i++) { await page.click("#words"); await page.clock.runFor(300); }
+  assert.equal((await page.textContent(".peekcue")).trim(), "", "the handle alone");
+});
+test("Reflect goes quiet as well (1.82.2)", async () => {
+  const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
+  await choose(page, "keep"); await page.clock.runFor(3500);
+  assert.ok(await page.evaluate(() => document.body.classList.contains("quiet")));
+});
 test("a thought back from Later waits for a choice and counts nothing", async () => {
   const page = await open({ prefs: ready, at: new Date(2026, 9, 27, 20, 50),
     thoughts: { a: P("a", "Back from earlier.", { later: { day: "2026-10-27", at: "" } }), b: P("b", "Other.") } });
