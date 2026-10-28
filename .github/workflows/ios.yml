@@ -58,6 +58,9 @@ jobs:
             archive > archive.log 2>&1
           code=$?
           if [ $code -ne 0 ]; then echo "::error::archive failed"; report archive.log; exit $code; fi
+          # The archive is unsigned, so it carries no entitlements and the export would drop iCloud (1.77.1).
+          # Sign it ad hoc with them; the export then signs it for the App Store and keeps them.
+          codesign --force --sign - --entitlements App/Scales.entitlements "$RUNNER_TEMP/Scales.xcarchive/Products/Applications/Scales.app" || { echo "::error::could not add entitlements"; exit 1; }
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Scales.xcarchive" \
             -exportOptionsPlist ExportOptions.plist -exportPath "$RUNNER_TEMP/out" $AUTH > export.log 2>&1
           code=$?
