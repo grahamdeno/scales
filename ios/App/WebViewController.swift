@@ -91,7 +91,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
     /// Daily save (1.77.0): Scales sends everything as one JSON file and it is written without asking, as
     /// "Scales backup.json" plus a dated copy (the last 14 kept). It goes to iCloud Drive, Scales, when the app
-    /// has an iCloud container, otherwise to Files, On My iPhone, Scales (also in the phone's iCloud Backup).
+    /// has an iCloud container (iCloud.com.grahamdeno.scales from 1.77.1, when the person is signed in to iCloud),
+    /// otherwise to Files, On My iPhone, Scales (also in the phone's iCloud Backup).
     private func save(json: String, day: String) {
         guard !json.isEmpty else { return }
         DispatchQueue.global(qos: .utility).async {
