@@ -246,6 +246,8 @@ body.quiet #v-deck .dwell.fresh .lineacts { opacity:1; transition:none; }
 .choice { display:flex; align-items:center; justify-content:center; min-height:56px; border-radius:14px; background:#2A2A28; color:var(--ink); font-size:1rem; font-weight:500; transition:transform .1s ease, filter .1s ease; }
 .choice.main { background:var(--accent); color:var(--onAccent); font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,.45), 0 8px 18px rgba(0,0,0,.45); }
 .choice:active { transform:scale(.97); filter:brightness(.92); }
+.choiceq { flex:none; margin:14px 0 0; font-size:var(--t-md); font-weight:500; color:var(--ink); text-align:center; }
+.choiceq + .choicenote { margin-top:4px; }
 .choicenote { flex:none; margin:12px 0 0; font-size:var(--t-sm); color:var(--muted); text-align:center; }
 .qacts { flex:none; display:flex; gap:8px; margin-top:22px; flex-wrap:wrap; }
 .qbtn { flex:none; align-self:flex-start; display:inline-flex; align-items:center; gap:10px; min-height:44px; padding:0 16px 0 14px; border-radius:12px; background:var(--btn2); color:var(--ink); font-size:var(--t-md); }
@@ -1117,7 +1119,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.83.0"></script>
+<script src="core.js?v=1.83.1"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -2045,7 +2047,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         '<button type="button" class="choice main" data-move="stay">Keep it</button></div>';
     }
     if (phase === "question") {
-      return '<p class="choicenote">Whichever you choose, it counts as weighed.</p>' +
+      // 1.83.1: the screen says what it is asking. The three choices answer one question.
+      return '<p class="choiceq">Does it still hold up?</p><p class="choicenote">Let go if not. Revise if partly. Keep it if it does.</p>' +
         '<div class="choices" id="keys" role="group" aria-label="Choose">' +
         '<button type="button" class="choice" data-move="letgo">Let go</button>' +
         '<button type="button" class="choice" data-move="revise">Revise</button>' +
@@ -2171,8 +2174,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     // Question it (1.79.0): the case against, your own reasons under it, then Let go, Revise or Keep it.
     if (phase === "question") {
       var notes = (t.why ? '<div><b>Why you believe it</b>' + esc(t.why) + "</div>" : "") + (t.change ? '<div><b>What would change your mind</b>' + esc(t.change) + "</div>" : "");
-      v.innerHTML = '<article class="card push" id="card" aria-label="The case against" aria-describedby="cardHow">' +
-        '<div class="phase"><span>The case against</span></div>' +
+      v.innerHTML = '<article class="card push" id="card" aria-label="The other side" aria-describedby="cardHow">' +
+        '<div class="phase"><span>The other side</span></div>' +
         words + '<div class="mid under">' + line +
         (notes ? '<div class="qnotes">' + notes + "</div>" : '<button type="button" class="linkbtn addwhy" data-move="why">Add why you believe it</button>') + "</div>" + how + "</article>" +
         choicesHtml();
