@@ -13,7 +13,7 @@ der = key.dsa_sign_asn1(OpenSSL::Digest::SHA256.digest("#{head}.#{body}"))
 raw = OpenSSL::ASN1.decode(der).value.map { |i| i.value.to_s(2).rjust(32, "\x00") }.join
 jwt = "#{head}.#{body}.#{b64.(raw)}"
 api = ->(method, url, payload = nil) {
-  uri = URI(url); req = { get: Net::HTTP::Get, post: Net::HTTP::Post, delete: Net::HTTP::Delete }.fetch(method).new(uri)
+  uri = URI(url); req = { get: Net::HTTP::Get, post: Net::HTTP::Post, delete: Net::HTTP::Delete, patch: Net::HTTP::Patch }.fetch(method).new(uri)
   req["Authorization"] = "Bearer #{jwt}"; req["Content-Type"] = "application/json"; req.body = JSON.dump(payload) if payload
   res = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |h| h.request(req) }
   [res.code.to_i, (JSON.parse(res.body) rescue {})]
@@ -31,6 +31,20 @@ bundles.each do |ident, name|
     rec = made["data"]; found = { "included" => [] }
     puts "::notice::Registered App ID #{ident}"
   end
+  # iCloud in the current mode (with CloudKit support, as Xcode sets it); the Xcode 5 mode makes profiles
+  # without the iCloud container entitlements the app uses.
+  cap = (found["included"] || []).find { |c| c["type"] == "bundleIdCapabilities" && c.dig("attributes", "capabilityType") == "ICLOUD" }
+  if cap
+    puts "::notice::iCloud settings: #{JSON.dump(cap.dig('attributes', 'settings'))}"
+    unless JSON.dump(cap.dig("attributes", "settings")).include?('"key":"XCODE_6","enabled":true')
+      pc, out = api.(:patch, "https://api.appstoreconnect.apple.com/v1/bundleIdCapabilities/#{cap['id']}",
+        { data: { type: "bundleIdCapabilities", id: cap["id"], attributes: { capabilityType: "ICLOUD",
+          settings: [{ key: "ICLOUD_VERSION", options: [{ key: "XCODE_6", enabled: true }] }] } } })
+      puts(pc == 200 ? "::notice::iCloud switched to the current mode" : "::warning::couldn't switch iCloud mode (#{pc}): #{JSON.dump(out)[0, 300]}")
+    end
+  else
+    puts "::warning::iCloud is not on for #{ident}"
+  end
   # Profiles made before iCloud was turned on for the App ID (1.77.1) lack the container, and the export
   # would reuse them and fail. Delete any profile for this app that doesn't name the container, so Xcode
   # makes a fresh one with it.
@@ -38,6 +52,8 @@ bundles.each do |ident, name|
   if code == 200
     (profs["data"] || []).each do |pr|
       content = Base64.decode64(pr.dig("attributes", "profileContent").to_s)
+      ents = content[/<key>Entitlements<\/key>\s*<dict>(.*?)<\/dict>/m, 1].to_s.scan(/<key>([^<]+)<\/key>/).flatten
+      puts "::notice::#{pr.dig('attributes', 'name')} (#{pr.dig('attributes', 'profileState')}) entitlements: #{ents.join(', ')}"
       next if content.include?("iCloud.com.grahamdeno.scales") && pr.dig("attributes", "profileState") == "ACTIVE"
       dc, = api.(:delete, "https://api.appstoreconnect.apple.com/v1/profiles/#{pr['id']}")
       puts(dc == 204 ? "::notice::Deleted out-of-date profile #{pr.dig('attributes', 'name')}" : "::warning::couldn't delete profile #{pr.dig('attributes', 'name')} (#{dc})")
