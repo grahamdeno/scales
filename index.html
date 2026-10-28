@@ -84,6 +84,7 @@ body::before { content:""; position:fixed; inset:0; z-index:0; pointer-events:no
 button, input, textarea { font:inherit; color:inherit; }
 button { cursor:pointer; border:0; background:none; padding:0; }
 :focus-visible { outline:2px solid var(--ink); outline-offset:3px; }
+.sheet:focus, .sheet:focus-visible { outline:0; }
 .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 svg.i { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; flex:none; }
 /* Small caps label: dates, section names, the sheet's quiet headings. */
@@ -1058,7 +1059,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastPop" popover="manual"></div>
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
-<script src="core.js"></script>
+<!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
+<script src="core.js?v=1.77.2"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1215,6 +1217,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     openSheet = $(id); onSheetClose = onClose || null;
     openSheet.classList.remove("dragging", "settle"); openSheet.style.transform = "";
     if (!openSheet.open) { if (openSheet.showModal) openSheet.showModal(); else openSheet.setAttribute("open", ""); }
+    // 1.77.2: opening a sheet focuses its first button, and iOS rings it (the way back, or Done). Focus the
+    // sheet itself instead; a sheet that wants its text field focused still does that itself.
+    var a = document.activeElement;
+    if (a && openSheet.contains(a) && a.tagName === "BUTTON") { openSheet.setAttribute("tabindex", "-1"); try { openSheet.focus({ preventScroll: true }); } catch (_) {} }
   }
   function hide() { closeSheet(true); }
   function closeSheet(restore) {

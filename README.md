@@ -185,6 +185,8 @@ Node 18 or later, no dependencies. `node --test tests/e2e/loop.e2e.js` (needs Pl
 
 ## Versioning
 
+Each release changes three things together, and a test checks they match: `VERSION` in core.js, the cache name in sw.js, and the `core.js?v=` address in index.html (from 1.77.2), so a phone that keeps an old core.js in its cache never pairs it with a new page.
+
 Releases are numbered `MAJOR.MINOR.PATCH`:
 
 | Part | When it changes | Example |
