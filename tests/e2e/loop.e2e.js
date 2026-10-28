@@ -123,6 +123,31 @@ test("Reflect goes quiet as well (1.82.2)", async () => {
   await choose(page, "keep"); await page.clock.runFor(3500);
   assert.ok(await page.evaluate(() => document.body.classList.contains("quiet")));
 });
+test("Scales Plus opened from Settings closes back to Settings (1.82.4)", async () => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
+  await ctx.route(/^https?:\/\//, (r) => {
+    const u = new URL(r.request().url());
+    if (u.hostname !== "scales.tangomike.app" || u.pathname === "/api/ai") return r.abort();
+    const p = path.join(root, u.pathname.replace(/^\/app\/?/, "/") === "/" ? "/index.html" : u.pathname.replace(/^\/app\//, "/"));
+    fs.readFile(p, (e, d) => e ? r.fulfill({ status: 404 }) : r.fulfill({ status: 200, contentType: types[path.extname(p)] || "application/octet-stream", body: d }));
+  });
+  const page = await ctx.newPage();
+  await page.clock.install({ time: new Date(2026, 9, 27, 9, 0) });
+  await page.addInitScript((t) => {
+    window.scalesNative = { version: 1, platform: "ios" };
+    window.webkit = { messageHandlers: { scales: { postMessage: () => {} } } };
+    localStorage.setItem("scales.prefs.v1", JSON.stringify({ onboarded: true, coach_seen: true }));
+    localStorage.setItem("scales.thoughts.v1", JSON.stringify(t));
+  }, { a: P("a", "One.") });
+  await page.goto("https://scales.tangomike.app/app/?native=1"); await page.clock.runFor(500);
+  await page.evaluate(() => window.scalesStore({ active: false, price: "$19.99", trialDays: 14 }));
+  await page.click("#setBtn"); await page.clock.runFor(300);
+  await page.click("#openPlus"); await page.clock.runFor(300);
+  assert.ok(await page.isVisible("#plusBack"), "the way back shows");
+  await page.click("#plusClose"); await page.clock.runFor(300);
+  assert.equal(await page.$eval("#sheetSettings", (e) => e.open), true, "back on Settings");
+  await ctx.close();
+});
 test("a thought back from Later waits for a choice and counts nothing", async () => {
   const page = await open({ prefs: ready, at: new Date(2026, 9, 27, 20, 50),
     thoughts: { a: P("a", "Back from earlier.", { later: { day: "2026-10-27", at: "" } }), b: P("b", "Other.") } });
