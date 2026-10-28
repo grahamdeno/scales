@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.72.1";
+  var VERSION = "1.73.0";
   var BUILT = "2026-10-25";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
@@ -574,7 +574,7 @@ var ScalesCore = (function () {
   // 1.60.0: living people are no longer built in (App Store 5.2.1). A name the user adds is still written about
   // in the third person unless they mark it as someone no longer living.
   var TALK_MAX = 6, REPLY_WORDS = 70;
-  var MOVES = { skip: "Skip", keep: "Sit with it", shed: "Living it" };
+  var MOVES = { skip: "Skip", keep: "Reflect", shed: "Lived" };
 
   // Every voice on offer: the built-in ones, then names the user added ({ name, first }).
   function allVoices(custom) {
@@ -608,7 +608,7 @@ var ScalesCore = (function () {
   // One line weighing the move just made on principle t.
   function weighPrompt(v, t, move, daysIn) {
     return "You give the user a perspective from " + v.name + " on a move they just made in Scales, an app for living by chosen principles.\n" +
-      "In Scales, Skip sets a principle aside for now, Sit with it keeps it in practice in daily life, and Living it says they now act on it without prompting.\n" +
+      "In Scales, Skip sets a principle aside for now, Reflect keeps it in practice in daily life, and Lived says they now act on it without prompting.\n" +
       (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "Draw on what " + v.name + " is known to think and value.\n") +
       voiceRule(v) + "\n" +
       "Weigh the move itself: was it honest, evasive, earned, premature? Hold the standard; no flattery, no permission to wait.\n" +
@@ -727,9 +727,9 @@ var ScalesCore = (function () {
     state.moved.forEach(function (m) { if (n[m.move] != null) n[m.move]++; });
     var w = function (k) { return k <= 10 ? NUM[k] : String(k); };
     var parts = [];
-    if (n.keep) parts.push(w(n.keep) + " sat with");
+    if (n.keep) parts.push(w(n.keep) + " reflected on");
     if (n.skip) parts.push(w(n.skip) + " skipped");
-    if (n.shed) parts.push(w(n.shed) + " living it");
+    if (n.shed) parts.push(w(n.shed) + " lived");
     if (!parts.length) return "";
     var s = parts.length > 1 ? parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1] : parts[0];
     return s.charAt(0).toUpperCase() + s.slice(1) + ".";
@@ -838,7 +838,7 @@ var ScalesCore = (function () {
     (t.caught || []).forEach(function (x) { ev.push({ at: x.day, kind: "caught", text: "Caught it" + (x.text ? ": " + x.text : "") }); });
     (t.talks || []).forEach(function (x) { if (x.line) ev.push({ at: x.day || d(x.at), kind: "talk", text: x.reply ? "Talked with " + (x.voice_name || "a thinker") : "Weighed in by " + (x.voice_name || "a thinker") + " on " + (MOVES[x.move] || x.move) }); });
     (t.earlier || []).forEach(function (x) { ev.push({ at: d(x.until), kind: "edit", text: "Wording changed" }); });
-    if (t.status === "shed" && t.shed_at) ev.push({ at: d(t.shed_at), kind: "lived", text: "Living it" + (t.evidence ? ": " + t.evidence : "") });
+    if (t.status === "shed" && t.shed_at) ev.push({ at: d(t.shed_at), kind: "lived", text: "Lived" + (t.evidence ? ": " + t.evidence : "") });
     var order = { start: 0, edit: 1, skip: 2, act: 3, talk: 4, caught: 5, lived: 6 };
     return ev.sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : order[b.kind] - order[a.kind]; });
   }

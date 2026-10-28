@@ -38,7 +38,7 @@ img { max-width: 100%; }
   --line:rgba(236,234,229,.16); --brass:#ECEAE5; --brass-hi:#ECEAE5; --violet:#ECEAE5; --danger:#E3A595;
   --hi:transparent; --lo:transparent; --scrim:rgba(0,0,0,.55); --onBrass:#121212;
   /* The one accent (1.66.0): blue, for the main action and whatever is selected. Lighter on Black so it reads. */
-  --accent:#6E9BF0; --onAccent:#121212;
+  --accent:#6E9BF0; --onAccent:#121212; --btn2:#262624;
   --font:"Geist",-apple-system,"SF Pro Text",system-ui,sans-serif;
   /* Corners: square throughout; only the ring and dots are round. */
   --r-s:0; --r-m:0; --r-l:0; --r-xl:0;
@@ -55,7 +55,7 @@ img { max-width: 100%; }
   --paper:#ECEAE5; --deep:#E2E0DA; --rise:#ECEAE5; --ink:#141414; --muted:#5A5955; --faint:#6A6965; --rest:#64635F;
   --line:rgba(20,20,20,.16); --brass:#141414; --brass-hi:#141414; --violet:#141414; --danger:#A3402C;
   --scrim:rgba(20,20,20,.28); --onBrass:#ECEAE5;
-  --accent:#1F5FCC; --onAccent:#F4F3EF;
+  --accent:#1F5FCC; --onAccent:#F4F3EF; --btn2:#DCD9D3;
   color-scheme:light;
 }
 
@@ -130,7 +130,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .thought.small.long { font-size:0.9412rem; line-height:1.4; }
 /* On push and reflect the line is the subject, so a long principle folds to four lines; tap to open it. */
 .thought.small.fold { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4; overflow:hidden; cursor:pointer; }
-.foldhint { margin-top:-14px; font-size:var(--t-xs); color:var(--faint); }
+.foldhint { margin-top:6px; font-size:var(--t-xs); color:var(--faint); }
 .where { flex:none; margin-top:16px; display:flex; flex-wrap:wrap; gap:4px 14px; font-size:var(--t-sm); color:var(--muted); }
 .where b { color:var(--ink); font-weight:500; }
 /* Push and reflect: a small-caps phase name at the top, the principle and its line in the middle. */
@@ -163,7 +163,6 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .reflfoot .bar { position:relative; height:1px; background:var(--line); overflow:hidden; }
 .reflfoot .bar i { position:absolute; inset:0; background:var(--ink); transform-origin:0 50%; animation:fill linear both; }
 @keyframes fill { from { transform:scaleX(0); } }
-.holdlbl { margin:0; min-height:21px; font-size:var(--t-sm); color:var(--muted); text-align:center; }
 .setaside { min-height:44px; padding:0 12px; font-size:var(--t-sm); font-weight:500; color:var(--ink); text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px; }
 .date .coll, .dots .coll { margin-left:10px; color:var(--ink); }
 .ai-p.pending { opacity:.5; }
@@ -179,27 +178,22 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .banner .yes { color:var(--ink); }
 /* Hold: the ring, then the three outcomes as plain buttons. */
 /* The hold area: the bottom of the screen. The ring sits in the middle; the choices appear around it while held. */
-.hold { position:relative; flex:none; height:clamp(230px, 33dvh, 300px); margin:0 calc(-1 * var(--gutter)); padding:0 var(--gutter) max(20px, env(safe-area-inset-bottom, 0px));
-  display:flex; flex-direction:column; align-items:center; justify-content:center; touch-action:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; cursor:pointer; }
-.card.push ~ .hold { height:clamp(200px, 27dvh, 250px); }
-.tapmoves { flex:none; display:grid; gap:8px; padding:12px 0 max(20px, env(safe-area-inset-bottom, 0px)); }
-.tapmove { display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:56px; padding:0 18px; border:1px solid var(--line); font-size:1.0588rem; font-weight:500; color:var(--ink); text-align:left; }
-.tapmove small { font-size:var(--t-xs); font-weight:400; color:var(--faint); }
-.hold .holdlbl { margin:14px 0 0; font-size:var(--t-md); color:var(--muted); text-align:center; }
+/* The choices (1.73.0): always in view. Gray for the moves, blue for the one Scales suggests. */
+.choices { flex:none; display:grid; grid-template-columns:1fr 1.3fr 1fr; gap:8px; padding:12px 0 max(20px, env(safe-area-inset-bottom, 0px)); }
+.choices.two { grid-template-columns:1fr 1fr; }
+.choice { display:flex; align-items:center; justify-content:center; min-height:52px; border-radius:12px; background:var(--btn2); color:var(--ink); font-size:1rem; font-weight:500; transition:transform .1s ease, filter .1s ease; }
+.choice.main { background:var(--accent); color:var(--onAccent); font-weight:600; }
+.choice:active { transform:scale(.97); filter:brightness(.92); }
+.choicenote { flex:none; margin:12px 0 0; font-size:var(--t-sm); color:var(--muted); text-align:center; }
+.qbtn { flex:none; align-self:flex-start; display:inline-flex; align-items:center; gap:10px; min-height:44px; margin-top:22px; padding:0 16px 0 14px; border-radius:10px; background:var(--btn2); color:var(--ink); font-size:var(--t-md); }
+.lineacts { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.laterbtn { margin:0; align-self:center; color:var(--ink); }
+.wchoices { margin:0 0 24px; padding:0 0 0 20px; display:grid; gap:10px; color:var(--muted); }
+.wchoices b { color:var(--ink); font-weight:500; }
 /* The choices (1.39.0): a panel of three full-width rows that opens above the thumb. The row under the
    finger fills with ink. The principle steps back while they are open. */
-.picks { position:absolute; z-index:4; left:calc(var(--gutter) - 8px); right:calc(var(--gutter) - 8px); bottom:calc(50% + 64px);
-  display:flex; flex-direction:column; background:var(--deep); border:1px solid var(--line); }
-.picks[hidden] { display:none; }
 @media (prefers-reduced-motion: no-preference) { .picks:not([hidden]) { animation:choicesin .16s var(--ease-out); transform-origin:50% 100%; } }
 @keyframes choicesin { from { opacity:0; transform:translateY(8px) scale(.98); } }
-.pickrow { display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:60px; padding:0 20px; text-align:left; font-size:1.0588rem; font-weight:500; color:var(--ink); }
-.pickrow + .pickrow { border-top:1px solid var(--line); }
-.pickrow small { font-size:0.7647rem; font-weight:400; color:var(--faint); }
-.pickrow.on { background:var(--accent); color:var(--onAccent); }
-.pickrow.on small { color:var(--onAccent); opacity:.75; }
-#v-deck.choosing .card { opacity:.3; transition:opacity .15s ease; }
-.hold.open .ring { transform:scale(.7); transition:transform .15s var(--ease-out); }
 /* Wide, thumb-sized buttons (1.36.0): nothing smaller than 48px to aim at. */
 .btn3d.wide { width:100%; min-height:56px; }
 .widewrap { flex:none; padding:0 0 max(16px, env(safe-area-inset-bottom, 0px)); margin-top:-8px; }
@@ -238,7 +232,6 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .welcome p b { color:var(--ink); font-weight:500; }
 .welcome .note { font-size:var(--t-sm); }
 .wdecks { display:grid; gap:8px; margin-top:8px; }
-.welcome .wbuttons { display:block; margin:12px auto 0; text-decoration:underline; text-underline-offset:3px; }
 /* Backup reminder (1.50.0), as in The Road: on Done for today and in the Ledger, never on the deck. */
 .bk { margin-top:24px; padding-top:16px; border-top:1px solid var(--line); }
 .bk p { margin:0; font-size:var(--t-sm); line-height:1.45; color:var(--muted); max-width:none; }
@@ -250,22 +243,8 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .adv.inner > summary { font-size:var(--t-sm); color:var(--muted); min-height:48px; }
 #ledgerBk .bk { margin-top:16px; padding-top:0; border-top:0; }
 .lived2 { flex:none; display:flex; flex-direction:column; gap:10px; padding-top:12px; font-size:var(--t-sm); color:var(--muted); }
-.ring { position:relative; width:96px; height:96px; display:grid; place-items:center; touch-action:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; cursor:pointer; }
-.ring svg { width:96px; height:96px; transform:rotate(-90deg); }
-.ring .track { fill:none; stroke:var(--line); stroke-width:1; }
-.ring .arc { fill:none; stroke:var(--accent); stroke-width:2; stroke-linecap:butt; }
-.ring i { position:absolute; left:50%; top:50%; width:12px; height:12px; margin:-6px 0 0 -6px; border-radius:50%; background:var(--ink); transition:transform .2s var(--ease-out); }
-.ring.held i { transform:scale(.6); }
-.ring.lift i { transform:translateY(-14px) scale(.7); }
-.moves { width:100%; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
 /* The move buttons are for VoiceOver and the keyboard: out of sight until one of them has focus. */
-.moves.sr:focus-within { position:static; width:100%; height:auto; overflow:visible; clip:auto; white-space:normal; }
-.key { min-height:48px; padding:4px 0; display:flex; flex-direction:column; justify-content:center; gap:1px; font-size:var(--t-sm); line-height:1.3; color:var(--muted); text-align:left; touch-action:manipulation; border:0 !important; background:none !important; transition:color .12s ease; }
-.key span { font-size:var(--t-xs); color:var(--faint); }
-.key b { font-weight:500; }
 #kKeep { text-align:center; } #kShed { text-align:right; }
-.key.on, .key:hover { color:var(--ink); }
-.key.on b { text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px; }
 .foot { flex:none; display:flex; justify-content:space-between; gap:12px; padding:14px 0 max(14px, env(safe-area-inset-bottom, 0px)); font-size:var(--t-xs); color:var(--faint); font-variant-numeric:tabular-nums; }
 .foot .first { color:var(--ink); }
 /* Empty states: words first, then plain buttons. */
@@ -278,14 +257,6 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 @keyframes burst { from { transform:scale(.2); opacity:1; } to { transform:scale(2.6); opacity:0; } }
 
 /* First-use tip: the page dims, a short note sits above the ring. Shown once. */
-.coach { position:absolute; inset:0 calc(-1 * var(--gutter)) 0; z-index:5; display:flex; flex-direction:column; justify-content:flex-end; padding:0 var(--gutter) calc(96px + 120px + max(14px, env(safe-area-inset-bottom, 0px)));
-  background:color-mix(in srgb, var(--paper) 86%, transparent); }
-.coach .glass { padding:20px 0 0; border-top:1px solid var(--ink); background:none; }
-.coach h2 { margin:0; font-size:var(--t-lg); font-weight:600; letter-spacing:-.01em; }
-.coach ul { list-style:none; padding:0; margin:12px 0 0; display:grid; gap:8px; font-size:var(--t-md); color:var(--muted); }
-.coach li b { color:var(--ink); font-weight:500; }
-.coach .tapnote { margin:12px 0 0; font-size:var(--t-sm); color:var(--muted); }
-.coach .row { margin-top:16px; display:flex; justify-content:flex-start; }
 
 /* Text button, for actions that are not the primary one: a hairline box. */
 .btn3d { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 18px; border:1px solid var(--line); background:none; font-size:0.8824rem; font-weight:500; color:var(--ink); white-space:nowrap; }
@@ -568,7 +539,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 @keyframes vt-in { from { opacity:0; transform:translateX(24px); } }
 @keyframes vt-out-back { to { opacity:0; transform:translateX(18px); } }
 @keyframes vt-in-back { from { opacity:0; transform:translateX(-24px); } }
-@media (prefers-reduced-motion: reduce) { .card, .card.spring, .ai-p, .raised, .toggle i, .key, .ring i, .thought { transition:none; } .reflfoot .bar { display:none; } }
+@media (prefers-reduced-motion: reduce) { .card, .card.spring, .ai-p, .raised, .toggle i, .thought { transition:none; } .reflfoot .bar { display:none; } }
 </style>
 </head>
 <body>
@@ -653,7 +624,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <!-- Living it sheet -->
 <dialog class="sheet" id="sheetShed" aria-modal="true" aria-labelledby="sheetShedTitle">
   <div class="grabber" aria-hidden="true"></div>
-  <h2><span id="sheetShedTitle">Living it</span> <button type="button" id="shedCancel">Not yet</button></h2>
+  <h2><span id="sheetShedTitle">Lived</span> <button type="button" id="shedCancel">Not yet</button></h2>
   <div class="quote" id="shedText"></div>
   <div class="glass" id="shedLine" hidden></div>
   <p class="note">Mark it only if you acted on it without prompting yourself.</p>
@@ -662,7 +633,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <textarea id="evidenceInput" rows="3" maxlength="280" placeholder="One line on when you lived it."></textarea>
   </div>
   <div class="stats">
-    <div class="stat pressed"><b id="sReflect">0</b><span>Sat with</span></div>
+    <div class="stat pressed"><b id="sReflect">0</b><span>Reflected</span></div>
     <div class="stat pressed"><b id="sSkips" class="br">0</b><span>Skipped</span></div>
     <div class="stat pressed"><b id="sDays">0</b><span>Days in deck</span></div>
   </div>
@@ -764,7 +735,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   </div>
   <div class="group" id="caughtStep2" hidden>
     <div class="notice pressed" id="caughtNotice"></div>
-    <div class="sd"><button type="button" class="btn3d raised" id="caughtNotYet">Not yet</button><button type="button" class="primary" id="caughtLive">Living it</button></div>
+    <div class="sd"><button type="button" class="btn3d raised" id="caughtNotYet">Not yet</button><button type="button" class="primary" id="caughtLive">Lived</button></div>
   </div>
 </dialog>
 
@@ -875,8 +846,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       <div class="stepper" role="group" aria-labelledby="restLbl"><button type="button" class="raised" id="restDown" aria-label="One day less">&minus;</button><output id="restOut" aria-live="polite">4 days</output><button type="button" class="raised" id="restUp" aria-label="One day more">+</button></div></div>
     <div class="setrow"><span id="aiLbl">AI questions and quotes<small id="aiSub">Your key stays on this phone</small></span>
       <button type="button" class="toggle" id="aiToggle" role="switch" aria-checked="true" aria-labelledby="aiLbl"><i></i></button></div>
-    <div class="setrow"><span id="tapLbl">Buttons instead of press and hold<small>Your choices as buttons on the main screen</small></span>
-      <button type="button" class="toggle" id="tapToggle" role="switch" aria-checked="false" aria-labelledby="tapLbl"><i></i></button></div>
     <button type="button" class="setrow" id="openCollections" style="width:100%;text-align:left;color:inherit"><span>Collections<small>Rename, merge or remove</small></span><span class="status" style="display:flex;align-items:center;gap:6px;font-size:0.8235rem"><span id="collCount">0</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px"><path d="M9 6l6 6-6 6"/></svg></span></button>
   </div>
 
@@ -890,13 +859,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       <button class="btn3d sm raised" type="button" id="voiceAdd" disabled>Add</button>
     </div>
   </div>
-  <p class="note">One voice a day, in turn. Sit with it shows a real quote from today’s voice when one fits, and the voice answers when you reply.</p>
+  <p class="note">One voice a day, in turn. Reflect shows a real quote from today’s voice when one fits, and the voice answers when you reply.</p>
 
   <h3 class="sec2">Look</h3>
   <div class="panel raised">
     <div class="setrow"><span id="lookLbl">Appearance</span>
       <div class="seg pressed" role="group" aria-labelledby="lookLbl"><button type="button" data-look="auto" aria-pressed="false">Match iPhone</button><button type="button" data-look="matte" aria-pressed="true">Black</button><button type="button" data-look="light" aria-pressed="false">White</button></div></div>
-    <div class="setrow"><span id="whereLbl">Show where it came from<small>Collection, origin and author on Sit with it</small></span>
+    <div class="setrow"><span id="whereLbl">Show where it came from<small>Collection, origin and author on Reflect</small></span>
       <button type="button" class="toggle" id="whereToggle" role="switch" aria-checked="true" aria-labelledby="whereLbl"><i></i></button></div>
   </div>
 
@@ -925,13 +894,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <details class="adv inner helpbox">
       <summary>How Scales works</summary>
       <ul class="howlist">
-        <li>One principle at a time. Tap it to see the question Scales has for it.</li>
-        <li>Press and hold the bottom of the screen for your choices: <b>Living it</b>, <b>Sit with it</b> or <b>Skip</b>. Slide onto one, or let go and tap one.</li>
-        <li><b>Sit with it</b> shows a real quote from today’s voice. After eight seconds it counts, and the principle gets lighter.</li>
-        <li><b>Reply</b> to any line to keep what came up. With Scales Plus, today’s voice answers, and you can go back and forth.</li>
+        <li>One principle at a time. <b>Today’s question</b> shows the line Scales has for it.</li>
+        <li>Choose at the bottom of the screen: <b>Skip</b>, <b>Reflect</b> or <b>Lived</b>.</li>
+        <li><b>Reflect</b> shows a real quote from today’s voice. After eight seconds it counts, and the principle gets lighter.</li>
         <li id="howRest"><b>Skip</b> rests a principle for a few days. It comes back first, set heavier, until you live it.</li>
         <li><b>Later</b> saves a principle for this evening, after 6 PM.</li>
-        <li><b>Living it</b> moves it to your record in the Ledger, with where it showed up.</li>
+        <li><b>Lived</b> moves it to your record in the Ledger, with where it showed up.</li>
+        <li><b>Reply</b> to any line to keep what came up. With Scales Plus, today’s voice answers, and you can go back and forth.</li>
         <li>Press and hold a principle to edit it, or a quote to keep it as a principle of its own.</li>
       </ul>
     </details>
@@ -1520,7 +1489,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var l = shown, r = C.lastReply(t);
     if (!l || l.none || l.pending) { box.innerHTML = ""; return; }
     box.innerHTML = (r ? '<div class="bubble me"><p>' + esc(r.text) + "</p><small>You, " + esc(fmtDayKey(r.day)) + "</small></div>" : "") +
-      '<button type="button" class="btn3d replybtn" id="replyBtn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Reply</button>';
+      '<div class="lineacts"><button type="button" class="btn3d replybtn" id="replyBtn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Reply</button>' + laterHtml() + "</div>";
   }
   function fmtDayKey(d) { if (!d) return ""; var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
 
@@ -1612,6 +1581,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (kind === "shed") openShed(t);
   }
   // Not today from the ring, a button or the left arrow: the first time it shows the push line instead.
+  // Keep it (1.73.0): back from the Skip screen to the three choices, with the line still showing.
+  function keepIt() {
+    var t = onCard(); if (!t || phase !== "push") return;
+    phase = "rest"; peekId = t.id; renderDeck(); showLine(t, "push");
+  }
   function requestSkip() {
     dropUndo();
     var t = onCard(); if (!t || phase === "reflect") return;
@@ -1732,7 +1706,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     t.status = "shed"; t.shed_at = new Date().toISOString(); t.evidence = $("evidenceInput").value.trim();
     noteMove(t, "shed"); noteDay(t, "shed");
     save(t); logActivity("shed"); shedDone = true; hide(); burst(); flyOut("right");
-    undoable("Living it. Moved to your record.", u);
+    undoable("Lived. Moved to your record.", u);
   });
 
   // ---------- render: deck ----------
@@ -1783,41 +1757,26 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     }
     return p.length ? '<div class="where">' + p.join("") + "</div>" : "";
   }
-  // The hold area (1.39.0): the bottom of the screen. Press and hold anywhere in it; the ring fills for
-  // HOLD_REVEAL, then the three choices open above the thumb as a menu. Slide onto one and let go, or let
-  // go and tap one. Letting go after sliding off the list cancels; nothing is ever chosen by letting go
-  // alone. The three moves are also buttons for VoiceOver and the keyboard (#keys, shown on focus).
-  var RING_R = 46, RING_C = 2 * Math.PI * RING_R;
-  function holdHtml(caption) {
-    var push = phase === "push" || peeked(), n = restDays();
-    var rows = [
-      ["shed", "Living it", "I act on it now"],
-      ["keep", "Sit with it", "A quote, then Next"],
-      ["skip", push ? "Skip it" : "Skip", push ? "Rests " + n + (n === 1 ? " day" : " days") : "Asks first"]
-    ];
-    // On the skip screen: Later, when there is room and this principle has not just come back from Later.
-    var cur = thoughts[current];
-    if (push && C.canLater(all(), cur)) rows.splice(2, 0, ["later", "Later", "When I have time"]);
-    // Buttons instead of press and hold (1.45.0): the same choices as plain buttons, for anyone who cannot hold.
-    if (tapMoves()) return '<div class="tapmoves" id="keys" role="group" aria-label="Choose">' + rows.map(function (r) {
-      return '<button type="button" class="tapmove" data-move="' + r[0] + '"><span>' + r[1] + "</span><small>" + r[2] + "</small></button>";
-    }).join("") + "</div>";
-    return '<div class="hold" id="holdZone">' +
-      '<div class="picks" id="choices" role="menu" aria-label="Choose" hidden>' + rows.map(function (r) {
-        return '<button type="button" class="pickrow" role="menuitem" data-pick="' + r[0] + '"><span>' + r[1] + "</span><small>" + r[2] + "</small></button>";
-      }).join("") + "</div>" +
-      '<div class="ring" id="holdRing" aria-hidden="true"><svg viewBox="0 0 96 96"><circle class="track" cx="48" cy="48" r="' + RING_R + '"></circle>' +
-      '<circle class="arc" id="holdArc" cx="48" cy="48" r="' + RING_R + '" stroke-dasharray="' + RING_C.toFixed(1) + '" stroke-dashoffset="' + RING_C.toFixed(1) + '"></circle></svg><i></i></div>' +
-      '<p class="holdlbl" id="holdLbl" data-rest="' + esc(caption || "") + '" aria-hidden="true">' + esc(caption || "") + "</p>" +
-      '<div class="moves sr" id="keys" role="group" aria-label="Moves">' +
-      (phase === "rest" ? '<button type="button" class="key" id="kPeek" data-move="peek"><b>' + (push ? "Hide the line" : "Show the line") + "</b></button>" : "") +
-      '<button type="button" class="key" id="kSkip" data-move="skip"><b>' + (push ? "Skip it" : "Skip") + "</b></button>" +
-      '<button type="button" class="key" id="kKeep" data-move="keep"><b>Sit with it</b></button>' +
-      (push && C.canLater(all(), cur) ? '<button type="button" class="key" id="kLater" data-move="later"><b>Later</b></button>' : "") +
-      '<button type="button" class="key" id="kShed" data-move="shed"><b>Living it</b></button></div></div>';
+  // The choices (1.73.0): always in view at the bottom, one tap each. Skip, Reflect and Lived at rest; on the
+  // Skip screen, Skip anyway and Keep it. The press and hold menu that hid them until 1.72 is gone.
+  function choicesHtml() {
+    if (phase === "push") {
+      var n = restDays();
+      return '<p class="choicenote">Skipping rests it for ' + n + (n === 1 ? " day" : " days") + ", then it comes back first.</p>" +
+        '<div class="choices two" id="keys" role="group" aria-label="Choose">' +
+        '<button type="button" class="choice" data-move="skip">Skip anyway</button>' +
+        '<button type="button" class="choice main" data-move="stay">Keep it</button></div>';
+    }
+    return '<div class="choices" id="keys" role="group" aria-label="Choose">' +
+      '<button type="button" class="choice" data-move="skip">Skip</button>' +
+      '<button type="button" class="choice main" data-move="keep">Reflect</button>' +
+      '<button type="button" class="choice" data-move="shed">Lived</button></div>';
   }
-  function restCaption() { return "Press and hold"; }
-  function tapMoves() { return !!prefs.tap_moves; }
+  // Later, offered beside Reply once the line has been read (or on the Skip screen), when there is room for it.
+  function laterHtml() {
+    var t = onCard(); if (!t || !(phase === "push" || (peeked() && !returned())) || !C.canLater(all(), t)) return "";
+    return '<button type="button" class="linkbtn laterbtn" data-move="later">' + (new Date().getHours() < C.CHECKIN_HOUR ? "Later tonight" : "Later") + "</button>";
+  }
 
   function footHtml(left) {
     // After Keep going, the footer offers the way back to today's focus.
@@ -1891,7 +1850,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       paintStat();
       return;
     }
-    var nudge = t.consecutive_reflects >= NUDGE_AT, coachOn = !prefs.coach_seen && phase === "rest";
+    var nudge = t.consecutive_reflects >= NUDGE_AT;
     // At rest the words are one span each so the hold can ink them. On push and reflect the principle is plain
     // text: Safari laid the spans out one word per line there (1.34.3).
     var lifted = phase !== "rest" || peeked();
@@ -1900,12 +1859,12 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       (fold ? '<small class="foldhint" id="foldHint" aria-hidden="true">Tap to read it all</small>' : "");
     var line = '<div class="lineWrap"><p class="ai-p" id="aiLine"></p><small class="ai-src" id="aiSrc"></small>' +
       '<div class="replies" id="replies"></div></div>';
-    var how = '<span class="sr" id="cardHow">Use the Skip, Sit with it and Living it buttons, or press and hold the bottom of the screen to open them. Tap the principle to see its line. Press and hold the principle to edit it.</span>';
+    var how = '<span class="sr" id="cardHow">Choose Skip, Reflect or Lived at the bottom of the screen. Today’s question shows the line Scales has for it. Press and hold the principle to edit it.</span>';
     if (phase === "reflect") {
-      v.innerHTML = '<article class="card reflect" id="card" aria-label="Sit with it" aria-describedby="cardHow">' +
-        '<div class="phase"><span>' + (fromLater ? "Saved from earlier" : "Sitting with it") + "</span></div>" +
+      v.innerHTML = '<article class="card reflect" id="card" aria-label="Reflect" aria-describedby="cardHow">' +
+        '<div class="phase"><span>' + (fromLater ? "Saved from earlier" : "Reflecting") + "</span></div>" +
         words + '<div class="mid under">' + line + whereHtml(t) + "</div>" + how + "</article>" +
-        (nudge ? '<div class="lived2"><span>Have you lived this yet?</span><div class="pair"><button type="button" class="btn3d" id="nudgeNo">Not yet</button><button type="button" class="btn3d" id="nudgeYes">Living it</button></div></div>' : "") +
+        (nudge ? '<div class="lived2"><span>Have you lived this yet?</span><div class="pair"><button type="button" class="btn3d" id="nudgeNo">Not yet</button><button type="button" class="btn3d" id="nudgeYes">Lived</button></div></div>' : "") +
         '<div class="reflfoot" id="reflFoot" aria-live="polite"></div>';
       if (nudge) {
         $("nudgeYes").onclick = function () { act("shed"); };
@@ -1915,10 +1874,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       return;
     }
     if (phase === "push") {
-      v.innerHTML = '<article class="card push" id="card" aria-label="Skip this one?" aria-describedby="cardHow">' +
-        '<div class="phase"><span>Skip this one?</span></div>' +
+      v.innerHTML = '<article class="card push" id="card" aria-label="Before you skip" aria-describedby="cardHow">' +
+        '<div class="phase"><span>Before you skip</span></div>' +
         words + '<div class="mid under">' + line + (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") + "</div>" + how + "</article>" +
-        holdHtml("Press and hold to choose");
+        choicesHtml();
       paintLine();
       return;
     }
@@ -1926,7 +1885,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       v.innerHTML = '<article class="card reflect" id="card" aria-label="Saved from earlier" aria-describedby="cardHow">' +
         '<div class="phase"><span>Saved from earlier</span></div>' +
         words + '<div class="mid under">' + line + whereHtml(t) + "</div>" + how + "</article>" +
-        holdHtml(restCaption());
+        choicesHtml();
       paintLine();
       return;
     }
@@ -1934,12 +1893,14 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       v.innerHTML = '<article class="card peek" id="card" aria-label="Current principle, with its line" aria-describedby="cardHow">' +
         words + '<div class="mid under">' + line +
         (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") + "</div>" + how + "</article>" +
-        holdHtml(restCaption());
+        choicesHtml();
       paintLine();
       return;
     }
-    v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current principle" aria-describedby="cardHow">' + words + how + "</article>" +
-      holdHtml(restCaption()) + (coachOn ? coachHtml() : "");
+    // 1.73.0: the question Scales has for the principle is a button, not a tap nobody finds.
+    v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current principle" aria-describedby="cardHow">' + words +
+      '<button type="button" class="qbtn" data-move="peek"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.3M12 13.6v.01"/></svg>Today’s question</button>' + how + "</article>" +
+      choicesHtml();
     // A principle too long for the screen scrolls; a quiet hint says so until the end is reached (1.69.0).
     requestAnimationFrame(function () {
       var w = $("words"); if (!w || w.scrollHeight <= w.clientHeight + 12) return; // glyphs overhang the tight line height by a few pixels
@@ -1947,21 +1908,17 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       w.insertAdjacentElement("afterend", h);
       w.addEventListener("scroll", function () { if (w.scrollTop + w.clientHeight >= w.scrollHeight - 4) { var x = $("scrollHint"); if (x) x.remove(); } });
     });
-    if (coachOn) {
-      $("coachOk").onclick = function () { coachSeen(); };
-      $("coach").onclick = function (e) { if (e.target === $("coach")) coachSeen(); };
-    }
   }
   // The reflect screen's foot: a thin line filling for REFLECT_SEC, then Next.
   function paintReflectFoot() {
     var f = $("reflFoot"); if (!f) return;
     if (reflectDone) {
-      f.innerHTML = '<span>' + (reflectLighter ? "Counted as Sit with it. One lighter." : "Counted as Sit with it.") + '</span><div class="pair next"><button type="button" class="btn3d" id="reflUndo">Undo</button><button type="button" class="primary" id="reflNext">Next principle</button></div>';
+      f.innerHTML = '<span>' + (reflectLighter ? "Counted as Reflect. One lighter." : "Counted as Reflect.") + '</span><div class="pair next"><button type="button" class="btn3d" id="reflUndo">Undo</button><button type="button" class="primary" id="reflNext">Next principle</button></div>';
       $("reflNext").onclick = nextFromReflect;
       var w = $("words"), t = thoughts[current]; if (w && t) w.style.fontWeight = C.inkWeight(t);
     } else {
       var left = Math.max(0, C.REFLECT_SEC * 1000 - (Date.now() - reflectAt));
-      f.innerHTML = '<div class="bar"><i style="animation-duration:' + (C.REFLECT_SEC * 1000) + 'ms;animation-delay:-' + (C.REFLECT_SEC * 1000 - left) + 'ms"></i></div><span>Next appears in a moment.</span><button type="button" class="btn3d wide" id="reflUndo">Undo</button>';
+      f.innerHTML = '<div class="bar"><i style="animation-duration:' + (C.REFLECT_SEC * 1000) + 'ms;animation-delay:-' + (C.REFLECT_SEC * 1000 - left) + 'ms"></i></div><span>' + ((prefs.tests || 0) <= 2 ? "Stay with it. After " + C.REFLECT_SEC + " seconds it counts, and the principle gets lighter." : "Next appears in a moment.") + '</span><button type="button" class="btn3d wide" id="reflUndo">Undo</button>';
     }
     $("reflUndo").onclick = function () { var p = reflectUndo; if (p) { restore(p); toast("Undone."); } };
   }
@@ -1973,7 +1930,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // A tap on the principle at rest shows its line; a second tap hides it. Taps on the line (Reply), its
   // links and buttons keep their own meaning, and the release of a press and hold (Edit) is not a tap.
   $("v-deck").addEventListener("click", function (e) {
-    if (openSheet || phase !== "rest" || choicesOpen) return;
+    if (openSheet || phase !== "rest") return;
     if (!e.target.closest("#card") || e.target.closest(".lineWrap, a, button, #coach")) return;
     togglePeek();
   });
@@ -1981,81 +1938,20 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   $("v-deck").addEventListener("click", function (e) {
     var k = e.target.closest("[data-move]"); if (!k || !onCard()) return;
     var m = k.getAttribute("data-move");
-    if (m === "skip") requestSkip(); else if (m === "later") saveLater(); else if (m === "peek") togglePeek(); else act(m);
+    if (NATIVE) toNative({ type: "haptic" });
+    if (m === "skip") requestSkip(); else if (m === "later") saveLater(); else if (m === "peek") togglePeek(); else if (m === "stay") keepIt(); else act(m);
   });
 
-  // ---------- first-swipe tip ----------
-  // Shown over the first principle anyone sees: the three moves in a glass panel above the keys. Got it, a tap
-  // outside the panel, or the first real move dismisses it, and prefs.coach_seen keeps it from coming back.
-  function coachHtml() {
-    var n = restDays();
-    return '<div class="coach" id="coach" role="group" aria-label="How to use the deck"><div class="glass">' +
-      "<h2>Press and hold the bottom of the screen</h2>" +
-      "<ul><li>Your three choices open: <b>Living it</b>, <b>Sit with it</b> and <b>Skip</b>.</li>" +
-      "<li><b>Slide onto one and let go</b>, or let go and tap one.</li>" +
-      "<li><b>Letting go never chooses by itself.</b> Slide off the list, or tap outside it, to close it.</li></ul>" +
-      '<p class="tapnote">Skip asks you once before it rests the principle for ' + n + (n === 1 ? " day" : " days") + '. Tap the principle to see its line. Press and hold it to edit it. Everything else is in the menu.</p>' +
-      '<div class="row"><button type="button" class="btn3d" id="coachOk">Got it</button></div></div></div>';
-  }
-  function coachSeen() { if (prefs.coach_seen) return; prefs.coach_seen = true; savePrefs(); var c = $("coach"); if (c) c.remove(); }
+  // The first-swipe tip retired in 1.73.0: the choices are on screen and say what they are.
+  function coachSeen() { if (prefs.coach_seen) return; prefs.coach_seen = true; savePrefs(); }
 
-  // ---------- hold, and press and hold ----------
-  // Pointer events on the deck view (touch and mouse), bound once.
-  //   ring  pressed in the hold area: the ring fills for C.HOLD_REVEAL; letting go before then does nothing
-  //   drag  the choices are open and the finger is still down: the row under it is lit. Letting go on a
-  //         row chooses it; letting go off the list after touching it cancels; letting go without having
-  //         touched it leaves the choices open to tap
-  //   open  the choices are open with the finger up: tap one, or tap anywhere else to close them
+  // ---------- press and hold ----------
   // Holding still for HOLD_MS on the words opens Edit; on a model line or quote, it opens Keep.
   var HOLD_MS = 550;
-  var choicesOpen = false;
-  function closeChoices() {
-    choicesOpen = false;
-    var m = $("choices"), z = $("holdZone"), v = $("v-deck");
-    if (m) { m.hidden = true; Array.prototype.forEach.call(m.querySelectorAll(".pickrow"), function (b) { b.classList.remove("on"); }); }
-    if (z) z.classList.remove("open");
-    if (v) v.classList.remove("choosing");
-    var arc = $("holdArc"); if (arc) arc.setAttribute("stroke-dashoffset", RING_C.toFixed(1));
-    var l = $("holdLbl"); if (l) l.textContent = l.getAttribute("data-rest");
-  }
-  function openChoices() {
-    var m = $("choices"); if (!m) return;
-    choicesOpen = true; m.hidden = false;
-    $("holdZone").classList.add("open"); $("v-deck").classList.add("choosing");
-    var l = $("holdLbl"); if (l) l.textContent = "Slide onto one, or let go and tap";
-    if (NATIVE) toNative({ type: "haptic" });
-  }
-  function pick(move) {
-    closeChoices(); coachSeen();
-    if (NATIVE) toNative({ type: "haptic" });
-    prefs.holds = (prefs.holds || 0) + 1; savePrefs();
-    if (move === "skip") requestSkip(); else if (move === "later") saveLater(); else act(move);
-  }
   (function bindHold() {
-    var deck = $("v-deck"), t0 = 0, raf = 0, mode = "", holdT = 0, sx = 0, sy = 0, touched = false;
-    function rowAt(x, y) { var el = document.elementFromPoint(x, y); return el && el.closest ? el.closest("#choices .pickrow") : null; }
-    function light(row) { Array.prototype.forEach.call(document.querySelectorAll("#choices .pickrow"), function (b) { b.classList.toggle("on", b === row); }); }
-    function frame() {
-      if (mode !== "ring") return;
-      var p = Math.min(1, (Date.now() - t0) / C.HOLD_REVEAL), arc = $("holdArc");
-      if (arc) arc.setAttribute("stroke-dashoffset", (RING_C * (1 - p)).toFixed(1));
-      if (p >= 1) { mode = "drag"; touched = false; openChoices(); return; }
-      raf = requestAnimationFrame(frame);
-    }
+    var deck = $("v-deck"), mode = "", holdT = 0, sx = 0, sy = 0;
     deck.addEventListener("pointerdown", function (e) {
       if (e.button > 0 || !onCard()) return;
-      if (choicesOpen) {
-        // Open with the finger up: a tap on a row is handled by click; anywhere else closes the choices.
-        if (!e.target.closest("#choices")) { e.preventDefault(); closeChoices(); }
-        return;
-      }
-      var r = e.target.closest("#holdZone");
-      if (r && !e.target.closest("button")) {
-        e.preventDefault();
-        mode = "ring"; t0 = Date.now();
-        try { deck.setPointerCapture(e.pointerId); } catch (_) {}
-        coachSeen(); frame(); return;
-      }
       var press = e.target.closest("#words") ? "edit" : (e.target.closest("#aiLine") && shown && shown.ai) ? "keep" : "";
       if (!press) return;
       mode = press; sx = e.clientX; sy = e.clientY;
@@ -2063,39 +1959,15 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       holdT = setTimeout(function () {
         var m = mode; if (m !== "edit" && m !== "keep") return; mode = "";
         var t = onCard(); if (!t) return;
-        coachSeen();
         if (m === "edit") openEdit(t); else if (shown && shown.ai) openKeep(t, shown.text, shown.quote ? { author: shown.author, src: shown.src } : null);
       }, HOLD_MS);
     });
     deck.addEventListener("pointermove", function (e) {
-      if ((mode === "edit" || mode === "keep") && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) { mode = ""; clearTimeout(holdT); return; }
-      if (mode !== "drag") return;
-      var row = rowAt(e.clientX, e.clientY);
-      if (row) touched = true;
-      light(row);
+      if (mode && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) { mode = ""; clearTimeout(holdT); }
     });
-    function end(e) {
-      clearTimeout(holdT);
-      var m = mode; mode = ""; cancelAnimationFrame(raf);
-      if (m === "ring") {
-        // Let go before the choices opened: nothing happens.
-        var arc = $("holdArc"); if (arc) arc.setAttribute("stroke-dashoffset", RING_C.toFixed(1));
-        return;
-      }
-      if (m !== "drag") return;
-      if (e.type === "pointercancel") { closeChoices(); return; }
-      var row = rowAt(e.clientX, e.clientY);
-      if (row) { pick(row.getAttribute("data-pick")); return; }
-      if (touched) { closeChoices(); return; } // slid off the list: cancel
-      light(null); // never touched a row: stay open to tap
-    }
+    function end() { clearTimeout(holdT); mode = ""; }
     deck.addEventListener("pointerup", end); deck.addEventListener("pointercancel", end);
-    deck.addEventListener("click", function (e) {
-      var row = e.target.closest("#choices .pickrow");
-      if (row && choicesOpen) pick(row.getAttribute("data-pick"));
-    });
-    deck.addEventListener("contextmenu", function (e) { if (e.target.closest("#card, #holdZone")) e.preventDefault(); });
-    document.addEventListener("keydown", function (e) { if (choicesOpen && e.key === "Escape") { e.preventDefault(); closeChoices(); } }, true);
+    deck.addEventListener("contextmenu", function (e) { if (e.target.closest("#card")) e.preventDefault(); });
   })();
 
   // ---------- keep an AI line (Story 10) ----------
@@ -2125,7 +1997,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     $("keepRep").setAttribute("aria-pressed", String(keepMode === "replace"));
     var r = keepCheck(), err = $("keepErr");
     if (r.reason === "duplicate") {
-      err.textContent = "Already in your " + (r.conflict.status === "shed" ? "Living it record" : "deck") + ": " + clip(r.conflict.text, 80);
+      err.textContent = "Already in your " + (r.conflict.status === "shed" ? "lived record" : "deck") + ": " + clip(r.conflict.text, 80);
       err.hidden = false;
     } else err.hidden = true;
     $("keepSave").disabled = !!r.reason;
@@ -2349,11 +2221,12 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         }).join("") + '<button type="button" class="primary" id="wOwn">Write my own</button></div></div>';
       $("wOwn").onclick = openCapture;
     } else {
-      v.innerHTML = '<div class="welcome"><h1>Press and hold</h1>' +
-        "<p>Press and hold the bottom of the screen and your three choices open: <b>Living it</b>, <b>Sit with it</b> and <b>Skip</b>. Slide onto one, or let go and tap one.</p>" +
-        "<p>Letting go never chooses by itself. Tap the principle to see the line Scales has for it.</p>" +
-        '<div class="widewrap"><button type="button" class="primary" id="wDone">Got it</button>' +
-        '<button type="button" class="linkbtn wbuttons" id="wButtons">Use buttons instead of press and hold</button></div></div>';
+      v.innerHTML = '<div class="welcome"><h1>Three choices</h1>' +
+        "<p>Each principle gets one of three, at the bottom of the screen.</p>" +
+        '<ul class="wchoices"><li><b>Skip</b> rests it for a few days. It comes back first, and Scales asks why once.</li>' +
+        "<li><b>Reflect</b> shows a quote from today’s voice. After a few seconds it counts, and the principle gets lighter.</li>" +
+        "<li><b>Lived</b> moves it out of the deck and into your record.</li></ul>" +
+        '<div class="widewrap"><button type="button" class="primary" id="wDone">Got it</button></div></div>';
       // 1.65.0: the AI question comes right after the welcome, where it has a reason, not on a later launch.
       var finish = function () {
         $("addTop").hidden = false; $("menuBtn").hidden = false;
@@ -2361,7 +2234,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         if ((savedKey || plusOn()) && prefs.ai_consent === undefined) setTimeout(function () { if (!openSheet) askConsent(); }, 400);
       };
       $("wDone").onclick = finish;
-      $("wButtons").onclick = function () { prefs.tap_moves = true; finish(); };
     }
     paintStat();
   }
@@ -2409,7 +2281,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     }
     if (C.suggestLiving(t, today())) {
       var n = C.catchCount(t, today());
-      $("caughtNotice").innerHTML = "<b>" + (n === 3 ? "Third" : n + "th") + " time in " + C.CATCH_WINDOW + " days.</b> You have caught yourself living this " + n + " times without the app. Ready to call it Living it?";
+      $("caughtNotice").innerHTML = "<b>" + (n === 3 ? "Third" : n + "th") + " time in " + C.CATCH_WINDOW + " days.</b> You have caught yourself living this " + n + " times without the app. Ready to mark it Lived?";
       $("caughtStep1").hidden = true; $("caughtStep2").hidden = false;
       renderDeck(); if (!$("v-ledger").hidden) renderLedger();
       return;
@@ -2444,7 +2316,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var th = C.thread(t);
     $("rowThread").hidden = !th.length;
     $("rowThread").innerHTML = th.length ? '<span class="cap">Your thread</span>' + th.map(function (r) {
-      return '<span class="when">' + esc(fmtDayKey(r.day)) + " · " + (r.kind === "reflect" ? "Sat with it" : "Skip") + "</span>" +
+      return '<span class="when">' + esc(fmtDayKey(r.day)) + " · " + (r.kind === "reflect" ? "Reflect" : "Skip") + "</span>" +
         (r.line ? '<div class="bubble them"><p>' + esc(r.kind === "reflect" ? "\u201C" + r.line + "\u201D" : r.line) + "</p>" + (r.author ? "<small>" + esc(r.author) + "</small>" : "") + "</div>" : "") +
         '<div class="bubble me"><p>' + esc(r.text) + "</p></div>";
     }).join("") : "";
@@ -2534,7 +2406,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       : "Your counts, dates and weight stay. Changing the wording rewrites the AI line; changing details keeps it.";
     $("editKept").innerHTML = (lived
       ? ["Lived " + fmtDate(t.shed_at), t.evidence ? "Where it showed up" : "", lastLine(t) ? "Last AI line" : "", "Skipped " + times(t.lifetime_skips)]
-      : ["Skipped " + times(t.skip_count || 0), "Sat with " + times(t.reflect_count || 0), "Since " + fmtDate(t.created_at), "Weight " + weight(t).toFixed(1)]
+      : ["Skipped " + times(t.skip_count || 0), "Reflected " + times(t.reflect_count || 0), "Since " + fmtDate(t.created_at), "Weight " + weight(t).toFixed(1)]
     ).filter(Boolean).map(function (x) { return '<span class="pressed">' + esc(x) + "</span>"; }).join("");
     $("editInput").value = t.text;
     $("editCollection").value = t.collection || "";
@@ -2569,7 +2441,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     $("editSave").disabled = !r.ok;
     if (r.reason === "duplicate") {
       var other = r.conflict.text.trim();
-      err.textContent = "Already in your " + (r.conflict.status === "shed" ? "Living it record" : "deck") + ": " + (other.length > 80 ? other.slice(0, 80) + "…" : other);
+      err.textContent = "Already in your " + (r.conflict.status === "shed" ? "lived record" : "deck") + ": " + (other.length > 80 ? other.slice(0, 80) + "…" : other);
       err.hidden = false;
     } else err.hidden = true;
     return r;
@@ -2680,7 +2552,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       else if (t.skip_count > 0) p.push("Skipped " + times(t.skip_count));
       var c = C.catchCount(t, td);
       if (c) p.push("caught " + times(c));
-      if (!p.length) p.push(t.reflect_count ? "Sat with " + times(t.reflect_count) : "New");
+      if (!p.length) p.push(t.reflect_count ? "Reflected " + times(t.reflect_count) : "New");
     }
     var nr = C.thread(t).length;
     if (nr) p.push(nr === 1 ? "one reply" : nr + " replies");
@@ -2695,15 +2567,15 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   var GROUPS = [
     { id: "avoiding", name: "Avoiding", note: "Skipped three or more times", fw: 800 },
     { id: "working", name: "Working on", note: "In the deck, still in practice", fw: 450 },
-    { id: "nearly", name: "Nearly lived", note: "No skips left, and sat with or caught", fw: 250 },
+    { id: "nearly", name: "Nearly lived", note: "No skips left, and reflected on or caught", fw: 250 },
     { id: "lived", name: "Lived", note: "You act on these without prompting", fw: 250 }
   ];
   // The one fact on the right of a row.
   function rowCount(t, g, td) {
     if (g === "lived") return fmtDate(t.shed_at);
     var c = C.catchCount(t, td), s = t.skip_count || 0, r = t.reflect_count || 0;
-    if (g === "nearly") { var nf = c ? "caught " + c + "×" : r + "× sat with"; return C.isResting(t, td) ? nf + "\nresting" : nf; }
-    var f = s ? s + "× skipped" : r ? r + "× sat with" : "new";
+    if (g === "nearly") { var nf = c ? "caught " + c + "×" : r + "× reflected"; return C.isResting(t, td) ? nf + "\nresting" : nf; }
+    var f = s ? s + "× skipped" : r ? r + "× reflected" : "new";
     return C.isResting(t, td) ? f + "\nresting" : f;
   }
   function ledgerRow(t, g, td) {
@@ -2929,7 +2801,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var n = restDays();
     paintCollCount();
     $("whereToggle").setAttribute("aria-checked", String(showWhere()));
-    $("tapToggle").setAttribute("aria-checked", String(tapMoves()));
     $("aiToggle").setAttribute("aria-checked", String(aiAllowed() && (!PROXY || plusOn())));
     $("restOut").textContent = n + (n === 1 ? " day" : " days");
     $("restDown").disabled = n <= C.REST_MIN; $("restUp").disabled = n >= C.REST_MAX;
@@ -2939,7 +2810,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   Array.prototype.forEach.call(document.querySelectorAll(".seg [data-look]"), function (b) {
     b.onclick = function () { prefs.look = b.getAttribute("data-look"); savePrefs(); applyLook(); };
   });
-  $("tapToggle").onclick = function () { prefs.tap_moves = !tapMoves(); savePrefs(); paintSettings(); };
   $("whereToggle").onclick = function () { prefs.show_where = !showWhere(); savePrefs(); paintSettings(); if (onCard()) renderDeck(); };
   function setRest(n) { prefs.rest_days = C.restDays(n); savePrefs(); paintSettings(); }
   $("restDown").onclick = function () { setRest(restDays() - 1); };
@@ -3036,7 +2906,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   menuBtn.addEventListener("click", function () { if (menu.open) closeMenu(); else openMenu(); });
 
   // Keyboard. On the deck, with no sheet or menu open and no field in use: the arrow keys are the three moves
-  // (left Not today, up Testing it, right Living it), E edits. Anywhere: N captures, L switches
+  // (left Skip, up Reflect, right Lived), E edits. Anywhere: N captures, L switches
   // between the deck and the Ledger, M opens the menu, comma opens Settings, and Escape on the Ledger goes back.
   document.addEventListener("keydown", function (e) {
     if (openSheet || menu.open || isTyping(document.activeElement) || e.metaKey || e.ctrlKey || e.altKey) return;
