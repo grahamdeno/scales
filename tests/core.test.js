@@ -476,7 +476,7 @@ test("an undo point is a copy: later changes do not leak in, and applying it twi
 
 test("the page wires sheets as modal dialogs, Undo and the coach (1.26.0)", () => {
   const html = read("index.html");
-  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 15, "every sheet is a <dialog>");
+  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 18, "every sheet is a <dialog>");
   assert.doesNotMatch(html, /<section class="sheet/, "no sheet left as a hidden section");
   assert.match(html, /\.showModal\(\)/);
   for (const id of (html.match(/aria-labelledby="(sheet\w+Title)"/g) || []).map((m) => m.slice(17, -1))) {
@@ -651,13 +651,16 @@ test("the three moves are buttons in view; Skip asks once; keys work (1.34.0, 1.
   assert.match(html, /id="reflNext">Next principle</);
   assert.match(html, /if \(t\) \{ C\.spendLines\(t\); save\(t\); \}/, "moving on spends the lines");
   assert.match(html, /aria-describedby="cardHow"/);
-});test("everything else is in a modal menu at the top right (1.30.0)", () => {
+});test("no menu: Today | Ledger, Capture and Settings are in view; the chip lists collections (1.75.0)", () => {
   const html = read("index.html");
-  assert.match(html, /<header class="top">[\s\S]*id="todayLbl"[\s\S]*id="backDeck"[^>]*hidden[\s\S]*id="menuBtn"[^>]*aria-haspopup="dialog"[^>]*aria-expanded="false"[^>]*aria-controls="menu"[\s\S]*<\/header>/);
-  assert.match(html, /<dialog class="menu frost" id="menu"/);
-  for (const m of ["capture", "edit", "ledger", "collections", "settings"]) assert.match(html, new RegExp('data-m="' + m + '"'), m + " is in the menu");
-  assert.match(html, /\$\("mEdit"\)\.hidden = !onCard\(\);/, "Edit is listed only with a principle on screen");
+  assert.match(html, /<header class="top onsmoke">[\s\S]*id="tabDeck" aria-selected="true">Today<[\s\S]*id="tabLedger" aria-selected="false">Ledger<[\s\S]*id="addTop"[\s\S]*id="setBtn" aria-label="Settings"[\s\S]*<\/header>/);
+  assert.match(html, /<dialog class="menu" id="menu" aria-label="Collections">/);
+  assert.match(html, /id="menuBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu" hidden>/, "the chip shows only when there are collections");
+  assert.doesNotMatch(html, /data-m="capture"|data-m="settings"|data-m="ledger"|id="backDeck"|id="voiceHead"/);
+  assert.match(html, /if \(cb\) \{ closeMenu\(\); setColl\(cb\.getAttribute\("data-coll"\)\); return; \}/);
   assert.match(html, /menu\.showModal\(\)/);
+  assert.match(html, /class="qbtn" data-move="edit"/, "Edit lives on the principle");
+  assert.match(html, /data-move="save">/, "Save is a button beside Reply");
 });
 
 test("Black and White: one face, two flat looks, no shadows, glass or rounded panels (1.33.0)", () => {
@@ -693,7 +696,7 @@ test("at rest only the principle and the ring; lines appear on push and reflect 
   const rest = html.slice(html.indexOf("    v.innerHTML = '<article class=\"card' + (enter"), html.indexOf("  // The reflect screen's foot"));
   assert.doesNotMatch(rest, /aiLine|whereHtml|chipsHtml|footHtml/, "nothing but the principle and the ring at rest");
   assert.doesNotMatch(html, /id="chips"|class="chips-row"/, "collections are off the home screen");
-  assert.match(html, /data-m="focus" id="mFocus">Show/, "Show is in the menu");
+  assert.match(html, /id="chipLbl">All</, "the collection is a chip in the band (1.75.0)");
   assert.match(html, /<dialog class="sheet" id="sheetFocus"/);
   assert.match(html, /function whereHtml\(t\)/);
   assert.match(html, /if \(showWhere\(\)\) \{/);
@@ -717,9 +720,9 @@ test("at rest only the principle and the ring; lines appear on push and reflect 
   for (const r of ["show", "caught", "edit", "ev", "keep", "talk", "del"]) assert.match(html, new RegExp('data-r="' + r + '"'), r + " action");
   assert.match(html, /var cls = a && \(a\.s \|\| a\.c\) \? "lv" : n >= 3 \? "on2" : n \? "on" : "";/);
 });
-test("the top: the day and date on the deck, the way back on the Ledger", () => {
+test("the top: Today | Ledger shows where you are", () => {
   const html = read("index.html");
-  assert.match(html, /\$\("backDeck"\)\.hidden = view !== "ledger";/);
+  assert.match(html, /\$\("tabDeck"\)\.setAttribute\("aria-selected", String\(view === "deck"\)\); \$\("tabLedger"\)\.setAttribute\("aria-selected", String\(view === "ledger"\)\);/);
   assert.match(html, /\$\("todayLbl"\)\.hidden = view !== "deck";/);
   assert.match(html, /function paintDate\(\)/);
   assert.match(html, /function paintStat\(\) \{[\s\S]{0,120}\$\("deckN"\)/, "the deck count sits in the footer");
@@ -735,8 +738,8 @@ test("motion respects reduced motion", () => {
 
 test("touch targets: buttons a thumb can hit (1.36.0, 1.73.0)", () => {
   const c = css();
-  assert.match(rule(c, ".iconbtn"), /width:44px; height:44px;.*border-radius:10px/, "rounded 44px buttons on the band (1.74.0)");
-  assert.match(rule(c, ".choice"), /min-height:52px;/, "the choices are a thumb's width (1.73.0)");
+  assert.match(rule(c, ".iconbtn"), /width:44px; height:44px;.*border-radius:12px/, "rounded 44px buttons on the band (1.75.0)");
+  assert.match(rule(c, ".choice"), /min-height:56px;/, "the choices are a thumb's width (1.75.0)");
   assert.match(rule(c, ".btn3d.wide"), /min-height:56px;/);
   assert.match(rule(c, ".pair .btn3d"), /min-height:52px;/);
   assert.match(rule(c, ".menu button"), /min-height:48px;/);
@@ -1213,17 +1216,21 @@ test("a new deck opens on the welcome; an existing one never does; + opens Captu
 });
 
 // ---------- 1.48.0: Settings rebuilt ----------
-test("Settings: most used first, help with support and privacy, Advanced only for keys (1.67.0)", () => {
-  const html = read("index.html");
+test("Settings: grouped cards, half the length; Voices, starter decks and About have their own pages (1.75.0)", () => {
+  const html = read("index.html"), c = css();
   const sheet = html.slice(html.indexOf('id="sheetSettings"'), html.indexOf("</dialog>", html.indexOf('id="sheetSettings"')));
   const groups = [...sheet.matchAll(/<h3 class="sec2"[^>]*>([^<]+)/g)].map(m => m[1].trim());
-  assert.deepEqual(groups, ["Reminders", "Your deck", "Voices", "Look", "Your data", "Scales Plus", "Help"]);
-  const adv = sheet.slice(sheet.indexOf('<details class="adv" id="advanced"'));
+  assert.deepEqual(groups, ["Reminders", "Your deck", "Look", "Your data", "Help", "About"]);
+  assert.ok(sheet.indexOf('id="plusGroup"') < sheet.indexOf("Reminders"), "Scales Plus first");
+  for (const id of ["openVoices", "openStarter", "openAbout", "openCollections"]) assert.match(sheet, new RegExp('id="' + id + '"'));
+  assert.doesNotMatch(sheet, /id="voiceList"|id="starterGroup"|id="versionText"/, "those live on their own pages");
+  for (const id of ["sheetVoices", "sheetStarter", "sheetAbout"]) assert.match(html, new RegExp('id="' + id + '"'));
+  assert.match(html, /data-back="settings"/, "each page has the way back to Settings");
+  const adv = sheet.slice(sheet.indexOf('id="advanced"'));
   assert.match(adv, /id="apiKey"/);
-  assert.doesNotMatch(adv, /id="aiToggle"|id="starterGroup"|id="versionText"/);
   assert.match(sheet, /href="https:\/\/scales\.tangomike\.app\/privacy"/);
   assert.match(sheet, /href="https:\/\/scales\.tangomike\.app\/support"/);
-  assert.doesNotMatch(sheet, /With a keyboard: the arrow keys|today’s focus/);
+  assert.match(rule(c, ".panel"), /border-radius:16px; background:var\(--card\)/, "cards");
 });
 
 // ---------- 1.49.0: wording sweep, Wikiquote credit, privacy ----------
@@ -1387,10 +1394,10 @@ test("first run: no Home Screen note in the app, the three choices explained, AI
 test("one blue accent for the main action and selected states, and Match iPhone appearance", () => {
   const html = read("index.html");
   assert.match(html, /--accent:#1F5FCC; --onAccent:#FFFFFF;/, "one blue with white text in Black too (1.74.2)");
-  assert.match(html, /--accent:#1F5FCC; --onAccent:#F4F3EF;/);
+  assert.match(html, /--accent:#1F5FCC; --onAccent:#FFFFFF; --btn2:#DCD9D3;/);
   assert.match(html, /\.primary \{[^}]*background:var\(--accent\)/);
   assert.match(html, /\.toggle\[aria-checked="true"\] \{ background:var\(--accent\)/);
-  assert.match(html, /data-look="auto"[^>]*>Match iPhone</);
+  assert.match(html, /data-look="auto"[^>]*>iPhone</);
   assert.match(html, /prefs = Object\.assign\(\{ look: savedPrefs \? "matte" : "auto" \}/);
 });
 
@@ -1477,17 +1484,20 @@ test("the AI server needs Scales Plus, fixes the model and limits, and only take
 test("the layered look: a band with today's voice and the set as tiles, a black panel, one button system", () => {
   const html = read("index.html"), c = css();
   assert.match(c, /--band:#DCD9D3; --bandCtl:#ECEAE5;/, "smoke band in White");
-  assert.match(c, /--band:#2A2A28;/, "charcoal band in Black");
+  assert.doesNotMatch(c, /--band:#2A2A28;/, "smoke band in every look (1.75.0)");
   assert.match(rule(c, "body"), /background:var\(--band\)/);
   assert.match(html, /<section class="view onblack" id="v-deck"/, "the deck sits on the black panel");
-  assert.match(rule(c, "#v-deck"), /border-radius:12px 12px 0 0; box-shadow:0 -1\.5px 3\.5px/, "12px top corners, shadow on the top edge only");
+  assert.match(rule(c, "#v-deck"), /border-radius:16px 16px 0 0; box-shadow:0 -1\.5px 3\.5px/, "16px top corners, shadow on the top edge only");
   assert.match(rule(c, ".onblack"), /--paper:#121212;.*--accent:#1F5FCC; --onAccent:#FFFFFF;/, "blue primary with white text on black");
   assert.match(html, /<div class="lpanel onblack">/, "the Ledger list sits on the panel too");
-  assert.match(html, /id="voiceHead"/);
+  assert.match(html, /id="bandLbl"/);
   assert.match(html, /function paintBand\(phase\)/);
   assert.match(html, /i < m \? '<div class="tile done">'/, "done tiles carry a check");
-  assert.match(rule(c, ".btn3d"), /border:0; border-radius:10px; background:var\(--btn2\)/, "gray secondary buttons");
+  assert.match(rule(c, ".btn3d"), /border:0; border-radius:12px; background:var\(--btn2\)/, "gray secondary buttons");
   assert.match(rule(c, ".primary"), /border-radius:12px;/);
-  assert.match(rule(c, ".choice"), /border-radius:12px;/);
+  assert.match(rule(c, ".choice"), /border-radius:14px;/, "the tray's buttons");
+  assert.match(rule(c, ".choices"), /border-radius:20px;/, "the tray: 14 + 6");
+  assert.match(rule(c, ".toggle"), /border-radius:10px;/, "switches are rounded squares");
+  assert.match(rule(c, ".toggle i"), /border-radius:8px;/, "and so are their knobs");
   assert.doesNotMatch(c, /backdrop-filter:blur\(18px\)/, "no glass");
 });

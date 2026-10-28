@@ -32,10 +32,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         web.scrollView.contentInsetAdjustmentBehavior = .never
         web.scrollView.bounces = false
         web.isOpaque = false
-        // The matte surfaces of the Black and White looks, so nothing flashes while Scales loads.
-        web.backgroundColor = UIColor { $0.userInterfaceStyle == .light
-            ? UIColor(red: 0xEC / 255, green: 0xEA / 255, blue: 0xE5 / 255, alpha: 1)
-            : UIColor(red: 0x12 / 255, green: 0x12 / 255, blue: 0x12 / 255, alpha: 1) }
+        // The smoke band (1.75.0), in every look, so nothing flashes while Scales loads.
+        web.backgroundColor = UIColor(red: 0xDC / 255, green: 0xD9 / 255, blue: 0xD3 / 255, alpha: 1)
         web.scrollView.backgroundColor = web.backgroundColor
         if #available(iOS 16.4, *) { web.isInspectable = true }
         view = web
