@@ -52,7 +52,8 @@ async function until(page, check, steps = 40) {
 }
 const rows = (page) => page.$$eval("#keys .choice", (s) => s.map((x) => x.textContent));
 // 1.83.0: the question fades in after DWELL_MS on the thought; no button.
-const reveal = (page) => page.clock.runFor(6200);
+// The screen is quiet by then; one touch on the thought wakes it (1.83.2).
+const reveal = async (page) => { await page.clock.runFor(6200); await page.click("#words"); await page.clock.runFor(100); };
 const ready = { onboarded: true, coach_seen: true };
 
 test("first run: welcome, a starter deck, the three choices, then the deck", async () => {
@@ -170,7 +171,7 @@ test("a thought back from Later waits for a choice and counts nothing", async ()
   assert.equal(await page.$(".laterbtn"), null, "no Later for a thought that just came back from Later");
 });
 
-test("Reflect counts after eight seconds, and Undo puts it back", async () => {
+test("Reflect counts after eight seconds; on trial, no Undo, just Next (1.83.2)", async () => {
   // One thought, so the deck's weighted draw cannot put a different one on screen.
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One.", { skip_count: 2, lifetime_skips: 2 }) } });
   await choose(page, "keep");
@@ -178,9 +179,8 @@ test("Reflect counts after eight seconds, and Undo puts it back", async () => {
   await page.clock.runFor(8000);
   assert.ok(await until(page, async () => /Counted as Reflect/.test(await page.textContent("#reflFoot").catch(() => ""))), "counted after eight seconds");
   assert.equal((await saved(page)).a.skip_count, 1, "one lighter");
-  await page.click("#reflUndo");
-  assert.ok(await until(page, async () => (await saved(page)).a.skip_count === 2), "undone");
-  assert.equal((await saved(page)).a.reflect_count, 0);
+  assert.equal(await page.$("#reflUndo"), null, "no Undo while REFLECT_UNDO is false");
+  assert.ok(await page.$("#reflNext"), "Next thought");
 });
 
 test("Capture adds a thought from the + button", async () => {
