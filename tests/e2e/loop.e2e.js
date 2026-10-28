@@ -110,11 +110,11 @@ test("the touch that wakes a quiet screen only wakes it; the next one presses (1
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
   await page.clock.runFor(3500);
   assert.ok(await page.evaluate(() => document.body.classList.contains("quiet")), "quiet after 3 seconds");
-  await page.click('[data-move="question"]'); await page.clock.runFor(300);
+  await page.click("#setBtn"); await page.clock.runFor(300);
   assert.ok(!(await page.evaluate(() => document.body.classList.contains("quiet"))), "awake");
-  assert.equal(await page.$("#card .phase"), null, "the waking touch presses nothing");
-  await page.click('[data-move="question"]'); await page.clock.runFor(300);
-  assert.match(await page.textContent("#card .phase"), /The other side/, "the next touch does");
+  assert.equal(await page.$eval("#sheetSettings", (e) => e.open), false, "the waking touch presses nothing");
+  await page.click("#setBtn"); await page.clock.runFor(300);
+  assert.equal(await page.$eval("#sheetSettings", (e) => e.open), true, "the next touch does");
 });
 test("the question fades in after a few seconds; its buttons show, then go quiet (1.83.0)", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
@@ -122,8 +122,10 @@ test("the question fades in after a few seconds; its buttons show, then go quiet
   const top0 = await box();
   assert.ok(!(await page.isVisible("#aiLine")), "not yet");
   assert.equal(await page.$('[data-move="peek"]'), null, "no button for it");
+  assert.ok(!(await page.isVisible('[data-move="question"]')), "Show me the other side waits too");
   await reveal(page);
   assert.ok(await page.isVisible("#aiLine"), "the question is there");
+  assert.ok(await page.isVisible('[data-move="question"]'), "and Show me the other side under it");
   assert.equal(await box(), top0, "the thought did not move");
   assert.ok(await page.$eval("#dwell", (e) => e.classList.contains("fresh")), "Reply, Keep and Later at full strength");
   assert.ok(await page.$(".laterbtn"), "Later is offered");
@@ -191,7 +193,7 @@ test("Capture adds a thought from the + button", async () => {
   assert.ok(Object.values(await saved(page)).some((t) => t.text === "Finish what I start."));
 });
 
-test("Undo goes away after eight seconds", async () => {
+test("Undo goes away after five seconds (1.83.3)", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
   await reveal(page);
   await page.click(".laterbtn"); await page.clock.runFor(500);
@@ -302,7 +304,7 @@ test("Scales Plus in the iPhone app: no server AI without it; buy, then AI reque
 test("Question it: the case against, then Let go puts it in the Ledger with the reason (1.79.0)", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "Never complain. Never explain.", { why: "Excuses cost more than they buy." }), b: P("b", "Be present, need little.") } });
   if ((await words(page)) !== "Never complain. Never explain.") { await choose(page, "skip"); await choose(page, "skip"); }
-  await page.click('[data-move="question"]'); await page.clock.runFor(300);
+  await reveal(page); await page.click('[data-move="question"]'); await page.clock.runFor(300);
   assert.match(await page.textContent(".phase"), /The other side/);
   assert.match(await page.textContent(".qnotes"), /Excuses cost more than they buy\./, "your reason sits under the case");
   assert.deepEqual(await rows(page), ["Let go", "Revise", "Keep it"]);
@@ -321,7 +323,7 @@ test("Question it: the case against, then Let go puts it in the Ledger with the 
 
 test("Question it: Keep it counts as weighed and the next thought comes up (1.79.0)", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "Rest is part of the work.", { skip_count: 2 }) } });
-  await page.click('[data-move="question"]'); await page.clock.runFor(300);
+  await reveal(page); await page.click('[data-move="question"]'); await page.clock.runFor(300);
   await choose(page, "qkeep"); await page.clock.runFor(600);
   const t = (await saved(page)).a;
   assert.equal(t.skip_count, 1); assert.equal(t.questioned, 1);

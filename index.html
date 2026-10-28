@@ -186,9 +186,11 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 /* On push and reflect the line is the subject, so a long thought folds to four lines; tap to open it. */
 .thought.small.fold { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4; overflow:hidden; cursor:pointer; }
 #aiLine { position:relative; }
-.dwell { flex:none; margin-top:26px; min-height:184px; opacity:0; visibility:hidden; transition:opacity 1.2s ease, visibility 0s linear 1.2s; }
+.dwell { flex:none; margin-top:26px; min-height:250px; opacity:0; visibility:hidden; transition:opacity 1.2s ease, visibility 0s linear 1.2s; }
 .dwell.on { opacity:1; visibility:visible; transition:opacity 1.2s ease; }
-body.quiet #v-deck .dwell.fresh .lineacts { opacity:1; transition:none; }
+body.quiet #v-deck .dwell.fresh .lineacts, body.quiet #v-deck .dwell.fresh .qacts { opacity:1; transition:none; }
+.dwell.on .qacts { animation:qin 1.2s ease .9s backwards; }
+@keyframes qin { from { opacity:0; } to { opacity:1; } }
 #aiLine::after { content:""; position:absolute; left:0; right:0; bottom:-6px; height:2px; border-radius:1px; background:var(--ink); opacity:.5; transform:scaleX(0); transform-origin:0 50%; }
 #aiLine.holding::after { transform:scaleX(1); transition:transform .55s linear; }
 .foldhint { margin-top:6px; font-size:var(--t-xs); color:var(--faint); }
@@ -657,7 +659,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 @keyframes vt-in { from { opacity:0; transform:translateX(24px); } }
 @keyframes vt-out-back { to { opacity:0; transform:translateX(18px); } }
 @keyframes vt-in-back { from { opacity:0; transform:translateX(-24px); } }
-@media (prefers-reduced-motion: reduce) { .dwell, .dwell.on, .card, .card.spring, .ai-p, .raised, .toggle i, .thought { transition:none; } .reflfoot .bar { display:none; } }
+@media (prefers-reduced-motion: reduce) { .dwell.on .qacts { animation:none; } .dwell, .dwell.on, .card, .card.spring, .ai-p, .raised, .toggle i, .thought { transition:none; } .reflfoot .bar { display:none; } }
 </style>
 </head>
 <body>
@@ -1119,7 +1121,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.83.2"></script>
+<script src="core.js?v=1.83.3"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1848,7 +1850,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function dwell(t) {
     if (phase !== "rest" || onCard() !== t || peeked()) return;
     if (openSheet || menu.open) { dwellT = setTimeout(function () { dwell(t); }, 2000); return; }
-    coachSeen();
+    coachSeen(); dropUndo();
     peekId = t.id; paintReplies();
     var d = $("dwell"); if (!d) return;
     d.classList.add("on", "fresh");
@@ -1893,7 +1895,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // move or a delete. Undo restores it whole, so counts, rest days, the turn at the front, the
   // activity grid and the Ledger all go back, and the card returns to the screen. Only the latest
   // move can be undone; any other message replaces the toast and drops the undo.
-  var UNDO_MS = 8000;
+  var UNDO_MS = 5000; // 1.83.3: was 8000; it also goes when the next question fades in
   // The day's set and the Testing it count go back too.
   function undoPoint() {
     var p = C.undoPoint(thoughts, activity, history, current);
@@ -2196,11 +2198,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var pm = []; if (t.skip_count > 0) pm.push("Skipped " + times(t.skip_count)); if (String(t.collection || "").trim()) pm.push(esc(t.collection));
     v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current thought" aria-describedby="cardHow">' + words +
       (pm.length ? '<p class="pmeta">' + pm.join(" \u00b7 ") + "</p>" : "") +
-      '<div class="dwell' + (peeked() ? " on" : "") + '" id="dwell">' + line + "</div>" +
-      '<div class="qacts"><button type="button" class="qbtn" data-move="question">' + ICON_Q + "Show me the other side</button></div>" + how + "</article>" +
+      // 1.83.3: Show me the other side fades in too, just after the question, under the same rules.
+      '<div class="dwell' + (peeked() ? " on" : "") + '" id="dwell">' + line +
+      '<div class="qacts"><button type="button" class="qbtn" data-move="question">' + ICON_Q + "Show me the other side</button></div></div>" + how + "</article>" +
       choicesHtml();
     if (lineFor !== t.id || !shown || shown.kind !== "push") { lineFor = t.id; showLine(t, "push"); } else paintLine();
-    if (!peeked()) dwellT = setTimeout(function () { dwell(t); }, DWELL_MS);
+    // With VoiceOver on, nothing waits: the question and its buttons are there to be read straight away.
+    if (!peeked()) dwellT = setTimeout(function () { dwell(t); }, voiceOver ? 0 : DWELL_MS);
     wake();
     // A thought too long for the screen scrolls; a quiet hint says so until the end is reached (1.69.0).
     requestAnimationFrame(function () {
