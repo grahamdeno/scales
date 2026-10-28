@@ -804,7 +804,7 @@ test("at rest only the thought and the ring; lines appear on push and reflect (1
   assert.doesNotMatch(card, /background|box-shadow|border-radius|border:/, "no card chrome");
   assert.match(html, /id="words" style="font-weight:' \+ C\.inkWeight\(t\)/, "weight from the record");
   assert.doesNotMatch(html, /function wordsHtml|class="w"/, "no per-word spans: Safari set them one word per line");
-  const rest = html.slice(html.indexOf("    v.innerHTML = '<article class=\"card' + (enter"), html.indexOf("  // The reflect screen's foot"));
+  const rest = html.slice(html.indexOf("    v.innerHTML = '<article class=\"card' + (enter"), html.indexOf("  // 1.84.2: the whole thought"));
   assert.doesNotMatch(rest, /aiLine|whereHtml|chipsHtml|footHtml/, "nothing but the thought and the ring at rest");
   assert.doesNotMatch(html, /id="chips"|class="chips-row"/, "collections are off the home screen");
   assert.match(html, /id="chipLbl">All</, "the collection is a chip in the band (1.75.0)");
@@ -1219,7 +1219,7 @@ test("the reflect screen shows the quote or nothing; the push line is plain (1.3
   const html = read("index.html");
   assert.doesNotMatch(html, /REFLECT_FALLBACK/, "no built-in reflections: nothing shows when no quote fits");
   assert.match(html, /if \(wrap\) wrap\.hidden = !!\(l && l\.none\);/);
-  assert.match(html, /l\.quote \? esc\(l\.author \+ \(l\.src \? ", " \+ l\.src : ""\)\)/, "the author and work under a quote");
+  assert.match(html, /l\.quote \? "<b>" \+ esc\(l\.author\) \+ "<\/b>" \+ esc\(l\.src \? ", " \+ l\.src : ""\)/, "the author (in ink, 1.84.8) and work under a quote");
   assert.match(html, /sample\(C\.quotePrompt\(of, v\.name, list\)\)/);
   assert.match(html, /ranked\[0\]\.score >= 2 \? 0 : -1/, "without a key, only a close match is shown");
   assert.match(html, /Never invent anything about the user's day, schedule, hours, plans, people or circumstances\./);
