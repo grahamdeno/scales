@@ -38,6 +38,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         if #available(iOS 16.4, *) { web.isInspectable = true }
         view = web
         web.load(URLRequest(url: home))
+        NotificationCenter.default.addObserver(forName: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil, queue: .main) { [weak self] _ in self?.sendA11y() }
         // Renewals, refunds and purchases made elsewhere (another device, Ask to Buy) arrive here.
         storeUpdates = Task { [weak self] in
             for await result in Transaction.updates {
@@ -63,7 +64,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             queued.forEach { web.evaluateJavaScript($0, completionHandler: nil) }
             queued.removeAll()
             Task { await sendPlus() }
-            sendIcon()
+            sendIcon(); sendA11y()
         case "plus":
             Task { await sendPlus() }
         case "purchase":
@@ -95,6 +96,11 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         default:
             break
         }
+    }
+
+    /// Whether VoiceOver is on (1.81.0): the quiet fade never dims the screen for someone who isn't looking at it.
+    private func sendA11y() {
+        run("window.scalesA11y && window.scalesA11y({ voiceOver: \(UIAccessibility.isVoiceOverRunning) })")
     }
 
     /// Which icon is on the Home Screen, for the choice in Settings.

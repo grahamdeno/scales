@@ -87,6 +87,11 @@ button { cursor:pointer; border:0; background:none; padding:0; }
 :focus-visible { outline:2px solid var(--ink); outline-offset:3px; }
 .sheet:focus, .sheet:focus-visible { outline:0; }
 #iconRow { flex-wrap:wrap; row-gap:12px; }
+/* Quiet (1.81.0): on the resting card, 3 seconds without a touch dims everything but the thought to 20%, so the
+   eye stays on the words. The controls stay visible and working; any touch brings them back at once. */
+.top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot { transition:opacity .25s ease; }
+body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot { opacity:.2; transition:opacity 1.2s ease; }
+@media (prefers-reduced-motion: reduce) { .top, #setBand, #v-deck .pmeta, #v-deck .qacts, #v-deck #keys, #v-deck .foot, body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .qacts, body.quiet #v-deck #keys, body.quiet #v-deck .foot { transition:none; } }
 .iconpick { display:flex; gap:12px; flex:none; }
 .iconpick button { display:flex; flex-direction:column; align-items:center; gap:6px; min-width:56px; font-size:var(--t-xs); color:var(--muted); }
 .iconpick img { width:44px; height:44px; border-radius:10px; display:block; }
@@ -1099,7 +1104,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.80.1"></script>
+<script src="core.js?v=1.81.0"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -2166,6 +2171,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       '<div class="qacts"><button type="button" class="qbtn" data-move="peek"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.3M12 13.6v.01"/></svg>Today’s question</button>' +
       '<button type="button" class="qbtn" data-move="question">' + ICON_Q + "Question it</button></div>" + how + "</article>" +
       choicesHtml();
+    wake();
     // A thought too long for the screen scrolls; a quiet hint says so until the end is reached (1.69.0).
     requestAnimationFrame(function () {
       var w = $("words"); if (!w || w.scrollHeight <= w.clientHeight + 12) return; // glyphs overhang the tight line height by a few pixels
@@ -2515,6 +2521,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         '<ul class="wchoices"><li><b>Skip</b> rests it for a few days. It comes back first, and Scales asks why once.</li>' +
         "<li><b>Reflect</b> shows a quote from today’s voice. After a few seconds it counts, and the thought gets lighter.</li>" +
         "<li><b>Lived</b> moves it out of the deck and into your record.</li></ul>" +
+        '<p class="note">The screen goes quiet so you can read. Touch anywhere to bring it back.</p>' +
         '<div class="widewrap"><button type="button" class="primary" id="wDone">Got it</button></div></div>';
       // 1.65.0: the AI question comes right after the welcome, where it has a reason, not on a later launch.
       var finish = function () {
@@ -2638,6 +2645,23 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       '<div class="more">' + more.join("") + "</div>" + '<button type="button" class="del" data-r="del">Delete</button>';
     show("sheetRow");
   }
+  // ---------- quiet (1.81.0) ----------
+  // Only on the resting card: not while its question shows, not on Skip, Reflect or Question it, not with a sheet,
+  // the collection list or the Ledger open, not while a control has keyboard focus, and never with VoiceOver on.
+  var QUIET_MS = 3000, quietT = 0, voiceOver = false;
+  function quietOk() {
+    if (document.hidden || voiceOver || openSheet || menu.open || !$("v-ledger").hidden || phase !== "rest" || peeked() || returned() || !onCard()) return false;
+    var a = document.activeElement;
+    return !(a && a !== document.body && a.closest && a.closest(".top, #setBand, #v-deck .qacts, #v-deck #keys"));
+  }
+  function wake() {
+    clearTimeout(quietT); document.body.classList.remove("quiet");
+    quietT = setTimeout(function () { if (quietOk()) document.body.classList.add("quiet"); }, QUIET_MS);
+  }
+  ["pointerdown", "keydown", "wheel", "touchstart", "focusin"].forEach(function (ev) { document.addEventListener(ev, wake, { capture: true, passive: true }); });
+  document.addEventListener("visibilitychange", wake);
+  window.scalesA11y = function (s) { voiceOver = !!(s && s.voiceOver); if (voiceOver) document.body.classList.remove("quiet"); };
+
   // Put it on Today: the thought goes to the front of today's deck, in the collection that holds it.
   function putOnToday(t) {
     if (!t) return;
