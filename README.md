@@ -210,6 +210,10 @@ Every release, patches included, gets a new version number. GitHub Actions adds 
 3. Push to `main`. GitHub Pages redeploys in about a minute, and once the tests pass, GitHub Actions tags the commit with the new version (`v1.21.0`).
 4. On the phone, tap Reload when the bar appears. Settings > Help shows the version.
 
+## The website
+
+`site/` is scales.tangomike.app itself: the landing page (`index.html`), Support (`support.html`, served at /support) and Privacy (`privacy.html`, at /privacy), with their images in `site/img` and Geist in `site/fonts`. The app stays at /app/ and the AI server at /api/ai. The thinker heads are flat drawings (`site/img/*.svg`). Each quote on the page names its source.
+
 ## Scales Plus and the AI server
 
 AI in the app (a question written for each thought, the quote that fits it best, and today's voice answering a Reply) is Scales Plus: $19.99 a year with a 14-day free trial, bought in the iPhone app through StoreKit (1.72.0). Free keeps everything else.

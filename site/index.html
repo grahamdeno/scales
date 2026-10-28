@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scales: Weigh your thoughts</title>
+<meta property="og:title" content="Scales: Weigh your thoughts">
+<meta property="og:description" content="Scales hands you one of your thoughts a day. Is it true? Do you live it?">
+<meta property="og:image" content="https://scales.tangomike.app/img/icon.png">
+<link rel="icon" type="image/png" href="img/icon.png">
+<link rel="apple-touch-icon" href="img/icon.png">
+<meta name="description" content="Scales hands you one of your thoughts a day. Is it true? Do you live it?">
+<style>
+@font-face { font-family:"Geist"; src:url("fonts/geist-latin.woff2") format("woff2"); font-weight:100 900; font-display:swap; }
+:root { --smoke:#DCD9D3; --smoke2:#E6E3DD; --ink:#121212; --paper:#ECEAE5; --muted:#6B6A66; --mutedD:#9A9994; --line:rgba(236,234,229,.12); --blue:#1F5FCC; --blue2:#2F6BE0; --card:#1E1E1D; }
+* { box-sizing:border-box; }
+html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--smoke); color:var(--ink); font-family:"Geist",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+a { color:inherit; }
+.wrap { max-width:1120px; margin:0 auto; padding:0 24px; }
+/* top */
+nav { display:flex; align-items:center; gap:12px; padding:20px 0; }
+nav .brand { display:flex; align-items:center; gap:10px; font-weight:600; font-size:18px; text-decoration:none; margin-right:auto; }
+nav .brand img { width:32px; height:32px; border-radius:8px; }
+nav a.link { font-size:15px; color:var(--muted); text-decoration:none; padding:8px 10px; }
+.btn { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:0 22px; border-radius:12px; font-size:16px; font-weight:500; text-decoration:none; }
+.btn.primary { background:var(--blue); color:#fff; }
+.btn.ghost { background:rgba(18,18,18,.07); color:var(--ink); }
+.btn.sm { min-height:40px; padding:0 16px; font-size:15px; border-radius:10px; }
+.onblack .btn.ghost { background:#2A2A28; color:var(--paper); }
+/* hero */
+.hero { display:grid; grid-template-columns:1.1fr .9fr; gap:48px; align-items:center; padding:40px 0 72px; }
+.hero h1 { margin:0; font-size:clamp(44px, 6.4vw, 84px); line-height:.98; letter-spacing:-.035em; font-weight:650; }
+.hero h1 em { font-style:normal; position:relative; white-space:nowrap; }
+.hero h1 em svg { position:absolute; left:-2%; bottom:-.2em; width:104%; height:.42em; }
+.hero p.lede { margin:28px 0 0; font-size:20px; line-height:1.5; color:#3A3936; max-width:34em; }
+.ctas { display:flex; gap:10px; flex-wrap:wrap; margin-top:30px; }
+.fine { margin-top:14px; font-size:14px; color:var(--muted); }
+.phone { width:300px; aspect-ratio:390/844; border-radius:44px; background:#0B0B0B; padding:10px; box-shadow:0 2px 6px rgba(0,0,0,.12), 0 30px 60px rgba(0,0,0,.25); margin:0 auto; }
+.phone img { width:100%; height:100%; object-fit:cover; border-radius:35px; display:block; }
+/* the panel */
+.panel { background:var(--ink); color:var(--paper); border-radius:24px 24px 0 0; box-shadow:0 -1.5px 3.5px rgba(0,0,0,.115), 0 -9.5px 22px rgba(0,0,0,.15); }
+section.s { padding:88px 0; border-top:1px solid var(--line); }
+section.s:first-child { border-top:0; }
+.kicker { font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--mutedD); margin:0 0 14px; }
+h2 { margin:0; font-size:clamp(34px, 4.4vw, 56px); line-height:1.02; letter-spacing:-.03em; font-weight:620; }
+.panel p { color:#B9B6AF; font-size:18px; line-height:1.55; }
+/* quote */
+.quote { display:grid; grid-template-columns:auto 1fr; gap:40px; align-items:center; }
+.quote img { width:168px; height:168px; }
+.quote blockquote { margin:0; font-size:clamp(28px, 3.6vw, 44px); line-height:1.15; letter-spacing:-.02em; font-weight:500; color:var(--paper); }
+.quote cite { display:block; margin-top:16px; font-style:normal; font-size:15px; color:var(--mutedD); }
+.quote p { margin:20px 0 0; }
+/* three ways */
+.three { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-top:44px; }
+.way { background:var(--card); border-radius:16px; padding:24px; }
+.way .chip { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 18px; border-radius:12px; background:#2A2A28; font-weight:500; font-size:16px; color:var(--paper); }
+.way .chip.main { background:var(--blue); color:#fff; }
+.way p { margin:16px 0 0; font-size:16px; }
+/* split */
+.split { display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:center; }
+.split.rev .txt { order:2; }
+.split p { margin:22px 0 0; max-width:30em; }
+.tag { display:inline-block; margin-left:10px; padding:3px 8px; border-radius:6px; background:var(--blue); color:#fff; font-size:12px; letter-spacing:.04em; vertical-align:middle; font-weight:500; }
+.pts { list-style:none; padding:0; margin:24px 0 0; display:grid; gap:12px; }
+.pts li { display:grid; grid-template-columns:20px 1fr; gap:10px; font-size:16px; color:#B9B6AF; line-height:1.5; }
+.pts li i { width:8px; height:16px; border-radius:2px; margin-top:4px; background:#8E8D88; }
+.pts li i.o { background:transparent; box-shadow:inset 0 0 0 1.5px #8E8D88; }
+.pts li i.b { background:var(--blue2); }
+.pts b { color:var(--paper); font-weight:500; }
+/* voices */
+.voices { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-top:44px; }
+.voice { background:var(--card); border-radius:16px; padding:22px; display:grid; grid-template-columns:64px 1fr; gap:16px; align-items:start; }
+.voice img { width:64px; height:64px; }
+.voice q { display:block; font-size:16.5px; line-height:1.4; color:var(--paper); quotes:"\201C" "\201D"; }
+.voice small { display:block; margin-top:8px; font-size:13px; color:var(--mutedD); }
+.note { font-size:14px !important; color:var(--mutedD) !important; margin-top:20px !important; }
+/* origin */
+.meta { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-top:40px; }
+.meta div { border-top:2px solid #3A3A37; padding-top:18px; }
+.meta div.on { border-color:var(--blue2); }
+.meta b { display:block; font-size:22px; font-weight:600; color:var(--paper); letter-spacing:-.01em; }
+.meta span { display:block; margin-top:6px; font-size:16px; color:#B9B6AF; line-height:1.5; }
+/* privacy + price */
+.cols { display:grid; grid-template-columns:repeat(3, 1fr); gap:28px; margin-top:36px; }
+.cols b { display:block; font-size:18px; font-weight:600; color:var(--paper); }
+.cols span { display:block; margin-top:6px; color:#B9B6AF; font-size:16px; line-height:1.5; }
+.price { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:40px; }
+.plan { border-radius:16px; padding:28px; background:var(--card); }
+.plan.plus { background:var(--paper); color:var(--ink); }
+.plan h3 { margin:0; font-size:22px; font-weight:600; }
+.plan .amt { margin-top:8px; font-size:15px; color:var(--mutedD); }
+.plan.plus .amt { color:var(--muted); }
+.plan ul { margin:18px 0 0; padding-left:18px; line-height:1.7; font-size:16px; color:#B9B6AF; }
+.plan.plus ul { color:#3A3936; }
+.end { text-align:center; padding:110px 0 60px; }
+.end h2 { font-size:clamp(40px, 5.4vw, 72px); }
+.end .ctas { justify-content:center; }
+footer { display:flex; flex-wrap:wrap; gap:18px; justify-content:space-between; align-items:center; padding:28px 0 40px; border-top:1px solid var(--line); font-size:14px; color:var(--mutedD); }
+footer nav { padding:0; gap:18px; }
+footer a { color:var(--mutedD); text-decoration:none; }
+@media (max-width:820px) {
+  .hero, .split, .quote { grid-template-columns:1fr; gap:36px; }
+  .split.rev .txt { order:0; }
+  .three, .voices, .meta, .cols, .price { grid-template-columns:1fr; }
+  .quote img { width:120px; height:120px; }
+  section.s { padding:64px 0; }
+  .phone { width:260px; }
+  nav a.link { display:none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav><a class="brand" href="#"><img src="img/icon.png" alt="">Scales</a><a class="link" href="/support">Support</a><a class="link" href="/privacy">Privacy</a><a class="btn primary sm" href="#beta">Get the iPhone beta</a></nav>
+  <div class="hero">
+    <div>
+      <h1>Weigh your <em>thoughts<svg viewBox="0 0 300 30" preserveAspectRatio="none" aria-hidden="true"><path d="M4 18 C70 10 160 9 296 15" stroke="#1F5FCC" stroke-width="7" fill="none" stroke-linecap="round"/></svg></em>.</h1>
+      <p class="lede">Most of us don't think. We have ideas and tell ourselves they're true. Scales hands you one of your thoughts a day and asks two questions. Is it true? Do you live it?</p>
+      <div class="ctas"><a class="btn primary" href="#beta">Get the iPhone beta</a><a class="btn ghost" href="/app/">Open in your browser</a></div>
+      <p class="fine">Free. No account. Your thoughts stay on your phone.</p>
+    </div>
+    <div class="phone"><img src="img/shot-today.png" alt="Scales showing one thought, Trust your gut., with Skip, Reflect and Lived"></div>
+  </div>
+</div>
+
+<main class="panel onblack">
+<div class="wrap">
+  <section class="s">
+    <div class="quote">
+      <img src="img/nietzsche.svg" alt="Friedrich Nietzsche">
+      <div>
+        <blockquote>“Convictions are more dangerous enemies of truth than lies.”</blockquote>
+        <cite>Friedrich Nietzsche, Human, All Too Human</cite>
+        <p>A thought you never question isn't a belief. It's a habit. Scales makes you find out which of yours hold up.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="s">
+    <p class="kicker">How it works</p>
+    <h2>One a day. Three honest answers.</h2>
+    <div class="three">
+      <div class="way"><span class="chip">Skip</span><p>Not today. It counts, it rests a few days, and it comes back first. Skip it often enough and Scales asks why.</p></div>
+      <div class="way"><span class="chip main">Reflect</span><p>Sit with it. A real line from a thinker who would push you, never a pep talk. Reply, and they answer.</p></div>
+      <div class="way"><span class="chip">Lived</span><p>You acted on it without being reminded. It leaves the deck for your record, with where it showed up.</p></div>
+    </div>
+  </section>
+
+  <section class="s">
+    <div class="split">
+      <div class="txt">
+        <p class="kicker">Question it <span class="tag">New</span></p>
+        <h2>Doubt counts.</h2>
+        <p>Not sure it's true? Scales makes the strongest honest case against it, next to your own reasons for believing it. Then you keep it, revise it, or let it go.</p>
+        <p>Letting go is a conclusion, not a failure. It goes in your Ledger with the reason you changed your mind.</p>
+      </div>
+      <div class="phone"><img src="img/shot-question.png" alt="The case against Trust your gut.: Jung pushes back, your two reasons under it, and Let go, Revise or Keep it"></div>
+    </div>
+  </section>
+
+  <section class="s">
+    <div class="split rev">
+      <div class="txt">
+        <p class="kicker">The Ledger</p>
+        <h2>See what you avoid.</h2>
+        <p>The thoughts you keep skipping come first, so resistance shows instead of hiding. Every row carries its last five moves.</p>
+        <ul class="pts">
+          <li><i class="o"></i><span><b>Skipped.</b> A hollow mark. Three in a row and it's in Avoiding.</span></li>
+          <li><i></i><span><b>Reflected.</b> You sat with it.</span></li>
+          <li><i class="b"></i><span><b>Caught it.</b> You lived it out in the world, and wrote down where.</span></li>
+        </ul>
+      </div>
+      <div class="phone"><img src="img/shot-ledger.png" alt="The Ledger: this week, the four stages, and thoughts listed by stage"></div>
+    </div>
+  </section>
+
+  <section class="s">
+    <p class="kicker">The voices</p>
+    <h2>Argue with the greats.</h2>
+    <div class="voices">
+      <div class="voice"><img src="img/socrates.svg" alt=""><div><q>The unexamined life is not worth living.</q><small>Socrates, in Plato's Apology</small></div></div>
+      <div class="voice"><img src="img/epictetus.svg" alt=""><div><q>It is impossible for a man to begin to learn that which he thinks that he knows.</q><small>Epictetus, Discourses</small></div></div>
+      <div class="voice"><img src="img/marcus.svg" alt=""><div><q>No longer talk at all about the kind of man that a good man ought to be, but be such.</q><small>Marcus Aurelius, Meditations</small></div></div>
+      <div class="voice"><img src="img/nietzsche.svg" alt=""><div><q>If we have our own why of life, we shall get along with almost any how.</q><small>Friedrich Nietzsche, Twilight of the Idols</small></div></div>
+      <div class="voice"><img src="img/dostoevsky.svg" alt=""><div><q>Above all, don't lie to yourself.</q><small>Fyodor Dostoevsky, The Brothers Karamazov</small></div></div>
+      <div class="voice"><img src="img/jung.svg" alt=""><div><q>The shoe that fits one person pinches another; there is no recipe for living that suits all cases.</q><small>C. G. Jung, Modern Man in Search of a Soul</small></div></div>
+    </div>
+    <p class="note">With Scales Plus, today's voice answers what you write, drawn from their own words. Quotes come from Wikiquote, with the source. Living people are written about, never voiced.</p>
+  </section>
+
+  <section class="s">
+    <p class="kicker">Where it came from</p>
+    <h2>Camel, lion, child.</h2>
+    <p style="max-width:40em;margin-top:22px">Nietzsche wrote that the spirit changes three times. Scales is built on it.</p>
+    <div class="meta">
+      <div><b>The camel</b><span>Carries what it was handed. Every thought starts here: a line from a book, a parent, a coach.</span></div>
+      <div><b>The lion</b><span>Says no. Skip, question, push back. Find out which thoughts survive a fight.</span></div>
+      <div class="on"><b>The child</b><span>Says a new yes. You live it without being reminded, because now it's yours.</span></div>
+    </div>
+  </section>
+
+  <section class="s">
+    <p class="kicker">Private by default</p>
+    <h2>Your thoughts stay yours.</h2>
+    <div class="cols">
+      <div><b>No account</b><span>Nothing to sign up for. Everything lives on your phone and saves itself to iCloud Drive each day.</span></div>
+      <div><b>No ads, no tracking</b><span>Nothing is sold, and nothing follows you around the web.</span></div>
+      <div><b>AI only when you ask</b><span>With Scales Plus, one thought at a time goes to the AI to write its question. Nothing is kept.</span></div>
+    </div>
+  </section>
+
+  <section class="s">
+    <p class="kicker">Price</p>
+    <h2>Free to weigh. Plus to argue back.</h2>
+    <div class="price">
+      <div class="plan"><h3>Scales</h3><p class="amt">Free</p><ul><li>Your whole deck, every day</li><li>Skip, Reflect, Lived and the Ledger</li><li>Real quotes from the voices</li><li>Reminders and a daily save</li></ul></div>
+      <div class="plan plus"><h3>Scales Plus</h3><p class="amt">$19.99 a year · 14 days free</p><ul><li>A question written for each thought</li><li>The quote that fits it best</li><li>Voices that answer your replies</li><li>The case against, when you question it</li></ul></div>
+    </div>
+  </section>
+
+  <section class="end" id="beta">
+    <h2>Weigh your thoughts.</h2>
+    <p style="margin:18px auto 0;max-width:30em">Start in your browser today. The iPhone app is in beta; ask and we'll send you an invite.</p>
+    <div class="ctas" style="margin-top:28px"><a class="btn primary" href="mailto:support@tangomike.app?subject=%5BScales%5D%20Beta%20invite">Get the iPhone beta</a><a class="btn ghost" href="/app/">Open in your browser</a></div>
+  </section>
+
+  <footer><span>Made by Graham D. at tangomike.app</span><nav><a href="/support">Support</a><a href="/privacy">Privacy</a><a href="mailto:support@tangomike.app">support@tangomike.app</a></nav></footer>
+</div>
+</main>
+</body>
+</html>

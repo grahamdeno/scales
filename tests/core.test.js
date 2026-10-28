@@ -56,6 +56,18 @@ test("the app icon can be black or light (1.78.0)", () => {
   assert.ok(fs.existsSync(path.join(__dirname, "..", "ios", "App", "Assets.xcassets", "AppIcon-Light.appiconset", "icon-1024.png")));
   assert.ok(fs.existsSync(path.join(__dirname, "..", "icons", "icon-light-192.png")));
 });
+test("the website: landing, Support and Privacy (1.79.0)", () => {
+  for (const f of ["index.html", "support.html", "privacy.html"]) {
+    const h = fs.readFileSync(path.join(__dirname, "..", "site", f), "utf8");
+    assert.doesNotMatch(h, /\u2014/, f + ": no em-dashes");
+    assert.doesNotMatch(h, /[Pp]rinciple/, f + ": the app weighs thoughts");
+    assert.match(h, /href="\/support"/); assert.match(h, /href="\/privacy"/);
+    for (const m of h.matchAll(/src="(img\/[^"]+|fonts\/[^"]+)"/g)) assert.ok(fs.existsSync(path.join(__dirname, "..", "site", m[1])), f + " needs " + m[1]);
+  }
+  const home = fs.readFileSync(path.join(__dirname, "..", "site", "index.html"), "utf8");
+  assert.match(home, /<title>Scales: Weigh your thoughts<\/title>/);
+  assert.match(home, /href="\/app\/"/, "Open in your browser goes to the app");
+});
 test("the page asks for core.js at its own version, and the cache keeps it (1.77.2)", () => {
   const html = read("index.html"), sw = read("sw.js");
   assert.match(html, new RegExp('<script src="core\\.js\\?v=' + C.VERSION.replace(/\./g, "\\.") + '"></script>'), "bump the core.js address with VERSION");
