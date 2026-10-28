@@ -1,6 +1,6 @@
-# Scales
+# Scales: Weigh what you believe
 
-A small phone app for turning the principles you collect into how you actually live.
+A small phone app for weighing the principles you collect until they become how you actually live.
 
 You write down a principle you want to live by ("the hard conversation is usually shorter than the dread before it"), or load a starter deck. Scales keeps putting it in front of you. Each time, you choose Skip, Reflect or Lived. Once you act on it without being reminded, it moves to your Lived record with a line on where it showed up.
 
