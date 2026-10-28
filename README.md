@@ -212,7 +212,7 @@ Every release, patches included, gets a new version number. GitHub Actions adds 
 
 ## The website
 
-`site/` is scales.tangomike.app itself: the landing page (`index.html`), Support (`support.html`, served at /support) and Privacy (`privacy.html`, at /privacy), with their images in `site/img` and Geist in `site/fonts`. The app stays at /app/ and the AI server at /api/ai. The thinker heads are flat drawings (`site/img/*.svg`). Each quote on the page names its source.
+`site/` is scales.tangomike.app itself: the landing page (`index.html`), Support (`support.html`, served at /support) and Privacy (`privacy.html`, at /privacy), with their images in `site/img` and Geist in `site/fonts`. The styles are one file, `site/site.css`, so the site's security header can keep `style-src 'self'`. The Cloudflare Pages project (tangomike-scales) is a Direct Upload: the pages are uploaded from `site/` by hand, /app/ is passed through to GitHub Pages by `functions/app/[[path]].js`, and the AI server at /api/ai is `server/ai.mjs`. The thinker heads are flat drawings (`site/img/*.svg`). Each quote on the page names its source.
 
 ## Scales Plus and the AI server
 
