@@ -3152,11 +3152,23 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
   $("testAi").onclick = function () {
     var out = $("testAiResult"); out.hidden = false; out.textContent = "Testing...";
-    var t0 = Date.now();
-    makeSampler("")("Reply with the single word: working").then(function (res) {
+    var t0 = Date.now(), ask = makeSampler("");
+    if (!ask) { out.textContent = NATIVE ? "Scales Plus is off on this phone. Open Settings > Scales Plus, or Restore purchase." : "AI needs Scales Plus, in the iPhone app."; return; }
+    ask("Reply with the single word: working").then(function (res) {
       out.textContent = "AI works. It replied \u201c" + (res.text || "").trim() + "\u201d in " + (Date.now() - t0) + " ms.";
-    }).catch(function (e) { out.textContent = explainError(e); });
+    }).catch(function (e) {
+      out.textContent = explainError(e);
+      // 1.72.1: when the server turns down this phone's Plus record, run the server's own check here and say why.
+      if (e && e.status === 402 && plus.jws) plusWhy().then(function (why) { out.textContent += " " + why; });
+    });
   };
+  function plusWhy() {
+    var j = plus.jws, info = "";
+    try { var p = JSON.parse(atob(j.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))); info = " (" + [p.environment, p.productId, p.expiresDate ? "expires " + new Date(p.expiresDate).toISOString().slice(0, 16) : "no expiry"].join(", ") + ", " + j.length + " characters)"; } catch (x) { info = " (record unreadable)"; }
+    return import("./server/ai.mjs").then(function (m) { return m.verifyPlus(j); }).then(function () {
+      return "This phone's record passes the check" + info + ", so the server's copy is out of date or set up differently.";
+    }, function (err) { return "Reason: " + ((err && err.message) || String(err)) + info + "."; });
+  }
   $("testKey").onclick = function () {
     var k = $("apiKey").value.trim(); try { k = k || localStorage.getItem(LSK) || ""; } catch (e) {}
     var out = $("testResult"); out.hidden = false;
