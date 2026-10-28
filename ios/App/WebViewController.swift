@@ -20,7 +20,9 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         config.websiteDataStore = .default()
         let content = WKUserContentController()
         content.add(WeakHandler(self), name: "scales")
-        content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios' };",
+        // 1.83.2: the build number, shown in About, so a TestFlight copy says which build it is.
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
+        content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios', build: '\(build)' };",
                                            injectionTime: .atDocumentStart, forMainFrameOnly: true))
         config.userContentController = content
 

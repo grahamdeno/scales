@@ -1119,7 +1119,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.83.1"></script>
+<script src="core.js?v=1.83.2"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -2211,18 +2211,22 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     });
   }
   // The reflect screen's foot: a thin line filling for REFLECT_SEC, then Next.
+  // 1.83.2 trial: no Undo on Reflect. Set REFLECT_UNDO to true to bring both Undo buttons back.
+  var REFLECT_UNDO = false;
   function paintReflectFoot() {
     var f = $("reflFoot"); if (!f) return;
     if (reflectDone) {
-      f.innerHTML = '<span>' + (reflectLighter ? "Counted as Reflect. One lighter." : "Counted as Reflect.") + '</span><div class="pair next"><button type="button" class="btn3d" id="reflUndo">Undo</button><button type="button" class="primary" id="reflNext">Next thought</button></div>';
+      f.innerHTML = '<span>' + (reflectLighter ? "Counted as Reflect. One lighter." : "Counted as Reflect.") + '</span>' + (REFLECT_UNDO
+        ? '<div class="pair next"><button type="button" class="btn3d" id="reflUndo">Undo</button><button type="button" class="primary" id="reflNext">Next thought</button></div>'
+        : '<button type="button" class="primary wide" id="reflNext">Next thought</button>');
       $("reflNext").onclick = nextFromReflect;
       wake();
       var w = $("words"), t = thoughts[current]; if (w && t) w.style.fontWeight = C.inkWeight(t);
     } else {
       var left = Math.max(0, C.REFLECT_SEC * 1000 - (Date.now() - reflectAt));
-      f.innerHTML = '<div class="bar"><i style="animation-duration:' + (C.REFLECT_SEC * 1000) + 'ms;animation-delay:-' + (C.REFLECT_SEC * 1000 - left) + 'ms"></i></div><span>' + ((prefs.tests || 0) <= 2 ? "Stay with it. After " + C.REFLECT_SEC + " seconds it counts, and the thought gets lighter." : "Next appears in a moment.") + '</span><button type="button" class="btn3d wide" id="reflUndo">Undo</button>';
+      f.innerHTML = '<div class="bar"><i style="animation-duration:' + (C.REFLECT_SEC * 1000) + 'ms;animation-delay:-' + (C.REFLECT_SEC * 1000 - left) + 'ms"></i></div><span>' + ((prefs.tests || 0) <= 2 ? "Stay with it. After " + C.REFLECT_SEC + " seconds it counts, and the thought gets lighter." : "Next appears in a moment.") + '</span>' + (REFLECT_UNDO ? '<button type="button" class="btn3d wide" id="reflUndo">Undo</button>' : "");
     }
-    $("reflUndo").onclick = function () { var p = reflectUndo; if (p) { restore(p); toast("Undone."); } };
+    var ru = $("reflUndo"); if (ru) ru.onclick = function () { var p = reflectUndo; if (p) { restore(p); toast("Undone."); } };
   }
   // A folded thought opens in place on a tap.
   $("v-deck").addEventListener("click", function (e) {
@@ -2692,8 +2696,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // button or start a press and hold; the next touch does. wokeAt is when that waking touch went down.
   var wokeAt = 0;
   function wake(e) {
-    // The question's buttons, at full strength just after it fades in, work on the first touch.
-    if (e && e.type === "pointerdown") wokeAt = document.body.classList.contains("quiet") && !(e.target.closest && e.target.closest("#dwell.fresh .lineacts")) ? Date.now() : 0;
+    // 1.83.2: one rule, no exceptions. Even the question's buttons, shown at full strength as it fades in, only wake.
+    if (e && e.type === "pointerdown") wokeAt = document.body.classList.contains("quiet") ? Date.now() : 0;
     clearTimeout(quietT); document.body.classList.remove("quiet");
     quietT = setTimeout(function () { if (quietOk()) document.body.classList.add("quiet"); }, QUIET_MS);
   }
@@ -3450,7 +3454,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   applyLook();
   resetScroll();
   $("verShort").textContent = C.VERSION;
-  $("versionText").textContent = "Version " + C.VERSION + ", built " + fmtDate(C.BUILT + "T12:00:00") + ".";
+  $("versionText").textContent = "Version " + C.VERSION + ", built " + fmtDate(C.BUILT + "T12:00:00") + "." +
+    (NATIVE && window.scalesNative.build ? " iPhone app build " + window.scalesNative.build + "." : NATIVE ? " iPhone app build 20 or earlier." : "");
   // 1.70.0: feedback by email, with the version and where Scales runs filled in.
   $("feedbackLink").href = "mailto:support@tangomike.app?subject=" + encodeURIComponent("Scales feedback (" + C.VERSION + ")") +
     "&body=" + encodeURIComponent("\n\n\nScales " + C.VERSION + (NATIVE ? ", iPhone app" : standalone() ? ", Home Screen" : ", browser") + "\n");
