@@ -125,6 +125,8 @@ To check the key, tap **Test key** under AI key. It sends one tiny request and r
 
 ## The look
 
+**Light or black icon (1.78.0).** Settings shows App icon in the iPhone app: Black (the main icon) or Light, the same mark in black ink on smoke. iOS confirms the change itself.
+
 **The icon (1.77.3).** The fulcrum, in ink: one brush-stroke beam in smoke on black, heavy where the brush pressed and dry where it lifted, resting on a blue point set toward its heavy side. Level, but weighted. It is drawn bristle by bristle (icons/icon.svg), with a heavier version of the same mark at 64 px and below (icons/icon-small.svg). It replaced a flat bar-and-triangle balance that read as a generic pictogram.
 
 **The Ledger and a new icon (1.77.0).** The Ledger is one scroll. The band shows this week, a bar a day, and a bar of how your principles split across Avoiding, Working on, Nearly lived and Lived, with counts that jump to each section. The panel lists every principle by stage. Avoiding opens with the one avoided most and Put it on Today. Each row shows its last five moves, oldest to newest: a hollow mark for skipped, gray for reflected, blue for caught it. Lived folds to one line, and the last 12 weeks stay at the bottom. A principle, opened, shows its stage, four numbers (days, skipped, reflected, caught) and what happened, newest first, with Put it on Today as the one blue action and Delete as quiet text. Each principle now keeps its last 30 moves with their dates; older Reflects, kept only as a count, show as undated. The iPhone app opens on smoke instead of black.

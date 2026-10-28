@@ -36,7 +36,7 @@ bundles.each do |ident, name|
   cap = (found["included"] || []).find { |c| c["type"] == "bundleIdCapabilities" && c.dig("attributes", "capabilityType") == "ICLOUD" }
   if cap
     puts "::notice::iCloud settings: #{JSON.dump(cap.dig('attributes', 'settings'))}"
-    unless JSON.dump(cap.dig("attributes", "settings")).include?('"key":"XCODE_6","enabled":true')
+    unless JSON.dump(cap.dig("attributes", "settings")).include?('"key":"XCODE_6"')
       pc, out = api.(:patch, "https://api.appstoreconnect.apple.com/v1/bundleIdCapabilities/#{cap['id']}",
         { data: { type: "bundleIdCapabilities", id: cap["id"], attributes: { capabilityType: "ICLOUD",
           settings: [{ key: "ICLOUD_VERSION", options: [{ key: "XCODE_6", enabled: true }] }] } } })
