@@ -476,7 +476,7 @@ test("an undo point is a copy: later changes do not leak in, and applying it twi
 
 test("the page wires sheets as modal dialogs, Undo and the coach (1.26.0)", () => {
   const html = read("index.html");
-  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 18, "every sheet is a <dialog>");
+  assert.equal((html.match(/<dialog class="sheet/g) || []).length, 22, "every sheet is a <dialog>");
   assert.doesNotMatch(html, /<section class="sheet/, "no sheet left as a hidden section");
   assert.match(html, /\.showModal\(\)/);
   for (const id of (html.match(/aria-labelledby="(sheet\w+Title)"/g) || []).map((m) => m.slice(17, -1))) {
@@ -670,7 +670,6 @@ test("Black and White: one face, two flat looks, no shadows, glass or rounded pa
   assert.doesNotMatch(c, /box-shadow:-?\d+px -?\d+px \d+px|backdrop-filter|radial-gradient|linear-gradient/, "no raised shadows, blur or gradients");
   assert.match(c, /--r-s:0; --r-m:0; --r-l:0; --r-xl:0;/, "square corners");
   assert.match(rule(c, ".primary"), /background:var\(--accent\)/, "the main action carries the one accent (1.66.0)");
-  assert.match(html, /data-look="matte" aria-pressed="true">Black<\/button><button type="button" data-look="light" aria-pressed="false">White<\/button>/);
   assert.match(html, /content="#121212" id="themeColor"/);
   assert.match(read("manifest.webmanifest"), /"background_color": "#121212"/);
   // Geist only, self-hosted, preloaded and cached.
@@ -1216,20 +1215,20 @@ test("a new deck opens on the welcome; an existing one never does; + opens Captu
 });
 
 // ---------- 1.48.0: Settings rebuilt ----------
-test("Settings: grouped cards, half the length; Voices, starter decks and About have their own pages (1.75.0)", () => {
+test("Settings is an index: each part and what it is set to, the controls one tap in (1.76.0)", () => {
   const html = read("index.html"), c = css();
   const sheet = html.slice(html.indexOf('id="sheetSettings"'), html.indexOf("</dialog>", html.indexOf('id="sheetSettings"')));
-  const groups = [...sheet.matchAll(/<h3 class="sec2"[^>]*>([^<]+)/g)].map(m => m[1].trim());
-  assert.deepEqual(groups, ["Reminders", "Your deck", "Look", "Your data", "Help", "About"]);
-  assert.ok(sheet.indexOf('id="plusGroup"') < sheet.indexOf("Reminders"), "Scales Plus first");
-  for (const id of ["openVoices", "openStarter", "openAbout", "openCollections"]) assert.match(sheet, new RegExp('id="' + id + '"'));
-  assert.doesNotMatch(sheet, /id="voiceList"|id="starterGroup"|id="versionText"/, "those live on their own pages");
-  for (const id of ["sheetVoices", "sheetStarter", "sheetAbout"]) assert.match(html, new RegExp('id="' + id + '"'));
-  assert.match(html, /data-back="settings"/, "each page has the way back to Settings");
-  const adv = sheet.slice(sheet.indexOf('id="advanced"'));
-  assert.match(adv, /id="apiKey"/);
-  assert.match(sheet, /href="https:\/\/scales\.tangomike\.app\/privacy"/);
-  assert.match(sheet, /href="https:\/\/scales\.tangomike\.app\/support"/);
+  const rows = [...sheet.matchAll(/class="setrow nav" id="(\w+)"/g)].map(m => m[1]);
+  assert.deepEqual(rows, ["openPlus", "openReminders", "openDeck", "openVoices", "openData", "openHelp"]);
+  assert.doesNotMatch(sheet, /class="toggle"|class="stepper"|<h3/, "no controls and no section headers on the index");
+  for (const id of ["remindVal", "deckVal", "voiceCount", "dataVal"]) assert.match(sheet, new RegExp('id="' + id + '"'), id + " shows the value");
+  for (const id of ["sheetReminders", "sheetDeck", "sheetData", "sheetHelp", "sheetVoices", "sheetStarter", "sheetAbout"]) assert.match(html, new RegExp('id="' + id + '"'));
+  assert.equal((html.match(/data-back="settings"/g) || []).length, 7, "every page has the way back to Settings");
+  assert.match(html, /\$\("deckVal"\)\.textContent = setSize\(\) \+ " a day";/);
+  const help = html.slice(html.indexOf('id="sheetHelp"'), html.indexOf("</dialog>", html.indexOf('id="sheetHelp"')));
+  assert.match(help, /id="apiKey"/, "Advanced is at the bottom of Help and about");
+  assert.match(help, /href="https:\/\/scales\.tangomike\.app\/privacy"/);
+  assert.match(help, /href="https:\/\/scales\.tangomike\.app\/support"/);
   assert.match(rule(c, ".panel"), /border-radius:16px; background:var\(--card\)/, "cards");
 });
 
@@ -1397,7 +1396,7 @@ test("one blue accent for the main action and selected states, and Match iPhone 
   assert.match(html, /--accent:#1F5FCC; --onAccent:#FFFFFF; --btn2:#DCD9D3;/);
   assert.match(html, /\.primary \{[^}]*background:var\(--accent\)/);
   assert.match(html, /\.toggle\[aria-checked="true"\] \{ background:var\(--accent\)/);
-  assert.match(html, /data-look="auto"[^>]*>iPhone</);
+  assert.doesNotMatch(html, /<button[^>]*data-look=/, "one look: no Appearance choice (1.76.0)");
   assert.match(html, /prefs = Object\.assign\(\{ look: savedPrefs \? "matte" : "auto" \}/);
 });
 
