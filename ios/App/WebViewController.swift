@@ -208,6 +208,13 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
                 }
             }
         }
+        // TestFlight preview (1.82.0): a TestFlight copy can turn Plus on before the App Store approves it. The proof
+        // is Apple's signed AppTransaction for this copy. Hidden unless the build's ScalesPlusPreview flag is on.
+        if Bundle.main.object(forInfoDictionaryKey: "ScalesPlusPreview") as? Bool == true,
+           let app = try? await AppTransaction.shared, case .verified(let at) = app,
+           at.environment == .sandbox || at.environment == .xcode {
+            state["preview"] = app.jwsRepresentation
+        }
         if let note { state["note"] = note }
         guard let data = try? JSONSerialization.data(withJSONObject: state),
               let json = String(data: data, encoding: .utf8) else { return }
