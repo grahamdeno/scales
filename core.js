@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.84.4";
+  var VERSION = "1.84.5";
   var BUILT = "2026-10-28";
 
   // CAP        highest weight a thought can reach (4x as likely as a fresh one)

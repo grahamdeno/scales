@@ -146,6 +146,7 @@ test("Scales Plus opened from Settings closes back to Settings (1.82.4)", async 
   await page.clock.install({ time: new Date(2026, 9, 27, 9, 0) });
   await page.addInitScript((t) => {
     window.scalesNative = { version: 1, platform: "ios" };
+    delete Navigator.prototype.serviceWorker; // like the iPhone app's web view (1.84.5)
     window.webkit = { messageHandlers: { scales: { postMessage: () => {} } } };
     localStorage.setItem("scales.prefs.v1", JSON.stringify({ onboarded: true, coach_seen: true }));
     localStorage.setItem("scales.thoughts.v1", JSON.stringify(t));
@@ -169,6 +170,24 @@ test("a long thought is never cut, even when the font arrives late (1.84.4)", as
   await page.goto(base);
   const cut = () => page.$eval("#words", (w) => w.scrollHeight - w.clientHeight > 4 && !w.classList.contains("overflow"));
   for (const ms of [300, 1000, 1500, 1500]) { await page.waitForTimeout(ms); assert.equal(await cut(), false, "not cut at " + ms + "ms steps"); }
+  await ctx.close();
+});
+test("in the iPhone app (no service worker) the page says it is ready, and the app's answers land (1.84.5)", async () => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
+  await ctx.route(/^https?:\/\/(?!localhost)/, (r) => r.abort());
+  const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    delete Navigator.prototype.serviceWorker;
+    window.scalesNative = { version: 1, platform: "ios", build: "25" };
+    window.__sent = []; window.webkit = { messageHandlers: { scales: { postMessage: (m) => window.__sent.push(m.type) } } };
+    localStorage.setItem("scales.prefs.v1", JSON.stringify({ onboarded: true, coach_seen: true }));
+  });
+  await page.goto(base); await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() => "serviceWorker" in navigator), false);
+  assert.ok((await page.evaluate(() => window.__sent)).includes("ready"), "ready reaches the app");
+  await page.evaluate(() => { window.scalesIcon("auto"); });
+  await page.click("#setBtn"); await page.waitForTimeout(200);
+  assert.equal(await page.$eval("#iconRow", (e) => e.hidden), false, "the icon choice shows");
   await ctx.close();
 });
 test("a thought back from Later waits for a choice and counts nothing", async () => {
@@ -283,6 +302,7 @@ test("Scales Plus in the iPhone app: no server AI without it; buy, then AI reque
   await page.clock.install({ time: new Date(2026, 9, 27, 9, 0) });
   await page.addInitScript((t) => {
     window.scalesNative = { version: 1, platform: "ios" };
+    delete Navigator.prototype.serviceWorker; // like the iPhone app's web view (1.84.5)
     window.__sent = []; window.webkit = { messageHandlers: { scales: { postMessage: (m) => window.__sent.push(m) } } };
     localStorage.setItem("scales.prefs.v1", JSON.stringify({ onboarded: true, coach_seen: true }));
     localStorage.setItem("scales.thoughts.v1", JSON.stringify(t));

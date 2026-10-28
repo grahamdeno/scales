@@ -1149,7 +1149,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.84.4"></script>
+<script src="core.js?v=1.84.5"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -3834,6 +3834,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     e.target.value = "";
   };
 
+  // ---------- the iPhone app ----------
+  // 1.84.5: tell the app the page is ready, and start the daily save. These sat inside the service worker block
+  // below from 1.77.0, and the iPhone app's web view has no service worker, so the app never heard "ready": no
+  // Plus state, no TestFlight preview, no icon choice and no daily save reached the page.
+  if (NATIVE) { toNative({ type: "ready" }); setTimeout(function () { autoSave(true); }, 1500); }
+  document.addEventListener("visibilitychange", function () { if (document.hidden) autoSave(false); });
+
   // ---------- offline ----------
   // Register the service worker (sw.js) so the app opens offline.
   // Updates (1.34.2). A launch always loads the newest release (sw.js is network first), but an app that is only
@@ -3845,8 +3852,6 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       if (hadWorker) toast("Scales was updated.", null, { label: "Reload", fn: function () { location.reload(); } });
       hadWorker = true;
     });
-    if (NATIVE) { toNative({ type: "ready" }); setTimeout(function () { autoSave(true); }, 1500); }
-    document.addEventListener("visibilitychange", function () { if (document.hidden) autoSave(false); });
     // Moved (1.63.0): the old GitHub Pages address keeps working, but a phone keeps data per address, so it says
     // where Scales lives now and offers the backup to restore there. The bar stays until Back up is tapped.
     if (location.hostname === "grahamdeno.github.io") setTimeout(function () {
