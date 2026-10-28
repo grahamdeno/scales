@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- 1.87.0: no screen zooms: no pinch, no double tap, no zoom into a field. -->
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <style>
 :root { color-scheme: light; box-sizing: border-box; }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); }
@@ -19,7 +20,7 @@ img { max-width: 100%; }
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#DCD9D3" id="themeColor">
 <link rel="manifest" href="manifest.webmanifest">
-<!-- 1.86.1: the icon addresses carry ?v=fulcrum so browsers that kept an older icon by its address fetch this one. -->
+<!-- 1.87.0: the icon addresses carry ?v=fulcrum so browsers that kept an older icon by its address fetch this one. -->
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=fulcrum">
 <link rel="icon" href="favicon.ico?v=fulcrum" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=fulcrum">
@@ -80,6 +81,8 @@ html { height:100%; min-height:100lvh; background:var(--band); font-size:17px; }
 /* Text size (1.45.0): every size is in rem against the system body text, so Settings > Display & Brightness >
    Text Size (and Larger Text) changes Scales too. 17px is the default iPhone body size. */
 @supports (font: -apple-system-body) { html { font: -apple-system-body; } }
+/* 1.87.0: panning only, so a stray pinch or double tap never zooms or shifts the screen. */
+html, body { touch-action:pan-x pan-y; }
 body { height:100%; height:100dvh; overflow:hidden; background:var(--band); color:var(--ink); font-family:var(--font); font-size:var(--t-md); line-height:1.45; -webkit-tap-highlight-color:transparent; overscroll-behavior:none; -webkit-font-smoothing:antialiased; }
 /* Grain: a fixed layer of fine noise over the ground, so the surface reads as matte. Decorative. */
 body::before { content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35; mix-blend-mode:soft-light;
@@ -100,7 +103,7 @@ body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-d
 .iconpick [aria-checked="true"] { color:var(--ink); }
 .iconpick [aria-checked="true"] img { outline:2px solid var(--accent); outline-offset:2px; }
 .iconpick button { position:relative; }
-/* 1.86.1: five icons take their own line under the label and spread across it, so none runs off a 375 px screen. */
+/* 1.87.0: five icons take their own line under the label and spread across it, so none runs off a 375 px screen. */
 #iconRow .iconpick { flex:1 1 100%; justify-content:space-between; gap:4px; }
 #iconRow .iconpick button { min-width:52px; }
 .iconpick .locked img { opacity:.45; }
@@ -1160,7 +1163,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.86.1"></script>
+<script src="core.js?v=1.87.0"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1246,7 +1249,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     el.textContent = left ? left + " in deck" : "";
   }
   function savePrefs() { lsSet(LSP, prefs); badgeSoon(); }
-  // The icon badge (1.51.0, quiet from 1.86.1): only a scheduled reminder sets it, as a plain 1 when something is
+  // The icon badge (1.51.0, quiet from 1.87.0): only a scheduled reminder sets it, as a plain 1 when something is
   // waiting, and opening Scales clears it. The page never sets a count. The state is still saved for the reminders.
   var badgeTimer = null;
   function badgeSoon() { clearTimeout(badgeTimer); badgeTimer = setTimeout(paintBadge, 300); }
@@ -1258,6 +1261,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
   // The iPhone app (1.61.0): Scales runs inside a native shell that injects window.scalesNative and takes
   // messages on webkit.messageHandlers.scales. The shell sets the badge and schedules reminders on the phone.
+  // 1.87.0: Safari's own pinch gesture, stopped too (the viewport and touch-action cover the rest).
+  ["gesturestart", "gesturechange"].forEach(function (n) { document.addEventListener(n, function (e) { e.preventDefault(); }, { passive: false }); });
   var NATIVE = !!window.scalesNative;
   function toNative(msg) { try { window.webkit.messageHandlers.scales.postMessage(msg); } catch (_) {} }
   function remindTimes() { return { am: prefs.remind_am || "08:00", pm: prefs.remind_pm || "18:00" }; }
@@ -1384,7 +1389,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   try { if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual"; } catch (e) {}
   // A new Scales day may have started while the app was in the background; if the deck was
   // showing Nothing left today, look again.
-  // 1.86.1: coming back clears the badge (paintBadge sends 0); leaving reschedules the reminders as before.
+  // 1.87.0: coming back clears the badge (paintBadge sends 0); leaving reschedules the reminders as before.
   document.addEventListener("visibilitychange", function () { paintBadge(); });
   setTimeout(paintBadge, 800);
   document.addEventListener("visibilitychange", function () {
@@ -1884,7 +1889,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var t = onCard(); if (!t) return;
     dropUndo(); coachSeen(); phase = "question"; renderDeck(); showLine(t, "case");
   }
-  // Not done with it (1.86.1; was It holds): kept as it is, counted as weighed for the day.
+  // Not done with it (1.87.0; was It holds): kept as it is, counted as weighed for the day.
   function questionKeep() {
     var t = onCard(); if (!t || phase !== "question") return;
     var u = undoPoint();
@@ -2120,7 +2125,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         choice("skip", days, "set it down for " + days) + choice("stay", "Stay with it", "keep it in today", true) + "</div>";
     }
     if (phase === "question") {
-      // 1.86.1: keeping it is not a verdict that it is true; it means you are still working on it.
+      // 1.87.0: keeping it is not a verdict that it is true; it means you are still working on it.
       return '<p class="choiceq">Where does this leave you?</p>' +
         '<div class="choices endmain" id="keys" role="group" aria-label="Where does this leave you?">' +
         choice("letgo", "Let go", "I'm done with it") + choice("revise", "Revise", "change the words") + choice("qkeep", "Not done yet", "keep it in the deck", true) + "</div>";
@@ -2603,7 +2608,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var el = $("todayLbl");
     el.className = "sr"; el.removeAttribute("aria-label");
     paintBand(phase);
-    // 1.69.0: what is left of today's set, said in words. (The Home Screen badge is no longer a count, 1.86.1.)
+    // 1.69.0: what is left of today's set, said in words. (The Home Screen badge is no longer a count, 1.87.0.)
     var dc = deckColl(), s = badgeState(), n = s ? C.badgeFrom(s, new Date()) : 0, parts = [];
     if (dc) parts.push(esc(dc));
     if (n && phase === "set") parts.push(n + " left today");
@@ -3711,7 +3716,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     row.querySelectorAll("[data-icon]").forEach(function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-icon") === name)); });
     paintIconPick();
   };
-  // Light, Black, Paper and Glass are part of Scales Plus (1.82.0, 1.86.1); Automatic is for everyone.
+  // Light, Black, Paper and Glass are part of Scales Plus (1.82.0, 1.87.0); Automatic is for everyone.
   function paintIconPick() {
     document.querySelectorAll("#iconRow [data-plus]").forEach(function (b) {
       var locked = !plusOn(); b.classList.toggle("locked", locked);
@@ -3719,7 +3724,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       var tag = b.querySelector(".plustag"); if (locked && !tag) b.insertAdjacentHTML("beforeend", '<span class="plustag">Plus</span>'); else if (!locked && tag) tag.remove();
     });
   }
-  // 1.86.1: when the phone refuses an icon, say so rather than snapping back without a word.
+  // 1.87.0: when the phone refuses an icon, say so rather than snapping back without a word.
   window.scalesIconError = function (why) { toast("The icon didn\u2019t change (" + String(why || "unknown") + ")."); };
   $("iconRow").addEventListener("click", function (e) {
     var b = e.target.closest("[data-icon]"); if (!b || b.getAttribute("aria-checked") === "true") return;

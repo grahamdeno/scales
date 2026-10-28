@@ -34,6 +34,14 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         web.allowsLinkPreview = false
         web.scrollView.contentInsetAdjustmentBehavior = .never
         web.scrollView.bounces = false
+        // 1.87.0: the page never zooms or slides under a stray touch. Scales scrolls inside its own views and
+        // lifts its sheets above the keyboard itself, so the web view's own scrolling and zoom are off.
+        web.scrollView.isScrollEnabled = false
+        web.scrollView.minimumZoomScale = 1
+        web.scrollView.maximumZoomScale = 1
+        web.scrollView.pinchGestureRecognizer?.isEnabled = false
+        web.scrollView.showsVerticalScrollIndicator = false
+        web.scrollView.showsHorizontalScrollIndicator = false
         web.isOpaque = false
         // The smoke band (1.75.0), in every look, so nothing flashes while Scales loads.
         web.backgroundColor = UIColor(red: 0xDC / 255, green: 0xD9 / 255, blue: 0xD3 / 255, alpha: 1)
