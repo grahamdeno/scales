@@ -48,7 +48,7 @@ jobs:
           if [ ! -x "$ICT" ]; then echo "::warning::ictool not found"; exit 0; fi
           "$ICT" --version | sed 's/^/::notice::ictool /' || true
           mkdir -p "$RUNNER_TEMP/prev"
-          for i in AppIcon AppIcon-Light AppIcon-Black; do for r in Default Dark TintedLight TintedDark; do
+          for i in AppIcon AppIcon-Light AppIcon-Black AppIcon-Glass AppIcon-Ember; do for r in Default Dark TintedLight TintedDark; do
             "$ICT" ios/App/$i.icon --export-image --output-file "$RUNNER_TEMP/prev/$i-$r.png" --platform iOS --rendition $r --width 1024 --height 1024 --scale 1 >/dev/null 2>&1 || echo "::warning::$i $r failed"
           done; done
           ls -la "$RUNNER_TEMP/prev" | sed 's/^/::notice::/'
