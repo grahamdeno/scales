@@ -813,7 +813,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <!-- Scales Plus (1.72.0): what it adds, the price from the App Store, and the terms Apple asks to be shown. -->
 <dialog class="sheet" id="sheetPlus" aria-modal="true" aria-labelledby="sheetPlusTitle">
   <div class="grabber" aria-hidden="true"></div>
-  <h2><span id="sheetPlusTitle">Scales Plus</span> <button type="button" data-close>Close</button></h2>
+  <h2><button type="button" class="backlink" data-back="settings" id="plusBack" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Settings</button><span id="sheetPlusTitle">Scales Plus</span> <button type="button" id="plusClose">Close</button></h2>
   <ul class="consentlist">
     <li>A question written for each thought</li>
     <li>The quote from today’s voice that fits it best</li>
@@ -1114,7 +1114,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.82.3"></script>
+<script src="core.js?v=1.82.4"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -3298,7 +3298,14 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (was !== plusOn()) applyKey();
     paintPlus(); if (plusOn()) { toast("Scales Plus preview is on."); if (prefs.ai_consent !== true) setTimeout(function () { if (!openSheet) askConsent(); }, 400); }
   };
-  function openPlus() { paintPlus(); show("sheetPlus"); }
+  // 1.82.4: opened from Settings (or one of its pages), Plus has the way back, and Close returns to Settings.
+  var plusFromSettings = false;
+  function openPlus() {
+    plusFromSettings = !!(openSheet && (openSheet.id === "sheetSettings" || openSheet.querySelector(".backlink")));
+    $("plusBack").hidden = !plusFromSettings;
+    paintPlus(); show("sheetPlus");
+  }
+  $("plusClose").onclick = function () { if (plusFromSettings) openSettings(); else hide(); };
   $("openPlus").onclick = openPlus;
   // A purchase or restore the App Store never answers (a sign-in left open, no connection) frees the button after a minute.
   var plusBusyT = 0;

@@ -103,6 +103,11 @@ test("finding the line and keeping it: a cue under the thought, a named button, 
   assert.match(html, /Press and hold a line Scales wrote to keep it as a thought\./, "the walkthrough says so");
   assert.match(c, /body\.quiet #v-deck \.reflfoot/, "Reflect goes quiet too");
 });
+test("Close on Scales Plus returns to Settings when opened from there (1.82.4)", () => {
+  const html = read("index.html");
+  assert.match(html, /id="plusBack" hidden>/);
+  assert.match(html, /\$\("plusClose"\)\.onclick = function \(\) \{ if \(plusFromSettings\) openSettings\(\); else hide\(\); \};/);
+});
 test("the page asks for core.js at its own version, and the cache keeps it (1.77.2)", () => {
   const html = read("index.html"), sw = read("sw.js");
   assert.match(html, new RegExp('<script src="core\\.js\\?v=' + C.VERSION.replace(/\./g, "\\.") + '"></script>'), "bump the core.js address with VERSION");
@@ -1326,7 +1331,7 @@ test("Settings is an index: each part and what it is set to, the controls one ta
   assert.doesNotMatch(sheet, /class="toggle"|class="stepper"|<h3/, "no controls and no section headers on the index");
   for (const id of ["remindVal", "deckVal", "voiceCount", "dataVal"]) assert.match(sheet, new RegExp('id="' + id + '"'), id + " shows the value");
   for (const id of ["sheetReminders", "sheetDeck", "sheetData", "sheetHelp", "sheetVoices", "sheetStarter", "sheetAbout"]) assert.match(html, new RegExp('id="' + id + '"'));
-  assert.equal((html.match(/data-back="settings"/g) || []).length, 7, "every page has the way back to Settings");
+  assert.equal((html.match(/data-back="settings"/g) || []).length, 8, "every page has the way back to Settings, Plus too (1.82.4)");
   assert.match(html, /\$\("deckVal"\)\.textContent = setSize\(\) \+ " a day";/);
   const help = html.slice(html.indexOf('id="sheetHelp"'), html.indexOf("</dialog>", html.indexOf('id="sheetHelp"')));
   assert.match(help, /id="apiKey"/, "Advanced is at the bottom of Help and about");
