@@ -771,7 +771,8 @@ test("Black and White: one face, two flat looks, no shadows, glass or rounded pa
   const c = css(), html = read("index.html"), sw = read("sw.js");
   assert.match(c, /--paper:#121212;[^}]*--ink:#ECEAE5;/);
   assert.match(c, /:root\[data-look="light"\] \{\s*--paper:#ECEAE5;[^}]*--ink:#141414;/);
-  assert.doesNotMatch(c, /box-shadow:-?\d+px -?\d+px \d+px|backdrop-filter|radial-gradient|linear-gradient/, "no raised shadows, blur or gradients");
+  // A mask that fades a too-long thought (1.84.2) is not a painted gradient.
+  assert.doesNotMatch(c.replace(/(-webkit-)?mask-image:[^;]+;/g, ""), /box-shadow:-?\d+px -?\d+px \d+px|backdrop-filter|radial-gradient|linear-gradient/, "no raised shadows, blur or gradients");
   assert.match(c, /--r-s:0; --r-m:0; --r-l:0; --r-xl:0;/, "square corners");
   assert.match(rule(c, ".primary"), /background:var\(--accent\)/, "the main action carries the one accent (1.66.0)");
   assert.match(html, /content="#DCD9D3" id="themeColor"/);
@@ -1122,7 +1123,9 @@ test("two kept lines: reused until a test or a wording change; pushback sharpens
 test("long thoughts wrap normally and fold on push and reflect (1.34.1)", () => {
   const c = css(), html = read("index.html");
   assert.match(c, /\.thought\.small\.fold \{[^}]*-webkit-line-clamp:4;/);
-  assert.match(html, /var fold = lifted && sizeClass\(t\.text\) !== "";/);
+  assert.match(html, /var fold = false;/, "no clipped thoughts (1.84.2)");
+  assert.match(html, /var FIT_MIN = 19, FIT_MIN_LIFTED = 15;/, "the type steps down to fit instead");
+  assert.match(html, /\.thought\.overflow \{ -webkit-mask-image:/, "a thought too long even then fades, not cut");
 });
 
 test("an update shows a bar with Reload that stays until tapped (1.34.2)", () => {

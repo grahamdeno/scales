@@ -214,10 +214,20 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         }
         // TestFlight preview (1.82.0): a TestFlight copy can turn Plus on before the App Store approves it. The proof
         // is Apple's signed AppTransaction for this copy. Hidden unless the build's ScalesPlusPreview flag is on.
-        if Bundle.main.object(forInfoDictionaryKey: "ScalesPlusPreview") as? Bool == true,
-           let app = try? await AppTransaction.shared, case .verified(let at) = app,
-           at.environment == .sandbox || at.environment == .xcode {
-            state["preview"] = app.jwsRepresentation
+        // 1.84.2: the page always hears that this build allows a preview, and why not when Apple's record is missing.
+        if Bundle.main.object(forInfoDictionaryKey: "ScalesPlusPreview") as? Bool == true {
+            state["previewFlag"] = true
+            var record = try? await AppTransaction.shared
+            if record == nil { record = try? await AppTransaction.refresh() }
+            switch record {
+            case .verified(let at)?:
+                if at.environment == .sandbox || at.environment == .xcode { state["preview"] = record!.jwsRepresentation }
+                else { state["previewWhy"] = "Apple reports this copy as " + at.environment.rawValue }
+            case .unverified(_, let error)?:
+                state["previewWhy"] = "Apple's record for this copy did not verify (" + error.localizedDescription + ")"
+            case nil:
+                state["previewWhy"] = "Apple did not return a record for this copy"
+            }
         }
         if let note { state["note"] = note }
         guard let data = try? JSONSerialization.data(withJSONObject: state),
