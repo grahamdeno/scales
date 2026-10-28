@@ -11,7 +11,7 @@ img { max-width: 100%; }
 [hidden]:not([hidden=until-found i]) { display: none !important; }
 </style>
 <title>Scales</title>
-<meta name="description" content="Scales: Weigh what you believe. One principle a day.">
+<meta name="description" content="Scales: Weigh what you believe. One thought a day.">
 <link rel="preload" href="fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Scales">
@@ -27,9 +27,9 @@ img { max-width: 100%; }
 /* Layout (1.34.0): Black and White, quiet until asked.
    Two flat matte surfaces, Black (the default) and White, with a faint grain. No raised keys, glass,
    shadows or rounded panels: the type carries the page. One face, Geist, at one type scale; a
-   principle's weight comes from its record (core.js inkWeight), heavier the more it has been set aside.
+   thought's weight comes from its record (core.js inkWeight), heavier the more it has been set aside.
    Lines are hairlines in --line. The one filled control per sheet (.primary) is solid ink.
-   The deck is quiet until asked (1.34.0): at rest, the principle and the ring. Hold the ring and the words
+   The deck is quiet until asked (1.34.0): at rest, the thought and the ring. Hold the ring and the words
    ink in; let go early for a push to reconsider, hold through to sit with a question, lift for Lived.
    Everything else is in the menu at the top right. */
 
@@ -86,6 +86,12 @@ button, input, textarea { font:inherit; color:inherit; }
 button { cursor:pointer; border:0; background:none; padding:0; }
 :focus-visible { outline:2px solid var(--ink); outline-offset:3px; }
 .sheet:focus, .sheet:focus-visible { outline:0; }
+/* Question it (1.79.0) */
+.qnotes { display:grid; gap:12px; margin-top:22px; font-size:var(--t-sm); line-height:1.45; color:var(--muted); }
+.qnotes b { display:block; color:var(--ink); font-weight:500; margin-bottom:2px; }
+.qbtn.doubt { margin-top:24px; align-self:flex-start; }
+.addwhy { margin-top:18px; align-self:flex-start; }
+
 .iconpick { display:flex; gap:12px; flex:none; }
 .iconpick button { display:flex; flex-direction:column; align-items:center; gap:6px; min-width:56px; font-size:var(--t-xs); color:var(--muted); }
 .iconpick img { width:44px; height:44px; border-radius:10px; display:block; }
@@ -148,7 +154,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .view[hidden] { display:none !important; }
 
 /* ---------- Deck ---------- */
-/* The principle, on the page. Its words are spans that ink in as the ring is held (paintHold). */
+/* The thought, on the page. Its words are spans that ink in as the ring is held (paintHold). */
 .card { position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:center; padding:16px 0 8px; -webkit-touch-callout:none;
   user-select:none; -webkit-user-select:none; transition:transform .25s ease, opacity .25s ease; will-change:transform; }
 .card.spring { transition:transform .45s var(--ease-spring), opacity .25s ease; }
@@ -161,20 +167,20 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .thought.mid { font-size:var(--d-mid); line-height:1.1; letter-spacing:-.02em; }
 .thought.long { font-size:1.1176rem; line-height:1.4; letter-spacing:-.005em; text-wrap:pretty; }
 /* At rest the words are in full ink. Held, they step back and ink in again one by one. On the push screen
-   the principle sits a step back from the line. */
-/* The principle is one plain text node (1.34.4). Held, it steps back to --rest and darkens to full ink as the
+   the thought sits a step back from the line. */
+/* The thought is one plain text node (1.34.4). Held, it steps back to --rest and darkens to full ink as the
    ring fills (paintHold sets the color). Per-word spans were dropped: Safari set them one word per line. */
 .card.push .thought.plain { color:var(--rest); }
 .thought.small { font-size:clamp(1.4118rem, 7.4vw, 1.7647rem); line-height:1.08; letter-spacing:-.025em; }
 .thought.small.mid { font-size:1.2941rem; line-height:1.15; }
 .thought.small.long { font-size:0.9412rem; line-height:1.4; }
-/* On push and reflect the line is the subject, so a long principle folds to four lines; tap to open it. */
+/* On push and reflect the line is the subject, so a long thought folds to four lines; tap to open it. */
 .thought.small.fold { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:4; overflow:hidden; cursor:pointer; }
 .foldhint { margin-top:6px; font-size:var(--t-xs); color:var(--faint); }
 .where { flex:none; margin-top:16px; display:flex; flex-wrap:wrap; gap:4px 8px; font-size:var(--t-sm); color:var(--faint); }
 .where b { color:var(--faint); font-weight:400; }
 .where > * + *::before { content:"\00B7"; margin-right:8px; }
-/* Push and reflect: a small-caps phase name at the top, the principle and its line in the middle. */
+/* Push and reflect: a small-caps phase name at the top, the thought and its line in the middle. */
 .card.push, .card.reflect { justify-content:flex-start; padding-top:22px; }
 .phase { flex:none; display:flex; justify-content:space-between; align-items:center; min-height:44px; font-size:var(--t-xs); font-weight:500; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
 .phase button { min-height:44px; min-width:44px; margin-right:-6px; font-size:var(--t-sm); font-weight:400; letter-spacing:0; text-transform:none; color:var(--muted); text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px; }
@@ -184,12 +190,12 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 /* Centered with auto margins, not justify-content, so a tall column scrolls from its top in Safari. */
 .card .mid > :first-child { margin-top:auto; }
 .card .mid > :last-child { margin-bottom:auto; }
-/* 1.56.0: the principle sits above the scrolling part, so a long quote or reply never pushes it off screen. */
+/* 1.56.0: the thought sits above the scrolling part, so a long quote or reply never pushes it off screen. */
 .card .mid.under { margin-top:18px; }
 .card .mid.under > :first-child { margin-top:0; }
 .card.peek { justify-content:flex-start; padding-top:22px; }
 #scrollHint { flex:none; margin:10px 0 0; position:static; }
-/* Only on the line screens, where a long principle folds; at rest it shrinks to the space and scrolls (1.69.0). */
+/* Only on the line screens, where a long thought folds; at rest it shrinks to the space and scrolls (1.69.0). */
 .card.push > .thought, .card.reflect > .thought, .card.peek > .thought, .card > .foldhint, .card > .phase { flex:none; }
 .aside { font-size:0.7647rem; color:var(--faint); margin-top:-10px; }
 /* The AI line: the subject of the push and reflect screens. */
@@ -233,7 +239,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .wchoices { margin:0 0 24px; padding:0 0 0 20px; display:grid; gap:10px; color:var(--muted); }
 .wchoices b { color:var(--ink); font-weight:500; }
 /* The choices (1.39.0): a panel of three full-width rows that opens above the thumb. The row under the
-   finger fills with ink. The principle steps back while they are open. */
+   finger fills with ink. The thought steps back while they are open. */
 @media (prefers-reduced-motion: no-preference) { .picks:not([hidden]) { animation:choicesin .16s var(--ease-out); transform-origin:50% 100%; } }
 @keyframes choicesin { from { opacity:0; transform:translateY(8px) scale(.98); } }
 /* Wide, thumb-sized buttons (1.36.0): nothing smaller than 48px to aim at. */
@@ -368,7 +374,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .was { margin-top:8px; font-size:var(--t-xs); line-height:1.4; color:var(--muted); }
 .kfrom { color:var(--muted); }
 /* The Ledger (1.77.0). The band: this week, a day to a bar (blue when you caught one or lived one), and how
-   your principles split across the four stages; each count jumps to its section. */
+   your thoughts split across the four stages; each count jumps to its section. */
 .lcap { display:flex; justify-content:space-between; gap:12px; margin-top:6px; font-size:var(--t-sm); color:var(--muted); }
 .lcap b { color:var(--ink); font-weight:550; }
 .wkbars { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:6px; margin-top:10px; }
@@ -383,7 +389,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .scount { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; margin-top:4px; }
 .scount button { display:flex; flex-direction:column; align-items:flex-start; min-height:48px; padding:4px 0; text-align:left; font-size:var(--t-xs); color:var(--muted); white-space:nowrap; }
 .scount b { font-size:1.25rem; font-weight:500; line-height:1.25; color:var(--ink); font-variant-numeric:tabular-nums; }
-/* The panel: a section per stage, Lived folded to one line. A row is the principle, two lines at most,
+/* The panel: a section per stage, Lived folded to one line. A row is the thought, two lines at most,
    and its last five moves, oldest to newest: hollow skipped, gray reflected, blue caught it. */
 .lsh { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin:22px 0 2px; scroll-margin-top:12px; }
 .lsh h3 { margin:0; font-size:var(--t-sm); font-weight:600; color:var(--ink); }
@@ -398,6 +404,8 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .marks i { width:7px; height:16px; border-radius:2px; background:color-mix(in srgb, var(--ink) 10%, transparent); }
 .marks i.m-keep { background:color-mix(in srgb, var(--ink) 55%, transparent); }
 .marks i.m-skip { background:transparent; box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 38%, transparent); }
+.marks i.m-question, .marks i.m-revise { background:transparent; box-shadow:inset 0 0 0 1.5px var(--accent); }
+.marks i.m-letgo { background:transparent; box-shadow:inset 0 -2px 0 color-mix(in srgb, var(--ink) 45%, transparent); }
 .marks i.m-caught { background:var(--accent); }
 /* Avoided most: the one skipped most, first in Avoiding, with a way to act on it. */
 .amost { display:grid; gap:6px; margin:10px 0 4px; padding:16px; border-radius:16px; background:var(--card); }
@@ -408,7 +416,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .lfold .i { width:18px; height:18px; transition:transform .2s; } .lfold[aria-expanded="true"] .i { transform:rotate(90deg); }
 #ledgerList { margin-top:0; }
 #ledgerList .none { margin:22px 0 4px; }
-/* A principle, opened (1.77.0). */
+/* A thought, opened (1.77.0). */
 .rstage { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px 4px; }
 .rstage i { height:6px; border-radius:2px; background:var(--track); }
 .rstage i.now { background:var(--accent); }
@@ -644,7 +652,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <div class="navseg" role="tablist" aria-label="View" id="navSeg"><button type="button" role="tab" id="tabDeck" aria-selected="true">Today</button><button type="button" role="tab" id="tabLedger" aria-selected="false">Ledger</button></div>
     <h1 class="sr" id="todayLbl"></h1>
     <div class="topacts">
-      <button type="button" class="iconbtn" id="addTop" aria-label="Capture a principle"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button type="button" class="iconbtn" id="addTop" aria-label="Capture a thought"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
       <button type="button" class="iconbtn" id="setBtn" aria-label="Settings"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     </div>
   </header>
@@ -655,11 +663,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   </div>
 
   <main class="main">
-<!-- Deck view. Empty here on purpose: renderDeck() builds the collection keys, the principle, the three keys and the footer. -->
+<!-- Deck view. Empty here on purpose: renderDeck() builds the collection keys, the thought, the three keys and the footer. -->
   <section class="view onblack" id="v-deck" aria-label="Deck"></section>
 
-<!-- Ledger view (1.77.0): the band is your week and where your principles stand; the panel is every
-     principle on one scroll, by stage, then the last 12 weeks. Filled by renderLedger(). -->
+<!-- Ledger view (1.77.0): the band is your week and where your thoughts stand; the panel is every
+     thought on one scroll, by stage, then the last 12 weeks. Filled by renderLedger(). -->
   <section class="view onsmoke" id="v-ledger" aria-label="Ledger" hidden>
     <h2 class="sr">Ledger</h2>
     <div id="lWeek"></div>
@@ -686,12 +694,15 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
      Cancel on the left, the action on the right, and the field fills the sheet. -->
 <dialog class="sheet inverse writesheet" id="sheetCapture" aria-modal="true" aria-labelledby="sheetCaptureTitle">
   <div class="grabber" aria-hidden="true"></div>
-  <h2><button type="button" class="wcancel" data-close>Cancel</button><span id="sheetCaptureTitle">New principle</span><button type="submit" form="captureForm" class="wdone" id="addBtn" disabled>Add</button></h2>
+  <h2><button type="button" class="wcancel" data-close>Cancel</button><span id="sheetCaptureTitle">New thought</span><button type="submit" form="captureForm" class="wdone" id="addBtn" disabled>Add</button></h2>
   <form class="group" id="captureForm" autocomplete="off" style="gap:16px">
     <div class="group">
-      <textarea id="thoughtInput" class="big" maxlength="1500" aria-label="Principle" placeholder="Rest is part of the work, not a reward for it."></textarea>
+      <textarea id="thoughtInput" class="big" maxlength="1500" aria-label="Thought" placeholder="Rest is part of the work, not a reward for it."></textarea>
       <p class="counter wcount" id="thoughtCount" hidden></p>
     </div>
+    <!-- 1.79.0: the two questions Question it puts back in front of you. Optional. -->
+    <div class="group"><label for="capWhy">Why do you believe this?</label><textarea class="field" id="capWhy" rows="2" maxlength="280" placeholder="Optional. One line"></textarea></div>
+    <div class="group"><label for="capChange">What would change your mind?</label><textarea class="field" id="capChange" rows="2" maxlength="280" placeholder="Optional. Something you could notice"></textarea></div>
     <button type="button" class="more raised" id="capMore" aria-expanded="false" aria-controls="capDetails">More details <small id="capMoreHint">Where it came from, collection, author</small></button>
     <div class="group" id="capDetails" hidden style="gap:16px">
       <div class="group">
@@ -710,6 +721,19 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       </div>
     </div>
   </form>
+</dialog>
+
+<!-- Let go sheet (1.79.0): why you changed your mind, kept with it in the Ledger. -->
+<dialog class="sheet" id="sheetLetGo" aria-modal="true" aria-labelledby="sheetLetGoTitle">
+  <div class="grabber" aria-hidden="true"></div>
+  <h2><span id="sheetLetGoTitle">Let go</span> <button type="button" id="letCancel">Keep it</button></h2>
+  <div class="quote" id="letText"></div>
+  <div class="group">
+    <label for="letInput">What changed your mind?</label>
+    <textarea id="letInput" rows="3" maxlength="280" placeholder="Optional. One line for when you look back."></textarea>
+  </div>
+  <p class="note">It leaves the deck and goes to Let go in the Ledger, with your reason. Letting go is a conclusion, not a failure. You can bring it back.</p>
+  <button class="primary" type="button" id="confirmLetGo">Let it go</button>
 </dialog>
 
 <!-- Lived sheet -->
@@ -731,7 +755,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <button class="primary" type="button" id="confirmShed">I live this now</button>
 </dialog>
 
-<!-- Evidence sheet: add or edit where a lived principle showed up, from the Lived record. -->
+<!-- Evidence sheet: add or edit where a lived thought showed up, from the Lived record. -->
 <dialog class="sheet" id="sheetEvidence" aria-modal="true" aria-labelledby="sheetEvidenceTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetEvidenceTitle">Where it showed up</span> <button type="button" data-close>Cancel</button></h2>
@@ -744,15 +768,15 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <button class="primary" type="button" id="evSave">Save</button>
 </dialog>
 
-<!-- Keep this line (Story 10): add an AI line as a new principle, or let it replace the wording. -->
+<!-- Keep this line (Story 10): add an AI line as a new thought, or let it replace the wording. -->
 <dialog class="sheet" id="sheetKeep" aria-modal="true" aria-labelledby="sheetKeepTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetKeepTitle">Keep this line</span> <button type="button" data-close>Cancel</button></h2>
   <div class="quote" id="keepText"></div>
   <p class="note" id="keepFrom"></p>
   <div class="choice" role="radiogroup" aria-label="How to keep it">
-    <button type="button" class="opt raised" id="keepAdd" data-k="add" aria-pressed="true"><i class="radio" aria-hidden="true"></i><span><b>Add as a new principle</b><small id="keepAddNote"></small></span></button>
-    <button type="button" class="opt raised" id="keepRep" data-k="replace" aria-pressed="false"><i class="radio" aria-hidden="true"></i><span><b>Replace my wording</b><small>The principle keeps its counts and dates; only the words change. Your earlier wording is saved in the Ledger.</small></span></button>
+    <button type="button" class="opt raised" id="keepAdd" data-k="add" aria-pressed="true"><i class="radio" aria-hidden="true"></i><span><b>Add as a new thought</b><small id="keepAddNote"></small></span></button>
+    <button type="button" class="opt raised" id="keepRep" data-k="replace" aria-pressed="false"><i class="radio" aria-hidden="true"></i><span><b>Replace my wording</b><small>The thought keeps its counts and dates; only the words change. Your earlier wording is saved in the Ledger.</small></span></button>
   </div>
   <p class="sheet-err" id="keepErr" role="alert" hidden></p>
   <button class="primary" type="button" id="keepSave">Keep</button>
@@ -764,9 +788,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <dialog class="sheet" id="sheetConsent" aria-modal="true" aria-labelledby="sheetConsentTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetConsentTitle">Use AI in Scales?</span> <button type="button" data-close>Not now</button></h2>
-  <p class="note">To write a question for each principle, pick the quote that fits it best, and have today’s voice answer your replies, Scales sends these, through its own server, to Anthropic, an AI company:</p>
+  <p class="note">To write a question for each thought, pick the quote that fits it best, and have today’s voice answer your replies, Scales sends these, through its own server, to Anthropic, an AI company:</p>
   <ul class="consentlist">
-    <li>the principle on screen and how many times you have skipped it</li>
+    <li>the thought on screen and how many times you have skipped it</li>
     <li>the quotes it is choosing between</li>
     <li>what you write in Reply</li>
   </ul>
@@ -779,7 +803,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetPlusTitle">Scales Plus</span> <button type="button" data-close>Close</button></h2>
   <ul class="consentlist">
-    <li>A question written for each principle</li>
+    <li>A question written for each thought</li>
     <li>The quote from today’s voice that fits it best</li>
     <li>Today’s voice answers when you reply</li>
   </ul>
@@ -814,7 +838,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   </form>
 </dialog>
 
-<!-- Caught it: when you lived a principle without the app. -->
+<!-- Caught it: when you lived a thought without the app. -->
 <dialog class="sheet" id="sheetCaught" aria-modal="true" aria-labelledby="sheetCaughtTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetCaughtTitle">Caught it</span> <button type="button" data-close>Cancel</button></h2>
@@ -830,10 +854,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   </div>
 </dialog>
 
-<!-- A principle in full, from the Ledger: its history and everything you can do with it. -->
+<!-- A thought in full, from the Ledger: its history and everything you can do with it. -->
 <dialog class="sheet tall" id="sheetRow" aria-modal="true" aria-labelledby="sheetRowTitle">
   <div class="grabber" aria-hidden="true"></div>
-  <h2><span id="sheetRowTitle">Principle</span> <button type="button" data-close>Done</button></h2>
+  <h2><span id="sheetRowTitle">Thought</span> <button type="button" data-close>Done</button></h2>
   <div class="quote" id="rowText"></div>
   <div class="where" id="rowWhere" style="margin-top:-6px"></div>
   <!-- 1.77.0: where it stands, its numbers, then what happened, newest first. One blue action. -->
@@ -841,6 +865,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <div class="rnums" id="rowNums"></div>
   <div class="glass" id="rowLine" hidden></div>
   <div class="ev" id="rowEv" hidden></div>
+  <div class="qnotes" id="rowWhy" hidden></div>
   <div id="rowHist"></div>
   <div class="thread" id="rowThread" hidden></div>
   <h3 class="sec2 tlh">What happened</h3>
@@ -852,7 +877,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <dialog class="sheet" id="sheetFocus" aria-modal="true" aria-labelledby="sheetFocusTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetFocusTitle">Show</span> <button type="button" data-close>Done</button></h2>
-  <p class="note">Draw today’s principles from one collection, or from all of them.</p>
+  <p class="note">Draw today’s thoughts from one collection, or from all of them.</p>
   <div class="coll-list" id="focusList"></div>
 </dialog>
 
@@ -876,16 +901,18 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <p class="note" id="renameRemoveNote" style="margin-top:-8px;text-align:center"></p>
 </dialog>
 
-<!-- Edit sheet: change a principle's wording and details from the deck or the Ledger. History is kept. -->
+<!-- Edit sheet: change a thought's wording and details from the deck or the Ledger. History is kept. -->
 <dialog class="sheet tall inverse writesheet" id="sheetEdit" aria-modal="true" aria-labelledby="sheetEditTitle">
   <div class="grabber" aria-hidden="true"></div>
-  <h2><button type="button" class="wcancel" data-close>Cancel</button><span id="sheetEditTitle">Edit principle</span><button type="button" class="wdone" id="editSave" disabled>Save</button></h2>
+  <h2><button type="button" class="wcancel" data-close>Cancel</button><span id="sheetEditTitle">Edit thought</span><button type="button" class="wdone" id="editSave" disabled>Save</button></h2>
   <p class="note" id="editNote"></p>
   <div class="group">
-    <textarea id="editInput" class="big" maxlength="1500" aria-label="Principle"></textarea>
+    <textarea id="editInput" class="big" maxlength="1500" aria-label="Thought"></textarea>
     <p class="counter wcount" id="editCount" hidden></p>
   </div>
   <p class="sheet-err" id="editErr" role="alert" hidden></p>
+  <div class="group"><label for="editWhy">Why do you believe this?</label><textarea class="field" id="editWhy" rows="2" maxlength="280" placeholder="Optional"></textarea></div>
+  <div class="group"><label for="editChange">What would change your mind?</label><textarea class="field" id="editChange" rows="2" maxlength="280" placeholder="Optional"></textarea></div>
   <div class="group"><label for="editCollection">Collection</label><input class="field" id="editCollection" maxlength="40" autocomplete="off" placeholder="Optional, e.g. Poems">
     <div class="chips" id="editChips"></div><p class="hint" id="editHint" hidden></p></div>
   <div class="two">
@@ -959,7 +986,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <div class="grabber" aria-hidden="true"></div>
   <h2><button type="button" class="backlink" data-back="settings"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Settings</button><span id="sheetDeckTitle">Your deck</span><button type="button" data-close>Done</button></h2>
   <div class="panel">
-    <div class="setrow"><span id="setLbl">Principles a day<small>Then Done for today</small></span>
+    <div class="setrow"><span id="setLbl">Thoughts a day<small>Then Done for today</small></span>
       <div class="stepper" role="group" aria-labelledby="setLbl"><button type="button" id="setDown" aria-label="One fewer">&minus;</button><output id="setOut" aria-live="polite">5</output><button type="button" id="setUp" aria-label="One more">+</button></div></div>
     <div class="setrow"><span id="restLbl">Rest after Skip<small>Then it comes back first</small></span>
       <div class="stepper" role="group" aria-labelledby="restLbl"><button type="button" id="restDown" aria-label="One day less">&minus;</button><output id="restOut" aria-live="polite">4 days</output><button type="button" id="restUp" aria-label="One day more">+</button></div></div>
@@ -991,14 +1018,14 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     <details class="adv inner helpbox">
       <summary>How Scales works</summary>
       <ul class="howlist">
-        <li>One principle at a time. <b>Today’s question</b> shows the line Scales has for it.</li>
+        <li>One thought at a time. <b>Today’s question</b> shows the line Scales has for it.</li>
         <li>Choose at the bottom of the screen: <b>Skip</b>, <b>Reflect</b> or <b>Lived</b>.</li>
-        <li><b>Reflect</b> shows a real quote from today’s voice. After eight seconds it counts, and the principle gets lighter.</li>
-        <li id="howRest"><b>Skip</b> rests a principle for a few days. It comes back first, set heavier, until you live it.</li>
-        <li><b>Later</b> saves a principle for this evening, after 6 PM.</li>
+        <li><b>Reflect</b> shows a real quote from today’s voice. After eight seconds it counts, and the thought gets lighter.</li>
+        <li id="howRest"><b>Skip</b> rests a thought for a few days. It comes back first, set heavier, until you live it.</li>
+        <li><b>Later</b> saves a thought for this evening, after 6 PM.</li>
         <li><b>Lived</b> moves it to your record in the Ledger, with where it showed up.</li>
         <li><b>Reply</b> to any line to keep what came up. With Scales Plus, today’s voice answers, and you can go back and forth.</li>
-        <li>Press and hold a principle to edit it, or a quote to keep it as a principle of its own.</li>
+        <li>Press and hold a thought to edit it, or a quote to keep it as a thought of its own.</li>
       </ul>
     </details>
     <a class="setrow nav" id="feedbackLink" href="mailto:support@tangomike.app"><span>Send feedback</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
@@ -1022,10 +1049,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       <p class="status" id="aiText">AI lines: built-in (no key)</p>
       <p class="note" id="aiNote">On this address AI uses your own Anthropic key. The iPhone app and scales.tangomike.app need none.</p>
     </div>
-      <p class="note">CSV columns: text, title, author, creationDate, tags, collection, link, citation. Importing leaves out principles already in the deck.</p>
+      <p class="note">CSV columns: text, title, author, creationDate, tags, collection, link, citation. Importing leaves out thoughts already in the deck.</p>
     </details>
   </div>
-  <p class="note fine" id="privacyNote">Your principles stay on this phone.</p>
+  <p class="note fine" id="privacyNote">Your thoughts stay on this phone.</p>
 </dialog>
 
 <!-- Voices (1.75.0): its own page, from Settings. -->
@@ -1046,7 +1073,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <dialog class="sheet" id="sheetStarter" aria-modal="true" aria-labelledby="sheetStarterTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><button type="button" class="backlink" data-back="settings"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Settings</button><span id="sheetStarterTitle">Starter decks</span><button type="button" data-close>Done</button></h2>
-  <p class="note">Adds a short deck to yours. Principles already there are left out.</p>
+  <p class="note">Adds a short deck to yours. Thoughts already there are left out.</p>
   <div class="group" id="starterGroup">
     <div class="sd"><button class="btn3d" type="button" data-starter="stoic">Stoic</button><button class="btn3d" type="button" data-starter="leadership">Leadership</button><button class="btn3d" type="button" data-starter="athletic">Athletic mindset</button><button class="btn3d" type="button" data-starter="overcoming">Self-overcoming</button></div>
   </div>
@@ -1070,7 +1097,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.78.0"></script>
+<script src="core.js?v=1.79.0"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1081,7 +1108,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   var C = ScalesCore, CAP = C.CAP, MAX_WORDS = C.MAX_WORDS, NUDGE_AT = 3;
   var tier = C.tier, weight = C.weight, words = C.words, clean = C.clean, fit = C.fit, vet = C.vet;
   // Built-in push lines (1.35.0), shown when you let go early and there is no model line. Plain questions
-  // from the record, grouped by how much a principle has been set aside (0, 1 or 2, 3 or more).
+  // from the record, grouped by how much a thought has been set aside (0, 1 or 2, 3 or more).
   var FALLBACK = {
     0: ["What is in the way of this today?",
         "Name the reason you are setting this down today.",
@@ -1107,7 +1134,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // Picks a smaller font for long or multi-line thoughts so they fit on the card
   // alongside a consideration of up to MAX_WORDS, even on a small phone.
   function sizeClass(x) { var n = (x || "").length, br = ((x || "").match(/\n/g) || []).length; return (n > 200 || br > 5) ? " long" : (n > 70 || br > 1) ? " mid" : ""; }
-  // Card label: collection (or "Principle") on line 1, origin on line 2 when set.
+  // Card label: collection (or "Thought") on line 1, origin on line 2 when set.
   function labelHtml(t) {
     var l = C.label(t);
     return '<div class="lab2"><span class="kicker">' + esc(l.line1) + "</span>" + (l.line2 ? '<span class="orig">' + esc(l.line2) + "</span>" : "") + "</div>";
@@ -1366,11 +1393,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function all() { return Object.keys(thoughts).map(function (k) { return thoughts[k]; }); }
   // Thoughts still in the deck (not shed).
   function activeList() { return all().filter(function (t) { return t.status === "active"; }); }
-  // The next card (core.js nextCard): principles waiting for their turn at the front come
+  // The next card (core.js nextCard): thoughts waiting for their turn at the front come
   // first, then a weighted draw that leaves out anything resting after Not today. Show anyway,
-  // from the Nothing left today screen, lets resting principles back in until the day ends.
+  // from the Nothing left today screen, lets resting thoughts back in until the day ends.
   function today() { return C.dayOf(new Date()); }
-  // When a resting principle returns, in words: "Saturday at 4:00 AM".
+  // When a resting thought returns, in words: "Saturday at 4:00 AM".
   function returnText(day) {
     if (!day) return "soon";
     var p = day.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]);
@@ -1389,9 +1416,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // through core.js deckFilter, so a collection that was renamed away or emptied falls back to all.
   function deckColl() { return C.deckFilter(all(), prefs.deck_coll); }
   function deckList() { var c = deckColl(); return activeList().filter(function (t) { return C.inCollection(t, c) && !t.later; }); }
-  // A principle saved for later whose evening has come, from any collection (1.42.0).
+  // A thought saved for later whose evening has come, from any collection (1.42.0).
   function dueLater() { var now = new Date(); return C.waiting(all()).filter(function (t) { return C.laterDue(t, now); })[0] || null; }
-  // Whether the deck has a principle to show now.
+  // Whether the deck has a thought to show now.
   function nextUp() { var t = thoughts[current]; return !!(t && t.status === "active"); }
   function pickNext() { return C.nextCard(deckList(), history, today(), showAnyway()).card; }
 
@@ -1418,12 +1445,12 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
 
   // ---------- the two lines (1.34.0) ----------
-  // Each principle keeps a push line (shown when you let go early) and a reflect line (shown after you
+  // Each thought keeps a push line (shown when you let go early) and a reflect line (shown after you
   // hold through) in t.lines, reused every time it comes up (core.js lineFresh, keepLine, spendLines).
-  // At rest nothing is shown; both lines are fetched in the background for the principle on screen and
+  // At rest nothing is shown; both lines are fetched in the background for the thought on screen and
   // the one queued next, so they are ready the moment they are needed. Without a key, or when the
   // model cannot supply a usable line, a built-in line is shown and nothing is kept.
-  // Questions to sit with (1.70.0), shown on Reflect when no quote fits. One per principle per day.
+  // Questions to sit with (1.70.0), shown on Reflect when no quote fits. One per thought per day.
   var SIT_QUESTIONS = [
     "Where would this have changed something yesterday?",
     "What would living this look like before noon today?",
@@ -1438,31 +1465,58 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     for (var i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
     return SIT_QUESTIONS[h % SIT_QUESTIONS.length];
   }
+  // Question it without Scales Plus (1.79.0): a question that tests the thought instead of the case against it.
+  var TEST_QUESTIONS = [
+    "When has this been wrong?",
+    "Who would disagree with this, and what is their best reason?",
+    "What would it cost you if this were false?",
+    "Is this true, or only familiar?",
+    "Where did this come from, and do you still trust the source?",
+    "What does believing this let you avoid?",
+    "What would someone you respect say against it?"
+  ];
+  function testQuestion(t) {
+    var key = "q" + String((t && t.id) || "") + today(), h = 0;
+    for (var i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+    return TEST_QUESTIONS[h % TEST_QUESTIONS.length];
+  }
+  // The case against, from the model (Scales Plus), kept on the thought like its other lines.
+  function fetchCase(t) {
+    if (!sample) return Promise.resolve(null);
+    var of = t.text;
+    return sample(C.casePrompt(todayVoice(), t)).then(function (res) {
+      var s = String((res && res.text) || "").replace(/[\u201C\u201D"]/g, "").replace(/\s*\u2014\s*/g, ", ").trim();
+      if (!s || s.split(/\s+/).length > 70) return null;
+      var live = thoughts[t.id];
+      if (live && live.text === of) { C.keepLine(live, "case", s); save(live); }
+      return s;
+    }, function () { return null; });
+  }
   function fallbackLine(t) {
     var arr = FALLBACK[tier(t.skip_count)], used = t.recent_lines || [];
     var opts = arr.filter(function (l) { return used.indexOf(l) < 0; });
     if (!opts.length) opts = arr;
     return opts[Math.floor(Math.random() * opts.length)];
   }
-  // The push line's prompt (1.35.0). Only the principle text, its Not today count and days in deck are sent.
+  // The push line's prompt (1.35.0). Only the thought text, its Not today count and days in deck are sent.
   // Plain, from the user's own words and record: the earlier prompt invented details about their day and
   // reached for metaphor, which read as coaching. Recent lines are included so it does not repeat itself.
   function buildPrompt(t) {
     var recent = (t.recent_lines || []).slice(-3);
-    return "You write one line shown when the user is about to set aside a principle they chose to live by.\n" +
+    return "You write one line shown when the user is about to set aside a thought they chose to live by.\n" +
       "Rules:\n" +
       "- One plain sentence or question, 20 words or fewer.\n" +
       "- Angle: " + ANGLE[tier(t.skip_count)] + ".\n" +
-      "- Use only the words of the principle and the record below. Never invent anything about the user's day, schedule, hours, plans, people or circumstances.\n" +
+      "- Use only the words of the thought and the record below. Never invent anything about the user's day, schedule, hours, plans, people or circumstances.\n" +
       "- No metaphors or imagery: no accounts, ledgers, debts, inheritance, shadows, or a future self as a person.\n" +
       "- No praise, reassurance, permission, insults, slogans or motivational language. Direct and serious, like a frank friend who holds the standard.\n" +
-      "- Do not repeat the principle verbatim. No exclamation marks, quotation marks, emoji, em-dashes or lists.\n" +
+      "- Do not repeat the thought verbatim. No exclamation marks, quotation marks, emoji, em-dashes or lists.\n" +
       "- Do not reuse the wording of these recent lines: " + (recent.length ? recent.join(" | ") : "none") + "\n" +
       "Return only the line.\n\n" +
-      "Principle: " + t.text + "\nTimes set aside: " + t.skip_count + "\nDays in deck: " + days(t.created_at);
+      "Thought: " + t.text + "\nTimes set aside: " + t.skip_count + "\nDays in deck: " + days(t.created_at);
   }
-  // inflight  open model requests by principle, kind and wording, so the screen and a background fetch share one
-  // queued    id of the principle picked to come next, whose lines are being fetched now
+  // inflight  open model requests by thought, kind and wording, so the screen and a background fetch share one
+  // queued    id of the thought picked to come next, whose lines are being fetched now
   // shown     the line on screen now: { kind, text, ai, pending }
   var inflight = {}, queued = null, shown = null;
   // Ask the model for one line (two retries if the answer fails vet). Resolves to { text, of } or null.
@@ -1484,7 +1538,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       delete inflight[key];
       if (!s) { $("aiText").textContent = "AI lines: on, but the last answer was not usable (" + lastReason + "). Built-in line shown."; return null; }
       setAiStatus();
-      // Keep it on the principle, if the wording has not changed while it was being written.
+      // Keep it on the thought, if the wording has not changed while it was being written.
       var live = thoughts[t.id];
       if (live && live.text === of) { C.keepLine(live, kind, s); save(live); }
       return { text: s, of: of };
@@ -1499,7 +1553,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     inflight[key] = p;
     return p;
   }
-  // Fetch whichever of a principle's two lines is missing or stale: the push line from the model, the
+  // Fetch whichever of a thought's two lines is missing or stale: the push line from the model, the
   // reflect quote from Wikiquote.
   function ensureLines(t) {
     if (!t || t.status !== "active") return;
@@ -1509,10 +1563,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 
   // ---------- quotes (1.35.0) ----------
   // The reflect screen shows a real quote from today's voice: its sourced quotes on Wikiquote (core.js
-  // parseQuotes), the twenty that share the most words with the principle (rankQuotes), and the model picks
+  // parseQuotes), the twenty that share the most words with the thought (rankQuotes), and the model picks
   // the one that speaks to it, or none (quotePrompt, readPick). Without a key, the closest is used only if it
-  // shares at least two word stems with the principle. Each voice's quotes are kept on the phone for 30 days.
-  // Only the voice's name goes to Wikiquote; only the principle and the candidate quotes go to Anthropic.
+  // shares at least two word stems with the thought. Each voice's quotes are kept on the phone for 30 days.
+  // Only the voice's name goes to Wikiquote; only the thought and the candidate quotes go to Anthropic.
   var LSQ = "scales.quotes.v1", QUOTE_DAYS = 30, quoteBook = lsGet(LSQ, {}), quoteFetch = {};
   function voiceQuotes(v) {
     var page = C.wqPage(v); if (!page) return Promise.resolve([]);
@@ -1528,7 +1582,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     }, function () { delete quoteFetch[page]; return (kept && kept.list) || []; });
     return quoteFetch[page];
   }
-  // Find the quote for a principle and keep it on the principle, or keep that none fit.
+  // Find the quote for a thought and keep it on the thought, or keep that none fit.
   // Resolves to the kept line, or null when nothing could be looked up (offline, no voice).
   function fetchQuote(t) {
     var v = todayVoice(), key = t.id + "\nquote\n" + t.text;
@@ -1552,14 +1606,14 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     inflight[key] = p;
     return p;
   }
-  // Pick the next principle now; its lines are written once it is on screen.
+  // Pick the next thought now; its lines are written once it is on screen.
   function prefetchNext() {
     var n = pickNext();
     queued = n ? n.id : null;
-    // 1.59.0: no lines are written ahead for the next principle; most were never seen. The one on screen still
+    // 1.59.0: no lines are written ahead for the next thought; most were never seen. The one on screen still
     // starts writing as soon as it appears, so it is usually ready by the time it is tapped or skipped.
   }
-  // At rest: get both lines ready for the principle on screen.
+  // At rest: get both lines ready for the thought on screen.
   function requestLine(t) { shown = null; ensureLines(t); prefetchNext(); }
   // Put one of the two lines on screen: the kept line, or a placeholder while it is written, or a built-in one.
   function showLine(t, kind) {
@@ -1586,6 +1640,18 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       });
       return;
     }
+    if (kind === "case") {
+      var cv = todayVoice(), by = cv ? cv.short + " pushes back" : "Written by AI";
+      var putCase = function (text, ai) { shown = ai ? { kind: kind, text: text, ai: true, by: by } : { kind: kind, text: testQuestion(t), ai: false, by: "A question to test it" }; paintLine(); };
+      if (C.lineFresh(t, kind)) { putCase(t.lines[kind].text, true); return; }
+      if (!sample) { putCase("", false); return; }
+      shown = { kind: kind, text: "Making the case against\u2026", ai: false, pending: true }; paintLine();
+      fetchCase(t).then(function (r) {
+        if (seq !== aiSeq || current !== t.id || !shown || shown.kind !== kind) return;
+        if (r) putCase(r, true); else putCase("", false);
+      });
+      return;
+    }
     if (C.lineFresh(t, kind)) { put(t.lines[kind].text, true); return; }
     if (!sample) { put(fallbackLine(t), false); return; }
     shown = { kind: kind, text: "Considering\u2026", ai: false, pending: true }; paintLine();
@@ -1596,7 +1662,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
   // Draw the line on screen. 'pending' dims the placeholder while a model line is on the way.
   // A quote shows its author and work; when no quote fit, the line's place is left empty.
-  // 1.56.1: the fold and its hint stay only when the principle is actually cut off.
+  // 1.56.1: the fold and its hint stay only when the thought is actually cut off.
   function trimFold() {
     var w = document.querySelector("#words.fold"); if (!w) return;
     if (w.scrollHeight <= w.clientHeight + 1) { w.classList.remove("fold"); var h = $("foldHint"); if (h) h.remove(); }
@@ -1614,17 +1680,17 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     // Quotes credit Wikiquote (1.49.0), whose text is CC BY-SA 4.0, with a link to the voice's page.
     if (src) src.innerHTML = l.pending ? "" : l.quote ? esc(l.author + (l.src ? ", " + l.src : "")) +
       ' <span aria-hidden="true">·</span> <a href="https://en.wikiquote.org/wiki/' + encodeURIComponent(String(l.page || l.author).replace(/ /g, "_")) + '" target="_blank" rel="noopener">Wikiquote</a>'
-      : esc(l.ai ? "Written by AI" : "A question to sit with");
+      : esc(l.by || (l.ai ? "Written by AI" : "A question to sit with"));
     paintReplies();
   }
-  // Under the line: your last reply on this principle, as a bubble, and a Reply button (1.40.0).
+  // Under the line: your last reply on this thought, as a bubble, and a Reply button (1.40.0).
   function paintReplies() {
     var box = $("replies"), t = thoughts[current]; if (!box || !t) return;
     var l = shown, r = C.lastReply(t);
     if (!l || l.none || l.pending) { box.innerHTML = ""; return; }
     box.innerHTML = (r ? '<div class="bubble me"><p>' + esc(r.text) + "</p><small>You, " + esc(fmtDayKey(r.day)) + "</small></div>" : "") +
       '<div class="lineacts"><button type="button" class="btn3d replybtn" id="replyBtn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Reply</button>' +
-      // 1.75.0: saving a quote or line as a principle is a button, not only a press and hold.
+      // 1.75.0: saving a quote or line as a thought is a button, not only a press and hold.
       (l.ai ? '<button type="button" class="btn3d replybtn" data-move="save"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z"/></svg>Save</button>' : "") + laterHtml() + "</div>";
   }
   function fmtDayKey(d) { if (!d) return ""; var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
@@ -1678,8 +1744,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   });
 
   // ---------- actions ----------
-  // The deck is quiet until asked (1.34.0). phase is where the principle on screen stands:
-  //   rest     the principle and the ring, nothing else
+  // The deck is quiet until asked (1.34.0). phase is where the thought on screen stands:
+  //   rest     the thought and the ring, nothing else
   //   push     after letting go early: the push line, and the ring again. Holding again stays with it;
   //            letting go early a second time, or Set aside anyway, is Not today. No second pushback.
   //   reflect  after holding through: the reflect line, where it came from, Reply. Next
@@ -1722,15 +1788,28 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var t = onCard(); if (!t || phase !== "push") return;
     phase = "rest"; peekId = t.id; renderDeck(); showLine(t, "push");
   }
+  // Question it (1.79.0).
+  function questionIt() {
+    var t = onCard(); if (!t) return;
+    dropUndo(); coachSeen(); phase = "question"; renderDeck(); showLine(t, "case");
+  }
+  // Keep it: it held up. Counts as weighed for the day.
+  function questionKeep() {
+    var t = onCard(); if (!t || phase !== "question") return;
+    var u = undoPoint();
+    C.questionKeep(t, today()); noteMove(t, "keep"); noteDay(t, "keep");
+    save(t); logActivity("keep"); phase = "rest"; flyOut("up");
+    undoable("Kept. It held up.", u);
+  }
   function requestSkip() {
     dropUndo();
     var t = onCard(); if (!t || phase === "reflect") return;
     if (phase === "push" || peeked()) { act("skip"); return; }
     coachSeen(); phase = "push"; renderDeck(); showLine(t, "push");
   }
-  // Tap to see the line (1.53.0): a tap on the principle at rest shows the line Skip would show, and changes
-  // nothing else. Once it has been read, Skip in the choices rests the principle straight away (the pushback
-  // has been seen) and Later joins the choices. A principle skipped without tapping still asks first.
+  // Tap to see the line (1.53.0): a tap on the thought at rest shows the line Skip would show, and changes
+  // nothing else. Once it has been read, Skip in the choices rests the thought straight away (the pushback
+  // has been seen) and Later joins the choices. A thought skipped without tapping still asks first.
   var peekId = null, laterId = null;
   function returned() { return phase === "rest" && !!current && laterId === current; }
   // A returned Later counts as read: Skip rests it straight away.
@@ -1762,7 +1841,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     save(t);
     reflectDone = true; paintReflectFoot();
   }
-  // Next principle: the lines this one had are spent, so new ones are written next time it comes up.
+  // Next thought: the lines this one had are spent, so new ones are written next time it comes up.
   function nextFromReflect() {
     var t = thoughts[current], ask = pendingAct; fromLater = false;
     clearTimeout(reflectT); pendingAct = false; reflectUndo = null;
@@ -1806,11 +1885,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     setTimeout(function () { entering = true; showNext(); }, 230);
   }
 
-  // The most recent model line shown for a principle, or "" if none was ever shown.
+  // The most recent model line shown for a thought, or "" if none was ever shown.
   // recent_lines only ever holds accepted model lines, never built-in ones, and stops
-  // changing once a principle is lived, so its last entry is the final line it received.
+  // changing once a thought is lived, so its last entry is the final line it received.
   function lastLine(t) { var r = (t && t.recent_lines) || []; return r.length ? r[r.length - 1] : ""; }
-  // Fill a sheet's line slot with the principle's last model line, or hide it.
+  // Fill a sheet's line slot with the thought's last model line, or hide it.
   function showSheetLine(id, t) {
     var el = $(id), l = lastLine(t);
     el.hidden = !l;
@@ -1845,13 +1924,35 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     undoable("Lived. Moved to your record.", u);
   });
 
+  // ---------- let go (1.79.0) ----------
+  // It leaves the deck with the reason you changed your mind, and waits in the Ledger, where it can come back.
+  var letTarget = null;
+  function openLetGo(t) {
+    if (!t) return;
+    letTarget = t;
+    $("letText").textContent = t.text;
+    $("letInput").value = "";
+    show("sheetLetGo");
+    setTimeout(function () { $("letInput").focus(); }, 60);
+  }
+  $("letCancel").addEventListener("click", hide);
+  $("confirmLetGo").addEventListener("click", function () {
+    var t = letTarget; if (!t) return;
+    var u = undoPoint();
+    C.letGo(t, $("letInput").value, today());
+    noteMove(t, "letgo"); noteDay(t, "letgo");
+    save(t); logActivity("letgo"); letTarget = null; hide(); phase = "rest"; flyOut("left");
+    undoable("Let go. Kept in your Ledger.", u);
+  });
+
   // ---------- render: deck ----------
   // Inline SVG icons.
   function icon(d) { return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="' + d + '"/></svg>'; }
   var ICON_SKIP = icon("M15 5l-7 7 7 7"), ICON_UP = icon("M12 19V6M6 11l6-6 6 6"), ICON_SHED = icon("M5 12.5l4.5 4.5L19 7.5");
   var ICON_KEEP = icon("M7 4h10v16l-5-4-5 4z"), ICON_NEXT = icon("M9 6l6 6-6 6");
+  var ICON_Q = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 20h14M4 8h16M7 8l-3 6h6zM17 8l-3 6h6z"/></svg>';
 
-  // Builds the deck view (1.30.0): the collection keys, the principle on the page with where it came from,
+  // Builds the deck view (1.30.0): the collection keys, the thought on the page with where it came from,
   // the AI line in glass with Keep, the optional 'Have you lived this yet?' strip, the three keys and the
   // footer, plus the first-swipe tip the first time. Shows an empty state when nothing is on screen.
   // Lived: one soft ring of brass blooms from the words (skipped with reduced motion).
@@ -1863,8 +1964,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     b.style.left = (r.left + r.width / 2) + "px"; b.style.top = (r.top + r.height * 0.6) + "px";
     document.body.appendChild(b); setTimeout(function () { b.remove(); }, 800);
   }
-  // Show (1.34.0): which collection today's principles are drawn from, chosen from the menu. The chosen one
-  // is named at the top of the deck; "" means all. The collection itself is kept on each principle.
+  // Show (1.34.0): which collection today's thoughts are drawn from, chosen from the menu. The chosen one
+  // is named at the top of the deck; "" means all. The collection itself is kept on each thought.
   function openFocus() {
     var cs = C.deckCollections(all()), on = deckColl();
     var row = function (name, label, n) {
@@ -1906,6 +2007,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         '<button type="button" class="choice" data-move="skip">Skip anyway</button>' +
         '<button type="button" class="choice main" data-move="stay">Keep it</button></div>';
     }
+    if (phase === "question") {
+      return '<p class="choicenote">Whichever you choose, it counts as weighed.</p>' +
+        '<div class="choices" id="keys" role="group" aria-label="Choose">' +
+        '<button type="button" class="choice" data-move="letgo">Let go</button>' +
+        '<button type="button" class="choice" data-move="revise">Revise</button>' +
+        '<button type="button" class="choice main" data-move="qkeep">Keep it</button></div>';
+    }
     return '<div class="choices" id="keys" role="group" aria-label="Choose">' +
       '<button type="button" class="choice" data-move="skip">Skip</button>' +
       '<button type="button" class="choice main" data-move="keep">Reflect</button>' +
@@ -1929,21 +2037,21 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     refreshDay();
     var dp = C.dayPhase(day, setSize());
     paintTop(dp);
-    // A principle mid-push or mid-reflect stays on screen until you move on, even if that move ended the set.
+    // A thought mid-push or mid-reflect stays on screen until you move on, even if that move ended the set.
     var mid = phase !== "rest" && nextUp();
-    // Its evening has come: a principle saved for later opens straight to Reflect, ahead of everything.
+    // Its evening has come: a thought saved for later opens straight to Reflect, ahead of everything.
     var L = !mid && dueLater();
     if (L) {
       L.later = null; L.later_blocked = true; save(L);
       current = L.id; currentLead = null; history.push(L.id); if (history.length > 20) history.shift();
       C.markShown(L, new Date(), false); save(L); shownAt = Date.now();
-      // 1.56.0: it opens on the principle and its quote, and nothing is counted until you choose.
+      // 1.56.0: it opens on the thought and its quote, and nothing is counted until you choose.
       fromLater = true; laterId = L.id; phase = "rest";
       renderDeck(); showLine(L, "reflect");
       return;
     }
     // First run (1.47.0): until it is finished, a new deck opens on the welcome. Someone who already has
-    // principles never sees it.
+    // thoughts never sees it.
     if (!prefs.onboarded) {
       if (!prefs.welcoming && all().length) { prefs.onboarded = true; savePrefs(); }
       else { if (!prefs.welcoming) { prefs.welcoming = true; savePrefs(); } renderWelcome(); return; }
@@ -1956,7 +2064,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       // The chosen collection has nothing to show right now.
       var inC = deckList(), nr = inC.filter(function (x) { return C.isResting(x, today()); }).length;
       v.innerHTML = emptyHtml("Nothing left in " + esc(coll) + " today.",
-        nr ? nr + (nr === 1 ? " principle is" : " principles are") + " resting. The next returns " + returnText(C.nextReturn(inC, today())) + "." : "Every principle here is resting or lived.",
+        nr ? nr + (nr === 1 ? " thought is" : " thoughts are") + " resting. The next returns " + returnText(C.nextReturn(inC, today())) + "." : "Every thought here is resting or lived.",
         '<button type="button" class="btn3d raised" id="showAll">Show all collections</button>' +
         (nr ? '<button type="button" class="btn3d raised" id="showAnyway">Show anyway</button>' : ""), nr ? nr + " resting" : "");
       paintStat();
@@ -1968,7 +2076,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       // Everything in the deck is resting after Not today.
       var n = activeList().filter(function (x) { return C.isResting(x, today()); }).length;
       v.innerHTML = emptyHtml("Nothing left today.",
-        (n === activeList().length ? "Every principle is resting." : n + (n === 1 ? " principle is" : " principles are") + " resting.") +
+        (n === activeList().length ? "Every thought is resting." : n + (n === 1 ? " thought is" : " thoughts are") + " resting.") +
         " The next one returns " + returnText(C.nextReturn(activeList(), today())) + ", and the most avoided come up first.",
         '<button type="button" class="btn3d raised" id="showAnyway">Show anyway</button>' +
         '<button type="button" class="btn3d raised" id="emptyAdd">Capture</button>', n + " resting");
@@ -1979,9 +2087,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     }
     if (!t) {
       var any = all().length;
-      v.innerHTML = emptyHtml(any ? "You are living every principle." : "No principles yet.",
-        "Capture a principle you want to live by. It stays in the deck until you live it without prompting.",
-        '<button type="button" class="btn3d raised" id="emptyAdd">Capture a principle</button>' +
+      v.innerHTML = emptyHtml(any ? "You are living every thought." : "No thoughts yet.",
+        "Capture a thought you want to live by. It stays in the deck until you live it without prompting.",
+        '<button type="button" class="btn3d raised" id="emptyAdd">Capture a thought</button>' +
         '<button type="button" class="btn3d raised" id="emptyStarter">Load a starter deck</button>');
       $("emptyAdd").onclick = openCapture;
       // Scroll only the Settings sheet to the starter decks; scrolling the element into view would also move the page.
@@ -1990,7 +2098,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       return;
     }
     var nudge = t.consecutive_reflects >= NUDGE_AT;
-    // At rest the words are one span each so the hold can ink them. On push and reflect the principle is plain
+    // At rest the words are one span each so the hold can ink them. On push and reflect the thought is plain
     // text: Safari laid the spans out one word per line there (1.34.3).
     var lifted = phase !== "rest" || peeked();
     var fold = lifted && sizeClass(t.text) !== "";
@@ -1998,7 +2106,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       (fold ? '<small class="foldhint" id="foldHint" aria-hidden="true">Tap to read it all</small>' : "");
     var line = '<div class="lineWrap"><p class="ai-p" id="aiLine"></p><small class="ai-src" id="aiSrc"></small>' +
       '<div class="replies" id="replies"></div></div>';
-    var how = '<span class="sr" id="cardHow">Choose Skip, Reflect or Lived at the bottom of the screen. Today’s question shows the line Scales has for it. Press and hold the principle to edit it.</span>';
+    var how = '<span class="sr" id="cardHow">Choose Skip, Reflect or Lived at the bottom of the screen. Today’s question shows the line Scales has for it. Press and hold the thought to edit it.</span>';
     if (phase === "reflect") {
       v.innerHTML = '<article class="card reflect" id="card" aria-label="Reflect" aria-describedby="cardHow">' +
         '<div class="phase"><span>' + (fromLater ? "Saved from earlier" : "Reflecting") + "</span></div>" +
@@ -2015,7 +2123,20 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (phase === "push") {
       v.innerHTML = '<article class="card push" id="card" aria-label="Before you skip" aria-describedby="cardHow">' +
         '<div class="phase"><span>Before you skip</span></div>' +
-        words + '<div class="mid under">' + line + (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") + "</div>" + how + "</article>" +
+        words + '<div class="mid under">' + line + (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") +
+        // 1.79.0: doubting it isn't avoiding it.
+        '<button type="button" class="qbtn doubt" data-move="question">' + ICON_Q + "I\u2019m not sure it\u2019s true</button>" + "</div>" + how + "</article>" +
+        choicesHtml();
+      paintLine();
+      return;
+    }
+    // Question it (1.79.0): the case against, your own reasons under it, then Let go, Revise or Keep it.
+    if (phase === "question") {
+      var notes = (t.why ? '<div><b>Why you believe it</b>' + esc(t.why) + "</div>" : "") + (t.change ? '<div><b>What would change your mind</b>' + esc(t.change) + "</div>" : "");
+      v.innerHTML = '<article class="card push" id="card" aria-label="The case against" aria-describedby="cardHow">' +
+        '<div class="phase"><span>The case against</span></div>' +
+        words + '<div class="mid under">' + line +
+        (notes ? '<div class="qnotes">' + notes + "</div>" : '<button type="button" class="linkbtn addwhy" data-move="why">Add why you believe it</button>') + "</div>" + how + "</article>" +
         choicesHtml();
       paintLine();
       return;
@@ -2029,21 +2150,21 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       return;
     }
     if (peeked()) {
-      v.innerHTML = '<article class="card peek" id="card" aria-label="Current principle, with its line" aria-describedby="cardHow">' +
+      v.innerHTML = '<article class="card peek" id="card" aria-label="Current thought, with its line" aria-describedby="cardHow">' +
         words + '<div class="mid under">' + line +
         (t.skip_count > 0 ? '<small class="aside">Skipped ' + times(t.skip_count) + "</small>" : "") + "</div>" + how + "</article>" +
         choicesHtml();
       paintLine();
       return;
     }
-    // 1.73.0: the question Scales has for the principle is a button, not a tap nobody finds.
+    // 1.73.0: the question Scales has for the thought is a button, not a tap nobody finds.
     var pm = []; if (t.skip_count > 0) pm.push("Skipped " + times(t.skip_count)); if (String(t.collection || "").trim()) pm.push(esc(t.collection));
-    v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current principle" aria-describedby="cardHow">' + words +
+    v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current thought" aria-describedby="cardHow">' + words +
       (pm.length ? '<p class="pmeta">' + pm.join(" \u00b7 ") + "</p>" : "") +
       '<div class="qacts"><button type="button" class="qbtn" data-move="peek"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.3M12 13.6v.01"/></svg>Today’s question</button>' +
-      '<button type="button" class="qbtn" data-move="edit"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Edit</button></div>' + how + "</article>" +
+      '<button type="button" class="qbtn" data-move="question">' + ICON_Q + "Question it</button></div>" + how + "</article>" +
       choicesHtml();
-    // A principle too long for the screen scrolls; a quiet hint says so until the end is reached (1.69.0).
+    // A thought too long for the screen scrolls; a quiet hint says so until the end is reached (1.69.0).
     requestAnimationFrame(function () {
       var w = $("words"); if (!w || w.scrollHeight <= w.clientHeight + 12) return; // glyphs overhang the tight line height by a few pixels
       var h = document.createElement("small"); h.className = "foldhint"; h.id = "scrollHint"; h.setAttribute("aria-hidden", "true"); h.textContent = "Scroll for more";
@@ -2055,21 +2176,21 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function paintReflectFoot() {
     var f = $("reflFoot"); if (!f) return;
     if (reflectDone) {
-      f.innerHTML = '<span>' + (reflectLighter ? "Counted as Reflect. One lighter." : "Counted as Reflect.") + '</span><div class="pair next"><button type="button" class="btn3d" id="reflUndo">Undo</button><button type="button" class="primary" id="reflNext">Next principle</button></div>';
+      f.innerHTML = '<span>' + (reflectLighter ? "Counted as Reflect. One lighter." : "Counted as Reflect.") + '</span><div class="pair next"><button type="button" class="btn3d" id="reflUndo">Undo</button><button type="button" class="primary" id="reflNext">Next thought</button></div>';
       $("reflNext").onclick = nextFromReflect;
       var w = $("words"), t = thoughts[current]; if (w && t) w.style.fontWeight = C.inkWeight(t);
     } else {
       var left = Math.max(0, C.REFLECT_SEC * 1000 - (Date.now() - reflectAt));
-      f.innerHTML = '<div class="bar"><i style="animation-duration:' + (C.REFLECT_SEC * 1000) + 'ms;animation-delay:-' + (C.REFLECT_SEC * 1000 - left) + 'ms"></i></div><span>' + ((prefs.tests || 0) <= 2 ? "Stay with it. After " + C.REFLECT_SEC + " seconds it counts, and the principle gets lighter." : "Next appears in a moment.") + '</span><button type="button" class="btn3d wide" id="reflUndo">Undo</button>';
+      f.innerHTML = '<div class="bar"><i style="animation-duration:' + (C.REFLECT_SEC * 1000) + 'ms;animation-delay:-' + (C.REFLECT_SEC * 1000 - left) + 'ms"></i></div><span>' + ((prefs.tests || 0) <= 2 ? "Stay with it. After " + C.REFLECT_SEC + " seconds it counts, and the thought gets lighter." : "Next appears in a moment.") + '</span><button type="button" class="btn3d wide" id="reflUndo">Undo</button>';
     }
     $("reflUndo").onclick = function () { var p = reflectUndo; if (p) { restore(p); toast("Undone."); } };
   }
-  // A folded principle opens in place on a tap.
+  // A folded thought opens in place on a tap.
   $("v-deck").addEventListener("click", function (e) {
     var w = e.target.closest("#words.fold"); if (!w) return;
     w.classList.remove("fold"); var h = $("foldHint"); if (h) h.remove();
   });
-  // A tap on the principle at rest shows its line; a second tap hides it. Taps on the line (Reply), its
+  // A tap on the thought at rest shows its line; a second tap hides it. Taps on the line (Reply), its
   // links and buttons keep their own meaning, and the release of a press and hold (Edit) is not a tap.
   $("v-deck").addEventListener("click", function (e) {
     if (openSheet || phase !== "rest") return;
@@ -2082,6 +2203,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var m = k.getAttribute("data-move");
     if (NATIVE) toNative({ type: "haptic" });
     if (m === "edit") { openEdit(onCard()); return; }
+    if (m === "question") { questionIt(); return; }
+    if (m === "qkeep") { questionKeep(); return; }
+    if (m === "revise") { openEdit(onCard(), true); return; }
+    if (m === "letgo") { openLetGo(onCard()); return; }
+    if (m === "why") { openEdit(onCard(), false, true); return; }
     if (m === "save") { if (shown && shown.ai) openKeep(onCard(), shown.text, shown.quote ? { author: shown.author, src: shown.src } : null); return; }
     if (m === "skip") requestSkip(); else if (m === "later") saveLater(); else if (m === "peek") togglePeek(); else if (m === "stay") keepIt(); else act(m);
   });
@@ -2115,19 +2241,19 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   })();
 
   // ---------- keep an AI line (Story 10) ----------
-  // An AI line can be kept as a new principle in the same collection, citing where it came from and linked to
-  // the original, or it can replace the principle's wording, as an edit would (core.js keepAsNew, keepReplace).
+  // An AI line can be kept as a new thought in the same collection, citing where it came from and linked to
+  // the original, or it can replace the thought's wording, as an edit would (core.js keepAsNew, keepReplace).
   // Either one can be undone from the toast.
   var keepT = null, keepLine = "", keepMode = "add";
   function clip(s, n) { s = String(s || "").trim(); return s.length > n ? s.slice(0, n) + "…" : s; }
-  // meta: for a quote, its author and work, which a principle kept from it carries (1.35.0).
+  // meta: for a quote, its author and work, which a thought kept from it carries (1.35.0).
   var keepMeta = null;
   function openKeep(t, line, meta) {
     if (!t || !line) return;
     keepT = t; keepLine = line; keepMode = "add"; keepMeta = meta || null;
     var coll = String(t.collection || "").trim();
     $("keepText").textContent = line;
-    $("keepFrom").textContent = "From your principle" + (coll ? " in " + coll : "") + ": " + clip(t.text, 90);
+    $("keepFrom").textContent = "From your thought" + (coll ? " in " + coll : "") + ": " + clip(t.text, 90);
     $("keepAddNote").textContent = (coll ? "Goes into " + coll + " beside the original." : "Goes into the deck beside the original.") + " It cites the line and starts with fresh counts.";
     paintKeep();
     show("sheetKeep");
@@ -2153,13 +2279,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var t = keepT; if (!t) return;
     var u = undoPoint(), now = new Date();
     if (keepMode === "add") {
-      var r = C.keepAsNew(all(), t, keepLine, now); if (!r.principle) return;
-      if (keepMeta) { r.principle.author = keepMeta.author || ""; r.principle.title = keepMeta.src || ""; r.principle.citation = "Quoted from Wikiquote"; }
-      r.principle.id = newId(); save(r.principle);
+      var r = C.keepAsNew(all(), t, keepLine, now); if (!r.thought) return;
+      if (keepMeta) { r.thought.author = keepMeta.author || ""; r.thought.title = keepMeta.src || ""; r.thought.citation = "Quoted from Wikiquote"; }
+      r.thought.id = newId(); save(r.thought);
       hide(); undoable("Added to " + (String(t.collection || "").trim() || "the deck") + ".", u);
       paintStat();
     } else {
-      var q = C.keepReplace(all(), t, keepLine, now); if (!q.principle) return;
+      var q = C.keepReplace(all(), t, keepLine, now); if (!q.thought) return;
       save(t);
       hide(); undoable("Wording replaced. Earlier wording kept.", u);
       if (t.id === current) { renderDeck(); requestLine(t); }
@@ -2170,7 +2296,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 
   // ---------- today's voice answers (Stories 12 and 13; one Reply since 1.71.0) ----------
   // Reply under the line keeps what you wrote. With AI on, today's voice (core.js voiceOfDay) answers in a
-  // thread saved on the principle (t.talks) and shown in the Ledger. Talks from before 1.71.0 began with a
+  // thread saved on the thought (t.talks) and shown in the Ledger. Talks from before 1.71.0 began with a
   // Weigh in line on a move; they still open from the Ledger.
   var lastMove = null; // { id, move, day, at }: the move Weigh in is about, until the next move
   function noteMove(t, move) { lastMove = { id: t.id, move: move, day: today(), at: null }; }
@@ -2187,7 +2313,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 
   var wT = null, wAt = null, wBusy = false, wFromLedger = false;
   function wTalk() { var t = thoughts[wT]; return t && (t.talks || []).filter(function (x) { return x.at === wAt; })[0]; }
-  // Open a saved talk from the Ledger: the newest one on that principle.
+  // Open a saved talk from the Ledger: the newest one on that thought.
   function openTalks(t) {
     var list = t.talks || []; if (!list.length) return;
     wT = t.id; wAt = list[list.length - 1].at; wFromLedger = true;
@@ -2328,7 +2454,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 
   // ---------- a day that ends (1.32.0) ----------
   // Today's set (core.js dayPhase): the deck closes after the number of moves chosen in Settings, asks which
-  // principle you will act on today, and carries it as today's focus. From 6 PM the deck opens on the
+  // thought you will act on today, and carries it as today's focus. From 6 PM the deck opens on the
   // evening check-in for that focus. Every third Testing it asks for the smallest act today.
   var day = null;
   function setSize() { return C.setSize(prefs.set_size); }
@@ -2362,7 +2488,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     for (var i = 0; i < n; i++) h += i < m ? '<div class="tile done">' + check + "</div>" : '<div class="tile' + (i === m && !done ? " now" : "") + '"><i></i></div>';
     $("setTiles").innerHTML = h; 
   }
-  // The welcome (1.47.0): what Scales is, a starter deck or your own principle, then the hold, once.
+  // The welcome (1.47.0): what Scales is, a starter deck or your own thought, then the hold, once.
   var welcomeStep = 0;
   function standalone() { return !!(NATIVE || navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches)); }
   function renderWelcome() {
@@ -2371,21 +2497,21 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     $("addTop").hidden = true; $("setBtn").hidden = true; $("navSeg").hidden = true;
     if (step === 0) {
       v.innerHTML = '<div class="welcome"><h1>Scales</h1>' +
-        "<p>Write down the principles you want to live by. Scales shows you one at a time, and keeps showing it until you live it without being reminded.</p>" +
+        "<p>Write down the thoughts you want to live by. Scales shows you one at a time, and keeps showing it until you live it without being reminded.</p>" +
         (standalone() ? "" : '<p class="note">Best as an app: in Safari, tap Share, then Add to Home Screen, and open Scales from there.</p>') +
         '<div class="widewrap"><button type="button" class="primary" id="wNext">Start</button></div></div>';
       $("wNext").onclick = function () { welcomeStep = 1; renderWelcome(); };
     } else if (step === 1) {
-      v.innerHTML = '<div class="welcome"><h1>Start with</h1><p>A short starter deck, or one principle of your own. You can add more anytime with +.</p>' +
+      v.innerHTML = '<div class="welcome"><h1>Start with</h1><p>A short starter deck, or one thought of your own. You can add more anytime with +.</p>' +
         '<div class="wdecks">' + [["stoic", "Stoic"], ["leadership", "Leadership"], ["athletic", "Athletic mindset"], ["overcoming", "Self-overcoming"]].map(function (d) {
           return '<button type="button" class="btn3d wide" data-starter="' + d[0] + '">' + d[1] + "</button>";
         }).join("") + '<button type="button" class="primary" id="wOwn">Write my own</button></div></div>';
       $("wOwn").onclick = openCapture;
     } else {
       v.innerHTML = '<div class="welcome"><h1>Three choices</h1>' +
-        "<p>Each principle gets one of three, at the bottom of the screen.</p>" +
+        "<p>Each thought gets one of three, at the bottom of the screen.</p>" +
         '<ul class="wchoices"><li><b>Skip</b> rests it for a few days. It comes back first, and Scales asks why once.</li>' +
-        "<li><b>Reflect</b> shows a quote from today’s voice. After a few seconds it counts, and the principle gets lighter.</li>" +
+        "<li><b>Reflect</b> shows a quote from today’s voice. After a few seconds it counts, and the thought gets lighter.</li>" +
         "<li><b>Lived</b> moves it out of the deck and into your record.</li></ul>" +
         '<div class="widewrap"><button type="button" class="primary" id="wDone">Got it</button></div></div>';
       // 1.65.0: the AI question comes right after the welcome, where it has a reason, not on a later launch.
@@ -2421,7 +2547,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
   function keepGoing() { day.more = true; saveDay(); if (!current || !thoughts[current] || thoughts[current].status !== "active") showNext(); else renderDeck(); }
 
-  // Caught it: when you lived a principle without the app. From the principle's history in the Ledger.
+  // Caught it: when you lived a thought without the app. From the thought's history in the Ledger.
   var caughtT = null, caughtFromCheckin = false;
   function openCaught(t, fromCheckin) {
     if (!t) return;
@@ -2458,13 +2584,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (last && last.text) $("evidenceInput").value = last.text;
   };
 
-  // ---------- a principle in full (the Ledger row) ----------
+  // ---------- a thought in full (the Ledger row) ----------
   var rowT = null;
-  var TL_DOT = { caught: "k", lived: "b", talk: "v", act: "b", keep: "v", skip: "o" };
+  var TL_DOT = { caught: "k", lived: "b", talk: "v", act: "b", keep: "v", skip: "o", question: "k", letgo: "o" };
   function openRow(t) {
     if (!t) return;
     rowT = t;
-    var lived = t.status === "shed", l = lastLine(t), parts = [];
+    var lived = t.status === "shed", gone = t.status === "letgo", l = lastLine(t), parts = [];
     if (String(t.collection || "").trim()) parts.push("<b>" + esc(t.collection) + "</b>");
     if (t.origin) parts.push("<span>" + esc(t.origin) + "</span>");
     if (t.author) parts.push("<span>" + esc(t.author) + "</span>");
@@ -2473,6 +2599,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     $("rowWhere").innerHTML = parts.join("");
     $("rowLine").hidden = !l; $("rowLine").innerHTML = l ? "<p>" + esc(l) + "</p>" : "";
     $("rowEv").hidden = !(lived && t.evidence); $("rowEv").textContent = t.evidence || "";
+    $("rowWhy").hidden = !(t.why || t.change || (gone && t.letgo_why));
+    $("rowWhy").innerHTML = (gone ? '<div><b>Let go ' + esc(fmtDate(t.letgo_at)) + "</b>" + esc(t.letgo_why || "No reason given.") + "</div>" : "") +
+      (t.why ? "<div><b>Why you believed it</b>" + esc(t.why) + "</div>" : "") + (t.change ? "<div><b>What would change your mind</b>" + esc(t.change) + "</div>" : "");
     $("rowHist").innerHTML = historyHtml(t);
     var th = C.thread(t);
     $("rowThread").hidden = !th.length;
@@ -2487,25 +2616,27 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     }).join("");
     // Where it stands and its numbers (1.77.0).
     var g = lived ? "lived" : C.ledgerGroup(t, today());
+    $("rowStage").hidden = gone;
     $("rowStage").innerHTML = GROUPS.map(function (x) { return '<i class="' + (x.id === g ? "now" : "") + '"></i>'; }).join("") +
       GROUPS.map(function (x) { return '<span class="' + (x.id === g ? "now" : "") + '">' + x.name + "</span>"; }).join("");
     $("rowStage").setAttribute("aria-label", "Stage: " + GROUPS.filter(function (x) { return x.id === g; })[0].name);
     $("rowStage").setAttribute("role", "img");
-    var end = lived && t.shed_at ? new Date(t.shed_at) : new Date(), days = Math.max(1, Math.round((end - new Date(t.created_at)) / 86400000));
+    var end = lived && t.shed_at ? new Date(t.shed_at) : gone && t.letgo_at ? new Date(t.letgo_at) : new Date(), days = Math.max(1, Math.round((end - new Date(t.created_at)) / 86400000));
     $("rowNums").innerHTML = "<div><b>" + days + "</b>" + (days === 1 ? "day" : "days") + "</div><div><b>" + (t.lifetime_skips || t.skip_count || 0) + "</b>skipped</div><div><b>" +
       (t.reflect_count || 0) + "</b>reflected</div><div><b>" + (t.caught || []).length + "</b>caught</div>";
-    // One blue action: Put it on Today, or for a lived principle, its evidence. Delete is a quiet text button.
+    // One blue action: Put it on Today, or for a lived thought, its evidence. Delete is a quiet text button.
     var more = [];
-    if (!lived) more.push('<button type="button" class="btn3d" data-r="caught">Caught it</button>');
+    if (!lived && !gone) more.push('<button type="button" class="btn3d" data-r="caught">Caught it</button>');
     more.push('<button type="button" class="btn3d" data-r="edit">Edit</button>');
     if (l) more.push('<button type="button" class="btn3d" data-r="keep">Keep line</button>');
     if ((t.talks || []).some(function (x) { return x.line; })) more.push('<button type="button" class="btn3d" data-r="talk">Talk</button>');
-    $("rowActs").innerHTML = (lived ? '<button type="button" class="primary" data-r="ev">' + (t.evidence ? "Edit evidence" : "Add evidence") + "</button>"
+    $("rowActs").innerHTML = (gone ? '<button type="button" class="primary" data-r="back">Bring it back</button>'
+      : lived ? '<button type="button" class="primary" data-r="ev">' + (t.evidence ? "Edit evidence" : "Add evidence") + "</button>"
       : '<button type="button" class="primary" data-r="show">Put it on Today</button>') +
       '<div class="more">' + more.join("") + "</div>" + '<button type="button" class="del" data-r="del">Delete</button>';
     show("sheetRow");
   }
-  // Put it on Today: the principle goes to the front of today's deck, in the collection that holds it.
+  // Put it on Today: the thought goes to the front of today's deck, in the collection that holds it.
   function putOnToday(t) {
     if (!t) return;
     if (openSheet) hide();
@@ -2517,6 +2648,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var b = e.target.closest("[data-r]"), t = rowT; if (!b || !t) return;
     var r = b.getAttribute("data-r");
     if (r === "show") putOnToday(t);
+    else if (r === "back") { var ub = undoPoint(); C.bringBack(t); save(t); hide(); renderLedger(); undoable("Back in the deck.", ub); }
     else if (r === "caught") openCaught(t, false);
     else if (r === "edit") openEdit(t);
     else if (r === "ev") openEvidence(t);
@@ -2531,7 +2663,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   };
 
   // ---------- evidence sheet ----------
-  // Add or edit the evidence line on a lived principle. An empty save clears it.
+  // Add or edit the evidence line on a lived thought. An empty save clears it.
   var evTarget = null;
   function openEvidence(t) {
     if (!t) return;
@@ -2572,13 +2704,17 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
 
   // ---------- edit sheet ----------
-  // Change a principle's wording. Validation and what is kept live in core.js
-  // (checkEdit, applyEdit). A deck principle gets a fresh model line for the new
+  // Change a thought's wording. Validation and what is kept live in core.js
+  // (checkEdit, applyEdit). A deck thought gets a fresh model line for the new
   // wording; a lived one keeps its record.
   var editTarget = null;
-  function openEdit(t) {
+  // revise (1.79.0): the same sheet from Question it; saving counts as weighed and keeps the earlier wording.
+  // why: opened to add the reasons, so the two fields come first.
+  var reviseMode = false, reviseUndo = null;
+  function openEdit(t, revise, why) {
     if (!t) return;
-    editTarget = t;
+    editTarget = t; reviseMode = !!revise; reviseUndo = revise ? undoPoint() : null;
+    $("sheetEditTitle").textContent = revise ? "Revise" : "Edit thought";
     var lived = t.status === "shed";
     $("editNote").textContent = lived
       ? "The Lived date, where it showed up, and the last AI line stay."
@@ -2587,7 +2723,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       ? ["Lived " + fmtDate(t.shed_at), t.evidence ? "Where it showed up" : "", lastLine(t) ? "Last AI line" : "", "Skipped " + times(t.lifetime_skips)]
       : ["Skipped " + times(t.skip_count || 0), "Reflected " + times(t.reflect_count || 0), "Since " + fmtDate(t.created_at), "Weight " + weight(t).toFixed(1)]
     ).filter(Boolean).map(function (x) { return '<span class="pressed">' + esc(x) + "</span>"; }).join("");
+    if (revise) $("editNote").textContent = "Weighed and revised. The earlier wording is kept in its history.";
     $("editInput").value = t.text;
+    $("editWhy").value = t.why || ""; $("editChange").value = t.change || "";
     $("editCollection").value = t.collection || "";
     $("editTitle").value = t.title || "";
     $("editAuthor").value = t.author || "";
@@ -2596,12 +2734,12 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     editColl.paint();
     checkEditInput();
     show("sheetEdit", fitReply); fitReply();
-    setTimeout(function () { var el = $("editInput"); el.focus(); el.setSelectionRange(el.value.length, el.value.length); }, 60);
+    setTimeout(function () { var el = $(why ? "editWhy" : "editInput"); el.focus(); el.setSelectionRange(el.value.length, el.value.length); }, 60);
   }
   // Everything the sheet would save, as one edit for core.js.
   var editOrigin = "";
   function editValues() {
-    return { text: $("editInput").value, collection: $("editCollection").value, title: $("editTitle").value, author: $("editAuthor").value, origin: editOrigin };
+    return { text: $("editInput").value, collection: $("editCollection").value, title: $("editTitle").value, author: $("editAuthor").value, origin: editOrigin, why: $("editWhy").value, change: $("editChange").value };
   }
   function paintEditOrigin() {
     Array.prototype.forEach.call(document.querySelectorAll("#editOriginPills .pill"), function (q) {
@@ -2626,12 +2764,21 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     return r;
   }
   var editColl = collectionField("edit", checkEditInput);
-  ["editInput", "editTitle", "editAuthor"].forEach(function (id) { $(id).addEventListener("input", checkEditInput); });
+  ["editInput", "editTitle", "editAuthor", "editWhy", "editChange"].forEach(function (id) { $(id).addEventListener("input", checkEditInput); });
   $("editSave").addEventListener("click", function () {
     var t = editTarget; if (!t || !checkEditInput().ok) return;
     var before = t.text;
     C.applyEdit(t, editValues(), all());
     var reworded = t.text !== before;
+    if (reviseMode && t.status === "active") {
+      // Revise from Question it: counted as weighed, the earlier wording kept, then the next thought.
+      if (reworded) C.noteRevise(t, before, today()); else C.questionKeep(t, today());
+      noteMove(t, "keep"); noteDay(t, "keep"); logActivity("keep");
+      save(t); editTarget = null; reviseMode = false; hide(); phase = "rest";
+      if (t.id === current) flyOut("up");
+      undoable(reworded ? "Revised. The earlier wording is kept." : "Kept. It held up.", reviseUndo); reviseUndo = null;
+      return;
+    }
     save(t); editTarget = null; hide(); toast("Saved. History kept.");
     // A new wording needs a new line; a detail-only edit keeps the line on screen.
     if (t.id === current) { renderDeck(); if (reworded) requestLine(t); }
@@ -2640,7 +2787,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 
   // ---------- manage collections ----------
   // List every collection with its count; rename, merge or remove one across every
-  // principle. Only the collection field changes (core.js renameCollection and
+  // thought. Only the collection field changes (core.js renameCollection and
   // removeCollection); wording, counts, dates, status, evidence and AI lines stay.
   function paintCollCount() { $("collCount").textContent = C.collections(all()).length; }
   // from: "settings" or "menu", so Done goes back to where Collections was opened. Left out, it stays as it was.
@@ -2649,8 +2796,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (from) collFrom = from;
     var list = C.collections(all());
     $("collList").innerHTML = list.length ? list.map(function (c) {
-      return '<button type="button" class="crow raised" data-coll="' + esc(c.name) + '" aria-label="' + esc(c.name) + ", " + c.count + (c.count === 1 ? " principle" : " principles") + '"><b>' + esc(c.name) + "</b><span>" + c.count + ICON_NEXT + "</span></button>";
-    }).join("") : '<p class="none">No collections yet. Add one from a principle\'s Edit sheet or when capturing.</p>';
+      return '<button type="button" class="crow raised" data-coll="' + esc(c.name) + '" aria-label="' + esc(c.name) + ", " + c.count + (c.count === 1 ? " thought" : " thoughts") + '"><b>' + esc(c.name) + "</b><span>" + c.count + ICON_NEXT + "</span></button>";
+    }).join("") : '<p class="none">No collections yet. Add one from a thought\'s Edit sheet or when capturing.</p>';
     show("sheetCollections");
   }
   $("openCollections").onclick = function () { openCollections("settings"); };
@@ -2661,10 +2808,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function openRename(name) {
     var c = C.collections(all()).filter(function (x) { return x.name === name; })[0]; if (!c) return;
     renameFrom = c.name;
-    $("renameMeta").textContent = c.name + ", " + c.count + (c.count === 1 ? " principle" : " principles");
+    $("renameMeta").textContent = c.name + ", " + c.count + (c.count === 1 ? " thought" : " thoughts");
     $("renameInput").value = c.name;
     var rm = $("renameRemove"); rm.classList.remove("confirm"); rm.textContent = "Remove this collection";
-    $("renameRemoveNote").textContent = "Removing leaves the " + (c.count === 1 ? "principle" : c.count + " principles") + " in place with no collection.";
+    $("renameRemoveNote").textContent = "Removing leaves the " + (c.count === 1 ? "thought" : c.count + " thoughts") + " in place with no collection.";
     checkRenameInput();
     show("sheetRename");
     setTimeout(function () { var el = $("renameInput"); el.focus(); el.select(); }, 60);
@@ -2674,7 +2821,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     b.disabled = !r.ok;
     if (r.ok && r.merge) {
       n.hidden = false;
-      n.innerHTML = "<b>" + esc(r.target) + " already exists</b> with " + (r.total - r.moving) + (r.total - r.moving === 1 ? " principle" : " principles") +
+      n.innerHTML = "<b>" + esc(r.target) + " already exists</b> with " + (r.total - r.moving) + (r.total - r.moving === 1 ? " thought" : " thoughts") +
         ". Saving moves " + (r.moving === 1 ? "this one" : "all " + r.moving) + " into " + esc(r.target) + ", for " + r.total + " in total. Their history is kept.";
       b.textContent = "Merge into " + r.target;
     } else { n.hidden = true; b.textContent = "Rename"; }
@@ -2697,18 +2844,18 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var b = $("renameRemove");
     if (!b.classList.contains("confirm")) {
       var c = C.collections(all()).filter(function (x) { return x.name === renameFrom; })[0];
-      b.classList.add("confirm"); b.textContent = "Tap again to remove from " + (c ? c.count : 0) + (c && c.count === 1 ? " principle" : " principles");
+      b.classList.add("confirm"); b.textContent = "Tap again to remove from " + (c ? c.count : 0) + (c && c.count === 1 ? " thought" : " thoughts");
       setTimeout(function () { if (b.isConnected && b.classList.contains("confirm")) { b.classList.remove("confirm"); b.textContent = "Remove this collection"; } }, 3000);
       return;
     }
     var name = renameFrom, n = C.removeCollection(all(), name);
-    afterCollectionChange("Removed " + name + " from " + n + (n === 1 ? " principle." : " principles."));
+    afterCollectionChange("Removed " + name + " from " + n + (n === 1 ? " thought." : " thoughts."));
   });
   $("renameCancel").onclick = openCollections;
 
   // ---------- render: ledger ----------
   // Ledger (1.32.0): a record, not a scorecard. One sentence on where you stand, Your week, the 12 week grid,
-  // and the In deck / Lived list. Each row opens the principle in full (openRow), where its actions are.
+  // and the In deck / Lived list. Each row opens the thought in full (openRow), where its actions are.
   function weekdayOf(day, opts) { var p = day.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", opts || { weekday: "short" }); }
   // Notes kept for the Lived record and the row's small line.
   function historyHtml(t) {
@@ -2719,7 +2866,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (e) h += '<div class="was">Earlier wording: ' + esc(clip(e.text, 160)) + "</div>";
     return h;
   }
-  // The small line under a row: what is true of the principle now.
+  // The small line under a row: what is true of the thought now.
   function rowState(t, td) {
     var p = [];
     if (t.status === "shed") {
@@ -2740,16 +2887,16 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var s = p.join(", ");
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
-  // The Ledger (1.77.0): every principle on one scroll, by stage. Avoiding opens with the one avoided most;
-  // Lived folds to one line. The band above is this week and how the principles split across the stages.
+  // The Ledger (1.77.0): every thought on one scroll, by stage. Avoiding opens with the one avoided most;
+  // Lived folds to one line. The band above is this week and how the thoughts split across the stages.
   var GROUPS = [
     { id: "avoiding", name: "Avoiding", note: "Skipped three or more times" },
     { id: "working", name: "Working on", note: "In the deck, still in practice" },
     { id: "nearly", name: "Nearly lived", note: "No skips left, reflected on or caught" },
     { id: "lived", name: "Lived", note: "You act on these without prompting" }
   ];
-  var livedOpen = false;
-  var MARK = { skip: "skipped", keep: "reflected", caught: "caught it" };
+  var livedOpen = false, letOpen = false;
+  var MARK = { skip: "skipped", keep: "reflected", caught: "caught it", question: "questioned and kept", revise: "revised", letgo: "let go" };
   function marksHtml(t) {
     var mv = C.recentMoves(t, 5), out = [];
     for (var i = 0; i < 5 - mv.length; i++) out.push("<i></i>");
@@ -2757,17 +2904,18 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     return '<span class="marks" aria-hidden="true">' + out.join("") + "</span>";
   }
   function rowNote(t, g, td) {
+    if (g === "letgo") return t.letgo_why || "";
     if (g === "lived") return "";
     if (t.later) return "Saved for tonight";
     if (C.isResting(t, td)) return "Resting until " + weekdayOf(t.rest_until, { weekday: "long" });
     return "";
   }
   function ledgerRow(t, g, td) {
-    var rest = g !== "lived" && C.isResting(t, td), note = rowNote(t, g, td), mv = C.recentMoves(t, 5);
+    var rest = g !== "lived" && g !== "letgo" && C.isResting(t, td), note = rowNote(t, g, td), mv = C.recentMoves(t, 5);
     var said = mv.length ? " Last moves: " + mv.map(function (m) { return MARK[m.m]; }).join(", ") + "." : "";
     return '<button type="button" class="lrow3 ' + g + (rest ? " resting" : "") + '" data-row="' + esc(t.id) + '" aria-label="' + esc(clip(t.text, 80) + ". " + rowState(t, td) + "." + said) + '">' +
       '<span class="tx"><span class="lt">' + esc(String(t.text).replace(/\s*\n\s*/g, " ")) + "</span>" + (note ? "<small>" + esc(note) + "</small>" : "") + "</span>" +
-      (g === "lived" ? '<span class="dt">' + esc(fmtDate(t.shed_at)) + "</span>" : marksHtml(t)) + "</button>";
+      (g === "lived" || g === "letgo" ? '<span class="dt">' + esc(fmtDate(g === "lived" ? t.shed_at : t.letgo_at)) + "</span>" : marksHtml(t)) + "</button>";
   }
   function avoidedHtml(t) {
     var r = t.reflect_count || 0;
@@ -2793,6 +2941,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var shed = items.filter(function (t) { return t.status === "shed"; }).sort(function (a, b) { return (b.shed_at || "").localeCompare(a.shed_at || ""); });
     var byGroup = { avoiding: [], working: [], nearly: [], lived: shed };
     act_.forEach(function (t) { byGroup[C.ledgerGroup(t, td)].push(t); });
+    var gone = items.filter(function (t) { return t.status === "letgo"; }).sort(function (a, b) { return (b.letgo_at || "").localeCompare(a.letgo_at || ""); });
     paintStat();
     $("lWeek").innerHTML = weekHtml(items, td);
     var n = items.filter(function (t) { return t.status === "active" || t.status === "shed"; }).length;
@@ -2810,7 +2959,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       if (g.id === "avoiding" && most) { html += avoidedHtml(most); rows = rows.filter(function (t) { return t !== most; }); }
       html += rows.map(function (t) { return ledgerRow(t, g.id, td); }).join("");
     });
-    $("ledgerList").innerHTML = html || '<p class="none">Nothing here yet. Add a principle with + and it shows here.</p>';
+    // Let go (1.79.0): folded under Lived, each with the reason you changed your mind.
+    if (gone.length) html += '<button type="button" class="lfold" id="sec-letgo" data-foldlet aria-expanded="' + letOpen + '"><span>' + gone.length + " let go</span>" + CHEV + "</button>" +
+      (letOpen ? gone.map(function (t) { return ledgerRow(t, "letgo", td); }).join("") : "");
+    $("ledgerList").innerHTML = html || '<p class="none">Nothing here yet. Add a thought with + and it shows here.</p>';
 
     var cells = [], now = new Date();
     for (var i = 83; i >= 0; i--) {
@@ -2825,6 +2977,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   var CHEV = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
   $("ledgerList").addEventListener("click", function (e) {
     var td_ = e.target.closest("[data-today]"); if (td_) { putOnToday(thoughts[td_.getAttribute("data-today")]); return; }
+    if (e.target.closest("[data-foldlet]")) { letOpen = !letOpen; renderLedger(); var fl = $("sec-letgo"); if (fl) { try { fl.focus({ preventScroll: true }); } catch (_) {} } return; }
     if (e.target.closest("[data-fold]")) { livedOpen = !livedOpen; renderLedger(); var f = $("sec-lived"); if (f) { try { f.focus({ preventScroll: true }); } catch (_) {} } return; }
     var b = e.target.closest("[data-row]"); if (b) openRow(thoughts[b.getAttribute("data-row")]);
   });
@@ -2838,7 +2991,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   });
 
   // ---------- capture ----------
-  // Capture sheet. Optional origin pill, MAX_TEXT character limit, and a new principle starts
+  // Capture sheet. Optional origin pill, MAX_TEXT character limit, and a new thought starts
   // with zero counts. It goes straight into the deck.
   var origin = "", input = $("thoughtInput");
   // More details starts collapsed on every capture.
@@ -2875,10 +3028,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var t = { id: newId(), text: text, origin: origin, created_at: new Date().toISOString(), status: "active",
       skip_count: 0, lifetime_skips: 0, reflect_count: 0, consecutive_reflects: 0, recent_lines: [],
       collection: C.canonCollection(all(), $("capCollection").value),
-      title: $("capTitle").value.trim().slice(0, C.LIMITS.title), author: $("capAuthor").value.trim().slice(0, C.LIMITS.author) };
+      title: $("capTitle").value.trim().slice(0, C.LIMITS.title), author: $("capAuthor").value.trim().slice(0, C.LIMITS.author),
+      why: $("capWhy").value.trim().slice(0, C.LIMITS.why), change: $("capChange").value.trim().slice(0, C.LIMITS.why) };
     save(t);
     input.value = ""; input.dispatchEvent(new Event("input"));
-    $("capCollection").value = ""; $("capTitle").value = ""; $("capAuthor").value = ""; setCapMore(false);
+    $("capCollection").value = ""; $("capTitle").value = ""; $("capAuthor").value = ""; $("capWhy").value = ""; $("capChange").value = ""; setCapMore(false);
     origin = ""; Array.prototype.forEach.call(document.querySelectorAll("#originPills .pill"), function (q) { q.setAttribute("aria-pressed", "false"); });
     hide(); toast("Added to the deck.");
     go("deck");
@@ -2890,7 +3044,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // Original lines are credited to Scales and cite their deck. Public-domain lines use the
   // exact wording of a named public-domain translation, cite the work and section, and link
   // to a verified chapter-level edition. Loading and merging rules live in core.js
-  // (loadStarter): nothing is duplicated, empty fields on principles already in the deck are
+  // (loadStarter): nothing is duplicated, empty fields on thoughts already in the deck are
   // filled without overwriting the user's values, and lines listed in "replaces" update an
   // older wording in place.
   var README = "https://github.com/grahamdeno/scales#readme";
@@ -3038,7 +3192,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     $("restOut").textContent = n + (n === 1 ? " day" : " days");
     $("restDown").disabled = n <= C.REST_MIN; $("restUp").disabled = n >= C.REST_MAX;
     var z = setSize(); $("setOut").textContent = z; $("setDown").disabled = z <= C.SET_MIN; $("setUp").disabled = z >= C.SET_MAX;
-    $("howRest").innerHTML = "<b>Skip</b> rests a principle for " + n + (n === 1 ? " day" : " days") + ". It comes back first, set heavier, until you live it.";
+    $("howRest").innerHTML = "<b>Skip</b> rests a thought for " + n + (n === 1 ? " day" : " days") + ". It comes back first, set heavier, until you live it.";
   }
   Array.prototype.forEach.call(document.querySelectorAll(".seg [data-look]"), function (b) {
     b.onclick = function () { prefs.look = b.getAttribute("data-look"); savePrefs(); applyLook(); };
@@ -3105,14 +3259,14 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // ---------- menu (1.30.0) ----------
   // Everything that is not one of the three moves: a frosted panel under the button at the top right. It is a
   // <dialog> shown with showModal(), so the page behind is inert and focus stays inside; Escape or a tap
-  // outside closes it. Edit is listed only while a principle is on screen.
+  // outside closes it. Edit is listed only while a thought is on screen.
   var menu = $("menu"), menuBtn = $("menuBtn");
   function onCard() { var t = $("v-ledger").hidden && current && thoughts[current]; return t && t.status === "active" && $("card") ? t : null; }
   function openMenu() {
     if (openSheet || menu.open || $("menuBtn").hidden) return;
     var cs = C.deckCollections(all()), on = deckColl(), tick = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="color:var(--accent)"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
     var row = function (name, label, n) { return '<button type="button" data-coll="' + esc(name) + '" aria-pressed="' + String(on === name) + '"><span>' + esc(label) + '</span><span class="status">' + n + (on === name ? " " + tick : "") + "</span></button>"; };
-    $("menuList").innerHTML = row("", "All principles", activeList().length) + cs.map(function (c) { return row(c.name, c.name, c.count); }).join("");
+    $("menuList").innerHTML = row("", "All thoughts", activeList().length) + cs.map(function (c) { return row(c.name, c.name, c.count); }).join("");
     var r = $("menuBtn").getBoundingClientRect();
     menu.style.inset = (r.bottom + 8) + "px " + Math.max(16, window.innerWidth - r.right) + "px auto auto";
     if (menu.showModal) menu.showModal(); else menu.setAttribute("open", "");
@@ -3149,7 +3303,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   document.addEventListener("keydown", function (e) {
     if (openSheet || menu.open || isTyping(document.activeElement) || e.metaKey || e.ctrlKey || e.altKey) return;
     var k = e.key, t = onCard(), done = true;
-    if (t && k === "ArrowLeft") requestSkip();
+    if (t && phase === "question" && (k === "ArrowLeft" || k === "ArrowUp" || k === "ArrowRight")) { if (k === "ArrowUp") questionKeep(); return; }
+    if (t && (k === "q" || k === "Q") && phase !== "question") questionIt();
+    else if (t && k === "ArrowLeft") requestSkip();
     else if (t && k === "ArrowUp") act("keep");
     else if (t && k === "ArrowRight") act("shed");
     else if (t && (k === "e" || k === "E")) openEdit(t);
@@ -3458,7 +3614,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         var text = g(r, "text").replace(/\r/g, "").trim();
         if (!text) return;
         var key = normText(text); if (seen[key]) { dup++; return; } seen[key] = 1;
-        var status = g(r, "scales_status") === "shed" ? "shed" : "active";
+        var status = g(r, "scales_status") === "shed" ? "shed" : g(r, "scales_status") === "letgo" ? "letgo" : "active";
         var t = { id: "t" + (base + n).toString(36) + Math.random().toString(36).slice(2, 7), text: text,
           title: g(r, "title").trim(), author: g(r, "author").trim(), tags: g(r, "tags").trim(), collection: g(r, "collection").trim(),
           link: g(r, "link").trim(), citation: g(r, "citation").trim(), origin: g(r, "scales_origin").trim(),
@@ -3472,7 +3628,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         thoughts[t.id] = t; added++;
       });
       lsSet(LS, thoughts);
-      toast(added ? "Imported " + added + (dup ? ", skipped " + dup + " already here" : "") : (dup ? "All " + dup + " are already here" : "No principles found"));
+      toast(added ? "Imported " + added + (dup ? ", skipped " + dup + " already here" : "") : (dup ? "All " + dup + " are already here" : "No thoughts found"));
       if (added) { hide(); if (!current || !thoughts[current]) showNext(); else renderDeck(); if (!$("v-ledger").hidden) renderLedger(); }
     }).catch(function () { toast("Could not read that CSV"); });
     e.target.value = "";
