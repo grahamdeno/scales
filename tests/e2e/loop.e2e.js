@@ -155,12 +155,12 @@ test("a long principle stays between the top and the choices, and the top says h
   assert.match(await page.textContent("#todayLbl"), /3 left today/);
 });
 
-test("the welcome hides + and the menu; Reflect shows a question when no quote fits", async () => {
+test("the welcome hides +, the switch and Settings; Reflect shows a question when no quote fits", async () => {
   let page = await open();
   assert.equal(await page.$eval("#addTop", (e) => e.hidden), true);
-  assert.equal(await page.$eval("#menuBtn", (e) => e.hidden), true);
+  assert.equal(await page.$eval("#setBtn", (e) => e.hidden), true);
   page = await open({ prefs: ready, thoughts: { a: P("a", "One.") } });
-  assert.equal(await page.$eval("#menuBtn", (e) => e.hidden), false);
+  assert.equal(await page.$eval("#setBtn", (e) => e.hidden), false);
   await choose(page, "keep");
   assert.ok(await until(page, async () => ((await page.textContent("#aiLine").catch(() => "")) || "").endsWith("?")), "a question to sit with");
   assert.match(await page.getAttribute("#feedbackLink", "href"), /^mailto:support@tangomike\.app\?subject=Scales%20feedback/);
@@ -226,7 +226,7 @@ test("Scales Plus in the iPhone app: no server AI without it; buy, then AI reque
   await page.evaluate(() => window.scalesStore({ active: false, price: "$19.99", trialDays: 14 }));
   await page.click("#words"); await page.clock.runFor(1500);
   assert.equal(asked.length, 0, "no server AI without Plus");
-  await page.click("#menuBtn"); await page.click('[data-m="settings"]'); await page.clock.runFor(300);
+  await page.click("#setBtn"); await page.clock.runFor(300);
   assert.equal(await page.$eval("#plusGroup", (e) => e.hidden), false);
   assert.match(await page.textContent("#plusStatus"), /Try it free for 14 days/);
   await page.click("#openPlus"); await page.clock.runFor(300);

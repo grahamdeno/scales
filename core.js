@@ -11,8 +11,8 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.74.2";
-  var BUILT = "2026-10-25";
+  var VERSION = "1.75.0";
+  var BUILT = "2026-10-28";
 
   // CAP        highest weight a principle can reach (4x as likely as a fresh one)
   // MAX_WORDS  longest consideration the app will show. Long enough for one complete
@@ -356,7 +356,7 @@ var ScalesCore = (function () {
   // Hold (1.33.0): the deck's one gesture. The ring is held down; how long and where the finger
   // goes on release decide the move. A press shorter than HOLD_TAP is a tap and does nothing, so a
   // stray touch never rests a principle for days. Lifting the finger HOLD_LIFT px or more toward
-  // the top before release is Living it at any point; holding the full HOLD_FULL is Testing it;
+  // the top before release is Lived at any point; holding the full HOLD_FULL is Testing it;
   // letting go in between is Not today. ms is how long the ring was held, dy the vertical offset
   // in pixels (negative going up). progress (0 to 1) drives the ring and how many words are inked.
   var HOLD_FULL = 2400, HOLD_TAP = 300, HOLD_LIFT = 70;
@@ -505,7 +505,7 @@ var ScalesCore = (function () {
     return "working";
   }
 
-  // Ledger bars (1.27.0): every principle counted once. Living it = lived; Not today = still in the
+  // Ledger bars (1.27.0): every principle counted once. Lived = lived; Not today = still in the
   // deck and currently set aside more than worked through (skip_count above 0); Testing it = the
   // rest of the deck. Percentages are whole numbers that add up to 100 (largest remainder), or all 0
   // for an empty deck.
@@ -749,7 +749,7 @@ var ScalesCore = (function () {
 
   // ---------- caught it ----------
   // Real-life evidence for a principle still in the deck: a one-line note of when you lived it
-  // without the app. CATCH_SUGGEST catches within CATCH_WINDOW days suggest it may be Living it.
+  // without the app. CATCH_SUGGEST catches within CATCH_WINDOW days suggest it may be Lived.
   function addCatch(t, day, text) { t.caught = (t.caught || []).concat([{ day: day, text: String(text || "").trim().slice(0, 280) }]).slice(-30); return t; }
   function catchCount(t, today, windowDays) {
     var from = addDays(today, -((windowDays || CATCH_WINDOW) - 1));
@@ -759,7 +759,7 @@ var ScalesCore = (function () {
   // Days a principle was set aside, kept for the weekly review (last 20).
   // Later (1.42.0): a principle that deserves more time than you have right now. Chosen from the skip screen,
   // it is not a skip: no count, no weight, no rest. It waits until the evening (CHECKIN_HOUR) of the day it
-  // was saved, or any later day, then opens straight to Sit with it. At most LATER_MAX wait at once, and a
+  // was saved, or any later day, then opens straight to Reflect. At most LATER_MAX wait at once, and a
   // principle that came back from Later is not offered Later again until you have sat with it for the full
   // reflect time (t.later_blocked).
   var LATER_MAX = 3;
@@ -774,7 +774,7 @@ var ScalesCore = (function () {
 
   // Replies (1.40.0). On the skip and sit-with screens you can reply to the line or quote shown. A reply is
   // kept on the principle with the words it answered: { at, day, kind, line, author, text }. kind is "push"
-  // for the line shown on Skip, "reflect" for the quote shown on Sit with it. Replying never makes or changes
+  // for the line shown on Skip, "reflect" for the quote shown on Reflect. Replying never makes or changes
   // a move. The last 40 are kept.
   var REPLY_MAX = 280;
   function addReply(t, text, to, day, at) {

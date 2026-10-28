@@ -29,7 +29,7 @@ img { max-width: 100%; }
    principle's weight comes from its record (core.js inkWeight), heavier the more it has been set aside.
    Lines are hairlines in --line. The one filled control per sheet (.primary) is solid ink.
    The deck is quiet until asked (1.34.0): at rest, the principle and the ring. Hold the ring and the words
-   ink in; let go early for a push to reconsider, hold through to sit with a question, lift for Living it.
+   ink in; let go early for a push to reconsider, hold through to sit with a question, lift for Lived.
    Everything else is in the menu at the top right. */
 
 /* Black (default). */
@@ -40,7 +40,8 @@ img { max-width: 100%; }
   /* The one accent (1.66.0): blue, for the main action and whatever is selected. Lighter on Black so it reads. */
   --accent:#1F5FCC; --onAccent:#FFFFFF; --btn2:#262624;
   /* The layered look (1.74.0): a band behind the top, a black panel raised over it. Charcoal in Black. */
-  --band:#2A2A28; --bandCtl:#3A3A37; --bandTile:rgba(236,234,229,.10);
+  --band:#DCD9D3; --bandCtl:#ECEAE5; --bandTile:rgba(236,234,229,.55);
+  --card:#1E1E1D; --track:#3A3A37;
   --font:"Geist",-apple-system,"SF Pro Text",system-ui,sans-serif;
   /* Corners: square throughout; only the ring and dots are round. */
   --r-s:0; --r-m:0; --r-l:0; --r-xl:0;
@@ -57,8 +58,9 @@ img { max-width: 100%; }
   --paper:#ECEAE5; --deep:#E2E0DA; --rise:#ECEAE5; --ink:#141414; --muted:#5A5955; --faint:#6A6965; --rest:#64635F;
   --line:rgba(20,20,20,.16); --brass:#141414; --brass-hi:#141414; --violet:#141414; --danger:#A3402C;
   --scrim:rgba(20,20,20,.28); --onBrass:#ECEAE5;
-  --accent:#1F5FCC; --onAccent:#F4F3EF; --btn2:#DCD9D3;
+  --accent:#1F5FCC; --onAccent:#FFFFFF; --btn2:#DCD9D3;
   --band:#DCD9D3; --bandCtl:#ECEAE5; --bandTile:rgba(236,234,229,.55);
+  --card:#F4F2EE; --track:#D3D1CB;
   color-scheme:light;
 }
 
@@ -102,33 +104,36 @@ svg.i { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.
 header.top { flex:none; display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; view-transition-name:topbar; }
 .date { margin:0; font-size:var(--t-xs); font-weight:500; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); line-height:1.3; }
 .date span { margin-left:.5em; }
-.iconbtn { width:44px; height:44px; display:grid; place-items:center; color:var(--ink); flex:none; border:0 !important; border-radius:10px !important; background:var(--bandCtl) !important; }
+.iconbtn { width:44px; height:44px; display:grid; place-items:center; color:var(--ink); flex:none; border:0 !important; border-radius:12px !important; background:var(--bandCtl) !important; }
 .iconbtn:active { filter:brightness(.94); }
 .topacts { display:flex; align-items:center; gap:8px; margin-left:auto; }
 /* Today's voice, at the top of the deck (1.74.0). */
-.voicehead { display:flex; align-items:center; gap:12px; min-width:0; }
-.voicehead[hidden] { display:none; }
-.voicehead .mono { width:40px; height:40px; flex:none; border-radius:10px; background:#121212; display:grid; place-items:center; }
-.voicehead .mono svg { width:18px; height:18px; fill:#ECEAE5; }
-.voicehead b { display:block; font-size:var(--t-md); font-weight:500; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.voicehead small { display:block; font-size:var(--t-xs); color:var(--muted); }
+/* Today | Ledger (1.75.0): the two places, always in view. Corners 12 outside, 8 inside, 4 apart. */
+.navseg { flex:1; display:grid; grid-template-columns:1fr 1fr; height:44px; padding:4px; border-radius:12px; background:rgba(20,20,20,.07); }
+.navseg[hidden] { display:none; }
+.navseg button { border-radius:8px; font-size:var(--t-md); font-weight:500; color:var(--muted); }
+.navseg button[aria-selected="true"] { background:var(--bandCtl); color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.06); }
+.bandrow { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 10px; min-height:30px; }
+.bandrow .setlbl { margin:0; }
+.chip { display:inline-flex; align-items:center; gap:4px; height:30px; padding:0 8px 0 12px; border-radius:8px; background:var(--bandCtl); font-size:var(--t-sm); font-weight:500; color:var(--ink); position:relative; }
+.chip::after { content:""; position:absolute; inset:-8px -4px; }
+.chip[hidden] { display:none; }
+.chip svg.i { width:14px; height:14px; }
 /* Today's set as tiles: done in black with a check, the current one outlined in blue (1.74.0). */
-.setband { flex:none; margin-top:18px; }
+.setband { flex:none; margin-top:20px; }
 .setband[hidden] { display:none; }
 .setlbl { margin:0 0 10px; font-size:var(--t-sm); color:var(--muted); }
 .setlbl b { color:var(--ink); font-weight:500; }
-.tiles { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:8px; }
-.tile { height:48px; border-radius:10px; background:var(--bandTile); display:grid; place-items:center; color:var(--muted); }
-.tile.done { background:#121212; color:#ECEAE5; }
-.tile.now { background:var(--bandCtl); box-shadow:inset 0 0 0 2px var(--accent); color:var(--accent); }
-.tile i { width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.5; }
-.tile.now i { opacity:1; }
-.tile svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-.tiles.few { grid-auto-flow:row; grid-template-columns:repeat(5, minmax(0, 1fr)); }
-.tiles.many { gap:3px; } .tiles.many .tile { height:8px; border-radius:3px; } .tiles.many .tile > * { display:none; }
+.tiles { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:4px; }
+.tile { height:4px; border-radius:2px; background:rgba(20,20,20,.14); }
+.tile.done { background:#121212; }
+.tile.now { background:var(--accent); }
+.tile > * { display:none; }
 /* The black panel (1.74.0): edge to edge, 12px top corners, a soft shadow on its top edge only. */
-.onblack { --paper:#121212; --deep:#1B1B1A; --rise:#121212; --ink:#ECEAE5; --muted:#9A9994; --faint:#7F7E7A; --rest:#8A8986; --line:rgba(236,234,229,.16); --brass:#ECEAE5; --brass-hi:#ECEAE5; --violet:#ECEAE5; --danger:#E3A595; --onBrass:#121212; --accent:#1F5FCC; --onAccent:#FFFFFF; --btn2:#262624; color-scheme:dark; }
-#v-deck { margin:16px calc(-1 * var(--gutter)) 0; padding:0 var(--gutter); background:var(--paper); color:var(--ink); border-radius:12px 12px 0 0; box-shadow:0 -1.5px 3.5px rgba(0,0,0,.115), 0 -9.5px 22px rgba(0,0,0,.15), 0 -14px 32px rgba(0,0,0,.05); }
+/* The band is smoke in every look (1.75.0); what sits on it uses the light set. */
+.onsmoke { --paper:#ECEAE5; --deep:#E2E0DA; --rise:#ECEAE5; --ink:#141414; --muted:#55544F; --faint:#6A6965; --rest:#64635F; --line:rgba(20,20,20,.16); --danger:#A3402C; --onBrass:#ECEAE5; --accent:#1F5FCC; --onAccent:#FFFFFF; --btn2:#ECEAE5; color-scheme:light; }
+.onblack { --card:#1E1E1D; --track:#3A3A37; --paper:#121212; --deep:#1B1B1A; --rise:#121212; --ink:#ECEAE5; --muted:#9A9994; --faint:#7F7E7A; --rest:#8A8986; --line:rgba(236,234,229,.16); --brass:#ECEAE5; --brass-hi:#ECEAE5; --violet:#ECEAE5; --danger:#E3A595; --onBrass:#121212; --accent:#1F5FCC; --onAccent:#FFFFFF; --btn2:#262624; color-scheme:dark; }
+#v-deck { margin:16px calc(-1 * var(--gutter)) 0; padding:0 var(--gutter); background:var(--paper); color:var(--ink); border-radius:16px 16px 0 0; box-shadow:0 -1.5px 3.5px rgba(0,0,0,.115), 0 -9.5px 22px rgba(0,0,0,.15), 0 -14px 32px rgba(0,0,0,.05); }
 .pmeta { flex:none; margin-top:14px; font-size:var(--t-sm); color:var(--faint); }
 .iconbtn[hidden] { display:none; }
 .main { position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
@@ -163,7 +168,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .where b { color:var(--faint); font-weight:400; }
 .where > * + *::before { content:"\00B7"; margin-right:8px; }
 /* Push and reflect: a small-caps phase name at the top, the principle and its line in the middle. */
-.card.push, .card.reflect { justify-content:flex-start; padding-top:0; }
+.card.push, .card.reflect { justify-content:flex-start; padding-top:22px; }
 .phase { flex:none; display:flex; justify-content:space-between; align-items:center; min-height:44px; font-size:var(--t-xs); font-weight:500; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
 .phase button { min-height:44px; min-width:44px; margin-right:-6px; font-size:var(--t-sm); font-weight:400; letter-spacing:0; text-transform:none; color:var(--muted); text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px; }
 .card .mid { flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:22px; padding:8px 0; scrollbar-width:none; }
@@ -175,7 +180,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 /* 1.56.0: the principle sits above the scrolling part, so a long quote or reply never pushes it off screen. */
 .card .mid.under { margin-top:18px; }
 .card .mid.under > :first-child { margin-top:0; }
-.card.peek { justify-content:flex-start; }
+.card.peek { justify-content:flex-start; padding-top:22px; }
 #scrollHint { flex:none; margin:10px 0 0; position:static; }
 /* Only on the line screens, where a long principle folds; at rest it shrinks to the space and scrolls (1.69.0). */
 .card.push > .thought, .card.reflect > .thought, .card.peek > .thought, .card > .foldhint, .card > .phase { flex:none; }
@@ -208,13 +213,14 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 /* Hold: the ring, then the three outcomes as plain buttons. */
 /* The hold area: the bottom of the screen. The ring sits in the middle; the choices appear around it while held. */
 /* The choices (1.73.0): always in view. Gray for the moves, blue for the one Scales suggests. */
-.choices { flex:none; display:grid; grid-template-columns:1fr 1.3fr 1fr; gap:8px; padding:12px 0 max(20px, env(safe-area-inset-bottom, 0px)); }
+.choices { flex:none; display:grid; grid-template-columns:1fr 1.3fr 1fr; gap:6px; padding:6px; margin:12px -14px max(20px, env(safe-area-inset-bottom, 0px)); border-radius:20px; background:#1B1B1A; box-shadow:inset 0 0 0 1px rgba(236,234,229,.10); }
 .choices.two { grid-template-columns:1fr 1fr; }
-.choice { display:flex; align-items:center; justify-content:center; min-height:52px; border-radius:12px; background:var(--btn2); color:var(--ink); font-size:1rem; font-weight:500; transition:transform .1s ease, filter .1s ease; }
-.choice.main { background:var(--accent); color:var(--onAccent); font-weight:600; }
+.choice { display:flex; align-items:center; justify-content:center; min-height:56px; border-radius:14px; background:#2A2A28; color:var(--ink); font-size:1rem; font-weight:500; transition:transform .1s ease, filter .1s ease; }
+.choice.main { background:var(--accent); color:var(--onAccent); font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,.45), 0 8px 18px rgba(0,0,0,.45); }
 .choice:active { transform:scale(.97); filter:brightness(.92); }
 .choicenote { flex:none; margin:12px 0 0; font-size:var(--t-sm); color:var(--muted); text-align:center; }
-.qbtn { flex:none; align-self:flex-start; display:inline-flex; align-items:center; gap:10px; min-height:44px; margin-top:22px; padding:0 16px 0 14px; border-radius:10px; background:var(--btn2); color:var(--ink); font-size:var(--t-md); }
+.qacts { flex:none; display:flex; gap:8px; margin-top:22px; flex-wrap:wrap; }
+.qbtn { flex:none; align-self:flex-start; display:inline-flex; align-items:center; gap:10px; min-height:44px; padding:0 16px 0 14px; border-radius:12px; background:var(--btn2); color:var(--ink); font-size:var(--t-md); }
 .lineacts { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .laterbtn { margin:0; align-self:center; color:var(--ink); }
 .wchoices { margin:0 0 24px; padding:0 0 0 20px; display:grid; gap:10px; color:var(--muted); }
@@ -281,15 +287,18 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .empty h1 { margin:0; font-size:var(--d-lg); line-height:1.04; letter-spacing:-.03em; font-weight:600; text-wrap:balance; }
 .empty p { margin:14px 0 0; font-size:var(--t-md); line-height:1.45; color:var(--muted); max-width:32ch; }
 .empty .acts { display:flex; flex-wrap:wrap; gap:12px; margin-top:24px; }
-/* Living it: one thin ring of ink that opens from the words and fades. Never with reduced motion. */
+/* Lived: one thin ring of ink that opens from the words and fades. Never with reduced motion. */
 .burst { position:fixed; z-index:6; width:200px; height:200px; margin:-100px 0 0 -100px; border-radius:50%; pointer-events:none; border:1px solid var(--ink); animation:burst .7s var(--ease-out) forwards; }
 @keyframes burst { from { transform:scale(.2); opacity:1; } to { transform:scale(2.6); opacity:0; } }
 
 /* First-use tip: the page dims, a short note sits above the ring. Shown once. */
 
 /* Text button, for actions that are not the primary one: a hairline box. */
-.btn3d { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 18px; border:0; border-radius:10px; background:var(--btn2); font-size:0.8824rem; font-weight:500; color:var(--ink); white-space:nowrap; }
-.btn3d.sm { min-height:40px; padding:0 14px; font-size:var(--t-sm); }
+/* Corner scale (1.75.0): 20 the tray; 16 the panel, sheets, cards and the collection list; 12 for 44 to 56px
+   controls; 10 for 30 to 40px controls (switches, small buttons, steppers); 8 for chips and the pieces inside a 12;
+   2 for marks. Anything inside another shape uses the outer corner minus the gap. */
+.btn3d { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 18px; border:0; border-radius:12px; background:var(--btn2); font-size:0.8824rem; font-weight:500; color:var(--ink); white-space:nowrap; }
+.btn3d.sm { min-height:36px; padding:0 14px; font-size:var(--t-sm); border-radius:10px; }
 .btn3d:disabled { opacity:.45; cursor:default; }
 .btn3d:active:not(:disabled), .primary:active:not(:disabled) { filter:brightness(.92); }
 /* The primary action: solid ink, one per sheet. */
@@ -299,20 +308,23 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 /* ---------- Menu ---------- */
 /* A plain panel under the menu button. A native <dialog> shown with showModal(): focus stays inside,
    the page behind is inert, and Escape or a tap outside closes it. */
-.menu { position:fixed; inset:calc(env(safe-area-inset-top, 0px) + 62px) max(var(--gutter), calc((100vw - 560px) / 2 + var(--gutter))) auto auto; margin:0; width:240px; padding:6px 0; border-radius:0; color:var(--ink); }
+.menu { position:fixed; inset:calc(env(safe-area-inset-top, 0px) + 140px) max(var(--gutter), calc((100vw - 560px) / 2 + var(--gutter))) auto auto; margin:0; width:250px; padding:6px; border:0; border-radius:16px; color:var(--ink); background:var(--card); box-shadow:0 2px 6px rgba(0,0,0,.08), 0 16px 40px rgba(0,0,0,.24); }
 .menu[open] { display:grid; }
 .menu::backdrop { background:var(--scrim); }
 @media (prefers-reduced-motion: no-preference) { .menu[open] { animation:menuin .16s var(--ease-out); transform-origin:100% 0; } }
 @keyframes menuin { from { opacity:0; transform:translateY(-4px); } }
-.menu button { display:flex; justify-content:space-between; align-items:center; gap:10px; min-height:48px; padding:0 16px; font-size:var(--t-md); text-align:left; }
+.menu button { display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; min-height:48px; padding:0 12px; border-radius:10px; font-size:var(--t-md); text-align:left; }
+.menu button[aria-pressed="true"] { background:var(--deep); font-weight:500; }
+.menu #menuList { display:grid; }
+.menu [data-m] { color:var(--muted); }
 .menu button:hover, .menu button:focus-visible { background:var(--deep); }
 .menu button span { color:var(--faint); font-size:var(--t-xs); }
 .menu button[hidden] { display:none; }
-.menu hr { border:0; border-top:1px solid var(--line); margin:6px 0; }
+.menu hr { border:0; border-top:1px solid var(--line); margin:6px 8px; }
 
 /* ---------- Ledger ---------- */
-#v-ledger { overflow-y:auto; overscroll-behavior:contain; margin-inline:calc(-1 * var(--gutter)); padding:8px var(--gutter) 0; scrollbar-width:none; }
-.lpanel { flex:1 0 auto; margin:20px calc(-1 * var(--gutter)) 0; padding:4px var(--gutter) calc(max(18px, env(safe-area-inset-bottom, 0px)) + 40px); background:var(--paper); color:var(--ink); border-radius:12px 12px 0 0; box-shadow:0 -1.5px 3.5px rgba(0,0,0,.115), 0 -9.5px 22px rgba(0,0,0,.15), 0 -14px 32px rgba(0,0,0,.05); }
+#v-ledger { overflow-y:auto; overscroll-behavior:contain; margin-inline:calc(-1 * var(--gutter)); padding:12px var(--gutter) 0; scrollbar-width:none; background:var(--band); }
+.lpanel { flex:1 0 auto; margin:20px calc(-1 * var(--gutter)) 0; padding:4px var(--gutter) calc(max(18px, env(safe-area-inset-bottom, 0px)) + 40px); background:var(--paper); color:var(--ink); border-radius:16px 16px 0 0; box-shadow:0 -1.5px 3.5px rgba(0,0,0,.115), 0 -9.5px 22px rgba(0,0,0,.15), 0 -14px 32px rgba(0,0,0,.05); }
 #v-ledger::-webkit-scrollbar { display:none; }
 #v-ledger > * { flex-shrink:0; }
 .ptitle { margin:4px 0 0; font-size:var(--d-md); font-weight:600; letter-spacing:-.02em; line-height:1.1; }
@@ -324,7 +336,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .wkey div { display:flex; flex-direction:column; gap:6px; }
 .wkey b { font-size:1.7647rem; line-height:1; letter-spacing:-.02em; }
 .wkey span { font-size:var(--t-xs); color:var(--muted); }
-.sec2 { margin:28px 0 0; display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-size:var(--t-xs); font-weight:500; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
+.sec2 { margin:10px 4px -10px; display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-size:var(--t-sm); font-weight:400; color:var(--muted); }
 /* Settings (1.48.0): Advanced folds the rarely touched parts. */
 .adv { margin-top:28px; border-top:1px solid var(--line); }
 .adv > summary { list-style:none; display:flex; justify-content:space-between; align-items:center; min-height:52px; cursor:pointer; font-size:var(--t-md); color:var(--ink); }
@@ -357,7 +369,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .lrow2 small { white-space:pre; }
 /* Ledger tabs (1.43.0): one group at a time, each count under its name so all four fit a phone. */
 .ltabs { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; margin-top:20px; }
-.ltab { display:flex; flex-direction:column-reverse; justify-content:space-between; align-items:flex-start; min-height:76px; padding:10px 9px; border-radius:10px; background:var(--bandTile); font-size:0.6765rem; color:var(--muted); white-space:nowrap; text-align:left; letter-spacing:-.01em; }
+.ltab { display:flex; flex-direction:column-reverse; justify-content:space-between; align-items:flex-start; min-height:76px; padding:10px 9px; border-radius:12px; background:var(--bandTile); font-size:0.6765rem; color:var(--muted); white-space:nowrap; text-align:left; letter-spacing:-.01em; }
 .ltab b { font-weight:500; font-size:1.4118rem; line-height:1; color:var(--ink); font-variant-numeric:tabular-nums; }
 .ltab[aria-selected="true"] { background:#121212; color:#A3A29D; }
 .ltab[aria-selected="true"] b { color:#ECEAE5; }
@@ -382,14 +394,16 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 /* Flat, square, a hairline on top and a grabber; fixed to the bottom, at most 92% of the height,
    scrollable inside. Native <dialog> elements shown with showModal(); the UA styles are reset. */
 .sheet { position:fixed; inset:auto 0 0 0; width:100%; max-width:560px; margin:0 auto; max-height:calc(100% - env(safe-area-inset-top, 0px) - var(--fade)); overflow-y:auto; overscroll-behavior:contain;
-  border:0; border-top:1px solid var(--line); border-radius:0; padding:12px var(--gutter) calc(24px + env(safe-area-inset-bottom, 0px)); gap:18px;
+  border:0; border-radius:16px 16px 0 0; padding:12px var(--gutter) calc(24px + env(safe-area-inset-bottom, 0px)); gap:18px; box-shadow:0 -1.5px 3.5px rgba(0,0,0,.115), 0 -9.5px 22px rgba(0,0,0,.15);
   color:var(--ink); background:var(--paper); scrollbar-width:none; }
 .sheet::-webkit-scrollbar { display:none; }
 .sheet[open] { display:grid; align-content:start; }
 .sheet.tall { min-height:min(88%, calc(100% - env(safe-area-inset-top, 0px) - var(--fade))); }
 /* Sheet tops (1.55.0): every sheet stops below the status bar and the iPhone's fade under it (--fade), and its
    title row stays pinned while the fields scroll. */
-dialog.sheet > h2 { position:sticky; top:-12px; z-index:2; margin:-10px calc(-1 * var(--gutter)) 0; padding:22px var(--gutter) 8px; background:var(--paper); }
+dialog.sheet > h2 { position:sticky; top:-12px; z-index:2; margin:-10px calc(-1 * var(--gutter)) 0; padding:22px var(--gutter) 8px; background:var(--paper); border-radius:16px 16px 0 0; }
+.sheet h2 .backlink { display:inline-flex; align-items:center; gap:2px; margin:-6px 0 -6px -10px; color:var(--accent); font-weight:500; }
+.sheet h2 .backlink + span { flex:1; text-align:center; }
 .sheet::backdrop { background:var(--scrim); }
 input.field.timefield { width:132px; min-width:0; flex:none; padding:8px 0; border-bottom:0; text-align:right; }
 .howlist { margin:0; padding:4px 0 16px 20px; display:grid; gap:10px; font-size:var(--t-sm); line-height:1.5; color:var(--muted); }
@@ -524,21 +538,30 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 .notice[hidden] { display:none; }
 .link-danger { font-size:var(--t-sm); font-weight:500; color:var(--danger); min-height:44px; justify-self:center; }
 /* Settings: groups of rows separated by hairlines. */
-.panel { padding:0; border:0 !important; border-top:1px solid var(--line) !important; background:none !important; }
-.setrow { display:flex; justify-content:space-between; align-items:center; gap:14px; min-height:56px; padding:12px 0; border-bottom:1px solid var(--line); font-size:var(--t-md); }
+.panel { padding:0 16px; border:0 !important; border-radius:16px; background:var(--card) !important; overflow:hidden; }
+.setrow { display:flex; justify-content:space-between; align-items:center; gap:14px; min-height:54px; padding:10px 0; border-bottom:1px solid var(--line); font-size:var(--t-md); }
+.panel > .setrow:last-child, .panel > div:last-child > .setrow:last-child, .panel > details:last-child { border-bottom:0; }
+.setrow.nav { width:100%; text-align:left; color:inherit; text-decoration:none; }
+.setrow.nav > span:first-child { flex:1; }
+.setrow .val { color:var(--muted); font-size:var(--t-md); white-space:nowrap; }
+.setrow .chev { width:16px; height:16px; color:var(--faint); margin-left:-6px; }
+.setrow .field { flex:1; min-width:0; }
+.note.fine { margin:-6px 4px 0; font-size:var(--t-xs); }
+.panel details.adv.inner { border-bottom:1px solid var(--line); }
+.panel details.adv.inner > summary { font-size:var(--t-md); color:var(--ink); min-height:54px; }
 .setrow.stack { display:grid; gap:12px; justify-content:stretch; }
 .setrow small { display:block; font-size:var(--t-xs); color:var(--muted); margin-top:2px; line-height:1.4; }
 .setrow > span:first-child { min-width:0; }
-.seg { display:grid; grid-template-columns:repeat(3, auto); padding:0; gap:0; flex:none; flex:none; border:1px solid var(--line) !important; background:none !important; }
-.seg button { min-height:36px; padding:0 12px; font-size:var(--t-sm); color:var(--muted); border:0 !important; }
-.seg button[aria-pressed="true"] { color:var(--onAccent); background:var(--accent) !important; }
-.toggle { width:46px; height:26px; border-radius:13px; position:relative; flex:none; border:1px solid var(--muted); background:none; }
+.seg { display:grid; grid-template-columns:repeat(3, auto); padding:3px; gap:0; flex:none; border:0 !important; border-radius:10px; background:var(--btn2) !important; }
+.seg button { min-height:30px; padding:0 11px; font-size:var(--t-sm); font-weight:500; color:var(--muted); border:0 !important; border-radius:7px; }
+.seg button[aria-pressed="true"] { color:var(--ink); background:var(--card) !important; box-shadow:0 1px 3px rgba(0,0,0,.14); }
+.toggle { width:51px; height:31px; border-radius:10px; position:relative; flex:none; border:0; background:var(--track); transition:background .18s ease; }
 .toggle::after { content:""; position:absolute; inset:-9px 0; }
-.toggle i { position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:var(--muted); transition:left .18s var(--ease-out); }
+.toggle i { position:absolute; top:2px; left:2px; width:27px; height:27px; border-radius:8px; background:#FFFFFF; box-shadow:0 1px 3px rgba(0,0,0,.2); transition:left .18s var(--ease-out); }
 .toggle[aria-checked="true"] { background:var(--accent); border-color:var(--accent); }
-.toggle[aria-checked="true"] i { left:23px; background:var(--paper); }
+.toggle[aria-checked="true"] i { left:22px; }
 .stepper { display:flex; align-items:center; gap:4px; flex:none; }
-.stepper button { width:40px; height:40px; border:0 !important; display:grid; place-items:center; font-size:1.0588rem; color:var(--ink); }
+.stepper button { width:36px; height:32px; border:0 !important; border-radius:10px; background:var(--btn2) !important; display:grid; place-items:center; font-size:1.0588rem; color:var(--ink); }
 .stepper button:disabled { opacity:.35; cursor:default; }
 .stepper output { font-size:var(--t-md); font-weight:500; min-width:56px; text-align:center; font-variant-numeric:tabular-nums; }
 .btnrow { display:flex; gap:8px; flex-wrap:wrap; }
@@ -550,15 +573,15 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 .steps div { display:grid; grid-template-columns:26px 1fr; gap:8px; align-items:start; }
 .steps b { width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font-size:0.6471rem; font-weight:600; color:var(--onBrass); background:var(--ink); }
 
-/* Toast: a plain bar along the bottom, near the thumb (back from the top in 1.41.0; the hold menu opens
-   above it, so it no longer gets in the way). #toastPop is a manual popover so it sits in the top layer,
-   above an open sheet. Screen readers hear the message from the #toastHost live region instead. */
-#toastPop { position:fixed; inset:auto max(var(--gutter), calc((100vw - 560px) / 2 + var(--gutter))) max(8px, calc(env(safe-area-inset-bottom, 0px) - 8px)); margin:0; width:auto;
+/* Toast (1.75.0): an off-white card with 12px corners and a soft shadow, just above the choices so it never
+   covers them. #toastPop is a manual popover so it sits in the top layer, above an open sheet. Screen readers
+   hear the message from the #toastHost live region instead. */
+#toastPop { position:fixed; inset:auto max(16px, calc((100vw - 560px) / 2 + 16px)) calc(max(20px, env(safe-area-inset-bottom, 0px)) + 82px); margin:0; width:auto;
   border:0; padding:0; background:transparent; overflow:visible; z-index:40; color:inherit; }
-.toast { display:flex; align-items:center; justify-content:space-between; gap:6px; min-height:48px; padding:0 4px 0 16px; font-size:var(--t-sm); color:var(--onBrass); background:var(--ink) !important; border:0 !important; }
+.toast { display:flex; align-items:center; justify-content:space-between; gap:6px; min-height:48px; padding:0 4px 0 16px; border-radius:12px; font-size:var(--t-sm); font-weight:500; color:#141414; background:#ECEAE5 !important; border:0 !important; box-shadow:0 2px 6px rgba(0,0,0,.10), 0 12px 32px rgba(0,0,0,.28); }
 .toast:not(:has(button)) { padding-right:16px; }
 .toast > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.toast button { flex:none; color:var(--onBrass); font-weight:600; font-size:var(--t-sm); min-height:44px; min-width:44px; padding:0 14px; text-decoration:underline; text-underline-offset:4px; }
+.toast button { flex:none; color:#1F5FCC; font-weight:600; font-size:var(--t-sm); min-height:44px; min-width:44px; padding:0 14px; border-radius:10px; }
 @media (prefers-reduced-motion: no-preference) { .toast { animation:toastin .22s var(--ease-out); } }
 @keyframes toastin { from { opacity:0; transform:translateY(8px); } }
 
@@ -579,18 +602,20 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <!-- Main screen. The top stays put; the deck and the Ledger swap in place below it. Everything that is not
      one of the three moves is in the menu at the top right. -->
 <div class="app">
-  <header class="top">
-    <!-- On the deck: the collection Show is drawing from, when one is chosen; nothing otherwise. On the Ledger: the way back to the deck. -->
-    <div class="voicehead" id="voiceHead" hidden><span class="mono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17c0-4.5 2.2-8 6-10l1 1.6C8.6 10 7.6 11.8 7.4 13.5H10V19H4zm9.5 0c0-4.5 2.2-8 6-10l1 1.6c-2.4 1.4-3.4 3.2-3.6 4.9h2.6V19h-6z"/></svg></span><span><b id="voiceName"></b><small>Today’s voice</small></span></div>
+  <header class="top onsmoke">
+    <!-- 1.75.0: no menu. The two places are a switch; Capture and Settings are buttons beside it. -->
+    <div class="navseg" role="tablist" aria-label="View" id="navSeg"><button type="button" role="tab" id="tabDeck" aria-selected="true">Today</button><button type="button" role="tab" id="tabLedger" aria-selected="false">Ledger</button></div>
     <h1 class="sr" id="todayLbl"></h1>
-    <button type="button" class="iconbtn raised" id="backDeck" aria-label="Back to the deck" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="topacts">
       <button type="button" class="iconbtn" id="addTop" aria-label="Capture a principle"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
-      <button type="button" class="iconbtn raised" id="menuBtn" aria-label="Menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16M4 16h10"/></svg></button>
+      <button type="button" class="iconbtn" id="setBtn" aria-label="Settings"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     </div>
   </header>
 
-  <div class="setband" id="setBand" hidden><p class="setlbl" id="setLbl"></p><div class="tiles" id="setTiles" aria-hidden="true"></div></div>
+  <div class="setband onsmoke" id="setBand" hidden>
+    <div class="bandrow"><p class="setlbl" id="bandLbl"></p><button type="button" class="chip" id="menuBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu" hidden><span id="chipLbl">All</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></div>
+    <div class="tiles" id="setTiles" aria-hidden="true"></div>
+  </div>
 
   <main class="main">
 <!-- Deck view. Empty here on purpose: renderDeck() builds the collection keys, the principle, the three keys and the footer. -->
@@ -598,8 +623,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 
 <!-- Ledger view: a summary, tabs for the groups (one shown at a time),
      then Your week and the last 12 weeks. Filled by renderLedger(). -->
-  <section class="view" id="v-ledger" aria-label="Ledger" hidden>
-    <h2 class="ptitle">Ledger</h2>
+  <section class="view onsmoke" id="v-ledger" aria-label="Ledger" hidden>
+    <h2 class="sr">Ledger</h2>
     <div id="ledgerBk"></div>
     <p class="summary" id="lSummary"></p>
     <div class="ltabs" id="ledgerTabs" role="tablist" aria-label="Groups"></div>
@@ -613,17 +638,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   </main>
 </div>
 
-<!-- Menu: a frosted panel under the menu button. -->
-<dialog class="menu frost" id="menu" aria-label="Menu">
-  <button type="button" data-m="capture">Capture<span>New principle</span></button>
-  <button type="button" data-m="edit" id="mEdit">Edit this principle</button>
-  <hr>
-  <button type="button" data-m="focus" id="mFocus">Show<span id="mFocusVal">All</span></button>
-  <button type="button" data-m="ledger" id="mLedger">Ledger<span>Your record</span></button>
-  <button type="button" data-m="collections">Collections<span id="mColl">0</span></button>
-  <hr>
-  <button type="button" data-m="settings">Settings<span id="mVer"></span></button>
-</dialog>
+<!-- The collection list (1.75.0): the one menu left, under the chip in the band. One kind of thing: which
+     collection the deck draws from, and the way to manage them. -->
+<dialog class="menu" id="menu" aria-label="Collections"><div id="menuList"></div><hr><button type="button" data-m="collections">Manage collections…</button></dialog>
 
 <!-- Sheets are native <dialog> elements opened with showModal(): the browser traps focus, makes the
      page behind inert, and draws the dimmed ::backdrop. Tapping the backdrop or Escape closes them. -->
@@ -659,7 +676,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   </form>
 </dialog>
 
-<!-- Living it sheet -->
+<!-- Lived sheet -->
 <dialog class="sheet" id="sheetShed" aria-modal="true" aria-labelledby="sheetShedTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetShedTitle">Lived</span> <button type="button" id="shedCancel">Not yet</button></h2>
@@ -678,7 +695,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <button class="primary" type="button" id="confirmShed">I live this now</button>
 </dialog>
 
-<!-- Evidence sheet: add or edit where a lived principle showed up, from the Living it record. -->
+<!-- Evidence sheet: add or edit where a lived principle showed up, from the Lived record. -->
 <dialog class="sheet" id="sheetEvidence" aria-modal="true" aria-labelledby="sheetEvidenceTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetEvidenceTitle">Where it showed up</span> <button type="button" data-close>Cancel</button></h2>
@@ -852,11 +869,17 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <dialog class="sheet tall" id="sheetSettings" aria-modal="true" aria-labelledby="sheetSettingsTitle">
   <div class="grabber" aria-hidden="true"></div>
   <h2><span id="sheetSettingsTitle">Settings</span> <button type="button" data-close>Done</button></h2>
-  <!-- Settings (1.67.0): what people change most comes first; help, privacy and about have their own group;
-       Advanced holds only what almost nobody needs. -->
+  <!-- Settings (1.75.0): grouped cards, what people change most first. Voices, the starter decks and About
+       have pages of their own, so this one is about half as long. -->
 
-  <h3 class="sec2" style="margin-top:4px">Reminders</h3>
-  <div class="panel raised" id="remindPanel">
+  <div id="plusGroup" hidden>
+  <div class="panel">
+    <button type="button" class="setrow nav" id="openPlus"><span>Scales Plus<small id="plusStatus">AI questions, the best quote, and answers when you reply</small></span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+  </div>
+
+  <h3 class="sec2">Reminders</h3>
+  <div class="panel" id="remindPanel">
     <div id="remindNative" hidden>
       <div class="setrow"><span id="remindLbl">Remind me<small>Your set in the morning, anything saved for Later in the evening</small></span>
         <button type="button" class="toggle" id="remindToggle" role="switch" aria-checked="false" aria-labelledby="remindLbl"><i></i></button></div>
@@ -877,58 +900,37 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   </div>
 
   <h3 class="sec2">Your deck</h3>
-  <div class="panel raised">
+  <div class="panel">
     <div class="setrow"><span id="setLbl">Principles a day<small>Then Done for today</small></span>
-      <div class="stepper" role="group" aria-labelledby="setLbl"><button type="button" class="raised" id="setDown" aria-label="One fewer">&minus;</button><output id="setOut" aria-live="polite">5</output><button type="button" class="raised" id="setUp" aria-label="One more">+</button></div></div>
+      <div class="stepper" role="group" aria-labelledby="setLbl"><button type="button" id="setDown" aria-label="One fewer">&minus;</button><output id="setOut" aria-live="polite">5</output><button type="button" id="setUp" aria-label="One more">+</button></div></div>
     <div class="setrow"><span id="restLbl">Rest after Skip<small>Then it comes back first</small></span>
-      <div class="stepper" role="group" aria-labelledby="restLbl"><button type="button" class="raised" id="restDown" aria-label="One day less">&minus;</button><output id="restOut" aria-live="polite">4 days</output><button type="button" class="raised" id="restUp" aria-label="One day more">+</button></div></div>
+      <div class="stepper" role="group" aria-labelledby="restLbl"><button type="button" id="restDown" aria-label="One day less">&minus;</button><output id="restOut" aria-live="polite">4 days</output><button type="button" id="restUp" aria-label="One day more">+</button></div></div>
     <div class="setrow"><span id="aiLbl">AI questions and quotes<small id="aiSub">Your key stays on this phone</small></span>
       <button type="button" class="toggle" id="aiToggle" role="switch" aria-checked="true" aria-labelledby="aiLbl"><i></i></button></div>
-    <button type="button" class="setrow" id="openCollections" style="width:100%;text-align:left;color:inherit"><span>Collections<small>Rename, merge or remove</small></span><span class="status" style="display:flex;align-items:center;gap:6px;font-size:0.8235rem"><span id="collCount">0</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px"><path d="M9 6l6 6-6 6"/></svg></span></button>
+    <button type="button" class="setrow nav" id="openCollections"><span>Collections</span><span class="val" id="collCount">0</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button type="button" class="setrow nav" id="openVoices"><span>Voices</span><span class="val" id="voiceCount"></span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
   </div>
-
-  <h3 class="sec2">Voices<span id="voiceToday"></span></h3>
-  <div class="panel raised" id="voiceList"></div>
-  <div class="panel raised">
-    <div class="setrow stack voiceadd">
-      <input class="field" id="voiceName" maxlength="60" autocomplete="off" placeholder="Add someone you admire" aria-label="Name to add">
-      <div class="setrow" style="border:0;padding:0;min-height:0"><span id="voiceFirstLbl">Speaks in the first person<small>Only for someone no longer living</small></span>
-        <button type="button" class="toggle" id="voiceFirst" role="switch" aria-checked="false" aria-labelledby="voiceFirstLbl"><i></i></button></div>
-      <button class="btn3d sm raised" type="button" id="voiceAdd" disabled>Add</button>
-    </div>
-  </div>
-  <p class="note">One voice a day, in turn. Reflect shows a real quote from today’s voice when one fits, and the voice answers when you reply.</p>
 
   <h3 class="sec2">Look</h3>
-  <div class="panel raised">
+  <div class="panel">
     <div class="setrow"><span id="lookLbl">Appearance</span>
-      <div class="seg pressed" role="group" aria-labelledby="lookLbl"><button type="button" data-look="auto" aria-pressed="false">Match iPhone</button><button type="button" data-look="matte" aria-pressed="true">Black</button><button type="button" data-look="light" aria-pressed="false">White</button></div></div>
+      <div class="seg" role="group" aria-labelledby="lookLbl"><button type="button" data-look="auto" aria-pressed="false">iPhone</button><button type="button" data-look="matte" aria-pressed="true">Black</button><button type="button" data-look="light" aria-pressed="false">White</button></div></div>
     <div class="setrow"><span id="whereLbl">Show where it came from<small>Collection, origin and author on Reflect</small></span>
       <button type="button" class="toggle" id="whereToggle" role="switch" aria-checked="true" aria-labelledby="whereLbl"><i></i></button></div>
   </div>
 
   <h3 class="sec2">Your data</h3>
-  <div class="panel raised">
-    <div class="setrow"><span>Back up<small id="syncText">One file with everything, for iCloud Drive</small></span><button class="btn3d sm raised" type="button" id="exportBtn">Back up</button></div>
-    <div class="setrow"><span>Restore<small>Adds a backup to this phone</small></span><button class="btn3d sm raised" type="button" id="importBtn">Restore</button></div>
-    <div class="setrow"><span>CSV<small>From or to a spreadsheet</small></span><div class="btnrow" style="flex:none"><button class="btn3d sm raised" type="button" id="csvImportBtn">Import</button><button class="btn3d sm raised" type="button" id="csvExportBtn">Export</button></div></div>
+  <div class="panel">
+    <div class="setrow"><span>Back up<small id="syncText">One file with everything, for iCloud Drive</small></span><button class="btn3d sm" type="button" id="exportBtn">Back up</button></div>
+    <div class="setrow"><span>Restore<small>Adds a backup to this phone</small></span><button class="btn3d sm" type="button" id="importBtn">Choose file</button></div>
+    <div class="setrow"><span>Spreadsheet (CSV)</span><div class="btnrow" style="flex:none"><button class="btn3d sm" type="button" id="csvImportBtn">Import</button><button class="btn3d sm" type="button" id="csvExportBtn">Export</button></div></div>
+    <button type="button" class="setrow nav" id="openStarter"><span>Add a starter deck</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
     <input type="file" id="csvFile" accept=".csv,text/csv,text/plain" hidden>
   </div>
-  <div class="group" id="starterGroup">
-    <h4 class="sec3">Add a starter deck</h4>
-    <div class="sd"><button class="btn3d raised" type="button" data-starter="stoic">Stoic</button><button class="btn3d raised" type="button" data-starter="leadership">Leadership</button><button class="btn3d raised" type="button" data-starter="athletic">Athletic mindset</button><button class="btn3d raised" type="button" data-starter="overcoming">Self-overcoming</button></div>
-  </div>
-
-  <div id="plusGroup" hidden>
-  <h3 class="sec2">Scales Plus</h3>
-  <div class="panel raised">
-    <button type="button" class="setrow" id="openPlus" style="width:100%;text-align:left;color:inherit"><span>Scales Plus<small id="plusStatus">AI questions, the best quote, and answers when you reply</small></span><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;flex:none"><path d="M9 6l6 6-6 6"/></svg></button>
-  </div>
-  </div>
 
   <h3 class="sec2">Help</h3>
-  <div class="panel raised">
+  <div class="panel">
     <details class="adv inner helpbox">
       <summary>How Scales works</summary>
       <ul class="howlist">
@@ -942,19 +944,16 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         <li>Press and hold a principle to edit it, or a quote to keep it as a principle of its own.</li>
       </ul>
     </details>
-    <a class="setrow linkrow" id="feedbackLink" href="mailto:support@tangomike.app"><span>Send feedback<small>An email to the developer, with your version filled in</small></span><span class="chev" aria-hidden="true">›</span></a>
-    <a class="setrow linkrow" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support<small>Questions and problems</small></span><span class="chev" aria-hidden="true">›</span></a>
-    <a class="setrow linkrow" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy<small id="privacyNote">Your principles stay on this phone</small></span><span class="chev" aria-hidden="true">›</span></a>
-    <div class="setrow stack aboutbox">
-      <p class="note" id="versionText">Version</p>
-      <p class="note">The name comes from scales falling from the eyes, and from Nietzsche’s three metamorphoses: the camel carries ideas, the lion tests them, the child acts from them without thinking. Scales is built for the lion stage.</p>
-      <p class="note" id="installNote">In Safari, tap Share, then Add to Home Screen. Works offline once installed.</p>
-    </div>
+    <a class="setrow nav" id="feedbackLink" href="mailto:support@tangomike.app"><span>Send feedback</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+    <a class="setrow nav" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+    <a class="setrow nav" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
   </div>
 
-  <details class="adv" id="advanced">
-    <summary>Advanced</summary>
-    <div class="panel raised">
+  <h3 class="sec2">About</h3>
+  <div class="panel">
+    <button type="button" class="setrow nav" id="openAbout"><span>About Scales</span><span class="val" id="verShort"></span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <details class="adv inner" id="advanced">
+      <summary>Advanced</summary>
     <div class="setrow stack" id="aiServer" hidden>
       <div class="btnrow"><button class="btn3d sm raised" type="button" id="testAi">Test AI</button></div>
       <p class="note" id="testAiResult" hidden></p>
@@ -966,9 +965,43 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       <p class="status" id="aiText">AI lines: built-in (no key)</p>
       <p class="note" id="aiNote">On this address AI uses your own Anthropic key. The iPhone app and scales.tangomike.app need none.</p>
     </div>
-    </div>
-    <p class="note">CSV columns: text, title, author, creationDate, tags, collection, link, citation. Importing leaves out principles already in the deck.</p>
-  </details>
+      <p class="note">CSV columns: text, title, author, creationDate, tags, collection, link, citation. Importing leaves out principles already in the deck.</p>
+    </details>
+  </div>
+  <p class="note fine" id="privacyNote">Your principles stay on this phone.</p>
+</dialog>
+
+<!-- Voices (1.75.0): its own page, from Settings. -->
+<dialog class="sheet tall" id="sheetVoices" aria-modal="true" aria-labelledby="sheetVoicesTitle">
+  <div class="grabber" aria-hidden="true"></div>
+  <h2><button type="button" class="backlink" data-back="settings"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Settings</button><span id="sheetVoicesTitle">Voices</span><button type="button" data-close>Done</button></h2>
+  <p class="note">One voice a day, in turn. <span id="voiceToday"></span>. Reflect shows a real quote from today’s voice when one fits, and the voice answers when you reply.</p>
+  <div class="panel" id="voiceList"></div>
+  <h3 class="sec2">Add someone</h3>
+  <div class="panel">
+    <div class="setrow"><input class="field" id="voiceName" maxlength="60" autocomplete="off" placeholder="Name of someone you admire" aria-label="Name to add"><button class="btn3d sm" type="button" id="voiceAdd" disabled>Add</button></div>
+    <div class="setrow"><span id="voiceFirstLbl">Speaks in the first person<small>Only for someone no longer living</small></span>
+      <button type="button" class="toggle" id="voiceFirst" role="switch" aria-checked="false" aria-labelledby="voiceFirstLbl"><i></i></button></div>
+  </div>
+</dialog>
+
+<!-- Starter decks (1.75.0): from Settings > Your data, or from an empty deck. -->
+<dialog class="sheet" id="sheetStarter" aria-modal="true" aria-labelledby="sheetStarterTitle">
+  <div class="grabber" aria-hidden="true"></div>
+  <h2><button type="button" class="backlink" data-back="settings"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Settings</button><span id="sheetStarterTitle">Starter decks</span><button type="button" data-close>Done</button></h2>
+  <p class="note">Adds a short deck to yours. Principles already there are left out.</p>
+  <div class="group" id="starterGroup">
+    <div class="sd"><button class="btn3d" type="button" data-starter="stoic">Stoic</button><button class="btn3d" type="button" data-starter="leadership">Leadership</button><button class="btn3d" type="button" data-starter="athletic">Athletic mindset</button><button class="btn3d" type="button" data-starter="overcoming">Self-overcoming</button></div>
+  </div>
+</dialog>
+
+<!-- About (1.75.0): the version, the name, and installing. -->
+<dialog class="sheet" id="sheetAbout" aria-modal="true" aria-labelledby="sheetAboutTitle">
+  <div class="grabber" aria-hidden="true"></div>
+  <h2><button type="button" class="backlink" data-back="settings"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Settings</button><span id="sheetAboutTitle">About Scales</span><button type="button" data-close>Done</button></h2>
+  <p class="note" id="versionText">Version</p>
+  <p class="note">The name comes from scales falling from the eyes, and from Nietzsche’s three metamorphoses: the camel carries ideas, the lion tests them, the child acts from them without thinking. Scales is built for the lion stage.</p>
+  <p class="note" id="installNote">In Safari, tap Share, then Add to Home Screen. Works offline once installed.</p>
 </dialog>
 
 <!-- Measuring element for the Settings screen check: viewport heights and safe areas. Never visible. -->
@@ -1327,7 +1360,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // At rest nothing is shown; both lines are fetched in the background for the principle on screen and
   // the one queued next, so they are ready the moment they are needed. Without a key, or when the
   // model cannot supply a usable line, a built-in line is shown and nothing is kept.
-  // Questions to sit with (1.70.0), shown on Sit with it when no quote fits. One per principle per day.
+  // Questions to sit with (1.70.0), shown on Reflect when no quote fits. One per principle per day.
   var SIT_QUESTIONS = [
     "Where would this have changed something yesterday?",
     "What would living this look like before noon today?",
@@ -1527,7 +1560,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var l = shown, r = C.lastReply(t);
     if (!l || l.none || l.pending) { box.innerHTML = ""; return; }
     box.innerHTML = (r ? '<div class="bubble me"><p>' + esc(r.text) + "</p><small>You, " + esc(fmtDayKey(r.day)) + "</small></div>" : "") +
-      '<div class="lineacts"><button type="button" class="btn3d replybtn" id="replyBtn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Reply</button>' + laterHtml() + "</div>";
+      '<div class="lineacts"><button type="button" class="btn3d replybtn" id="replyBtn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Reply</button>' +
+      // 1.75.0: saving a quote or line as a principle is a button, not only a press and hold.
+      (l.ai ? '<button type="button" class="btn3d replybtn" data-move="save"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z"/></svg>Save</button>' : "") + laterHtml() + "</div>";
   }
   function fmtDayKey(d) { if (!d) return ""; var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
 
@@ -1644,7 +1679,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     renderDeck();
     if (peeked()) showLine(t, "push");
   }
-  // Later (1.42.0): not a skip. It waits until this evening, then opens straight to Sit with it.
+  // Later (1.42.0): not a skip. It waits until this evening, then opens straight to Reflect.
   var fromLater = false;
   function saveLater() {
     dropUndo();
@@ -1756,7 +1791,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // Builds the deck view (1.30.0): the collection keys, the principle on the page with where it came from,
   // the AI line in glass with Keep, the optional 'Have you lived this yet?' strip, the three keys and the
   // footer, plus the first-swipe tip the first time. Shows an empty state when nothing is on screen.
-  // Living it: one soft ring of brass blooms from the words (skipped with reduced motion).
+  // Lived: one soft ring of brass blooms from the words (skipped with reduced motion).
   var REDUCED = window.matchMedia ? matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
   function burst() {
     var c = $("card"); if (!c || REDUCED.matches) return;
@@ -1777,12 +1812,15 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
   $("focusList").addEventListener("click", function (e) {
     var b = e.target.closest("[data-coll]"); if (!b) return;
-    var c = b.getAttribute("data-coll"); hide();
+    hide(); setColl(b.getAttribute("data-coll"));
+  });
+  // Draw the deck from one collection, or from all of them ("").
+  function setColl(c) {
     if (c === deckColl()) return;
     prefs.deck_coll = c; savePrefs(); queued = null;
     var t = thoughts[current];
     if (t && t.status === "active" && C.inCollection(t, c) && phase === "rest") renderDeck(); else if (phase === "rest") { entering = true; showNext(); } else renderDeck();
-  });
+  }
   var entering = false;
   function times(n) { return n === 1 ? "once" : n === 2 ? "twice" : n + " times"; }
   // Under the words: collection, origin and author (when Show where it came from is on), and how often it was set aside.
@@ -1830,7 +1868,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     paintTop(dp);
     // A principle mid-push or mid-reflect stays on screen until you move on, even if that move ended the set.
     var mid = phase !== "rest" && nextUp();
-    // Its evening has come: a principle saved for later opens straight to Sit with it, ahead of everything.
+    // Its evening has come: a principle saved for later opens straight to Reflect, ahead of everything.
     var L = !mid && dueLater();
     if (L) {
       L.later = null; L.later_blocked = true; save(L);
@@ -1884,7 +1922,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         '<button type="button" class="btn3d raised" id="emptyStarter">Load a starter deck</button>');
       $("emptyAdd").onclick = openCapture;
       // Scroll only the Settings sheet to the starter decks; scrolling the element into view would also move the page.
-      $("emptyStarter").onclick = function () { openSettings(); var sh = $("sheetSettings"), g = $("starterGroup"); $("advanced").open = true; if (g) sh.scrollTop = Math.max(0, g.offsetTop - 12); };
+      $("emptyStarter").onclick = openStarter;
       paintStat();
       return;
     }
@@ -1939,7 +1977,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var pm = []; if (t.skip_count > 0) pm.push("Skipped " + times(t.skip_count)); if (String(t.collection || "").trim()) pm.push(esc(t.collection));
     v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current principle" aria-describedby="cardHow">' + words +
       (pm.length ? '<p class="pmeta">' + pm.join(" \u00b7 ") + "</p>" : "") +
-      '<button type="button" class="qbtn" data-move="peek"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.3M12 13.6v.01"/></svg>Today’s question</button>' + how + "</article>" +
+      '<div class="qacts"><button type="button" class="qbtn" data-move="peek"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.3M12 13.6v.01"/></svg>Today’s question</button>' +
+      '<button type="button" class="qbtn" data-move="edit"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Edit</button></div>' + how + "</article>" +
       choicesHtml();
     // A principle too long for the screen scrolls; a quiet hint says so until the end is reached (1.69.0).
     requestAnimationFrame(function () {
@@ -1979,6 +2018,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var k = e.target.closest("[data-move]"); if (!k || !onCard()) return;
     var m = k.getAttribute("data-move");
     if (NATIVE) toNative({ type: "haptic" });
+    if (m === "edit") { openEdit(onCard()); return; }
+    if (m === "save") { if (shown && shown.ai) openKeep(onCard(), shown.text, shown.quote ? { author: shown.author, src: shown.src } : null); return; }
     if (m === "skip") requestSkip(); else if (m === "later") saveLater(); else if (m === "peek") togglePeek(); else if (m === "stay") keepIt(); else act(m);
   });
 
@@ -2182,7 +2223,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // Settings: the voices, each with a switch; names you add can be removed.
   function paintVoices() {
     var chosen = voices().map(function (v) { return v.id; }), tv = todayVoice();
-    $("voiceToday").textContent = tv ? "Today: " + tv.short : "None chosen";
+    $("voiceToday").textContent = tv ? "Today: " + tv.name : "None chosen yet";
+    $("voiceCount").textContent = chosen.length + " chosen";
     $("voiceList").innerHTML = C.allVoices(prefs.custom_voices).map(function (v) {
       var on = chosen.indexOf(v.id) >= 0, lid = "vl-" + v.id.replace(/[^a-z0-9]/g, "-");
       return '<div class="setrow"><span id="' + lid + '">' + esc(v.name) + "<small>" + (v.living ? "Written about, in the third person" : "In the first person") +
@@ -2243,16 +2285,19 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     el.innerHTML = parts.length ? parts.join(" \u00b7 ") : '<span class="sr">Scales</span>';
   }
   // The band (1.74.0): today's voice and today's set as tiles, on the deck once the welcome is done.
+  // 1.75.0: today's voice left the band (it shows where it speaks: on the quote and its replies); the line
+  // says what is waiting tonight instead, and the chip picks the collection.
   function paintBand(phase) {
-    var on = !!prefs.onboarded && $("v-ledger").hidden, v = on && todayVoice();
-    $("voiceHead").hidden = !v; if (v) $("voiceName").textContent = v.name;
+    var on = !!prefs.onboarded && $("v-ledger").hidden;
     $("setBand").hidden = !on; if (!on) return;
     refreshDay();
     var n = setSize(), m = Math.min(day.moved.length, n), done = phase === "done" || m >= n, dc = deckColl();
-    $("setLbl").innerHTML = "<b>Today</b> \u00b7 " + (done ? (n === 1 ? "done" : "all " + n + " done") : m + " of " + n + " done") + (dc ? " \u00b7 " + esc(dc) : "");
+    var w = all().filter(function (x) { return x.status === "active" && x.later; }).length;
+    $("bandLbl").innerHTML = "<b>Today</b> \u00b7 " + (done ? (n === 1 ? "done" : "all " + n + " done") : m + " of " + n + " done") + (w ? " \u00b7 " + w + " saved for tonight" : "");
+    var cs = C.deckCollections(all()).length; $("menuBtn").hidden = !cs; $("chipLbl").textContent = dc || "All";
     var check = '<svg viewBox="0 0 24 24"><path d="M6 12.5l4 4 8-9"/></svg>', h = "";
     for (var i = 0; i < n; i++) h += i < m ? '<div class="tile done">' + check + "</div>" : '<div class="tile' + (i === m && !done ? " now" : "") + '"><i></i></div>';
-    $("setTiles").innerHTML = h; $("setTiles").classList.toggle("many", n > 8); $("setTiles").classList.toggle("few", n < 5);
+    $("setTiles").innerHTML = h; 
   }
   // The welcome (1.47.0): what Scales is, a starter deck or your own principle, then the hold, once.
   var welcomeStep = 0;
@@ -2260,7 +2305,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function renderWelcome() {
     var v = $("v-deck"), step = all().length ? 2 : welcomeStep;
     // 1.70.0: no + or menu during the welcome, so a new user cannot leave it halfway.
-    $("addTop").hidden = true; $("menuBtn").hidden = true;
+    $("addTop").hidden = true; $("setBtn").hidden = true; $("navSeg").hidden = true;
     if (step === 0) {
       v.innerHTML = '<div class="welcome"><h1>Scales</h1>' +
         "<p>Write down the principles you want to live by. Scales shows you one at a time, and keeps showing it until you live it without being reminded.</p>" +
@@ -2282,7 +2327,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         '<div class="widewrap"><button type="button" class="primary" id="wDone">Got it</button></div></div>';
       // 1.65.0: the AI question comes right after the welcome, where it has a reason, not on a later launch.
       var finish = function () {
-        $("addTop").hidden = false; $("menuBtn").hidden = false;
+        $("addTop").hidden = false; $("setBtn").hidden = false; $("navSeg").hidden = false;
         prefs.onboarded = true; prefs.welcoming = false; prefs.coach_seen = true; savePrefs(); showNext();
         if ((savedKey || plusOn()) && prefs.ai_consent === undefined) setTimeout(function () { if (!openSheet) askConsent(); }, 400);
       };
@@ -2455,7 +2500,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     editTarget = t;
     var lived = t.status === "shed";
     $("editNote").textContent = lived
-      ? "The Living it date, where it showed up, and the last AI line stay."
+      ? "The Lived date, where it showed up, and the last AI line stay."
       : "Your counts, dates and weight stay. Changing the wording rewrites the AI line; changing details keeps it.";
     $("editKept").innerHTML = (lived
       ? ["Lived " + fmtDate(t.shed_at), t.evidence ? "Where it showed up" : "", lastLine(t) ? "Last AI line" : "", "Skipped " + times(t.lifetime_skips)]
@@ -2582,9 +2627,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 
   // ---------- render: ledger ----------
   // Ledger (1.32.0): a record, not a scorecard. One sentence on where you stand, Your week, the 12 week grid,
-  // and the In deck / Living it list. Each row opens the principle in full (openRow), where its actions are.
+  // and the In deck / Lived list. Each row opens the principle in full (openRow), where its actions are.
   function weekdayOf(day, opts) { var p = day.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-US", opts || { weekday: "short" }); }
-  // Notes kept for the Living it record and the row's small line.
+  // Notes kept for the Lived record and the row's small line.
   function historyHtml(t) {
     var h = "";
     if (t.kept_from && t.kept_at) h += '<div class="was kfrom">Kept from an AI line on ' + esc(fmtDate(t.kept_at)) + "</div>";
@@ -2821,15 +2866,17 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       $("v-deck").hidden = view !== "deck";
       $("v-ledger").hidden = view !== "ledger";
       $("todayLbl").hidden = view !== "deck";
-      if (view === "deck") paintBand(C.dayPhase(day || C.freshDay(today()), setSize())); else { $("setBand").hidden = true; $("voiceHead").hidden = true; }
-      $("backDeck").hidden = view !== "ledger";
+      if (view === "deck") paintBand(C.dayPhase(day || C.freshDay(today()), setSize())); else $("setBand").hidden = true;
+      $("tabDeck").setAttribute("aria-selected", String(view === "deck")); $("tabLedger").setAttribute("aria-selected", String(view === "ledger"));
     }
     if (from !== view && document.startViewTransition && !REDUCED.matches && !openSheet) {
       document.documentElement.setAttribute("data-vt", view === "deck" ? "back" : "fwd");
       try { document.startViewTransition(swap); } catch (e) { swap(); }
     } else swap();
   }
-  $("backDeck").onclick = function () { go("deck"); try { $("menuBtn").focus({ preventScroll: true }); } catch (e) {} };
+  $("tabDeck").onclick = function () { if (!$("v-ledger").hidden) go("deck"); };
+  $("tabLedger").onclick = function () { if ($("v-ledger").hidden) go("ledger"); };
+  $("setBtn").onclick = function () { closeMenu(); openSettings(); };
   function paintReminders() {
     $("remindNative").hidden = !NATIVE; $("remindWeb").hidden = NATIVE;
     if (!NATIVE) return;
@@ -2849,6 +2896,12 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     }
     paintPlus();
   }
+  // Pages from Settings (1.75.0): each opens in place of Settings, with the way back at the top left.
+  function openVoices() { paintVoices(); show("sheetVoices"); }
+  function openStarter() { show("sheetStarter"); }
+  function openAbout() { show("sheetAbout"); }
+  $("openVoices").onclick = openVoices; $("openStarter").onclick = openStarter; $("openAbout").onclick = openAbout;
+  document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-back]"); if (b && b.getAttribute("data-back") === "settings") openSettings(); });
   function openSettings() { paintBackup(); paintReminders(); paintAiBox(); paintSettings(); paintVoices(); show("sheetSettings", function () { if ($("v-ledger").hidden) { renderDeck(); } }); }
   // Settings controls (1.30.0): look, Show where it came from, rest after Not today, AI lines on or off.
   function paintSettings() {
@@ -2930,19 +2983,20 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   var menu = $("menu"), menuBtn = $("menuBtn");
   function onCard() { var t = $("v-ledger").hidden && current && thoughts[current]; return t && t.status === "active" && $("card") ? t : null; }
   function openMenu() {
-    if (openSheet || menu.open) return;
-    var deck = $("v-ledger").hidden;
-    $("mEdit").hidden = !onCard();
-    $("mLedger").innerHTML = deck ? "Ledger<span>Your record</span>" : "Deck<span>Today</span>";
-    $("mColl").textContent = C.collections(all()).length;
-    $("mFocusVal").textContent = deckColl() || "All";
-    $("mFocus").hidden = !C.deckCollections(all()).length;
+    if (openSheet || menu.open || $("menuBtn").hidden) return;
+    var cs = C.deckCollections(all()), on = deckColl(), tick = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="color:var(--accent)"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+    var row = function (name, label, n) { return '<button type="button" data-coll="' + esc(name) + '" aria-pressed="' + String(on === name) + '"><span>' + esc(label) + '</span><span class="status">' + n + (on === name ? " " + tick : "") + "</span></button>"; };
+    $("menuList").innerHTML = row("", "All principles", activeList().length) + cs.map(function (c) { return row(c.name, c.name, c.count); }).join("");
+    var r = $("menuBtn").getBoundingClientRect();
+    menu.style.inset = (r.bottom + 8) + "px " + Math.max(16, window.innerWidth - r.right) + "px auto auto";
     if (menu.showModal) menu.showModal(); else menu.setAttribute("open", "");
     menuBtn.setAttribute("aria-expanded", "true");
   }
   function closeMenu() { if (menu.open) { if (menu.close) menu.close(); else menu.removeAttribute("open"); } }
   menu.addEventListener("close", function () { menuBtn.setAttribute("aria-expanded", "false"); resetScroll(); });
   menu.addEventListener("click", function (e) {
+    var cb = e.target.closest("[data-coll]");
+    if (cb) { closeMenu(); setColl(cb.getAttribute("data-coll")); return; }
     var b = e.target.closest("[data-m]");
     if (!b) {
       var r = menu.getBoundingClientRect();
@@ -3022,11 +3076,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   prefs.deck_coll = C.deckFilter(all(), prefs.deck_coll);
   applyLook();
   resetScroll();
+  $("verShort").textContent = C.VERSION;
   $("versionText").textContent = "Version " + C.VERSION + ", built " + fmtDate(C.BUILT + "T12:00:00") + ".";
   // 1.70.0: feedback by email, with the version and where Scales runs filled in.
   $("feedbackLink").href = "mailto:support@tangomike.app?subject=" + encodeURIComponent("Scales feedback (" + C.VERSION + ")") +
     "&body=" + encodeURIComponent("\n\n\nScales " + C.VERSION + (NATIVE ? ", iPhone app" : standalone() ? ", Home Screen" : ", browser") + "\n");
-  $("mVer").textContent = C.VERSION;
   showNext();
 
   // ---------- API key ----------

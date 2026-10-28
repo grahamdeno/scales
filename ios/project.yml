@@ -33,6 +33,8 @@ targets:
         UIRequiresFullScreen: true
         UIApplicationSupportsIndirectInputEvents: true
         ITSAppUsesNonExemptEncryption: false
+        UIViewControllerBasedStatusBarAppearance: false
+        UIStatusBarStyle: UIStatusBarStyleDarkContent
         CFBundleURLTypes:
           - CFBundleURLName: com.grahamdeno.scales
             CFBundleURLSchemes: [scales]
