@@ -1280,6 +1280,9 @@ test("the iPhone app saves everything each day; the reminder is for the web (1.7
   assert.match(html, /if \(NATIVE && prefs\.save_where\) return false;/, "no reminder once a daily save is confirmed");
   assert.match(swift, /case "save":/);
   assert.match(swift, /forUbiquityContainerIdentifier: nil/);
+  const yml = fs.readFileSync(path.join(__dirname, "..", "ios", "project.yml"), "utf8");
+  assert.match(yml, /com\.apple\.developer\.ubiquity-container-identifiers: \[iCloud\.com\.grahamdeno\.scales\]/, "iCloud Drive (1.77.1)");
+  assert.match(yml, /NSUbiquitousContainerIsDocumentScopePublic: true/, "the Scales folder shows in iCloud Drive");
   assert.match(swift, /"Scales backup\.json"/);
   assert.match(swift, /dated\.dropLast\(14\)/, "the last 14 dated copies are kept");
   assert.match(fs.readFileSync(path.join(__dirname, "..", "ios", "project.yml"), "utf8"), /UIFileSharingEnabled: true\n\s+LSSupportsOpeningDocumentsInPlace: true/);

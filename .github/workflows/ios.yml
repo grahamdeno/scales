@@ -63,6 +63,10 @@ jobs:
           code=$?
           if [ $code -ne 0 ]; then echo "::error::export failed"; report export.log; exit $code; fi
           cd "$RUNNER_TEMP/out"
+          # Say whether the signed app carries iCloud (1.77.1), so the daily save can reach iCloud Drive.
+          rm -rf chk && mkdir chk && unzip -q *.ipa -d chk
+          if codesign -d --entitlements - chk/Payload/*.app 2>/dev/null | grep -q "iCloud.com.grahamdeno.scales"; then echo "::notice::iCloud entitlement is in the signed app"; else echo "::warning::iCloud entitlement is missing from the signed app"; fi
+          rm -rf chk
           mkdir -p ~/.appstoreconnect/private_keys && cp "$RUNNER_TEMP/asc.p8" ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
           xcrun altool --upload-app -f *.ipa -t ios --apiKey ${{ secrets.ASC_KEY_ID }} --apiIssuer ${{ secrets.ASC_ISSUER_ID }} > upload.log 2>&1
           code=$?

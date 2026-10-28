@@ -36,11 +36,23 @@ targets:
         # The daily save shows in Files, On My iPhone, Scales (1.77.0).
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
+        # And in iCloud Drive, Scales, when iCloud is on (1.77.1).
+        NSUbiquitousContainers:
+          iCloud.com.grahamdeno.scales:
+            NSUbiquitousContainerIsDocumentScopePublic: true
+            NSUbiquitousContainerName: Scales
+            NSUbiquitousContainerSupportedFolderLevels: None
         UIViewControllerBasedStatusBarAppearance: false
         UIStatusBarStyle: UIStatusBarStyleDarkContent
         CFBundleURLTypes:
           - CFBundleURLName: com.grahamdeno.scales
             CFBundleURLSchemes: [scales]
+    entitlements:
+      path: App/Scales.entitlements
+      properties:
+        com.apple.developer.icloud-container-identifiers: [iCloud.com.grahamdeno.scales]
+        com.apple.developer.icloud-services: [CloudDocuments]
+        com.apple.developer.ubiquity-container-identifiers: [iCloud.com.grahamdeno.scales]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.grahamdeno.scales
