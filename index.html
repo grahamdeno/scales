@@ -124,6 +124,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .tile i { width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.5; }
 .tile.now i { opacity:1; }
 .tile svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.tiles.few { grid-auto-flow:row; grid-template-columns:repeat(5, minmax(0, 1fr)); }
 .tiles.many { gap:3px; } .tiles.many .tile { height:8px; border-radius:3px; } .tiles.many .tile > * { display:none; }
 /* The black panel (1.74.0): edge to edge, 12px top corners, a soft shadow on its top edge only. */
 .onblack { --paper:#121212; --deep:#1B1B1A; --rise:#121212; --ink:#ECEAE5; --muted:#9A9994; --faint:#7F7E7A; --rest:#8A8986; --line:rgba(236,234,229,.16); --brass:#ECEAE5; --brass-hi:#ECEAE5; --violet:#ECEAE5; --danger:#E3A595; --onBrass:#121212; --accent:#1F5FCC; --onAccent:#FFFFFF; --btn2:#262624; color-scheme:dark; }
@@ -2246,10 +2247,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     $("setBand").hidden = !on; if (!on) return;
     refreshDay();
     var n = setSize(), m = Math.min(day.moved.length, n), done = phase === "done" || m >= n, dc = deckColl();
-    $("setLbl").innerHTML = "<b>Today</b> \u00b7 " + (done ? "all " + n + " done" : m + " of " + n + " done") + (dc ? " \u00b7 " + esc(dc) : "");
+    $("setLbl").innerHTML = "<b>Today</b> \u00b7 " + (done ? (n === 1 ? "done" : "all " + n + " done") : m + " of " + n + " done") + (dc ? " \u00b7 " + esc(dc) : "");
     var check = '<svg viewBox="0 0 24 24"><path d="M6 12.5l4 4 8-9"/></svg>', h = "";
     for (var i = 0; i < n; i++) h += i < m ? '<div class="tile done">' + check + "</div>" : '<div class="tile' + (i === m && !done ? " now" : "") + '"><i></i></div>';
-    $("setTiles").innerHTML = h; $("setTiles").classList.toggle("many", n > 8);
+    $("setTiles").innerHTML = h; $("setTiles").classList.toggle("many", n > 8); $("setTiles").classList.toggle("few", n < 5);
   }
   // The welcome (1.47.0): what Scales is, a starter deck or your own principle, then the hold, once.
   var welcomeStep = 0;
