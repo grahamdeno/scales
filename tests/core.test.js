@@ -84,6 +84,16 @@ test("the website is published whole: strict styles, and the app passed through 
   const wf = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "site.yml"), "utf8");
   assert.match(wf, /cp server\/ai\.mjs functions\/api\/ai\.js/); assert.match(wf, /"functions\/app\/\[\[path\]\]\.js"/, "Functions sit beside out/, where Wrangler looks for them");
 });
+test("quiet: the resting card dims everything but the thought after 3 seconds (1.81.0)", () => {
+  const html = read("index.html"), c = css(), swift = fs.readFileSync(path.join(__dirname, "..", "ios", "App", "WebViewController.swift"), "utf8");
+  assert.match(html, /var QUIET_MS = 3000/);
+  assert.match(c, /body\.quiet[^{]*#v-deck #keys[^{]*\{ opacity:\.2;/, "dimmed, not hidden");
+  assert.doesNotMatch(c, /body\.quiet[^{]*#words/, "the thought never dims");
+  assert.match(html, /if \(document\.hidden \|\| voiceOver \|\| openSheet \|\| menu\.open \|\| !\$\("v-ledger"\)\.hidden \|\| phase !== "rest" \|\| peeked\(\)/);
+  assert.match(html, /\["pointerdown", "keydown", "wheel", "touchstart", "focusin"\]\.forEach/, "any touch brings it back");
+  assert.match(swift, /UIAccessibility\.isVoiceOverRunning/);
+  assert.match(html, /The screen goes quiet so you can read\. Touch anywhere to bring it back\./);
+});
 test("the page asks for core.js at its own version, and the cache keeps it (1.77.2)", () => {
   const html = read("index.html"), sw = read("sw.js");
   assert.match(html, new RegExp('<script src="core\\.js\\?v=' + C.VERSION.replace(/\./g, "\\.") + '"></script>'), "bump the core.js address with VERSION");
