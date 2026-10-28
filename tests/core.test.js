@@ -839,7 +839,7 @@ test("motion respects reduced motion", () => {
   assert.match(html, /document\.startViewTransition && !REDUCED\.matches/);
   assert.match(html, /function burst\(\) \{[^}]*REDUCED\.matches\) return;/);
   assert.match(html, /@media \(prefers-reduced-motion: no-preference\) \{ \.card\.enter/);
-  assert.match(html, /@media \(prefers-reduced-motion: reduce\) \{ \.dwell, \.dwell\.on, \.card, \.card\.spring/);
+  assert.match(html, /@media \(prefers-reduced-motion: reduce\) \{ \.dwell\.on \.qacts \{ animation:none; \} \.dwell, \.dwell\.on, \.card, \.card\.spring/);
 });
 
 test("touch targets: buttons a thumb can hit (1.36.0, 1.73.0)", () => {
@@ -1306,7 +1306,7 @@ test("text follows the iPhone text size; contrast passes; Undo waits (1.45.0)", 
   assert.match(html, /function dropUndo\(\)/);
   for (const f of ["act(kind)", "requestSkip()", "saveLater()"]) assert.match(html, new RegExp("function " + f.replace(/[()]/g, "\\$&") + " \\{\\s*dropUndo\\(\\);"), f + " drops the last Undo");
   assert.match(html, /Undo is available for a few seconds\./);
-  assert.match(html, /var UNDO_MS = 8000;/);
+  assert.match(html, /var UNDO_MS = 5000;/);
   assert.doesNotMatch(html, /id="tapToggle"|tapMoves\(\)/, "no buttons-instead-of-hold switch: the buttons are always there (1.73.0)");
 });
 
