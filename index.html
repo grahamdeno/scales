@@ -225,7 +225,8 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 /* The AI line: the subject of the push and reflect screens. */
 .lineWrap { position:relative; flex:none; padding-top:20px; border-top:1px solid var(--line); -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
 .ai-p { margin:0; font-size:1.2941rem; line-height:1.3; letter-spacing:-.01em; font-weight:450; color:var(--ink); transition:opacity .3s; }
-.ai-src { display:block; margin-top:10px; font-size:var(--t-xs); color:var(--faint); }
+.ai-src { display:block; margin-top:10px; font-size:var(--t-xs); color:var(--muted); }
+.ai-src b { font-weight:500; color:var(--ink); }
 .ai-src a { color:inherit; text-decoration:underline; text-underline-offset:2px; text-decoration-thickness:1px; padding:12px 0; }
 .ai-p.quote { font-style:normal; }
 .lineWrap[hidden] { display:none; }
@@ -1152,7 +1153,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.84.7"></script>
+<script src="core.js?v=1.84.8"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1742,9 +1743,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     el.classList.toggle("longline", String(l.text || "").length > 90); // 1.84.4: a long line takes less room
     var src = $("aiSrc");
     // Quotes credit Wikiquote (1.49.0), whose text is CC BY-SA 4.0, with a link to the voice's page.
-    if (src) src.innerHTML = l.pending ? "" : l.quote ? esc(l.author + (l.src ? ", " + l.src : "")) +
+    // 1.84.8: the name carries weight, so it is set in ink: the quote's author, or the voice the AI wrote as.
+    var asVoice = /^Written by AI, as /.test(l.by || "") ? l.by.replace(/^Written by AI, as /, "") : "";
+    if (src) src.innerHTML = l.pending ? "" : l.quote ? "<b>" + esc(l.author) + "</b>" + esc(l.src ? ", " + l.src : "") +
       ' <span aria-hidden="true">·</span> <a href="https://en.wikiquote.org/wiki/' + encodeURIComponent(String(l.page || l.author).replace(/ /g, "_")) + '" target="_blank" rel="noopener">Wikiquote</a>'
-      : esc(l.by || (l.ai ? "Written by AI" : "A question to sit with"));
+      : asVoice ? "Written by AI, as <b>" + esc(asVoice) + "</b>" : esc(l.by || (l.ai ? "Written by AI" : "A question to sit with"));
     paintReplies(); requestAnimationFrame(fitThought);
   }
   // Under the line: your last reply on this thought, as a bubble, and a Reply button (1.40.0).
@@ -2268,6 +2271,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // fades out instead of being cut, until you reach the end.
   var FIT_MIN = 19, FIT_MIN_LIFTED = 15;
   function fitThought() {
+    fitLine();
     var w = $("words"); if (!w) return;
     w.style.fontSize = ""; w.classList.remove("overflow");
     var over = function () { return w.scrollHeight > w.clientHeight + 4; }; // glyphs overhang the tight line height a little
@@ -2277,6 +2281,14 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (!over()) return;
     w.classList.add("overflow");
     w.onscroll = function () { w.classList.toggle("overflow", w.scrollTop + w.clientHeight < w.scrollHeight - 4); };
+  }
+  // 1.84.8: on Before you skip, The other side and Reflect a long line steps down too (to 14px), so the credit
+  // and the options under it stay in view.
+  function fitLine() {
+    var m = document.querySelector("#card .mid"), al = $("aiLine"); if (!m || !al) return;
+    al.style.fontSize = "";
+    var size = parseFloat(getComputedStyle(al).fontSize);
+    while (m.scrollHeight > m.clientHeight + 2 && size > 14) { size -= 1; al.style.fontSize = size + "px"; }
   }
   window.addEventListener("resize", function () { requestAnimationFrame(fitThought); });
   // 1.84.4: on a phone the font arrives after the first fit and makes the words wider; fit again when it does,
