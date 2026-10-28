@@ -631,28 +631,25 @@ test("the Keep sheet offers add or replace, and both can be undone", () => {
   assert.match(html, /Kept from an AI line on /);
 });
 
-test("the three moves: hold the ring, buttons for VoiceOver and keys; Not today pushes back once (1.34.0)", () => {
+test("the three moves are buttons in view; Skip asks once; keys work (1.34.0, 1.73.0)", () => {
   const html = read("index.html");
-  for (const m of ["skip", "keep", "shed"]) assert.match(html, new RegExp('data-move="' + m + '"'), m + " button");
-  assert.match(html, /class="moves sr" id="keys"/, "the buttons are for VoiceOver and the keyboard");
-  assert.match(html, /if \(m === "skip"\) requestSkip\(\); else if \(m === "later"\) saveLater\(\); else if \(m === "peek"\) togglePeek\(\); else act\(m\);/);
+  for (const m of ["skip", "keep", "shed", "stay", "peek"]) assert.match(html, new RegExp('data-move="' + m + '"'), m + " button");
+  assert.match(html, /class="choices" id="keys" role="group" aria-label="Choose"/);
+  assert.match(html, /if \(m === "skip"\) requestSkip\(\); else if \(m === "later"\) saveLater\(\); else if \(m === "peek"\) togglePeek\(\); else if \(m === "stay"\) keepIt\(\); else act\(m\);/);
   assert.match(html, /k === "ArrowLeft"\) requestSkip\(\)/);
   assert.match(html, /k === "ArrowUp"\) act\("keep"\)/);
   assert.match(html, /k === "ArrowRight"\) act\("shed"\)/);
   assert.match(html, /if \(openSheet \|\| menu\.open \|\| isTyping\(document\.activeElement\)/, "shortcuts never fire while typing, in a sheet or in the menu");
   assert.match(html, /var HOLD_MS = 550;/);
   assert.match(html, /if \(m === "edit"\) openEdit\(t\); else if \(shown && shown\.ai\) openKeep\(t, shown\.text, shown\.quote \? \{ author: shown\.author, src: shown\.src \} : null\);/);
-  assert.match(html, /id="holdRing" aria-hidden="true"/, "the ring is pointer only; the buttons are the accessible path");
-  assert.match(html, /var r = e\.target\.closest\("#holdZone"\);\s*if \(r && !e\.target\.closest\("button"\)\)/, "the whole hold area starts a hold, not just the ring");
-  // Push: the first Not today shows the line; the second, or Set aside anyway, commits. No second pushback.
+  assert.doesNotMatch(html, /id="holdZone"|id="holdRing"|function openChoices/, "the press and hold menu is gone");
   assert.match(html, /if \(phase === "push" \|\| peeked\(\)\) \{ act\("skip"\); return; \}/);
   assert.match(html, /coachSeen\(\); phase = "push"; renderDeck\(\); showLine\(t, "push"\);/);
-  // Reflect: Next only after REFLECT_SEC, and only then does the test lower the Not today count.
+  assert.match(html, /phase = "rest"; peekId = t\.id; renderDeck\(\); showLine\(t, "push"\);/, "Keep it goes back with the line showing");
   assert.match(html, /reflectT = setTimeout\(finishReflect, C\.REFLECT_SEC \* 1000\)/);
   assert.match(html, /if \(t\.skip_count > 0\) \{ t\.skip_count--; reflectLighter = true; \}/);
   assert.match(html, /id="reflNext">Next principle</);
-  assert.match(html, /if \(t\) \{ C\.spendLines\(t\); save\(t\); \}/, "moving on from a test spends the lines");
-  assert.doesNotMatch(html, /dwell >= DWELL_SEC/, "the old dwell check is replaced by the reflect screen");
+  assert.match(html, /if \(t\) \{ C\.spendLines\(t\); save\(t\); \}/, "moving on spends the lines");
   assert.match(html, /aria-describedby="cardHow"/);
 });test("everything else is in a modal menu at the top right (1.30.0)", () => {
   const html = read("index.html");
@@ -736,10 +733,10 @@ test("motion respects reduced motion", () => {
   assert.match(html, /@media \(prefers-reduced-motion: reduce\) \{ \.card, \.card\.spring/);
 });
 
-test("touch targets: a hold area, not a small ring; buttons a thumb can hit (1.36.0)", () => {
+test("touch targets: buttons a thumb can hit (1.36.0, 1.73.0)", () => {
   const c = css();
   assert.match(rule(c, ".iconbtn"), /width:48px; height:48px;/);
-  assert.match(rule(c, ".hold"), /height:clamp\(230px, 33dvh, 300px\);/, "the bottom third of the screen holds");
+  assert.match(rule(c, ".choice"), /min-height:52px;/, "the choices are a thumb's width (1.73.0)");
   assert.match(rule(c, ".btn3d.wide"), /min-height:56px;/);
   assert.match(rule(c, ".pair .btn3d"), /min-height:52px;/);
   assert.match(rule(c, ".menu button"), /min-height:48px;/);
@@ -842,11 +839,13 @@ test("talkRequest from a Reply: the line replied to is in the system prompt, the
 });
 
 // ---------- 1.32.0: a day that ends, the evening check-in, Caught it, your week ----------
-test("the moves are named Skip, Sit with it and Living it everywhere on screen (1.36.0)", () => {
+test("the moves are named Skip, Reflect and Lived everywhere on screen (1.73.0)", () => {
   const html = read("index.html");
-  assert.doesNotMatch(html, /Still working on it|<b>Testing it<\/b>|<b>Not today<\/b>/);
-  assert.match(html, /<b>Sit with it<\/b>/);
-  assert.deepEqual([C.MOVES.skip, C.MOVES.keep, C.MOVES.shed], ["Skip", "Sit with it", "Living it"]);
+  assert.doesNotMatch(html, />Sit with it<|>Living it<|"Sitting with it"|Counted as Sit with it|Sat with/, "the old names are gone from the screen");
+  assert.match(html, />Reflect<\/button>/);
+  assert.match(html, />Lived<\/button>/);
+  assert.match(html, /"Reflecting"/);
+  assert.deepEqual([C.MOVES.skip, C.MOVES.keep, C.MOVES.shed], ["Skip", "Reflect", "Lived"]);
 });
 
 test("today's set: a size you choose, then done, then focus or more (1.32.0)", () => {
@@ -867,7 +866,7 @@ test("focus choices are today's principles, newest first, once each; the summary
   const s = C.freshDay("2026-10-17");
   [["a", "keep"], ["b", "skip"], ["a", "keep"], ["gone", "skip"], ["c", "shed"]].forEach(([id, m]) => C.noteDayMove(s, id, m));
   assert.deepEqual(C.focusChoices(s, { a: { id: "a" }, b: { id: "b" }, c: { id: "c" } }).map((x) => x.t.id), ["c", "a", "b"]);
-  assert.equal(C.daySummary(s), "Two sat with, two skipped and one living it.");
+  assert.equal(C.daySummary(s), "Two reflected on, two skipped and one lived.");
   assert.equal(C.daySummary(C.freshDay("x")), "");
   assert.doesNotMatch(C.daySummary(s), /—/);
 });
@@ -1113,21 +1112,14 @@ test("a quote's source: its work, a book within a work, or its citation under a 
 });
 
 // ---------- 1.39.0: hold reveals the choices ----------
-test("holding opens the three choices; letting go never chooses by itself (1.39.0)", () => {
+test("Skip asks once, in plain buttons: Skip anyway or Keep it (1.73.0)", () => {
   const html = read("index.html"), c = css();
-  assert.equal(C.HOLD_REVEAL, 500);
-  assert.match(html, /<div class="picks" id="choices" role="menu" aria-label="Choose" hidden>/);
-  assert.match(html, /\["shed", "Living it", "I act on it now"\],\s*\["keep", "Sit with it", "A quote, then Next"\],/, "Living it on top, Skip at the bottom");
-  assert.match(html, /if \(p >= 1\) \{ mode = "drag"; touched = false; openChoices\(\); return; \}/, "the choices open after the reveal");
-  assert.match(html, /if \(m === "ring"\) \{\s*\/\/ Let go before the choices opened: nothing happens\./, "an early release does nothing");
-  assert.match(html, /if \(row\) \{ pick\(row\.getAttribute\("data-pick"\)\); return; \}/, "letting go on a row chooses it");
-  assert.match(html, /if \(touched\) \{ closeChoices\(\); return; \} \/\/ slid off the list: cancel/);
-  assert.match(html, /light\(null\); \/\/ never touched a row: stay open to tap/);
-  assert.match(html, /if \(row && choicesOpen\) pick\(row\.getAttribute\("data-pick"\)\);/, "or tap one");
-  assert.match(html, /if \(move === "skip"\) requestSkip\(\); else if \(move === "later"\) saveLater\(\); else act\(move\);/, "Skip still asks first");
-  assert.match(html, /holdHtml\("Press and hold to choose"\);/, "the skip screen uses the same choices; no separate Skip it button");
+  assert.match(html, /data-move="skip">Skip anyway<\/button>/);
+  assert.match(html, /class="choice main" data-move="stay">Keep it<\/button>/);
+  assert.match(html, /Skipping rests it for ' \+ n/);
+  assert.match(html, /'<div class="phase"><span>Before you skip<\/span><\/div>'/);
+  assert.match(rule(c, ".choice.main"), /background:var\(--accent\)/, "the suggested choice is the one blue button");
   assert.doesNotMatch(html, /id="setAside"|class="hl hl-/);
-  assert.match(rule(c, ".pickrow"), /min-height:60px;/);
 });
 
 // ---------- 1.40.0: reply to the line ----------
@@ -1180,20 +1172,21 @@ test("Later waits until the evening of the day it was saved; three at most; not 
   assert.equal(C.canLater([], A("7", { later: { day: "x" } })), false);
 });
 
-test("Later is offered on the skip screen and is not a skip (1.42.0)", () => {
+test("Later is offered beside Reply once the line is read, and is not a skip (1.42.0, 1.73.0)", () => {
   const html = read("index.html");
-  assert.match(html, /if \(push && C\.canLater\(all\(\), cur\)\) rows\.splice\(2, 0, \["later", "Later", "When I have time"\]\);/);
+  assert.match(html, /if \(!t \|\| !\(phase === "push" \|\| \(peeked\(\) && !returned\(\)\)\) \|\| !C\.canLater\(all\(\), t\)\) return "";/);
+  assert.match(html, /data-move="later">' \+ \(new Date\(\)\.getHours\(\) < C\.CHECKIN_HOUR \? "Later tonight" : "Later"\)/);
   const save = html.slice(html.indexOf("  function saveLater()"), html.indexOf("  // After REFLECT_SEC on the reflect screen:"));
   assert.doesNotMatch(save, /applySkip|skip_count|noteSkipDay|logActivity/, "no count, no weight, no rest");
   assert.match(html, /return C\.inCollection\(t, c\) && !t\.later;/, "waiting principles are left out of the deck");
   assert.match(html, /L\.later = null; L\.later_blocked = true; save\(L\);/);
   assert.match(html, /fromLater = true; laterId = L\.id;/, "it comes back first, waiting for a choice (1.56.0)");
-  assert.match(html, /\(fromLater \? "Saved from earlier" : "Sitting with it"\)/);
-  assert.match(html, /if \(t\.later_blocked\) t\.later_blocked = false;/, "sitting with it for the full time lifts the block");
+  assert.match(html, /\(fromLater \? "Saved from earlier" : "Reflecting"\)/);
+  assert.match(html, /if \(t\.later_blocked\) t\.later_blocked = false;/, "reflecting for the full time lifts the block");
 });
 
 // ---------- 1.45.0: readability and accessibility ----------
-test("text follows the iPhone text size; contrast passes; Undo waits; buttons instead of hold (1.45.0)", () => {
+test("text follows the iPhone text size; contrast passes; Undo waits (1.45.0)", () => {
   const html = read("index.html"), c = css();
   assert.match(html, /@supports \(font: -apple-system-body\) \{ html \{ font: -apple-system-body; \} \}/);
   assert.equal((html.match(/font-size:\s*[\d.]+px/g) || []).length, 1, "no fixed pixel text sizes except the root fallback");
@@ -1204,8 +1197,7 @@ test("text follows the iPhone text size; contrast passes; Undo waits; buttons in
   for (const f of ["act(kind)", "requestSkip()", "saveLater()"]) assert.match(html, new RegExp("function " + f.replace(/[()]/g, "\\$&") + " \\{\\s*dropUndo\\(\\);"), f + " drops the last Undo");
   assert.match(html, /Undo is available for a few seconds\./);
   assert.match(html, /var UNDO_MS = 8000;/);
-  assert.match(html, /if \(tapMoves\(\)\) return '<div class="tapmoves" id="keys"/);
-  assert.match(html, /id="tapToggle" role="switch"/);
+  assert.doesNotMatch(html, /id="tapToggle"|tapMoves\(\)/, "no buttons-instead-of-hold switch: the buttons are always there (1.73.0)");
 });
 
 // ---------- 1.47.0: first run and a visible capture ----------
@@ -1310,12 +1302,11 @@ test("Capture and Edit are lifted above the keyboard like the reply sheet", () =
 });
 
 // ---------- 1.53.0: tap to see the line ----------
-test("a tap shows the line; once read, Skip commits and Later is offered", () => {
+test("Today's question shows the line; once read, Skip commits and Later is offered", () => {
   const html = read("index.html");
   assert.match(html, /if \(phase === "push" \|\| peeked\(\)\) \{ act\("skip"\); return; \}/);
-  assert.match(html, /var push = phase === "push" \|\| peeked\(\)/);
   assert.match(html, /if \(peeked\(\)\) showLine\(t, "push"\)/);
-  assert.match(html, /data-move="peek"/);
+  assert.match(html, /class="qbtn" data-move="peek"/);
 });
 
 // ---------- 1.55.0: sheet tops ----------
@@ -1332,7 +1323,7 @@ test("a principle back from Later opens with its quote and counts nothing until 
   assert.match(html, /fromLater = true; laterId = L\.id; phase = "rest";\s*renderDeck\(\); showLine\(L, "reflect"\);/);
   assert.doesNotMatch(html, /fromLater = true; act\("keep"\);/);
   assert.match(html, /if \(returned\(\)\) \{/);
-  assert.match(html, /Counted as Sit with it\./);
+  assert.match(html, /Counted as Reflect\./);
 });
 
 // ---------- 1.56.1: the fold hint only when cut off ----------
@@ -1384,10 +1375,11 @@ test("at scales.tangomike.app the app uses its own AI server, no key", () => {
 });
 
 // ---------- 1.65.0: first run for the iPhone app ----------
-test("first run: no Home Screen note in the app, a buttons choice, AI asked after the welcome, a reminder offered once", () => {
+test("first run: no Home Screen note in the app, the three choices explained, AI asked after the welcome, a reminder offered once", () => {
   const html = read("index.html");
   assert.match(html, /function standalone\(\) \{ return !!\(NATIVE \|\| navigator\.standalone/);
-  assert.match(html, /id="wButtons">Use buttons instead of press and hold</);
+  assert.match(html, /<h1>Three choices<\/h1>/);
+  assert.doesNotMatch(html, /id="wButtons"/);
   assert.match(html, /function remindOffer\(\) \{ return NATIVE && !prefs\.remind_on && !prefs\.remind_offered; \}/);
 });
 

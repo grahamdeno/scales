@@ -2,12 +2,12 @@
 
 A small phone app for turning the principles you collect into how you actually live.
 
-You write down a principle you want to live by ("the hard conversation is usually shorter than the dread before it"), or load a starter deck. Scales keeps putting it in front of you. Each time, you mark it Sit with it, Skip, or Living it. Once you act on it without being reminded, it moves to your Living it record with a line on where it showed up.
+You write down a principle you want to live by ("the hard conversation is usually shorter than the dread before it"), or load a starter deck. Scales keeps putting it in front of you. Each time, you choose Skip, Reflect or Lived. Once you act on it without being reminded, it moves to your Lived record with a line on where it showed up.
 
 <p>
   <img src="docs/deck.png" width="200" alt="The deck at rest: one principle and the ring">
   <img src="docs/deck-push.png" width="200" alt="After letting go early: a line pushing back, and the ring again">
-  <img src="docs/deck-reflect.png" width="200" alt="After holding through: a question to sit with, then Next principle">
+  <img src="docs/deck-reflect.png" width="200" alt="Reflect: a question to sit with, then Next principle">
   <img src="docs/ledger.png" width="200" alt="Ledger view: the weight key and principles grouped as Avoiding, Working on and Nearly lived">
 </p>
 
@@ -15,35 +15,35 @@ You write down a principle you want to live by ("the hard conversation is usuall
 
 **Writing.** Capture and Edit open on matte paper with black lettering (on the White look, the reverse), so writing reads as a different mode from the deck. Cancel is on the left and Add or Save on the right; the keyboard comes up with the sheet. Capture is one field: where it came from, collection, title and author are under More details, and the character count shows only near the 1,500 limit.
 
-**First run.** A new deck opens on a short welcome: what Scales is, a starter deck or one principle of your own, then the hold, shown once. The + next to the menu captures a principle anytime.
+**First run.** A new deck opens on a short welcome: what Scales is, a starter deck or one principle of your own, then the three choices, explained once. The + next to the menu captures a principle anytime.
 
-**The deck.** Quiet until asked. At rest the screen holds one principle and a ring. Press and hold anywhere on the bottom of the screen: after half a second your three choices open above your thumb, Living it, Sit with it and Skip. Slide onto one and let go, or let go and tap one. Letting go never chooses by itself; slide off the list or tap outside it to close it. There is no date and no progress bar. Messages sit at the bottom of the screen, near your thumb.
+**The deck.** At rest the screen holds one principle, a Today's question button and the three choices at the bottom: Skip, Reflect (in blue, the one Scales suggests) and Lived (1.73.0). Until 1.72 the choices hid behind a press and hold; they are always in view now. There is no date and no progress bar. Messages sit at the bottom of the screen, near your thumb.
 
 | Move | Choose | What happens |
 |---|---|---|
 | Skip | from the choices | Scales pushes back once with a plain line, and offers Later. Skip it rests the principle: its count goes up by 1, it rests, then comes back first and set heavier. |
-| Sit with it | from the choices | A real quote from today's voice (or a question to sit with when no quote fits), where the principle came from, and Reply. After 8 seconds the test counts against Skip (the count drops by 1) and Next principle appears. Nothing moves on by itself. |
-| Living it | from the choices | Opens a short form for where it showed up, then moves the principle to your record. |
+| Reflect | from the choices | A real quote from today's voice (or a question to sit with when no quote fits), where the principle came from, and Reply. After 8 seconds the test counts against Skip (the count drops by 1) and Next principle appears. Nothing moves on by itself. |
+| Lived | from the choices | Opens a short form for where it showed up, then moves the principle to your record. |
 
 A quick tap on the ring does nothing, so a stray touch never rests a principle. The three moves are also buttons for VoiceOver and the keyboard, and the arrow keys (left, up, right). Everything else (Capture, Edit, Show, the Ledger, Collections, Settings) is in the menu at the top right. With a keyboard, N captures, E edits, L switches between the deck and the Ledger, M opens the menu, and comma opens Settings.
 
-**The pushback and the quote.** When you choose Skip, one plain line pushes back, written by AI from the principle's own words and its record: nothing invented about your day, no metaphors. On Sit with it, the screen shows a real quote from today's voice instead of anything written. Scales reads the sourced quotes on that thinker's Wikiquote page (leaving out the disputed and misattributed ones), narrows them to the twenty that share the most words with your principle, and the AI picks the one that speaks to it, or none. When none fits, nothing is shown. Without a key, the closest match is shown only if it is a clear one. Each quote shows its author and work, and links to its Wikiquote page (text CC BY-SA 4.0). Both are kept on the principle and reused until you sit with it again or change its wording; a principle that reaches three Skip gets its pushback rewritten once. Each voice's quotes are kept on the phone for 30 days, and only the voice's name is sent to Wikiquote. Press and hold a line or quote to keep it as a principle of its own; a kept quote keeps its author and work.
+**The pushback and the quote.** When you choose Skip, one plain line pushes back, written by AI from the principle's own words and its record: nothing invented about your day, no metaphors. On Reflect, the screen shows a real quote from today's voice instead of anything written. Scales reads the sourced quotes on that thinker's Wikiquote page (leaving out the disputed and misattributed ones), narrows them to the twenty that share the most words with your principle, and the AI picks the one that speaks to it, or none. When none fits, nothing is shown. Without a key, the closest match is shown only if it is a clear one. Each quote shows its author and work, and links to its Wikiquote page (text CC BY-SA 4.0). Both are kept on the principle and reused until you reflect on it again or change its wording; a principle that reaches three Skip gets its pushback rewritten once. Each voice's quotes are kept on the phone for 30 days, and only the voice's name is sent to Wikiquote. Press and hold a line or quote to keep it as a principle of its own; a kept quote keeps its author and work.
 
 **Reply to the line.** On the skip screen and the sit-with screen, tap Reply, or the line or quote itself, to answer it. A sheet slides up with the line pinned at the top and moves up with the keyboard, so nothing covers what you type; Done is in the title row. The reply is kept with the line it answered and shows under the line next time. Replying never makes or changes a choice: the choice you were making is still waiting when the sheet closes. In the Ledger, each principle's history shows its thread, line and reply, by date.
 
 **Tap to see the line.** At rest, tap the principle to see the line Skip would show, and tap again to hide it. Nothing is chosen or counted. Once it has been read, Skip in the choices rests the principle straight away and Later is offered beside it. Skip without the tap still asks first, with the line.
 
-**Later.** On the skip screen, or after tapping to see the line, Later is for a principle that deserves more time than you have right now. It is not a skip: no count, no weight, no rest. It waits until after 6 PM that day, then comes back first, headed Saved from earlier, with its quote. Nothing is counted until you choose: press and hold for Living it, Sit with it or Skip it (which rests it straight away). Up to three can wait at once, and a principle that came back from Later is not offered Later again until you have sat with it for the full eight seconds.
+**Later.** Beside Reply, once you have read the line (or on the Skip screen), Later is for a principle that deserves more time than you have right now. It is not a skip: no count, no weight, no rest. It waits until after 6 PM that day, then comes back first, headed Saved from earlier, with its quote. Nothing is counted until you choose: Skip (which rests it straight away), Reflect or Lived. Up to three can wait at once, and a principle that came back from Later is not offered Later again until you have reflected on it for the full eight seconds.
 
-**Readable and reachable.** Text follows the iPhone's text size (Settings > Display & Brightness > Text Size). Undo stays for 8 seconds, or until your next move once VoiceOver or a keyboard reaches it. Settings > Your deck > Buttons instead of press and hold puts Skip, Sit with it and Living it on the main screen as plain buttons, for anyone who cannot press and hold.
+**Readable and reachable.** Text follows the iPhone's text size (Settings > Display & Brightness > Text Size). Undo stays for 8 seconds, or until your next move once VoiceOver or a keyboard reaches it.
 
 **Show.** The deck draws from every collection by default. Show, in the menu, draws it from one; the chosen collection is named at the top of the deck.
 
-**Editing.** Press and hold the principle, choose Edit this principle in the menu (or press E), or Edit on any Ledger row, to change a principle's wording or its details: collection, title, author and where it came from. Its counts, dates and weight are kept. Changing the wording of a principle still in the deck gets it a fresh AI line; changing only details keeps the line it has. A lived principle keeps its Living it date, evidence and last line either way. Principles can be up to 1,500 characters, long enough for a short poem. The Capture sheet has the same details under More details, collapsed by default.
+**Editing.** Press and hold the principle, choose Edit this principle in the menu (or press E), or Edit on any Ledger row, to change a principle's wording or its details: collection, title, author and where it came from. Its counts, dates and weight are kept. Changing the wording of a principle still in the deck gets it a fresh AI line; changing only details keeps the line it has. A lived principle keeps its Lived date, evidence and last line either way. Principles can be up to 1,500 characters, long enough for a short poem. The Capture sheet has the same details under More details, collapsed by default.
 
-**Weight.** A principle is set heavier each time you skip it: a new one is regular weight, and four or more Skip make it the boldest the type goes. Sit with it brings the count down, so the words lighten as the avoidance is worked off.
+**Weight.** A principle is set heavier each time you skip it: a new one is regular weight, and four or more Skip make it the boldest the type goes. Reflect brings the count down, so the words lighten as the avoidance is worked off.
 
-**Where it came from.** On Sit with it: its collection, where it came from and its author. Settings > Look > Show where it came from turns these off.
+**Where it came from.** On Reflect: its collection, where it came from and its author. Settings > Look > Show where it came from turns these off.
 
 **Collections.** A collection groups principles, such as Poems or Stoic, and Show uses them to focus the deck. Typing a collection that matches an existing one apart from capitalization saves it under the existing spelling, so collections don't split. Settings > Manage collections lists every collection with its count; tap one to rename it, merge it into another by renaming it to that name, or remove it. Only the collection changes; everything else on each principle is kept.
 
@@ -51,7 +51,7 @@ A quick tap on the ring does nothing, so a stray touch never rests a principle. 
 
 **Today's set.** Each day starts with a set of principles, five by default (Settings > Your deck > Principles a day, 1 to 20). When the set is done, the deck says Done for today and sums up how it went. Keep going opens the deck again if you want more.
 
-**Caught it.** When you live a principle without the app, open it in the Ledger and log where it showed up: real-life evidence. Three catches within 30 days ask whether you are ready to call it Living it.
+**Caught it.** When you live a principle without the app, open it in the Ledger and log where it showed up: real-life evidence. Three catches within 30 days ask whether you are ready to mark it Lived.
 
 **This week.** One line under the Ledger summary: moves this week, catches, and anything now living.
 
@@ -61,15 +61,15 @@ A quick tap on the ring does nothing, so a stray touch never rests a principle. 
 
 **Pushing back.** The Ledger opens on Avoiding, the principles you skip most, so resistance is visible instead of hidden.
 
-**Undo.** Skip, Sit with it, Living it, Later and Delete each show a toast with Undo that puts everything back, counts, rest days, the activity grid and the Ledger included. It goes after 8 seconds or at your next move, whichever comes first.
+**Undo.** Skip, Reflect, Lived, Later and Delete each show a toast with Undo that puts everything back, counts, rest days, the activity grid and the Ledger included. It goes after 8 seconds or at your next move, whichever comes first.
 
 **Starter decks.** Stoic, Leadership, Athletic mindset and Self-overcoming sets, loaded on first run, from the empty deck, or Settings > Advanced, so a new deck has something in it. Every starter principle fills every field (collection, title, author, origin, tags, link and citation) as a worked example. Original lines are credited to Scales and cite their deck. The lines by Epictetus and Nietzsche use the exact wording of a named public-domain translation (Elizabeth Carter, George Long, Thomas Common), cite the work and section, and link to that chapter. Loading a deck again adds nothing new; it fills any empty fields on starter principles already in the deck without overwriting your own values.
 
-**The ledger.** A record, not a scorecard. Tabs with counts show one group at a time: Avoiding (skipped three or more times), Working on, Nearly lived (no skips left, and sat with or caught) and Lived. It opens on Avoiding. Each principle shows two lines, set at its group's weight (bold, regular or light), with one fact on the right; resting principles say so. Tap a principle for its full text, its history and everything you can do with it. Under the summary, one line for this week. Below the list, a 12 week grid of days (darker on busier days, solid on days you caught yourself or marked Living it).
+**The ledger.** A record, not a scorecard. Tabs with counts show one group at a time: Avoiding (skipped three or more times), Working on, Nearly lived (no skips left, and reflected on or caught) and Lived. It opens on Avoiding. Each principle shows two lines, set at its group's weight (bold, regular or light), with one fact on the right; resting principles say so. Tap a principle for its full text, its history and everything you can do with it. Under the summary, one line for this week. Below the list, a 12 week grid of days (darker on busier days, solid on days you caught yourself or marked Lived).
 
 **The line under each principle.** A short line, 25 words or fewer, drawn from the words of the principle itself and written in the spirit of Jung and Nietzsche: avoidance is treated as the shadow protecting comfort, fear or self-image, and the line speaks for the person you are becoming rather than your comfort today. It holds the standard. No praise, no pep talk, and no grace for the gap between the principle and your conduct. It presses harder the more a principle has been skipped: fresh ones are asked what they demand, skipped ones what was chosen instead, and the most avoided are confronted with what the avoidance protects. Lines that slip into a gentle, permission-giving tone are rejected and asked for again. Built-in questions are used by default. If you add your own Anthropic API key in Settings, a new consideration is written for each showing by a small, fast model. Only the principle text, its skip count and days in the deck are sent. Settings > Your deck > AI questions and quotes switches AI off.
 
-**Keep an AI line.** Sometimes the line says it better than you did. Tap **Keep** on an AI line (on the deck, or Keep line in the Living it record) and choose:
+**Keep an AI line.** Sometimes the line says it better than you did. Tap **Keep** on an AI line (on the deck, or Keep line in the Lived record) and choose:
 
 - **Add as a new principle.** It goes into the same collection beside the original, with fresh counts, cited as "Kept from an AI line" with the date and linked to the original. No author is set.
 - **Replace my wording.** It works like Edit: counts, dates and status stay, and only the words change. The earlier wording is saved and shown in the Ledger.
@@ -126,7 +126,7 @@ To check the key, tap **Test key** under AI key. It sends one tiny request and r
 
 **Black and White (1.33.0).** Two flat matte surfaces, Black (the default) and White, chosen in Settings > Look, with a faint grain. No cards, raised keys, glass, shadows or rounded panels: the type carries the page, and lines are hairlines. The one filled control on each sheet is solid ink. One face, Geist, self-hosted so it looks the same offline, set at the weight each principle has earned.
 
-The deck has one gesture, the hold, and shows only what the moment needs: the principle at rest, the pushback after Skip, the quote on Sit with it. Living it ends with a thin ring of ink that opens from the words. With Reduce Motion on, the ink, the springs, the ring and the view transitions are left out.
+The deck shows only what the moment needs: the principle at rest, the pushback after Skip, the quote on Reflect, and the three choices always at the bottom. Lived ends with a thin ring of ink that opens from the words. With Reduce Motion on, the ink, the springs, the ring and the view transitions are left out.
 
 Earlier looks: 1.27.0 put the principle on a tilting card with a frosted tab bar; 1.28.0 and 1.29.0 followed a serif, front-page system with six color themes; 1.30.0 to 1.32.1 were Matte, with raised keys, frosted glass and swipes. 1.33.0 replaced them. A look chosen before keeps working: Matte opens as Black and Light as White.
 
@@ -143,7 +143,7 @@ tests/                  node:test suite for core.js and release wiring
 docs/                   architecture diagrams and screenshots
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams of how the pieces fit, how a principle moves from capture to Living it, and what happens each time a card is shown.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams of how the pieces fit, how a principle moves from capture to Lived, and what happens each time a card is shown.
 
 No build step and no runtime dependencies. The type face is served from `fonts/`; the only outside requests are Wikiquote, for today's voice, and the Anthropic API, only if a key is set.
 
@@ -153,10 +153,10 @@ No build step and no runtime dependencies. The type face is served from `fonts/`
 - **Network first service worker.** Updates show up the next time the app opens; the cache only covers being offline. API calls are never cached.
 - **Built-in questions as the floor.** The app is fully usable with no key and no connection. With a key, the next card's line is fetched while the current card is read, and a built-in line is shown only if the model cannot supply a valid one (25 words or fewer after trimming to whole sentences, no exclamation mark, not a restatement of a long principle).
 - **Skip cap at 4x.** Without a cap, one avoided principle would take over the deck.
-- **Eight seconds before Next.** A quick Sit with it should not erase a Skip. Next waits eight seconds, and only then does the count drop.
+- **Eight seconds before Next.** A quick Reflect should not erase a Skip. Next waits eight seconds, and only then does the count drop.
 - **One pushback, not two.** Skip asks once, with a line and Later; Skip it then rests the principle. A second warning would nag.
-- **Lines reused, not rewritten.** The same pushback each time is cheaper and honest about the record; it is rewritten once at three Skip so it does not go stale, and both lines are rewritten after Sit with it.
-- **A tap is not a move.** The choices open only after half a second of holding, and letting go never chooses, because Skip rests a principle for days.
+- **Lines reused, not rewritten.** The same pushback each time is cheaper and honest about the record; it is rewritten once at three Skip so it does not go stale, and both lines are rewritten after Reflect.
+- **Skip asks once.** Skip rests a principle for days, so the first Skip shows the pushback with Skip anyway and Keep it. Once the line has been read, Skip rests it straight away.
 
 ## Run it locally
 
@@ -172,7 +172,7 @@ Then open `http://localhost:8000`. The service worker needs `localhost` or HTTPS
 node --test
 ```
 
-Node 18 or later, no dependencies. `node --test tests/e2e/loop.e2e.js` (needs Playwright) drives the real page at iPhone size through first run, the hold, Skip, tap to see the line, Later and its return, Sit with it and Undo, and Capture; CI runs both. The unit tests cover weighting, the selection cooldown, answer cleanup and checks, and the version and offline-cache wiring. GitHub Actions runs the same command on every push.
+Node 18 or later, no dependencies. `node --test tests/e2e/loop.e2e.js` (needs Playwright) drives the real page at iPhone size through first run, the three choices, Skip, Today's question, Later and its return, Reflect and Undo, and Capture; CI runs both. The unit tests cover weighting, the selection cooldown, answer cleanup and checks, and the version and offline-cache wiring. GitHub Actions runs the same command on every push.
 
 ## Versioning
 
@@ -205,7 +205,7 @@ AI in the app (a question written for each principle, the quote that fits it bes
 ## Roadmap
 
 - iOS home screen widget showing the current principle
-- Action Button shortcut for Skip and Sit with it
+- Action Button shortcut for Skip and Reflect
 - Whoop recovery as context for when to show the harder principles (kept on device, never sent to the model)
 
 ## License
