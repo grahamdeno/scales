@@ -91,9 +91,9 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             haptics.play(body["style"] as? String ?? "tick")
         case "icon":
             // Automatic is the main icon, which follows the Home Screen's Light, Dark or Tinted style.
-            // Light and Black stay fixed (1.80.1). iOS says the icon changed itself.
-            let pick = body["name"] as? String
-            let name: String? = pick == "light" ? "AppIcon-Light" : pick == "black" ? "AppIcon-Black" : nil
+            // Light, Black, Paper and Glass stay fixed (1.80.1, 1.85.0). iOS says the icon changed itself.
+            let pick = body["name"] as? String ?? ""
+            let name: String? = Self.fixedIcons[pick]
             guard UIApplication.shared.supportsAlternateIcons, UIApplication.shared.alternateIconName != name else { sendIcon(); return }
             UIApplication.shared.setAlternateIconName(name) { _ in DispatchQueue.main.async { self.sendIcon() } }
         case "save":
@@ -108,10 +108,13 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         run("window.scalesA11y && window.scalesA11y({ voiceOver: \(UIAccessibility.isVoiceOverRunning) })")
     }
 
+    /// The fixed icons, by the name the page uses. Automatic is the main icon and has no entry.
+    private static let fixedIcons = ["light": "AppIcon-Light", "black": "AppIcon-Black", "paper": "AppIcon-Paper", "glass": "AppIcon-Glass"]
+
     /// Which icon is on the Home Screen, for the choice in Settings.
     private func sendIcon() {
         let n = UIApplication.shared.alternateIconName
-        let on = n == "AppIcon-Light" ? "light" : n == "AppIcon-Black" ? "black" : "auto"
+        let on = Self.fixedIcons.first { $0.value == n }?.key ?? "auto"
         run("window.scalesIcon && window.scalesIcon('\(on)')")
     }
 

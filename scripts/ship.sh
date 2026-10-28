@@ -12,8 +12,7 @@ BODY="$(tail -n +3 $S/msg.txt)
 
 Closes #$N
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
+🤖 Generated with [Claude Code](https://claude.com/claude-code)"
 PR=$(gh api repos/grahamdeno/scales/pulls -f title="$T" -f head="$B" -f base=main -f body="$BODY" -q .number)
 sleep 6
 gh api -X PUT repos/grahamdeno/scales/pulls/$PR/merge -f merge_method=merge -f commit_title="Merge pull request #$PR: $T" -q .merged >/dev/null
