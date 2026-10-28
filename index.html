@@ -38,7 +38,7 @@ img { max-width: 100%; }
   --line:rgba(236,234,229,.16); --brass:#ECEAE5; --brass-hi:#ECEAE5; --violet:#ECEAE5; --danger:#E3A595;
   --hi:transparent; --lo:transparent; --scrim:rgba(0,0,0,.55); --onBrass:#121212;
   /* The one accent (1.66.0): blue, for the main action and whatever is selected. Lighter on Black so it reads. */
-  --accent:#6E9BF0; --onAccent:#121212; --btn2:#262624;
+  --accent:#1F5FCC; --onAccent:#FFFFFF; --btn2:#262624;
   /* The layered look (1.74.0): a band behind the top, a black panel raised over it. Charcoal in Black. */
   --band:#2A2A28; --bandCtl:#3A3A37; --bandTile:rgba(236,234,229,.10);
   --font:"Geist",-apple-system,"SF Pro Text",system-ui,sans-serif;
@@ -490,6 +490,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 .done .primary { margin-top:20px; }
 .optp { font-weight:500 !important; font-size:0.8824rem !important; }
 .plusprice { margin:14px 0 0; font-size:var(--t-md); color:var(--ink); }
+.plusbuy { margin-top:16px; }
+.plusbuy[hidden] { display:none; }
 .pluslinks { display:flex; flex-wrap:wrap; justify-content:center; gap:0 4px; margin-top:4px; }
 .pluslinks .linkbtn { padding:0 8px; }
 .pluslinks a.linkbtn { display:inline-flex; align-items:center; text-decoration:none; }
@@ -730,7 +732,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   </ul>
   <p class="note">Free keeps the full deck, the Ledger, quotes, reminders and backups.</p>
   <p class="plusprice" id="plusPrice"></p>
-  <div class="sheet-foot"><button class="primary" type="button" id="plusBuy">Start free trial</button></div>
+  <div class="plusbuy"><button class="primary" type="button" id="plusBuy">Start free trial</button></div>
   <p class="note" id="plusTerms">Renews automatically each year until you cancel. Cancel anytime in iPhone Settings &gt; your name &gt; Subscriptions, at least a day before the trial or year ends.</p>
   <div class="pluslinks"><button type="button" class="linkbtn" id="plusRestore">Restore purchase</button><button type="button" class="linkbtn" id="plusManage" hidden>Manage subscription</button>
     <a class="linkbtn" href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener">Terms of Use</a><a class="linkbtn" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener">Privacy</a></div>
@@ -2889,21 +2891,25 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     $("plusPrice").textContent = on ? (plus.trial && when && plus.renews !== false ? "Your free trial runs until " + when + ". Then " + (plus.price || "the yearly price") + " a year."
       : "Scales Plus is on." + (when ? (plus.renews === false ? " It ends " : " It renews ") + when + "." : ""))
       : !plus.price ? "Scales Plus is not available yet." : days ? days + " days free, then " + plus.price + " a year." : plus.price + " a year.";
-    $("plusBuy").hidden = on;
-    $("plusBuy").disabled = plusBusy || !plus.price;
+    // 1.74.2: no price from the App Store means nothing to buy; the button goes rather than waiting forever.
+    $("plusBuy").parentNode.hidden = on || !plus.price;
+    $("plusBuy").disabled = plusBusy;
     $("plusBuy").textContent = plusBusy ? "Waiting for the App Store…" : days ? "Start free trial" : "Subscribe";
-    $("plusTerms").hidden = on;
+    $("plusTerms").hidden = on || !plus.price;
     $("plusRestore").hidden = on; $("plusManage").hidden = !on;
   }
   function openPlus() { paintPlus(); show("sheetPlus"); }
   $("openPlus").onclick = openPlus;
-  $("plusBuy").onclick = function () { plusBusy = true; paintPlus(); toNative({ type: "purchase" }); };
-  $("plusRestore").onclick = function () { plusBusy = true; paintPlus(); toNative({ type: "restore" }); };
+  // A purchase or restore the App Store never answers (a sign-in left open, no connection) frees the button after a minute.
+  var plusBusyT = 0;
+  function busy() { plusBusy = true; paintPlus(); clearTimeout(plusBusyT); plusBusyT = setTimeout(function () { plusBusy = false; paintPlus(); }, 60000); }
+  $("plusBuy").onclick = function () { busy(); toNative({ type: "purchase" }); };
+  $("plusRestore").onclick = function () { busy(); toNative({ type: "restore" }); };
   $("plusManage").onclick = function () { toNative({ type: "manage" }); };
   // Where Plus stands, from the iPhone app: on start, on return to the app, and after a purchase or restore.
   window.scalesStore = function (s) {
     var was = plusOn();
-    plus = s || { active: false }; plusBusy = false;
+    plus = s || { active: false }; plusBusy = false; clearTimeout(plusBusyT);
     if (was !== plusOn()) applyKey();
     paintPlus(); if (openSheet && openSheet.id === "sheetSettings") { paintAiBox(); paintSettings(); }
     var note = s && s.note;

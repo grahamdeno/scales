@@ -1386,7 +1386,7 @@ test("first run: no Home Screen note in the app, the three choices explained, AI
 // ---------- 1.66.0: the blue accent and Match iPhone ----------
 test("one blue accent for the main action and selected states, and Match iPhone appearance", () => {
   const html = read("index.html");
-  assert.match(html, /--accent:#6E9BF0; --onAccent:#121212;/);
+  assert.match(html, /--accent:#1F5FCC; --onAccent:#FFFFFF;/, "one blue with white text in Black too (1.74.2)");
   assert.match(html, /--accent:#1F5FCC; --onAccent:#F4F3EF;/);
   assert.match(html, /\.primary \{[^}]*background:var\(--accent\)/);
   assert.match(html, /\.toggle\[aria-checked="true"\] \{ background:var\(--accent\)/);
