@@ -62,7 +62,9 @@ test("the website: landing, Support and Privacy (1.79.0)", () => {
     assert.doesNotMatch(h, /\u2014/, f + ": no em-dashes");
     assert.doesNotMatch(h, /[Pp]rinciple/, f + ": the app weighs thoughts");
     assert.match(h, /href="\/support"/); assert.match(h, /href="\/privacy"/);
-    for (const m of h.matchAll(/src="(img\/[^"]+|fonts\/[^"]+)"/g)) assert.ok(fs.existsSync(path.join(__dirname, "..", "site", m[1])), f + " needs " + m[1]);
+    for (const m of h.matchAll(/(?:src|href)="\/((?:img|fonts)\/[^"]+|site\.css)"/g)) assert.ok(fs.existsSync(path.join(__dirname, "..", "site", m[1])), f + " needs " + m[1]);
+    assert.doesNotMatch(h, /<style|style="/, f + ": styles live in site.css, so the site needs no inline styles");
+    assert.match(h, /<link rel="stylesheet" href="\/site\.css">/);
   }
   const home = fs.readFileSync(path.join(__dirname, "..", "site", "index.html"), "utf8");
   assert.match(home, /<title>Scales: Weigh your thoughts<\/title>/);
