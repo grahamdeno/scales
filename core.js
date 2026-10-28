@@ -11,7 +11,7 @@ var ScalesCore = (function () {
   //   PATCH  defect fixes only
   // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
   // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.85.0";
+  var VERSION = "1.86.0";
   var BUILT = "2026-10-28";
 
   // CAP        highest weight a thought can reach (4x as likely as a fresh one)
@@ -700,6 +700,9 @@ var ScalesCore = (function () {
     var later = (s.laters || []).filter(function (l) { return laterDue({ later: l }, now); }).length;
     return Math.max(0, left) + later;
   }
+  // 1.86.0: the Home Screen badge is never a count. A reminder that fires with something waiting sets a plain 1,
+  // and opening Scales clears it; nothing else ever sets it. No climbing number calling you back.
+  function remindBadge(s, now) { return badgeFrom(s, now) > 0 ? 1 : 0; }
   function pushText(kind, s, now) {
     now = now || new Date();
     var left = s ? (s.day === dayOf(now) ? (+s.left || 0) : Math.min(+s.size || 0, +s.active || 0)) : 0;
@@ -938,7 +941,7 @@ var ScalesCore = (function () {
     addCatch: addCatch, catchCount: catchCount, suggestLiving: suggestLiving, noteSkipDay: noteSkipDay,
     REPLY_MAX: REPLY_MAX, addReply: addReply, thread: thread, lastReply: lastReply,
     LATER_MAX: LATER_MAX, laterDue: laterDue, waiting: waiting, canLater: canLater,
-    badgeFrom: badgeFrom, pushText: pushText,
+    badgeFrom: badgeFrom, remindBadge: remindBadge, pushText: pushText,
     BACKUP_EVERY: BACKUP_EVERY, BACKUP_SNOOZE: BACKUP_SNOOZE, needsBackup: needsBackup, backupAgo: backupAgo,
     weekDays: weekDays, isReviewDay: isReviewDay, weekStats: weekStats, weekPrompt: weekPrompt, timeline: timeline };
 })();

@@ -52,6 +52,8 @@ questions, the best quote from today's voice, and replies.
 - Quiet: after 3 s only the top bar, progress and labels dim. The thought, its question, the credit, the options
   and the choices stay bright and act on the first touch.
 - AI in a voice is credited "Written by AI, as **Name**". Names stay readable.
+- The badge is a plain 1 set only by a scheduled reminder, cleared on open (1.86.0). Never a climbing count:
+  the owner does not want the "your feed is calling" feeling.
 - Haptics confirm or reward, never decorate. The signature buzz plays once a day at "Done for today".
 - Test on a phone-like setup (late font, no service worker, 375/390/430 wide) before saying it works.
 - Owner's style: plain words, no em-dashes, no military metaphors; do checks yourself rather than handing them back.

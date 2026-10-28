@@ -69,7 +69,7 @@ test("the website: landing, Support and Privacy (1.79.0)", () => {
     assert.doesNotMatch(h, /\u2014/, f + ": no em-dashes");
     assert.doesNotMatch(h, /[Pp]rinciple/, f + ": the app weighs thoughts");
     assert.match(h, /href="\/support"/); assert.match(h, /href="\/privacy"/);
-    for (const m of h.matchAll(/(?:src|href)="\/((?:img|fonts)\/[^"]+|site\.css)"/g)) assert.ok(fs.existsSync(path.join(__dirname, "..", "site", m[1])), f + " needs " + m[1]);
+    for (const m of h.matchAll(/(?:src|href)="\/((?:img|fonts)\/[^"?]+|site\.css)(?:\?[^"]*)?"/g)) assert.ok(fs.existsSync(path.join(__dirname, "..", "site", m[1])), f + " needs " + m[1]);
     assert.doesNotMatch(h, /<style|style="/, f + ": styles live in site.css, so the site needs no inline styles");
     assert.match(h, /<link rel="stylesheet" href="\/site\.css">/);
   }
@@ -1411,6 +1411,24 @@ test("the badge counts today's set left plus Later that is back", () => {
   assert.equal(C.badgeFrom(s, at(19)), 3 + 2, "evening: both are back");
   assert.equal(C.badgeFrom({ day: "2026-10-25", left: 0, size: 5, active: 2, laters: [] }, at(9)), 2, "a new day: the set, capped by the deck");
   assert.equal(C.badgeFrom(null, at(9)), 0);
+});
+test("the Home Screen badge is a plain 1 or nothing, never a count (1.86.0)", () => {
+  const at = (h) => new Date(2026, 9, 26, h, 0);
+  const s = { day: "2026-10-26", left: 3, size: 5, active: 9, laters: [{ day: "2026-10-25" }] };
+  assert.equal(C.remindBadge(s, at(9)), 1, "something waiting: 1, not 4");
+  assert.equal(C.remindBadge({ day: "2026-10-26", left: 0, size: 5, active: 9, laters: [] }, at(19)), 0, "nothing waiting: no badge");
+  assert.equal(C.remindBadge(null, at(9)), 0);
+  const html = read("index.html"), swift = fs.readFileSync(path.join(__dirname, "..", "ios", "App", "WebViewController.swift"), "utf8");
+  assert.match(html, /badge: C\.remindBadge\(s, at\)/, "reminders carry the plain badge");
+  assert.match(html, /toNative\(\{ type: "badge", count: 0 \}\)/, "opening Scales clears the badge");
+  assert.doesNotMatch(html, /setAppBadge\(/, "the page never sets a count");
+  assert.match(swift, /min\(1, max\(0, badge\)\)/, "the shell never shows more than 1");
+});
+test("every icon address is the fulcrum's, cache-busted, with a favicon.ico (1.86.0)", () => {
+  const html = read("index.html");
+  for (const f of ["favicon.ico", "site/favicon.ico"]) assert.ok(fs.existsSync(path.join(__dirname, "..", f)), f);
+  assert.doesNotMatch(html, /href="icons\/[^"?]+\.png"/, "app icon links carry ?v=");
+  for (const f of ["index.html", "support.html", "privacy.html", "404.html"]) assert.match(fs.readFileSync(path.join(__dirname, "..", "site", f), "utf8"), /favicon\.ico\?v=fulcrum/, f);
 });
 test("reminder text says what is waiting", () => {
   const at = (h) => new Date(2026, 9, 26, h, 0);
