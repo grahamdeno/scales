@@ -63,6 +63,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             queued.forEach { web.evaluateJavaScript($0, completionHandler: nil) }
             queued.removeAll()
             Task { await sendPlus() }
+            sendIcon()
         case "plus":
             Task { await sendPlus() }
         case "purchase":
@@ -82,11 +83,25 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             setBadge(body["count"] as? Int ?? 0)
         case "haptic":
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        case "icon":
+            // Automatic is the main icon, which follows the Home Screen's Light, Dark or Tinted style.
+            // Light and Black stay fixed (1.80.1). iOS says the icon changed itself.
+            let pick = body["name"] as? String
+            let name: String? = pick == "light" ? "AppIcon-Light" : pick == "black" ? "AppIcon-Black" : nil
+            guard UIApplication.shared.supportsAlternateIcons, UIApplication.shared.alternateIconName != name else { sendIcon(); return }
+            UIApplication.shared.setAlternateIconName(name) { _ in DispatchQueue.main.async { self.sendIcon() } }
         case "save":
             save(json: body["json"] as? String ?? "", day: body["day"] as? String ?? "")
         default:
             break
         }
+    }
+
+    /// Which icon is on the Home Screen, for the choice in Settings.
+    private func sendIcon() {
+        let n = UIApplication.shared.alternateIconName
+        let on = n == "AppIcon-Light" ? "light" : n == "AppIcon-Black" ? "black" : "auto"
+        run("window.scalesIcon && window.scalesIcon('\(on)')")
     }
 
     /// Daily save (1.77.0): Scales sends everything as one JSON file and it is written without asking, as

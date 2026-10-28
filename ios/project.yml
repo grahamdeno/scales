@@ -57,6 +57,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.grahamdeno.scales
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Light and Black, chosen in Settings; the main icon (Automatic) follows the Home Screen (1.80.1).
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: AppIcon-Light AppIcon-Black
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
 schemes:
   Scales:
