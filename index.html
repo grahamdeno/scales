@@ -193,7 +193,7 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 .lineWrap .pill .i { width:15px; height:15px; }
 .lineWrap .pill .pn { min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--btn2); font-size:.6875rem; line-height:18px; text-align:center; color:var(--muted); }
 .lineWrap .pills .pill:active { background:var(--btn2); }
-.choices.endmain { grid-template-columns:1fr 1fr 1.25fr; }
+.choices.endmain { grid-template-columns:1fr 1fr 1.3fr; }
 
 #aiLine::after { content:""; position:absolute; left:0; right:0; bottom:-6px; height:2px; border-radius:1px; background:var(--ink); opacity:.5; transform:scaleX(0); transform-origin:0 50%; }
 #aiLine.holding::after { transform:scaleX(1); transition:transform .55s linear; }
@@ -1153,7 +1153,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.84.8"></script>
+<script src="core.js?v=1.84.9"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1877,13 +1877,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var t = onCard(); if (!t) return;
     dropUndo(); coachSeen(); phase = "question"; renderDeck(); showLine(t, "case");
   }
-  // Keep it: it held up. Counts as weighed for the day.
+  // Not done with it (1.84.9; was It holds): kept as it is, counted as weighed for the day.
   function questionKeep() {
     var t = onCard(); if (!t || phase !== "question") return;
     var u = undoPoint();
     C.questionKeep(t, today()); noteMove(t, "keep"); noteDay(t, "keep");
     save(t); logActivity("keep"); phase = "rest"; flyOut("up");
-    undoable("Kept. It held up.", u);
+    undoable("Kept. Not done with it yet.", u);
   }
   function requestSkip() {
     dropUndo();
@@ -2113,9 +2113,10 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         choice("skip", days, "set it down for " + days) + choice("stay", "Stay with it", "keep it in today", true) + "</div>";
     }
     if (phase === "question") {
-      return '<p class="choiceq">Does it still hold up?</p>' +
-        '<div class="choices endmain" id="keys" role="group" aria-label="Does it still hold up?">' +
-        choice("letgo", "Let go", "no") + choice("revise", "Revise", "partly") + choice("qkeep", "It holds", "yes", true) + "</div>";
+      // 1.84.9: keeping it is not a verdict that it is true; it means you are still working on it.
+      return '<p class="choiceq">Where does this leave you?</p>' +
+        '<div class="choices endmain" id="keys" role="group" aria-label="Where does this leave you?">' +
+        choice("letgo", "Let go", "I'm done with it") + choice("revise", "Revise", "change the words") + choice("qkeep", "Not done yet", "keep it in the deck", true) + "</div>";
     }
     return '<div class="choices" id="keys" role="group" aria-label="Choose">' +
       choice("skip", "Skip", "not today") + choice("keep", "Reflect", "sit with it", true) + choice("shed", "Lived", "I do this now") + "</div>";
@@ -2953,7 +2954,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       noteMove(t, "keep"); noteDay(t, "keep"); logActivity("keep");
       save(t); editTarget = null; reviseMode = false; hide(); phase = "rest";
       if (t.id === current) flyOut("up");
-      undoable(reworded ? "Revised. The earlier wording is kept." : "Kept. It held up.", reviseUndo); reviseUndo = null;
+      undoable(reworded ? "Revised. The earlier wording is kept." : "Kept as it was.", reviseUndo); reviseUndo = null;
       return;
     }
     save(t); editTarget = null; hide(); toast("Saved. History kept.");

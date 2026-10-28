@@ -348,7 +348,7 @@ test("Question it: the case against, then Let go puts it in the Ledger with the 
   await reveal(page); await page.click('[data-move="question"]'); await page.clock.runFor(300);
   assert.match(await page.textContent(".phase"), /The other side/);
   assert.match(await page.textContent(".qnotes"), /Excuses cost more than they buy\./, "your reason sits under the case");
-  assert.deepEqual(await rows(page), ["Let go", "Revise", "It holds"]);
+  assert.deepEqual(await rows(page), ["Let go", "Revise", "Not done yet"]);
   assert.ok((await page.textContent("#aiSrc")).length > 0, "a test question without Plus");
   await choose(page, "letgo");
   assert.equal(await page.$eval("#sheetLetGo", (e) => e.open), true);
