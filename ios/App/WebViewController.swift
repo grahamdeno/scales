@@ -163,7 +163,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
                     content.title = item["title"] as? String ?? "Scales"
                     content.body = item["body"] as? String ?? ""
                     content.sound = .default
-                    if let badge = item["badge"] as? Int { content.badge = NSNumber(value: badge) }
+                    // 1.86.0: a reminder's badge is a plain 1 when something is waiting, never a count.
+                    if let badge = item["badge"] as? Int { content.badge = NSNumber(value: min(1, max(0, badge))) }
                     let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: when)
                     center.add(UNNotificationRequest(identifier: "scales-\(id)", content: content,
                                                      trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)))
