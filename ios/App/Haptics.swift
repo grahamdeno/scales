@@ -3,7 +3,7 @@ import UIKit
 
 /// Haptics for Scales (1.84.1). The page asks for a style by name; this plays it.
 /// A buzz confirms something the person did or rewards something they earned:
-///   tick       a choice or an option (selection)
+///   tick       a choice or an option (a light tap)
 ///   medium     press and hold opened Edit or Add
 ///   success    Reflect counted
 ///   thud       Lived: a weight set down
@@ -35,7 +35,7 @@ final class Haptics {
         case "letgo":
             if !run(letGo()) { UIImpactFeedbackGenerator(style: .soft).impactOccurred() }
         default:
-            UISelectionFeedbackGenerator().selectionChanged()
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
         }
     }
 

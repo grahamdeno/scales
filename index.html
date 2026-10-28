@@ -218,6 +218,9 @@ header.top { flex:none; display:flex; align-items:center; justify-content:space-
 #scrollHint { flex:none; margin:10px 0 0; position:static; }
 /* Only on the line screens, where a long thought folds; at rest it shrinks to the space and scrolls (1.69.0). */
 .card.push > .thought, .card.reflect > .thought, .card.peek > .thought, .card > .foldhint, .card > .phase { flex:none; }
+/* 1.84.2: on the screens after a choice the thought may take up to a third of the screen; fitThought sizes it. */
+.card.push > .thought, .card.reflect > .thought { max-height:34dvh; overflow-y:auto; }
+.thought.overflow { -webkit-mask-image:linear-gradient(to bottom, #000 calc(100% - 44px), transparent); mask-image:linear-gradient(to bottom, #000 calc(100% - 44px), transparent); }
 .aside { font-size:0.7647rem; color:var(--faint); margin-top:-10px; }
 /* The AI line: the subject of the push and reflect screens. */
 .lineWrap { position:relative; flex:none; padding-top:20px; border-top:1px solid var(--line); -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
@@ -853,6 +856,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   <div class="panel" id="plusPreviewBox" hidden>
     <div class="setrow"><span id="plusPreviewLbl">Preview Scales Plus<small>TestFlight only. Turns on everything in Plus, without buying it, until the App Store approves it.</small></span>
       <button type="button" class="toggle" id="plusPreviewToggle" role="switch" aria-checked="false" aria-labelledby="plusPreviewLbl"><i></i></button></div>
+    <p class="note" id="plusPreviewWhy" hidden></p>
   </div>
   <div class="pluslinks"><button type="button" class="linkbtn" id="plusRestore">Restore purchase</button><button type="button" class="linkbtn" id="plusManage" hidden>Manage subscription</button>
     <a class="linkbtn" href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener">Terms of Use</a><a class="linkbtn" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener">Privacy</a></div>
@@ -1144,7 +1148,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.84.1"></script>
+<script src="core.js?v=1.84.2"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1736,7 +1740,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (src) src.innerHTML = l.pending ? "" : l.quote ? esc(l.author + (l.src ? ", " + l.src : "")) +
       ' <span aria-hidden="true">·</span> <a href="https://en.wikiquote.org/wiki/' + encodeURIComponent(String(l.page || l.author).replace(/ /g, "_")) + '" target="_blank" rel="noopener">Wikiquote</a>'
       : esc(l.by || (l.ai ? "Written by AI" : "A question to sit with"));
-    paintReplies();
+    paintReplies(); requestAnimationFrame(fitThought);
   }
   // Under the line: your last reply on this thought, as a bubble, and a Reply button (1.40.0).
   function paintReplies() {
@@ -2123,7 +2127,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   }
   function renderDeck() {
     var v = $("v-deck");
-    clearTimeout(dwellT);
+    clearTimeout(dwellT); requestAnimationFrame(fitThought);
     if (askedId && askedId !== current) askedId = null;
     refreshDay();
     var dp = C.dayPhase(day, setSize());
@@ -2192,7 +2196,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     // At rest the words are one span each so the hold can ink them. On push and reflect the thought is plain
     // text: Safari laid the spans out one word per line there (1.34.3).
     var lifted = phase !== "rest" || returned();
-    var fold = lifted && sizeClass(t.text) !== "";
+    var fold = false; // 1.84.2: no clipped thoughts; fitThought sizes it to fit
     var words = '<div class="thought plain' + sizeClass(t.text) + (lifted ? " small" : "") + (fold ? " fold" : "") + '" id="words" style="font-weight:' + C.inkWeight(t) + '">' + esc(t.text) + "</div>" +
       (fold ? '<small class="foldhint" id="foldHint" aria-hidden="true">Tap to read it all</small>' : "");
     var line = '<div class="lineWrap"><p class="ai-p" id="aiLine"></p><small class="ai-src" id="aiSrc"></small>' +
@@ -2253,14 +2257,23 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     // With VoiceOver on, nothing waits: the question and its buttons are there to be read straight away.
     if (!peeked()) dwellT = setTimeout(function () { dwell(t); }, voiceOver ? 0 : DWELL_MS);
     wake();
-    // A thought too long for the screen scrolls; a quiet hint says so until the end is reached (1.69.0).
-    requestAnimationFrame(function () {
-      var w = $("words"); if (!w || w.scrollHeight <= w.clientHeight + 12) return; // glyphs overhang the tight line height by a few pixels
-      var h = document.createElement("small"); h.className = "foldhint"; h.id = "scrollHint"; h.setAttribute("aria-hidden", "true"); h.textContent = "Scroll for more";
-      w.insertAdjacentElement("afterend", h);
-      w.addEventListener("scroll", function () { if (w.scrollTop + w.clientHeight >= w.scrollHeight - 4) { var x = $("scrollHint"); if (x) x.remove(); } });
-    });
   }
+  // 1.84.2: the whole thought, always. The type steps down until the thought fits the space it has, to a floor
+  // (FIT_MIN at rest, FIT_MIN_LIFTED elsewhere). Only a thought too long even then scrolls, and its last line
+  // fades out instead of being cut, until you reach the end.
+  var FIT_MIN = 19, FIT_MIN_LIFTED = 15;
+  function fitThought() {
+    var w = $("words"); if (!w) return;
+    w.style.fontSize = ""; w.classList.remove("overflow");
+    var over = function () { return w.scrollHeight > w.clientHeight + 4; }; // glyphs overhang the tight line height a little
+    if (!over()) return;
+    var size = parseFloat(getComputedStyle(w).fontSize), floor = w.classList.contains("small") ? FIT_MIN_LIFTED : FIT_MIN;
+    while (over() && size > floor) { size = Math.max(floor, size - 1); w.style.fontSize = size + "px"; }
+    if (!over()) return;
+    w.classList.add("overflow");
+    w.onscroll = function () { w.classList.toggle("overflow", w.scrollTop + w.clientHeight < w.scrollHeight - 4); };
+  }
+  window.addEventListener("resize", function () { requestAnimationFrame(fitThought); });
   // The reflect screen's foot: a thin line filling for REFLECT_SEC, then Next.
   // 1.83.2 trial: no Undo on Reflect. Set REFLECT_UNDO to true to bring both Undo buttons back.
   var REFLECT_UNDO = false;
@@ -3351,15 +3364,20 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function longDate(ms) { return new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
   function paintPlus() {
     $("plusGroup").hidden = !(NATIVE && PROXY);
-    $("plusPreviewBox").hidden = !plus.preview || paidOn();
+    // 1.84.2: a TestFlight build always shows the preview row; when Apple did not confirm this copy, it says why.
+    $("plusPreviewBox").hidden = !(plus.preview || plus.previewFlag) || paidOn();
     $("plusPreviewToggle").setAttribute("aria-checked", String(previewOn()));
+    $("plusPreviewToggle").disabled = !plus.preview;
+    $("plusPreviewWhy").hidden = !!plus.preview || !plus.previewWhy;
+    $("plusPreviewWhy").textContent = plus.previewWhy ? "Not available on this copy yet: " + plus.previewWhy + "." : "";
     if (previewOn()) {
       $("plusStatus").textContent = "Preview on (TestFlight)"; $("plusPrice").textContent = "Scales Plus preview is on. Everything in Plus works on this copy.";
       $("plusBuy").parentNode.hidden = true; $("plusTerms").hidden = true; $("plusRestore").hidden = true; $("plusManage").hidden = true;
       paintIconPick(); return;
     }
     var on = plusOn(), days = plus.trialDays, when = plus.expires ? longDate(plus.expires) : "";
-    $("plusStatus").textContent = on ? (plus.trial ? "Free trial" : "On") + (when ? (plus.renews === false || plus.trial ? (plus.trial && plus.renews !== false ? " until " : ", ends ") : ", renews ") + when : "")
+    if (!on && plus.preview) { $("plusStatus").textContent = "TestFlight: tap to turn on the preview"; }
+    else $("plusStatus").textContent = on ? (plus.trial ? "Free trial" : "On") + (when ? (plus.renews === false || plus.trial ? (plus.trial && plus.renews !== false ? " until " : ", ends ") : ", renews ") + when : "")
       : days ? "Try it free for " + days + " days" : "AI questions, the best quote, and answers when you reply";
     $("plusPrice").textContent = on ? (plus.trial && when && plus.renews !== false ? "Your free trial runs until " + when + ". Then " + (plus.price || "the yearly price") + " a year."
       : "Scales Plus is on." + (when ? (plus.renews === false ? " It ends " : " It renews ") + when + "." : ""))
