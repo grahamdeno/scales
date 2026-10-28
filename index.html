@@ -19,7 +19,7 @@ img { max-width: 100%; }
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#DCD9D3" id="themeColor">
 <link rel="manifest" href="manifest.webmanifest">
-<!-- 1.86.0: the icon addresses carry ?v=fulcrum so browsers that kept an older icon by its address fetch this one. -->
+<!-- 1.86.1: the icon addresses carry ?v=fulcrum so browsers that kept an older icon by its address fetch this one. -->
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=fulcrum">
 <link rel="icon" href="favicon.ico?v=fulcrum" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=fulcrum">
@@ -100,7 +100,7 @@ body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-d
 .iconpick [aria-checked="true"] { color:var(--ink); }
 .iconpick [aria-checked="true"] img { outline:2px solid var(--accent); outline-offset:2px; }
 .iconpick button { position:relative; }
-/* 1.86.0: five icons take their own line under the label and spread across it, so none runs off a 375 px screen. */
+/* 1.86.1: five icons take their own line under the label and spread across it, so none runs off a 375 px screen. */
 #iconRow .iconpick { flex:1 1 100%; justify-content:space-between; gap:4px; }
 #iconRow .iconpick button { min-width:52px; }
 .iconpick .locked img { opacity:.45; }
@@ -1160,7 +1160,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.86.0"></script>
+<script src="core.js?v=1.86.1"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -1246,7 +1246,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     el.textContent = left ? left + " in deck" : "";
   }
   function savePrefs() { lsSet(LSP, prefs); badgeSoon(); }
-  // The icon badge (1.51.0, quiet from 1.86.0): only a scheduled reminder sets it, as a plain 1 when something is
+  // The icon badge (1.51.0, quiet from 1.86.1): only a scheduled reminder sets it, as a plain 1 when something is
   // waiting, and opening Scales clears it. The page never sets a count. The state is still saved for the reminders.
   var badgeTimer = null;
   function badgeSoon() { clearTimeout(badgeTimer); badgeTimer = setTimeout(paintBadge, 300); }
@@ -1384,7 +1384,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   try { if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual"; } catch (e) {}
   // A new Scales day may have started while the app was in the background; if the deck was
   // showing Nothing left today, look again.
-  // 1.86.0: coming back clears the badge (paintBadge sends 0); leaving reschedules the reminders as before.
+  // 1.86.1: coming back clears the badge (paintBadge sends 0); leaving reschedules the reminders as before.
   document.addEventListener("visibilitychange", function () { paintBadge(); });
   setTimeout(paintBadge, 800);
   document.addEventListener("visibilitychange", function () {
@@ -1884,7 +1884,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var t = onCard(); if (!t) return;
     dropUndo(); coachSeen(); phase = "question"; renderDeck(); showLine(t, "case");
   }
-  // Not done with it (1.86.0; was It holds): kept as it is, counted as weighed for the day.
+  // Not done with it (1.86.1; was It holds): kept as it is, counted as weighed for the day.
   function questionKeep() {
     var t = onCard(); if (!t || phase !== "question") return;
     var u = undoPoint();
@@ -2120,7 +2120,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         choice("skip", days, "set it down for " + days) + choice("stay", "Stay with it", "keep it in today", true) + "</div>";
     }
     if (phase === "question") {
-      // 1.86.0: keeping it is not a verdict that it is true; it means you are still working on it.
+      // 1.86.1: keeping it is not a verdict that it is true; it means you are still working on it.
       return '<p class="choiceq">Where does this leave you?</p>' +
         '<div class="choices endmain" id="keys" role="group" aria-label="Where does this leave you?">' +
         choice("letgo", "Let go", "I'm done with it") + choice("revise", "Revise", "change the words") + choice("qkeep", "Not done yet", "keep it in the deck", true) + "</div>";
@@ -2603,7 +2603,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var el = $("todayLbl");
     el.className = "sr"; el.removeAttribute("aria-label");
     paintBand(phase);
-    // 1.69.0: what is left of today's set, said in words. (The Home Screen badge is no longer a count, 1.86.0.)
+    // 1.69.0: what is left of today's set, said in words. (The Home Screen badge is no longer a count, 1.86.1.)
     var dc = deckColl(), s = badgeState(), n = s ? C.badgeFrom(s, new Date()) : 0, parts = [];
     if (dc) parts.push(esc(dc));
     if (n && phase === "set") parts.push(n + " left today");
@@ -3711,7 +3711,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     row.querySelectorAll("[data-icon]").forEach(function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-icon") === name)); });
     paintIconPick();
   };
-  // Light, Black, Paper and Glass are part of Scales Plus (1.82.0, 1.86.0); Automatic is for everyone.
+  // Light, Black, Paper and Glass are part of Scales Plus (1.82.0, 1.86.1); Automatic is for everyone.
   function paintIconPick() {
     document.querySelectorAll("#iconRow [data-plus]").forEach(function (b) {
       var locked = !plusOn(); b.classList.toggle("locked", locked);
