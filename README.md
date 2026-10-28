@@ -124,7 +124,9 @@ To check the key, tap **Test key** under AI key. It sends one tiny request and r
 
 ## The look
 
-**Black and White (1.33.0).** Two flat matte surfaces, Black (the default) and White, chosen in Settings > Look, with a faint grain. No cards, raised keys, glass, shadows or rounded panels: the type carries the page, and lines are hairlines. The one filled control on each sheet is solid ink. One face, Geist, self-hosted so it looks the same offline, set at the weight each principle has earned.
+**The layered look (1.74.0).** Two levels. A band at the top (smoke #DCD9D3 in White, charcoal #2A2A28 in Black) holds today's voice, the + and menu buttons, and today's set as tiles: done in black with a check, the current one outlined in blue. A black panel runs edge to edge below it, with 12 px top corners and a soft shadow on its top edge only, and holds the principle, its question and the choices. The Ledger works the same way: the four groups are tiles on the band, the list is on the panel. One button system: one blue primary per screen (Reflect, Keep it), gray for the rest (Skip, Lived, Reply, Today's question), plain text for low-stakes actions (Later). Corners are 12 px on the panel and 52 px buttons, 10 px on 44 px controls and tiles, 6 px on small chips. No glass.
+
+**Black and White (1.33.0, before 1.74.0).** Two flat matte surfaces, Black (the default) and White, chosen in Settings > Look, with a faint grain. No cards, raised keys, glass, shadows or rounded panels: the type carries the page, and lines are hairlines. The one filled control on each sheet is solid ink. One face, Geist, self-hosted so it looks the same offline, set at the weight each principle has earned.
 
 The deck shows only what the moment needs: the principle at rest, the pushback after Skip, the quote on Reflect, and the three choices always at the bottom. Lived ends with a thin ring of ink that opens from the words. With Reduce Motion on, the ink, the springs, the ring and the view transitions are left out.
 
