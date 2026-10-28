@@ -76,7 +76,7 @@ test("the website is published whole: strict styles, and the app passed through 
   const proxy = fs.readFileSync(path.join(__dirname, "..", "server", "app-proxy.js"), "utf8");
   assert.match(proxy, /https:\/\/grahamdeno\.github\.io\/scales\//);
   const wf = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "site.yml"), "utf8");
-  assert.match(wf, /cp server\/ai\.mjs out\/functions\/api\/ai\.js/); assert.match(wf, /out\/functions\/app\/\[\[path\]\]\.js/);
+  assert.match(wf, /cp server\/ai\.mjs functions\/api\/ai\.js/); assert.match(wf, /"functions\/app\/\[\[path\]\]\.js"/, "Functions sit beside out/, where Wrangler looks for them");
 });
 test("the page asks for core.js at its own version, and the cache keeps it (1.77.2)", () => {
   const html = read("index.html"), sw = read("sw.js");
