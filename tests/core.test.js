@@ -726,7 +726,7 @@ test("the Keep sheet offers add or replace, and both can be undone", () => {
 
 test("the three moves are buttons in view; Skip asks once; keys work (1.34.0, 1.73.0)", () => {
   const html = read("index.html");
-  for (const m of ["skip", "keep", "shed", "stay", "peek"]) assert.match(html, new RegExp('data-move="' + m + '"'), m + " button");
+  for (const m of ["skip", "keep", "shed", "stay"]) assert.match(html, new RegExp('data-move="' + m + '"'), m + " button");
   assert.match(html, /class="choices" id="keys" role="group" aria-label="Choose"/);
   assert.match(html, /if \(m === "skip"\) requestSkip\(\); else if \(m === "later"\) saveLater\(\); else if \(m === "peek"\) togglePeek\(\); else if \(m === "stay"\) keepIt\(\); else act\(m\);/);
   assert.match(html, /k === "ArrowLeft"\) requestSkip\(\)/);
@@ -839,7 +839,7 @@ test("motion respects reduced motion", () => {
   assert.match(html, /document\.startViewTransition && !REDUCED\.matches/);
   assert.match(html, /function burst\(\) \{[^}]*REDUCED\.matches\) return;/);
   assert.match(html, /@media \(prefers-reduced-motion: no-preference\) \{ \.card\.enter/);
-  assert.match(html, /@media \(prefers-reduced-motion: reduce\) \{ \.card, \.card\.spring/);
+  assert.match(html, /@media \(prefers-reduced-motion: reduce\) \{ \.dwell, \.dwell\.on, \.card, \.card\.spring/);
 });
 
 test("touch targets: buttons a thumb can hit (1.36.0, 1.73.0)", () => {
@@ -1429,8 +1429,8 @@ test("Capture and Edit are lifted above the keyboard like the reply sheet", () =
 test("Today's question shows the line; once read, Skip commits and Later is offered", () => {
   const html = read("index.html");
   assert.match(html, /if \(phase === "push" \|\| peeked\(\)\) \{ act\("skip"\); return; \}/);
-  assert.match(html, /if \(peeked\(\)\) showLine\(t, "push"\)/);
-  assert.match(html, /class="qbtn" data-move="peek"/);
+  assert.match(html, /var DWELL_MS = 6000/, "the question comes on its own (1.83.0)");
+  assert.doesNotMatch(html, /class="qbtn" data-move="peek"/);
 });
 
 // ---------- 1.55.0: sheet tops ----------
@@ -1469,7 +1469,7 @@ test("nothing is sent to AI until the user allows it", () => {
 test("lines are written for the thought on screen only, not the next one", () => {
   const html = read("index.html");
   assert.doesNotMatch(html, /if \(n && n\.id !== current\) ensureLines\(n\);/);
-  assert.match(html, /function requestLine\(t\) \{ shown = null; ensureLines\(t\); prefetchNext\(\); \}/);
+  assert.match(html, /function requestLine\(t\) \{\n    shown = null; ensureLines\(t\); prefetchNext\(\);/);
 });
 
 // ---------- 1.61.0: the iPhone app ----------

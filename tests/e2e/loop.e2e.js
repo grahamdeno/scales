@@ -51,7 +51,8 @@ async function until(page, check, steps = 40) {
   return check();
 }
 const rows = (page) => page.$$eval("#keys .choice", (s) => s.map((x) => x.textContent));
-const PEEK = '#v-deck [data-move="peek"]';
+// 1.83.0: the question fades in after DWELL_MS on the thought; no button.
+const reveal = (page) => page.clock.runFor(6200);
 const ready = { onboarded: true, coach_seen: true };
 
 test("first run: welcome, a starter deck, the three choices, then the deck", async () => {
@@ -94,7 +95,7 @@ test("Skip asks once; Keep it goes back; Skip after reading rests the thought", 
 test("tap to see the line: then Skip it rests straight away and Later is offered", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
   const first = await words(page);
-  await page.click(PEEK); await page.clock.runFor(300);
+  await reveal(page);
   assert.ok((await page.textContent("#aiLine")).length > 5, "the line shows");
   assert.deepEqual(await rows(page), ["Skip", "Reflect", "Lived"]);
   assert.match(await page.textContent(".laterbtn"), /^Later/);
@@ -108,15 +109,25 @@ test("the touch that wakes a quiet screen only wakes it; the next one presses (1
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
   await page.clock.runFor(3500);
   assert.ok(await page.evaluate(() => document.body.classList.contains("quiet")), "quiet after 3 seconds");
-  await page.click(PEEK); await page.clock.runFor(300);
+  await page.click('[data-move="question"]'); await page.clock.runFor(300);
   assert.ok(!(await page.evaluate(() => document.body.classList.contains("quiet"))), "awake");
-  assert.ok(!(await page.isVisible("#aiLine")), "the waking touch does not show the line");
-  await page.click(PEEK); await page.clock.runFor(300);
-  assert.ok(await page.isVisible("#aiLine"), "the next touch does");
-  await page.clock.runFor(3500);
-  await page.click("#replyBtn"); await page.clock.runFor(300);
-  assert.equal(await page.$eval("#sheetReply", (e) => e.open).catch(() => false), false, "a waking touch presses nothing");
-  assert.ok(await page.isVisible("#aiLine"), "and leaves the line in place");
+  assert.equal(await page.$("#card .phase"), null, "the waking touch presses nothing");
+  await page.click('[data-move="question"]'); await page.clock.runFor(300);
+  assert.match(await page.textContent("#card .phase"), /The case against/, "the next touch does");
+});
+test("the question fades in after a few seconds; its buttons show, then go quiet (1.83.0)", async () => {
+  const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
+  const box = async () => (await page.$eval("#words", (e) => e.getBoundingClientRect().top));
+  const top0 = await box();
+  assert.ok(!(await page.isVisible("#aiLine")), "not yet");
+  assert.equal(await page.$('[data-move="peek"]'), null, "no button for it");
+  await reveal(page);
+  assert.ok(await page.isVisible("#aiLine"), "the question is there");
+  assert.equal(await box(), top0, "the thought did not move");
+  assert.ok(await page.$eval("#dwell", (e) => e.classList.contains("fresh")), "Reply, Keep and Later at full strength");
+  assert.ok(await page.$(".laterbtn"), "Later is offered");
+  await page.clock.runFor(4500);
+  assert.ok(!(await page.$eval("#dwell", (e) => e.classList.contains("fresh"))), "then quiet with the rest");
 });
 test("Reflect goes quiet as well (1.82.2)", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
@@ -182,7 +193,7 @@ test("Capture adds a thought from the + button", async () => {
 
 test("Undo goes away after eight seconds", async () => {
   const page = await open({ prefs: ready, thoughts: { a: P("a", "One."), b: P("b", "Two.") } });
-  await page.click(PEEK); await page.clock.runFor(200);
+  await reveal(page);
   await page.click(".laterbtn"); await page.clock.runFor(500);
   assert.ok(await page.$("#toastUndo"), "Undo is there");
   await page.clock.runFor(8500);
@@ -213,7 +224,7 @@ test("the welcome hides +, the switch and Settings; Reflect shows a question whe
 
 test("Reply: without AI the reply is kept; with AI today's voice answers in the thread (1.71.0)", async () => {
   let page = await open({ prefs: ready, thoughts: { a: P("a", "One.") } });
-  await page.click(PEEK); await page.clock.runFor(300);
+  await reveal(page);
   await page.click("#replyBtn"); await page.fill("#replyInput", "In the meeting."); await page.click("#replyDone");
   assert.ok(await until(page, async () => (await saved(page)).a.replies.length === 1), "kept");
   assert.equal(await page.$eval("#sheetWeigh", (e) => e.open), false, "no thread without AI");
@@ -230,7 +241,7 @@ test("Reply: without AI the reply is kept; with AI today's voice answers in the 
     localStorage.setItem("scales.prefs.v1", JSON.stringify(p)); localStorage.setItem("scales.thoughts.v1", JSON.stringify(t)); localStorage.setItem(k, "sk-ant-test");
   }, [Object.assign({ ai_consent: true }, ready), { a: P("a", "One.") }, "scales.apikey.v1"]);
   await page.goto(base); await page.clock.runFor(500);
-  await page.click(PEEK);
+  await reveal(page);
   assert.ok(await until(page, async () => !!(await page.$("#replyBtn"))), "the line and Reply");
   await page.click("#replyBtn");
   assert.match(await page.textContent("#replyNote"), /answers\./);
@@ -269,8 +280,9 @@ test("Scales Plus in the iPhone app: no server AI without it; buy, then AI reque
   const sent = () => page.evaluate(() => window.__sent.map((m) => m.type));
   // The app reports no Plus, with a trial on offer.
   await page.evaluate(() => window.scalesStore({ active: false, price: "$19.99", trialDays: 14 }));
-  await page.click(PEEK); await page.clock.runFor(1500);
+  await reveal(page);
   assert.equal(asked.length, 0, "no server AI without Plus");
+  await page.click("#words"); await page.clock.runFor(100); // wake the quiet screen
   await page.click("#setBtn"); await page.clock.runFor(300);
   assert.equal(await page.$eval("#plusGroup", (e) => e.hidden), false);
   assert.match(await page.textContent("#plusStatus"), /Try it free for 14 days/);
