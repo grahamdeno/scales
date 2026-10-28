@@ -70,6 +70,14 @@ test("the website: landing, Support and Privacy (1.79.0)", () => {
   assert.match(home, /<title>Scales: Weigh your thoughts<\/title>/);
   assert.match(home, /href="\/app\/"/, "Open in your browser goes to the app");
 });
+test("the website is published whole: strict styles, and the app passed through (1.79.0)", () => {
+  const h = fs.readFileSync(path.join(__dirname, "..", "site", "_headers"), "utf8");
+  assert.match(h, /style-src 'self';/); assert.doesNotMatch(h, /unsafe-inline/, "no inline styles allowed");
+  const proxy = fs.readFileSync(path.join(__dirname, "..", "server", "app-proxy.js"), "utf8");
+  assert.match(proxy, /https:\/\/grahamdeno\.github\.io\/scales\//);
+  const wf = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "site.yml"), "utf8");
+  assert.match(wf, /cp server\/ai\.mjs out\/functions\/api\/ai\.js/); assert.match(wf, /out\/functions\/app\/\[\[path\]\]\.js/);
+});
 test("the page asks for core.js at its own version, and the cache keeps it (1.77.2)", () => {
   const html = read("index.html"), sw = read("sw.js");
   assert.match(html, new RegExp('<script src="core\\.js\\?v=' + C.VERSION.replace(/\./g, "\\.") + '"></script>'), "bump the core.js address with VERSION");
