@@ -1094,6 +1094,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
         <li>Press and hold a thought to edit it, or a quote to keep it as a thought of its own.</li>
       </ul>
     </details>
+    <a class="setrow nav" id="tryNext" href="next/"><span>Try the new Scales</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
     <a class="setrow nav" id="feedbackLink" href="mailto:support@tangomike.app"><span>Send feedback</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
     <a class="setrow nav" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
     <a class="setrow nav" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
@@ -1163,7 +1164,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
 <div id="toastHost" class="sr" aria-live="polite"></div>
 
 <!-- The version on the address (1.77.2) so a phone never pairs a new page with an old core.js from its cache. -->
-<script src="core.js?v=1.87.0"></script>
+<script src="core.js?v=1.88.0"></script>
 <script>
 (function () {
   // Everything runs inside one function so nothing leaks into the global scope.
@@ -3372,6 +3373,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   $("openReminders").onclick = function () { paintReminders(); show("sheetReminders"); };
   $("openDeck").onclick = function () { paintAiBox(); paintSettings(); show("sheetDeck"); };
   $("openData").onclick = function () { paintBackup(); show("sheetData"); };
+  // 1.88.0: a way into the new Scales (next/), which reads these thoughts and never changes them. The iPhone app keeps ?native=1.
+  $("tryNext").setAttribute("href", "next/" + (NATIVE ? "?native=1" : ""));
   $("openHelp").onclick = function () { paintSettings(); show("sheetHelp"); };
   // Settings controls (1.30.0): look, Show where it came from, rest after Not today, AI lines on or off.
   function paintSettings() {

@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Scales</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Scales">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#B9C9A3" id="themeColor">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="icon" href="../icons/favicon-32.png">
+<style>
+@font-face { font-family:"Geist"; font-style:normal; font-weight:100 900; font-display:swap; src:url("../fonts/geist-latin.woff2") format("woff2"); }
+
+/* Two grounds and one ink each. Pistachio is for reading; plum is for when your own hand is on it
+   (writing, editing, the library). There is no accent color: the other ground is the accent. */
+:root {
+  --pist: #B9C9A3; --pist-ink: #2A1E2E; --pist-muted: #3E4830;
+  --plum: #3B2240; --plum-ink: #F1E9D8; --plum-muted: #BBA7BE; --plum-faint: #8E7A92;
+  --pad: 28px;
+  --top: max(env(safe-area-inset-top), 20px);
+  --bot: env(safe-area-inset-bottom);
+  --strip: calc(76px + var(--bot));
+  --ease-back: cubic-bezier(.34,1.56,.64,1);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
+body {
+  font-family: "Geist", -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+  background: var(--pist); color: var(--pist-ink); transition: background-color .45s ease, color .45s ease;
+  position: fixed; inset: 0; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+body.plum { background: var(--plum); color: var(--plum-ink); }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.view { position: absolute; inset: 0; }
+[hidden] { display: none !important; }
+
+.corner { position: absolute; top: calc(var(--top) + 12px); font-size: 16px; font-weight: 500; padding: 12px 0; z-index: 3; }
+.corner.l { left: var(--pad); } .corner.r { right: var(--pad); }
+.pill { background: var(--pist); color: var(--pist-ink); border-radius: 999px; padding: 13px 26px; font-weight: 700; font-size: 17px; }
+.pill:disabled { opacity: 0; pointer-events: none; }
+
+/* ---- Meet ---- */
+#stage { position: absolute; left: 0; right: 0; top: 0; bottom: var(--strip); touch-action: none; }
+#carry { transform-origin: center bottom; position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--top) + 64px); bottom: 24px; display: flex; flex-direction: column; justify-content: center; will-change: transform; }
+#words { margin: 0; font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600; transition: font-weight 1.2s ease; overflow-wrap: anywhere; }
+#words.long { font-size: 24px; line-height: 1.25; }
+#words.vlong { font-size: 19px; line-height: 1.35; }
+#note { margin: 18px 0 0; font-size: 16px; line-height: 1.45; color: var(--pist-muted); white-space: pre-wrap; }
+.hint { position: absolute; left: 0; right: 0; margin: 0; text-align: center; font-size: 15px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .12s; }
+#hintUp { top: calc(var(--top) + 76px); }
+#hintDown { bottom: calc(var(--strip) + 68px); }
+.hint.on { font-weight: 700; }
+#empty { position: absolute; left: var(--pad); right: var(--pad); top: 0; bottom: var(--strip); display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+#empty h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+#empty p { margin: 0; font-size: 16px; color: var(--pist-muted); }
+@keyframes nudge { 0%,100% { transform: translateY(0) } 30% { transform: translateY(-14px) } 62% { transform: translateY(6px) } }
+@keyframes arrive { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: none } }
+.nudge #words { animation: nudge 1.3s cubic-bezier(.4,0,.2,1) 1; }
+.arrive { animation: arrive .45s ease-out 1; }
+
+#strip { position: absolute; left: 0; right: 0; bottom: 0; height: var(--strip); background: var(--plum); color: var(--plum-ink);
+  border-radius: 22px 22px 0 0; display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 12px; transition: height .25s ease; z-index: 2; width: 100%; }
+#strip .grab { width: 36px; height: 4px; border-radius: 2px; background: rgba(241,233,216,.35); }
+#strip .row { display: flex; justify-content: space-between; width: 100%; padding: 0 var(--pad); font-size: 15px; }
+#strip .row b { font-weight: 600; } #strip .row span { color: var(--plum-muted); }
+body.plum #strip { opacity: 0; pointer-events: none; }
+
+#toast { position: absolute; left: 16px; right: 16px; bottom: calc(var(--strip) + 14px); background: var(--pist-ink); color: var(--pist);
+  border-radius: 14px; padding: 6px 6px 6px 18px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; z-index: 5;
+  opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; pointer-events: none; }
+#toast.on { opacity: 1; transform: none; pointer-events: auto; }
+#toast button { padding: 12px 14px; font-weight: 700; }
+
+/* ---- Write and Edit (plum) ---- */
+.sheetform { position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--top) + 76px); bottom: calc(var(--bot) + 100px); display: flex; flex-direction: column; gap: 22px; }
+.sheetform.center { justify-content: center; }
+textarea { font: inherit; color: var(--plum-ink); background: transparent; border: 0; outline: none; resize: none; width: 100%; padding: 0; caret-color: var(--pist); user-select: text; -webkit-user-select: text; touch-action: auto; }
+textarea::placeholder { color: var(--plum-faint); }
+.big { font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 700; }
+.small { font-size: 17px; line-height: 1.45; border-top: 1px solid rgba(241,233,216,.2); padding-top: 14px; }
+.lbl { font-size: 13px; color: var(--plum-muted); margin-bottom: -14px; }
+.formfoot { position: absolute; left: var(--pad); right: var(--pad); bottom: calc(var(--bot) + 28px); display: flex; align-items: center; justify-content: space-between; }
+.quiet { color: var(--plum-muted); font-size: 15px; padding: 12px 0; }
+.kept { position: absolute; left: var(--pad); right: var(--pad); top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+.kept p { margin: 0; } .kept .k1 { font-size: 20px; font-weight: 700; color: var(--pist); } .kept .k2 { font-size: 16px; color: var(--plum-muted); }
+
+/* ---- Library ---- */
+#lib { position: absolute; left: 0; right: 0; top: calc(var(--top) + 36px); bottom: 0; background: var(--plum); color: var(--plum-ink); border-radius: 22px 22px 0 0;
+  display: flex; flex-direction: column; transform: translateY(100%); transition: transform .35s cubic-bezier(.2,.8,.2,1); z-index: 6; }
+#lib.open { transform: none; }
+#libShade { position: absolute; inset: 0; z-index: 5; display: none; }
+#libShade.on { display: block; }
+#lib .grabbtn { align-self: center; padding: 10px 40px 14px; }
+#lib .grabbtn i { display: block; width: 36px; height: 4px; border-radius: 2px; background: rgba(241,233,216,.35); }
+#lib header { padding: 0 var(--pad) 14px; display: flex; flex-direction: column; gap: 14px; }
+#lib header div { display: flex; justify-content: space-between; align-items: baseline; }
+#lib h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+#lib .new { color: var(--pist); font-weight: 600; font-size: 16px; padding: 10px 0; }
+#q { width: 100%; font: inherit; font-size: 16px; color: var(--plum-ink); background: rgba(241,233,216,.08); border: 0; border-radius: 12px; padding: 12px 14px; outline: none; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
+#q::placeholder { color: var(--plum-faint); }
+#libList { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 0 var(--pad) calc(var(--bot) + 32px); }
+#libList h3 { margin: 18px 0 2px; font-size: 13px; font-weight: 500; color: var(--plum-muted); }
+.lrow { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid rgba(241,233,216,.12); width: 100%; text-align: left; }
+.lrow .t { font-size: 17px; line-height: 1.3; }
+.lrow .m { font-size: 13px; color: var(--plum-muted); white-space: nowrap; }
+.lrow.away .t { color: var(--plum-muted); }
+.lrow .back { font-size: 13px; font-weight: 600; color: var(--pist); white-space: nowrap; padding: 4px 0; }
+.libfoot { margin-top: 36px; display: flex; flex-direction: column; gap: 4px; }
+.libfoot a, .libfoot button { color: var(--plum-muted); font-size: 15px; padding: 10px 0; text-align: left; }
+.libfoot small { color: var(--plum-faint); font-size: 12px; padding-top: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+  #carry, #lib, body { transition-duration: 0s !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- Meet: one thought on pistachio. Swipe up for the next one, pull down to put it away, tap it to edit. -->
+<section class="view" id="vMeet" aria-label="Your thought">
+  <button class="corner l" id="newBtn" type="button">New</button>
+  <p class="hint" id="hintUp" aria-hidden="true">Next</p>
+  <div id="stage">
+    <div id="carry">
+      <p id="words"></p>
+      <p id="note" hidden></p>
+    </div>
+  </div>
+  <div id="empty" hidden><h1>That's all for today.</h1><p id="emptySub"></p></div>
+  <p class="hint" id="hintDown" aria-hidden="true">Put away</p>
+  <div class="sr" id="srActs">
+    <button type="button" id="srNext">Next thought</button>
+    <button type="button" id="srAway">Put away</button>
+    <button type="button" id="srEdit">Edit this thought</button>
+  </div>
+  <button id="strip" type="button" aria-label="Your thoughts. Open the list.">
+    <i class="grab" aria-hidden="true"></i>
+    <span class="row"><b>Your thoughts</b><span id="stripN">0</span></span>
+  </button>
+  <div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastUndo">Undo</button></div>
+</section>
+
+<!-- Write: plum. One field. -->
+<section class="view" id="vWrite" hidden aria-label="New thought">
+  <button class="corner l" id="writeCancel" type="button">Cancel</button>
+  <div class="sheetform center" id="writeForm">
+    <label class="sr" for="writeText">A thought</label>
+    <textarea class="big" id="writeText" rows="5" maxlength="1500" placeholder="What's on your mind?"></textarea>
+  </div>
+  <div class="formfoot"><span></span><button class="pill" type="button" id="writeKeep" disabled>Keep</button></div>
+  <div class="kept" id="writeKept" hidden><p class="k1">Kept.</p><p class="k2">It comes back tomorrow.</p></div>
+</section>
+
+<!-- Edit: plum. The thought and a note. -->
+<section class="view" id="vEdit" hidden aria-label="Edit thought">
+  <button class="corner l" id="editCancel" type="button">Cancel</button>
+  <div class="sheetform">
+    <label class="sr" for="editText">The thought</label>
+    <textarea class="big" id="editText" rows="4" maxlength="1500"></textarea>
+    <label class="lbl" for="editNote">A note</label>
+    <textarea class="small" id="editNote" rows="4" maxlength="1500" placeholder="Anything that came up"></textarea>
+  </div>
+  <div class="formfoot"><button class="quiet" type="button" id="editDelete">Delete</button><button class="pill" type="button" id="editDone">Done</button></div>
+</section>
+
+<!-- The library: the strip, opened. Everything you have written, findable. -->
+<div id="libShade"></div>
+<section id="lib" aria-label="Your thoughts" aria-hidden="true">
+  <button class="grabbtn" type="button" id="libClose" aria-label="Close the list"><i></i></button>
+  <header>
+    <div><h2>Your thoughts</h2><button class="new" type="button" id="libNew">New</button></div>
+    <label class="sr" for="q">Search your thoughts</label>
+    <input id="q" type="search" placeholder="Search" autocomplete="off" autocapitalize="off" spellcheck="false">
+  </header>
+  <div id="libList"></div>
+</section>
+
+<script src="core.js?v=2.0.0-next.1"></script>
+<script>
+(function () {
+  "use strict";
+  var C = window.ScalesNext;
+  var $ = function (id) { return document.getElementById(id); };
+  var NATIVE = !!window.scalesNative || /[?&]native=1/.test(location.search);
+  // "Next one back tomorrow." / "on Fri." / "Nov 3." / "today."
+  function nextBackText(label) {
+    if (label === "Today" || label === "Tomorrow") return "Next one back " + label.toLowerCase() + ".";
+    if (/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$/.test(label)) return "Next one back on " + label + ".";
+    return "Next one back " + label + ".";
+  }
+  var KEY = "scales.next.thoughts.v1", KEY_UI = "scales.next.ui.v1", OLD = "scales.thoughts.v1";
+
+  function lsGet(k, d) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function haptic(style) { if (!NATIVE) return; try { window.webkit.messageHandlers.scales.postMessage({ type: "haptic", style: style }); } catch (_) {} }
+  function now() { return new Date(); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+  // First open: your thoughts from the current Scales are copied in once. The current app's data is only read.
+  var store = lsGet(KEY, null);
+  if (!store) { store = C.importOld(lsGet(OLD, {}), now()); lsSet(KEY, store); }
+  var ui = Object.assign({ cur: null, ms: 0, worked: false, nudged: false }, lsGet(KEY_UI, {}));
+  function save() { lsSet(KEY, store); }
+  function saveUi() { lsSet(KEY_UI, ui); }
+
+  // ---------- the visit clock ----------
+  // Time counts only while the app is open and this thought is on screen. A long stretch with no touch at all
+  // is read as the phone being set down, so it counts as seen, never as thought about.
+  var since = null, lastTouch = Date.now(), softT = 0;
+  function clockOn() { if (since == null && ui.cur && !document.hidden && mode === "meet") since = Date.now(); scheduleSoften(); }
+  function clockOff() { if (since != null) { ui.ms += Date.now() - since; since = null; saveUi(); } clearTimeout(softT); }
+  function elapsed() { return ui.ms + (since != null ? Date.now() - since : 0); }
+  function idle() { return Date.now() - lastTouch > C.IDLE_MS; }
+  // At 11 s the type eases one step lighter: the only sign that the time counted.
+  function scheduleSoften() {
+    clearTimeout(softT);
+    var t = store[ui.cur]; if (!t) return;
+    var left = C.THOUGHT_MIN_MS - elapsed();
+    if (left <= 0) { $("words").style.fontWeight = Math.max(400, C.weight(t) - 100); return; }
+    softT = setTimeout(scheduleSoften, left + 20);
+  }
+  document.addEventListener("visibilitychange", function () { if (document.hidden) clockOff(); else { lastTouch = Date.now(); clockOn(); } });
+  window.addEventListener("pagehide", clockOff);
+  ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, function () { lastTouch = Date.now(); }, true); });
+
+  // Ends the current visit: classifies it and schedules the thought's return.
+  function endVisit() {
+    var t = store[ui.cur]; if (!t) return null;
+    clockOff();
+    var kind = C.recordVisit(t, ui.ms, ui.worked, idle(), now());
+    ui.cur = null; ui.ms = 0; ui.worked = false; saveUi(); save();
+    return kind;
+  }
+
+  // ---------- modes ----------
+  var mode = "meet";
+  function setMode(m) {
+    if (mode === "meet" && m !== "meet") clockOff();
+    mode = m;
+    $("vMeet").hidden = false;
+    $("vWrite").hidden = m !== "write";
+    $("vEdit").hidden = m !== "edit";
+    $("vMeet").style.visibility = (m === "write" || m === "edit") ? "hidden" : "visible";
+    document.body.classList.toggle("plum", m === "write" || m === "edit");
+    $("themeColor").setAttribute("content", document.body.classList.contains("plum") ? "#3B2240" : "#B9C9A3");
+    if (m === "meet") clockOn();
+  }
+
+  // ---------- Meet ----------
+  function sizeClass(text) { var n = text.length; return n > 220 ? "vlong" : n > 90 ? "long" : ""; }
+  function renderMeet(arrive) {
+    var t = store[ui.cur];
+    if (!t || t.away) { ui.cur = null; ui.ms = 0; ui.worked = false; var n = C.pickNext(store, now()); if (n) ui.cur = n.id; saveUi(); t = store[ui.cur]; }
+    $("stripN").textContent = C.list(store).length;
+    if (!C.list(store).length) { openWrite(true); return; }
+    $("carry").style.transition = "none"; $("carry").style.transform = ""; $("carry").style.opacity = "";
+    $("hintUp").style.opacity = 0; $("hintDown").style.opacity = 0;
+    if (!t) {
+      $("carry").hidden = true; $("srActs").hidden = true; $("empty").hidden = false;
+      var nd = C.nextDue(store);
+      $("emptySub").textContent = nd ? nextBackText(C.whenLabel(nd, now())) : "Everything is put away.";
+      return;
+    }
+    $("empty").hidden = true; $("carry").hidden = false; $("srActs").hidden = false;
+    var w = $("words");
+    w.textContent = t.text; w.className = sizeClass(t.text);
+    w.style.transition = "none"; w.style.fontWeight = C.weight(t); void w.offsetWidth; w.style.transition = "";
+    $("note").hidden = !t.note; $("note").textContent = t.note || "";
+    $("carry").classList.remove("arrive"); if (arrive) { void $("carry").offsetWidth; $("carry").classList.add("arrive"); }
+    clockOn();
+    if (!ui.nudged) setTimeout(function () {
+      if (ui.nudged || mode !== "meet" || drag) return;
+      ui.nudged = true; saveUi();
+      $("carry").classList.add("nudge"); setTimeout(function () { $("carry").classList.remove("nudge"); }, 1400);
+    }, 2500);
+  }
+
+  // ---------- the gesture ----------
+  // Up past 100 px: next. Down past 160 px: put away (further, so it is never an accident).
+  // The thought follows the finger 1:1 for 40 px, then at half speed. Short of a threshold it springs back.
+  var UP = 100, DOWN = 160, drag = null;
+  function res(v) { var a = Math.abs(v), s = Math.sign(v); return s * (a <= 40 ? a : 40 + (a - 40) * 0.5); }
+  var stage = $("stage");
+  stage.addEventListener("pointerdown", function (e) {
+    if (mode !== "meet" || !store[ui.cur]) return;
+    try { stage.setPointerCapture(e.pointerId); } catch (_) {}
+    drag = { y: e.clientY, x: e.clientX, t: Date.now(), dy: 0, crossed: 0 };
+    $("carry").style.transition = "none";
+  });
+  stage.addEventListener("pointermove", function (e) {
+    if (!drag) return;
+    var dy = e.clientY - drag.y; drag.dy = dy;
+    if (Math.abs(dy) < 6 && Math.abs(e.clientX - drag.x) < 6) return;
+    drag.moved = true;
+    var sc = dy > 0 ? 1 - Math.min(.06, (dy / DOWN) * .06) : 1;
+    $("carry").style.transform = "translateY(" + res(dy) + "px)" + (sc < 1 ? " scale(" + sc.toFixed(3) + ")" : "");
+    $("newBtn").style.opacity = dy > 0 ? Math.max(.35, 1 - dy / DOWN) : "";
+    var pu = Math.max(0, -dy) / UP, pd = Math.max(0, dy) / DOWN;
+    var hu = $("hintUp"), hd = $("hintDown");
+    hu.style.opacity = dy < 0 ? (pu >= 1 ? 1 : .2 + .5 * pu) : 0; hu.classList.toggle("on", pu >= 1);
+    hd.style.opacity = dy > 0 ? (pd >= 1 ? 1 : .2 + .5 * pd) : 0; hd.classList.toggle("on", pd >= 1);
+    $("strip").style.height = dy > 0 ? "calc(var(--strip) + " + Math.min(40, dy * .25) + "px)" : "";
+    var c = pu >= 1 ? 1 : pd >= 1 ? -1 : 0;
+    if (c !== drag.crossed) { if (c) haptic("tick"); drag.crossed = c; }
+  });
+  function release() {
+    if (!drag) return;
+    var d = drag; drag = null;
+    $("strip").style.height = ""; $("newBtn").style.opacity = "";
+    if (!d.moved && Date.now() - d.t < 350) { openEdit(); return; }
+    if (d.dy <= -UP) return goNext();
+    if (d.dy >= DOWN) return goAway();
+    $("carry").style.transition = "transform .4s var(--ease-back)";
+    $("carry").style.transform = "";
+    $("hintUp").style.opacity = 0; $("hintDown").style.opacity = 0;
+  }
+  stage.addEventListener("pointerup", release);
+  stage.addEventListener("pointercancel", release);
+
+  function fly(dir, then) {
+    var c = $("carry");
+    c.style.transition = "transform .3s cubic-bezier(.4,0,1,1), opacity .3s ease-in";
+    c.style.transform = dir < 0 ? "translateY(-110vh)" : "translateY(60vh) scale(.9)";
+    c.style.opacity = 0;
+    setTimeout(then, 300);
+  }
+  function goNext() {
+    var id = ui.cur; endVisit();
+    fly(-1, function () { var n = C.pickNext(store, now(), id); ui.cur = n ? n.id : null; saveUi(); renderMeet(true); });
+  }
+  var undoPoint = null;
+  function goAway() {
+    var id = ui.cur, before = JSON.parse(JSON.stringify(store[id])), ms = ui.ms;
+    endVisit();
+    store[id].away = now().toISOString(); save();
+    haptic("thud");
+    undoPoint = { id: id, t: before, ms: ms };
+    fly(1, function () { var n = C.pickNext(store, now(), id); ui.cur = n ? n.id : null; saveUi(); renderMeet(true); toast("Put away."); });
+  }
+  $("srNext").onclick = goNext; $("srAway").onclick = goAway; $("srEdit").onclick = function () { openEdit(); };
+
+  var toastT = 0;
+  function toast(msg) {
+    $("toastMsg").textContent = msg; $("toast").classList.add("on");
+    clearTimeout(toastT); toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; }, 5000);
+  }
+  $("toastUndo").onclick = function () {
+    if (!undoPoint) return;
+    clockOff();
+    store[undoPoint.id] = undoPoint.t; ui.cur = undoPoint.id; ui.ms = undoPoint.ms; ui.worked = false; undoPoint = null;
+    save(); saveUi(); $("toast").classList.remove("on"); renderMeet(true);
+  };
+
+  // ---------- Write ----------
+  var writeHome = false;
+  function openWrite(home) {
+    writeHome = !!home;
+    $("writeCancel").hidden = writeHome;
+    $("writeText").value = ""; $("writeKeep").disabled = true;
+    $("writeKept").hidden = true; $("writeForm").hidden = false; $("writeKeep").parentNode.hidden = false; $("writeCancel").hidden = false;
+    closeLib(); setMode("write");
+    setTimeout(function () { $("writeText").focus(); }, 60);
+  }
+  $("newBtn").onclick = function () { openWrite(false); };
+  $("libNew").onclick = function () { openWrite(false); };
+  $("writeText").addEventListener("input", function () { $("writeKeep").disabled = !this.value.trim(); });
+  $("writeCancel").onclick = function () { setMode("meet"); renderMeet(false); };
+  $("writeKeep").onclick = function () {
+    var text = $("writeText").value.trim(); if (!text) return;
+    var t = C.make(text, now()); store[t.id] = t; save();
+    $("writeText").blur();
+    haptic("success");
+    $("writeForm").hidden = true; $("writeKeep").parentNode.hidden = true; $("writeKept").hidden = false; $("writeCancel").hidden = true;
+    setTimeout(function () { setMode("meet"); renderMeet(true); }, 1600);
+  };
+
+  // ---------- Edit ----------
+  function openEdit() {
+    var t = store[ui.cur]; if (!t) return;
+    $("editText").value = t.text; $("editNote").value = t.note || "";
+    delArmed = false; $("editDelete").textContent = "Delete";
+    setMode("edit");
+  }
+  $("editCancel").onclick = function () { setMode("meet"); renderMeet(false); };
+  $("editDone").onclick = function () {
+    var t = store[ui.cur]; if (!t) return setMode("meet");
+    var text = $("editText").value.trim(), note = $("editNote").value.trim();
+    if (text && (text !== t.text || note !== (t.note || ""))) { t.text = text; t.note = note; ui.worked = true; save(); saveUi(); haptic("medium"); }
+    setMode("meet"); renderMeet(false);
+  };
+  // Delete asks for a second tap rather than a dialog.
+  var delArmed = false;
+  $("editDelete").onclick = function () {
+    if (!delArmed) { delArmed = true; this.textContent = "Tap again to delete"; return; }
+    var id = ui.cur; delete store[id]; ui.cur = null; ui.ms = 0; ui.worked = false; save(); saveUi();
+    setMode("meet"); renderMeet(true);
+  };
+
+  // ---------- Library ----------
+  function openLib() {
+    clockOff(); $("q").value = ""; renderLib();
+    $("lib").classList.add("open"); $("lib").setAttribute("aria-hidden", "false"); $("libShade").classList.add("on"); $("newBtn").style.visibility = "hidden";
+    mode = "library";
+  }
+  function closeLib() {
+    if (!$("lib").classList.contains("open")) return;
+    $("lib").classList.remove("open"); $("lib").setAttribute("aria-hidden", "true"); $("libShade").classList.remove("on"); $("q").blur(); $("newBtn").style.visibility = "";
+    if (mode === "library") { mode = "meet"; clockOn(); }
+  }
+  $("strip").onclick = openLib;
+  $("libClose").onclick = closeLib; $("libShade").onclick = closeLib;
+  $("q").addEventListener("input", renderLib);
+  function renderLib() {
+    var q = $("q").value.trim().toLowerCase(), n = now();
+    var match = function (t) { return !q || t.text.toLowerCase().indexOf(q) !== -1 || (t.note || "").toLowerCase().indexOf(q) !== -1; };
+    var on = C.inRotation(store).filter(match).sort(function (a, b) { return a.due < b.due ? -1 : a.due > b.due ? 1 : (b.skips || 0) - (a.skips || 0); });
+    var off = C.putAway(store).filter(match).sort(function (a, b) { return a.away < b.away ? 1 : -1; });
+    var h = "<h3>In rotation · " + on.length + "</h3>";
+    h += on.map(function (t) {
+      return '<button type="button" class="lrow" data-open="' + esc(t.id) + '"><span class="t" style="font-weight:' + Math.min(700, C.weight(t) - 100) + '">' + esc(t.text) + '</span><span class="m">' + esc(C.whenLabel(t.due, n)) + "</span></button>";
+    }).join("") || '<p class="lrow"><span class="m">Nothing here' + (q ? " matches." : " yet.") + "</span></p>";
+    h += "<h3 style=\"margin-top:28px\">Put away · " + off.length + "</h3>";
+    h += off.map(function (t) {
+      return '<div class="lrow away"><span class="t">' + esc(t.text) + '</span><button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button></div>';
+    }).join("") || '<p class="lrow"><span class="m">' + (q ? "Nothing matches." : "Pull a thought down to put it away.") + "</span></p>";
+    h += '<div class="libfoot"><button type="button" id="backup">Back up</button><a href="../' + (NATIVE ? "?native=1" : "") + '">Back to the current Scales</a><small>Scales ' + esc(C.VERSION) + ". Your thoughts stay on this phone.</small></div>";
+    $("libList").innerHTML = h;
+    $("backup").onclick = backup;
+  }
+  $("libList").addEventListener("click", function (e) {
+    var o = e.target.closest("[data-open]"), b = e.target.closest("[data-back]");
+    if (o) {
+      // Opening a thought from the list puts it on screen now. The thought you were on counts as visited.
+      var id = o.getAttribute("data-open");
+      if (ui.cur && ui.cur !== id) endVisit();
+      ui.cur = id; ui.ms = 0; ui.worked = false; saveUi();
+      closeLib(); renderMeet(true);
+    } else if (b) {
+      var t = store[b.getAttribute("data-back")]; if (!t) return;
+      t.away = null; t.due = C.addDays(C.dayKey(now()), 1); save(); haptic("medium"); renderLib();
+    }
+  });
+
+  function backup() {
+    var data = JSON.stringify({ app: "scales-next", version: C.VERSION, exported_at: now().toISOString(), thoughts: store }, null, 1);
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([data], { type: "application/json" }));
+    a.download = "scales-" + C.dayKey(now()) + ".json";
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+
+  // Keys on a keyboard: up for next, down to put away, E to edit, N for new.
+  document.addEventListener("keydown", function (e) {
+    if (mode !== "meet" || e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
+    if (e.key === "ArrowUp") { e.preventDefault(); if (store[ui.cur]) goNext(); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); if (store[ui.cur]) goAway(); }
+    else if (e.key === "e" || e.key === "Enter") { if (store[ui.cur]) openEdit(); }
+    else if (e.key === "n") { e.preventDefault(); openWrite(false); }
+  });
+
+  // A new day while the app stays open: pick up what came due.
+  setInterval(function () { if (mode === "meet" && !ui.cur && C.pickNext(store, now())) renderMeet(true); }, 60000);
+
+  setMode("meet");
+  renderMeet(true);
+
+  if ("serviceWorker" in navigator && !NATIVE) { navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(function () {}); }
+})();
+</script>
+</body>
+</html>
