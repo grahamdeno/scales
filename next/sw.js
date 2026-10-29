@@ -3,8 +3,8 @@
 // It keeps its own cache ("scales-next-v...") and never touches the current app's "scales-v..." cache.
 
 // Bump this with VERSION in core.js so phones drop the old copy.
-const CACHE = "scales-next-v2.0.0-next.1";
-const SHELL = ["./", "index.html", "core.js", "core.js?v=2.0.0-next.1", "manifest.webmanifest",
+const CACHE = "scales-next-v2.0.0-next.2";
+const SHELL = ["./", "index.html", "core.js", "core.js?v=2.0.0-next.2", "manifest.webmanifest",
   "../icons/apple-touch-icon.png", "../icons/icon-192.png", "../icons/icon-512.png", "../icons/favicon-32.png"];
 
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });

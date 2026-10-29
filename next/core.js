@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.0.0-next.1";
+  var VERSION = "2.0.0-next.2";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 7000;      // 7 s or less: skipped
@@ -104,6 +104,21 @@
     return out;
   }
 
+  // Catch-up: thoughts written in the current Scales after the first import join on the next open.
+  // Matched by id; a thought already here is never overwritten, and one deleted here (in gone) never comes back.
+  // Returns how many were added.
+  function mergeOld(store, old, now, gone) {
+    var fresh = importOld(old, now), added = 0, skip = {};
+    (gone || []).forEach(function (id) { skip[id] = true; });
+    Object.keys(fresh).forEach(function (id) {
+      if (store[id] || skip[id]) return;
+      var t = fresh[id];
+      if (!t.away) t.due = dayKey(now);
+      store[id] = t; added++;
+    });
+    return added;
+  }
+
   // "Tomorrow", "Today", a weekday for the coming week, else a short date.
   function whenLabel(key, now) {
     var today = dayKey(now);
@@ -117,6 +132,6 @@
   var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
     make: make, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext,
-    nextDue: nextDue, importOld: importOld, whenLabel: whenLabel };
+    nextDue: nextDue, importOld: importOld, mergeOld: mergeOld, whenLabel: whenLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);
