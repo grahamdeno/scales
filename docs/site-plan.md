@@ -70,8 +70,8 @@ Image: `shot-pull.png`.
 
 There's no rating, no streak and no "done". Scales notices one thing: how long a thought stays on your screen.
 
-- **A glance,** 7 seconds or less. It comes back tomorrow, a little bolder.
-- **A real look,** 11 seconds or more. It rests longer each time.
+- **A glance,** 20 seconds or less. It comes back tomorrow, a little bolder.
+- **A real look,** 30 seconds or more. It rests longer each time.
 - **An edit or a note.** It rests longest.
 
 The thoughts you keep glancing past come first, in heavier type. What you avoid shows instead of hiding.
@@ -127,7 +127,7 @@ Swipe up to move on. Pull down to put a thought away. Tap it to edit it or add a
 screen for five seconds.
 
 **Why did a thought come back so soon?**
-A glance of 7 seconds or less brings it back the next day. Stay with it for 11 seconds or more and it rests longer each
+A glance of 20 seconds or less brings it back the next day. Stay with it for 30 seconds or more and it rests longer each
 time. Edit it or add a note and it rests longest.
 
 **Why is one thought in bolder type?**

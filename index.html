@@ -121,13 +121,32 @@ textarea::placeholder { color: var(--plum-faint); }
 .lrow .m { font-size: 13px; color: var(--plum-muted); white-space: nowrap; }
 .lrow.away .t { color: var(--plum-muted); }
 .lrow .back { font-size: 13px; font-weight: 600; color: var(--pist); white-space: nowrap; padding: 4px 0; }
-.libfoot { margin-top: 36px; display: flex; flex-direction: column; gap: 4px; }
-.libfoot a, .libfoot button { color: var(--plum-muted); font-size: 15px; padding: 10px 0; text-align: left; }
-.libfoot small { color: var(--plum-faint); font-size: 12px; padding-top: 8px; }
+#libList { padding-bottom: calc(var(--bot) + 40px); }
+#lib header .top { display: flex; justify-content: space-between; align-items: center; }
+#lib .hbtns { display: flex; align-items: center; margin-right: calc(-1 * var(--pad)); }
+#lib .gear { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: var(--plum-ink); opacity: .7; }
+#lib .gear svg { width: 24px; height: 24px; }
+#lib .new { margin-right: 0; }
+
+/* ---- Settings and Help (2.1.0): plum pages that slide in from the right over the library ---- */
+.page { position: absolute; inset: 0; background: var(--plum); color: var(--plum-ink); z-index: 8; display: flex; flex-direction: column;
+  transform: translateX(100%); visibility: hidden; transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s .35s; touch-action: none; }
+.page.open { transform: none; visibility: visible; transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s; }
+.page .pback { align-self: flex-start; margin-top: calc(var(--top) + 4px); padding: 20px 28px 12px var(--pad); font-size: 16px; font-weight: 500; }
+.page h1 { margin: 0; padding: 0 var(--pad) 10px; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+.page .body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 0 0 calc(var(--bot) + 40px); }
+.page .sh { margin: 26px var(--pad) 4px; font-size: 13px; font-weight: 500; color: var(--plum-muted); }
+.srow { display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%; min-height: 52px; padding: 0 var(--pad); font-size: 17px; text-align: left;
+  border-bottom: 1px solid rgba(241,233,216,.12); }
+.srow .v { font-size: 15px; color: var(--plum-muted); white-space: nowrap; }
+.srow .chev { color: var(--plum-muted); font-size: 20px; }
+.snote { margin: 10px var(--pad) 0; font-size: 14px; line-height: 1.45; color: var(--plum-muted); }
+.snote.ok { color: var(--pist); }
+.help p { margin: 0 var(--pad) 18px; font-size: 17px; line-height: 1.5; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; }
-  #carry, #lib, body { transition-duration: 0s !important; }
+  #carry, #lib, body, .page { transition-duration: 0s !important; }
 }
 </style>
 </head>
@@ -185,7 +204,9 @@ textarea::placeholder { color: var(--plum-faint); }
 <section id="lib" aria-label="Your thoughts" aria-hidden="true">
   <button class="grabbtn" type="button" id="libClose" aria-label="Close the list"><i></i></button>
   <header>
-    <div><h2>Your thoughts</h2><button class="new" type="button" id="libNew"><span class="plus" aria-hidden="true">+</span>New</button></div>
+    <div class="top"><h2>Your thoughts</h2><span class="hbtns">
+      <button class="gear" type="button" id="libGear" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+      <button class="new" type="button" id="libNew"><span class="plus" aria-hidden="true">+</span>New</button></span></div>
     <label class="sr" for="q">Search your thoughts</label>
     <input id="q" type="search" placeholder="Search" autocomplete="off" autocapitalize="off" spellcheck="false">
     <div class="seg" id="seg" aria-label="Show"><button type="button" data-view="all">All</button><button type="button" data-view="on">In rotation</button><button type="button" data-view="away">Put away</button></div>
@@ -193,7 +214,37 @@ textarea::placeholder { color: var(--plum-faint); }
   <div id="libList"></div>
 </section>
 
-<script src="core.js?v=2.0.1"></script>
+<!-- Settings: your data, help, privacy. Reached from the gear in the library. -->
+<section class="page" id="settings" aria-label="Settings" aria-hidden="true">
+  <button class="pback" type="button" id="setBack">&#8249; Your thoughts</button>
+  <h1>Settings</h1>
+  <div class="body">
+    <p class="sh">Your data</p>
+    <button class="srow" type="button" id="setBackup"><span>Back up</span><span class="v">Save a file</span></button>
+    <button class="srow" type="button" id="setRestore"><span>Restore from a backup</span><span class="v">Choose a file</span></button>
+    <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+    <p class="snote" id="restoreMsg" role="status" aria-live="polite"></p>
+    <p class="snote" id="setSaved"></p>
+    <p class="sh">Help</p>
+    <button class="srow" type="button" id="setHelp"><span>How Scales works</span><span class="chev" aria-hidden="true">&#8250;</span></button>
+    <p class="sh">About</p>
+    <a class="srow" id="setPrivacy" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+    <a class="srow" id="setSupport" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+    <a class="srow" id="setFeedback" href="mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback"><span>Send feedback</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+    <p class="snote" id="setVersion"></p>
+  </div>
+</section>
+<section class="page" id="help" aria-label="How Scales works" aria-hidden="true">
+  <button class="pback" type="button" id="helpBack">&#8249; Settings</button>
+  <h1>How Scales works</h1>
+  <div class="body help">
+    <p>Swipe up to move on. Pull down to put a thought away; it waits in Your thoughts. Tap a thought to edit it or add a note. Undo stays for five seconds after either move.</p>
+    <p>Scales reads how long you stay. 20 seconds or less: it comes back tomorrow, a little bolder. 30 seconds or more: it rests longer each time. An edit or a note: it rests longest.</p>
+    <p>Nothing leaves unless you put it away.</p>
+  </div>
+</section>
+
+<script src="core.js?v=2.1.0"></script>
 <script>
 (function () {
   "use strict";
@@ -242,7 +293,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function clockOff() { if (since != null) { ui.ms += Date.now() - since; since = null; saveUi(); } clearTimeout(softT); }
   function elapsed() { return ui.ms + (since != null ? Date.now() - since : 0); }
   function idle() { return Date.now() - lastTouch > C.IDLE_MS; }
-  // At 11 s the type eases one step lighter: the only sign that the time counted.
+  // At 30 s the type eases one step lighter: the only sign that the time counted.
   function scheduleSoften() {
     clearTimeout(softT);
     var t = store[ui.cur]; if (!t) return;
@@ -449,7 +500,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function closeLib() {
     if (!$("lib").classList.contains("open")) return;
     $("lib").classList.remove("open"); $("lib").setAttribute("aria-hidden", "true"); $("libShade").classList.remove("on"); $("q").blur(); $("newBtn").style.visibility = "";
-    if (mode === "library") { mode = "meet"; clockOn(); }
+    if (mode === "library") { mode = "meet"; if (needsRender) { needsRender = false; renderMeet(false); } else clockOn(); }
   }
   var libCloseBlock = 0;
   $("libClose").onclick = function () { if (Date.now() - libCloseBlock > 400) closeLib(); };
@@ -502,7 +553,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("strip").addEventListener("click", function () { if (stripTap) openLib(); stripTap = true; });
   // Shutting, from the grabber or the header
   function headDown(e) {
-    if (!lib.classList.contains("open") || e.target.closest("input, #libNew, .seg button")) return;
+    if (!lib.classList.contains("open") || e.target.closest("input, #libNew, #libGear, .seg button")) return;
     sheet = { y: e.clientY, t: Date.now(), dy: 0, from: "head", moved: false };
   }
   document.addEventListener("pointerdown", function (e) { if (e.target.closest("#lib header, #libClose")) headDown(e); });
@@ -558,9 +609,8 @@ textarea::placeholder { color: var(--plum-faint); }
         return '<div class="lrow away"><span class="t">' + esc(t.text) + '</span><button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button></div>';
       }).join("") || '<p class="lrow"><span class="m">' + (q ? "Nothing matches." : "Pull a thought down to put it away.") + "</span></p>";
     }
-    h += '<div class="libfoot"><button type="button" id="backup">Back up</button><small>Scales ' + esc(C.VERSION) + ". " + esc(savedLine()) + "</small></div>";
+
     $("libList").innerHTML = h;
-    $("backup").onclick = backup;
   }
   $("libList").addEventListener("click", function (e) {
     var o = e.target.closest("[data-open]"), b = e.target.closest("[data-back]");
@@ -585,6 +635,44 @@ textarea::placeholder { color: var(--plum-faint); }
   // In the iPhone app: saved without asking to iCloud Drive, Scales (or Files), each day and whenever you leave.
   function dailySave() { if (NATIVE) post({ type: "save", json: JSON.stringify(backupData()), day: C.dayKey(now()) }); }
   window.scalesSaved = function (r) { ui.saved = { ok: !!(r && r.ok), where: r && r.where, at: now().toISOString() }; saveUi(); };
+  // ---------- Settings and Help ----------
+  var needsRender = false;
+  function openPage(id, m) { var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; }
+  function closePage(id, m) { var p = $(id); p.classList.remove("open"); p.setAttribute("aria-hidden", "true"); mode = m; }
+  function openSettings() {
+    $("restoreMsg").textContent = ""; $("restoreMsg").className = "snote";
+    $("setSaved").textContent = savedLine();
+    $("setVersion").textContent = "Scales " + C.VERSION;
+    $("setFeedback").setAttribute("href", "mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback&body=" +
+      encodeURIComponent("\n\n\nScales " + C.VERSION + (NATIVE ? ", iPhone app" : ", browser") + "\n"));
+    openPage("settings", "settings");
+  }
+  $("libGear").onclick = openSettings;
+  $("setBack").onclick = function () { closePage("settings", "library"); };
+  $("setHelp").onclick = function () { openPage("help", "help"); };
+  $("helpBack").onclick = function () { closePage("help", "settings"); };
+  $("setBackup").onclick = backup;
+  $("setRestore").onclick = function () { $("restoreFile").value = ""; $("restoreFile").click(); };
+  function restoreMsg(text, ok) { $("restoreMsg").textContent = text; $("restoreMsg").className = "snote" + (ok ? " ok" : ""); }
+  $("restoreFile").addEventListener("change", function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    if (f.size > 20 * 1024 * 1024) { restoreMsg("That file is too big to be a Scales backup.", false); return; }
+    var rd = new FileReader();
+    rd.onerror = function () { restoreMsg("That file couldn't be read.", false); };
+    rd.onload = function () {
+      var data = null; try { data = JSON.parse(String(rd.result)); } catch (e) {}
+      var r = C.restoreFrom(store, data, now(), lsGet(KEY_GONE, []));
+      if (!r.ok) { restoreMsg("That file isn't a Scales backup.", false); return; }
+      if (r.added) save();
+      lsSet(KEY_GONE, r.gone);
+      if (r.visits.length) { var lg = lsGet(KEY_LOG, []); C.mergeLog(lg, r.visits); lsSet(KEY_LOG, lg); }
+      $("stripN").textContent = C.list(store).length; needsRender = true; renderLib();
+      restoreMsg(r.added ? "Added " + r.added + (r.added === 1 ? " thought." : " thoughts.") : "Nothing new in that backup.", true);
+      if (r.added) haptic("success");
+    };
+    rd.readAsText(f);
+  });
+
   function savedLine() {
     if (!NATIVE) return "Your thoughts stay on this phone.";
     var s = ui.saved; if (!s || !s.ok) return "Saved each day to iCloud Drive, Scales.";

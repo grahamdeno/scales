@@ -119,6 +119,43 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click('#seg [data-view="on"]'); await page.waitForTimeout(200);
     ok(/In rotation ·/.test(await page.textContent("#libList")) && !/Put away ·/.test(await page.textContent("#libList")), tag + "In rotation filter shows only rotation");
     await page.click('#seg [data-view="all"]'); await page.waitForTimeout(200);
+    // Settings: reached from the gear, back returns to the library still open
+    await page.click("#libGear"); await page.waitForTimeout(600);
+    ok(await page.locator("#settings.open").count() === 1, tag + "the gear opens Settings");
+    ok(/Back up/.test(await page.textContent("#settings")) && /Restore from a backup/.test(await page.textContent("#settings")), tag + "Settings has Back up and Restore");
+    ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
+    ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.1\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/Scales 2\.1\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    await page.screenshot({ path: path.join(shots, w + "-8-settings.png") });
+    const dl = page.waitForEvent("download", { timeout: 3000 });
+    await page.click("#setBackup"); const d = await dl;
+    const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
+    ok(bk.app === "scales" && bk.version === "2.1.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
+    const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
+    const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
+    fs.writeFileSync(f2, JSON.stringify({ app: "scales", version: "2.1.0", thoughts: { r1: mk("r1", "Restored one"), r2: mk("r2", "Restored two") }, gone: [] }));
+    fs.writeFileSync(f1, JSON.stringify({ app: "scales", version: 1, thoughts: { z1: { id: "z1", text: "From a Scales 1 backup", status: "active" } }, activity: {}, prefs: {} }));
+    fs.writeFileSync(fb, JSON.stringify({ hello: "world" }));
+    await page.setInputFiles("#restoreFile", f2); await page.waitForTimeout(400);
+    ok((await page.textContent("#restoreMsg")).trim() === "Added 2 thoughts.", tag + "Restore adds the two new thoughts (" + (await page.textContent("#restoreMsg")).trim() + ")");
+    await page.evaluate(() => { document.getElementById("restoreFile").value = ""; }); // what tapping the row does
+    await page.setInputFiles("#restoreFile", f2); await page.waitForTimeout(400);
+    ok((await page.textContent("#restoreMsg")).trim() === "Nothing new in that backup.", tag + "Restoring the same file again adds nothing");
+    await page.setInputFiles("#restoreFile", f1); await page.waitForTimeout(400);
+    ok((await page.textContent("#restoreMsg")).trim() === "Added 1 thought.", tag + "A Scales 1 backup restores too");
+    await page.setInputFiles("#restoreFile", fb); await page.waitForTimeout(400);
+    ok(/isn't a Scales backup/.test(await page.textContent("#restoreMsg")), tag + "A file that is not a backup is refused");
+    // Help, and back
+    await page.click("#setHelp"); await page.waitForTimeout(500);
+    ok(await page.locator("#help.open").count() === 1 && /20 seconds or less/.test(await page.textContent("#help")) && /30 seconds or more/.test(await page.textContent("#help")), tag + "How Scales works opens with the new times");
+    await page.screenshot({ path: path.join(shots, w + "-9-help.png") });
+    await page.click("#helpBack"); await page.waitForTimeout(500);
+    ok(await page.locator("#help.open").count() === 0 && await page.locator("#settings.open").count() === 1, tag + "Help goes back to Settings");
+    await page.click("#setBack"); await page.waitForTimeout(500);
+    ok(await page.locator("#settings.open").count() === 0 && await page.locator("#lib.open").count() === 1, tag + "Settings goes back to the library, still open");
+    ok(/Restored one/.test(await page.textContent("#lib")), tag + "the library shows what was restored");
     await page.screenshot({ path: path.join(shots, w + "-6-library.png") });
     const lib = await page.textContent("#lib");
     ok(/brand new thought/.test(lib) && /A thought I lived/.test(lib), tag + "library lists new thought and put-away ones");
