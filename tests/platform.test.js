@@ -17,6 +17,31 @@ test("the website is published whole: strict styles, and the app passed through 
   assert.match(wf, /cp server\/ai\.mjs functions\/api\/ai\.js/); assert.match(wf, /"functions\/app\/\[\[path\]\]\.js"/, "Functions sit beside out/, where Wrangler looks for them");
 });
 
+test("the Scales 2 website: four pages, strict CSP, no inline code, no Scales 1 words, no em-dashes (2.1.0)", () => {
+  const pages = ["index", "support", "privacy", "404"];
+  for (const p of pages) {
+    const h = read("site/" + p + ".html");
+    assert.doesNotMatch(h, /<script/i, p + ": no scripts");
+    assert.doesNotMatch(h, /\sstyle=|<style/i, p + ": no inline styles");
+    assert.doesNotMatch(h, /\u2014/, p + ": no em-dashes");
+    for (const bad of ["Scales Plus", "Ledger", "Reflect", "Lived", "Wikiquote", "Weigh your thoughts", "Skip"]) {
+      assert.ok(!h.includes(bad), p + " still mentions " + bad);
+    }
+    assert.match(h, /href="\/site\.css"/);
+  }
+  assert.doesNotMatch(read("site/site.css"), /\u2014|smoke|#0a84ff|blue/i);
+  assert.match(read("site/site.css"), /--pist:#B9C9A3/);
+  const idx = read("site/index.html");
+  for (const w of ["One thought at a time.", "Two moves. That&#39;s all.".replace("&#39;", "'"), "Scales reads the pause.", "Nothing disappears on its own.", "Yours, on your phone.", "20 seconds or less", "30 seconds or more"])
+    assert.ok(idx.includes(w), "landing has: " + w);
+  assert.match(read("site/privacy.html"), /Effective October 29, 2026\./);
+  const sup = read("site/support.html");
+  assert.match(sup, /tap the gear, and choose Back up/); assert.match(sup, /Restoring adds what's missing and never\s+overwrites|Restoring adds what's missing and never overwrites/);
+  for (const f of ["shot-meet.png", "shot-pull.png", "shot-library.png", "icon.png"]) assert.ok(fs.existsSync(path.join(__dirname, "..", "site", "img", f)), f);
+  const wf = read(".github/workflows/site.yml");
+  assert.match(wf, /check \/ "One thought at a time"/); assert.match(wf, /check \/site\.css "--pist"/);
+});
+
 // ---------- 1.72.0: Scales Plus, checked on the server ----------
 const storeDir = path.join(__dirname, "fixtures", "store");
 const nodeCrypto = require("crypto");
