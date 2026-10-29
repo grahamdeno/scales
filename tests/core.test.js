@@ -40,7 +40,7 @@ test("Question it: keep, revise or let go, each counted as weighed (1.79.0)", ()
   assert.match(p, /strongest honest case against/); assert.match(p, /Why they believe it: My father said so\./);
   assert.equal(C.checkEdit([t], t, { why: "New reason" }).ok, true, "changing only the reasons can be saved");
   const html = read("index.html");
-  assert.match(html, /if \(phase === "push"\) p\.push\('<button type="button" class="pill" data-move="question">' \+ ICON_Q \+ "Not sure it\\u2019s true\?/, "doubt is offered before a skip (1.84.0)");
+  assert.match(html, /if \(reflecting\) p\.push\('<button type="button" class="pill" data-move="question">' \+ ICON_Q \+ "Not sure it\\u2019s true\?/, "doubt is offered on Reflect (1.88.0)");
   assert.match(html, /<p class="choiceq">Where does this leave you\?<\/p>/);
   assert.match(html, /choice\("qkeep", "Not done yet", "keep it in the deck", true\)/);
   assert.match(html, /id="sheetLetGo"/);
@@ -99,7 +99,7 @@ test("quiet: the resting card dims everything but the thought after 3 seconds (1
 test("finding the line and keeping it: a cue under the thought, a named button, a fill while held (1.82.2)", () => {
   const html = read("index.html"), c = css();
   assert.doesNotMatch(html, /togglePeek\(\);\n  \}\);/, "no tap on the thought (1.82.3)");
-  assert.match(html, /class="pill" data-move="save">\+ Add to my thoughts<\/button>/, "says what it does and where it goes (1.84.0)");
+  assert.doesNotMatch(html, /data-move="save">\+ Add to my thoughts/, "keeping a line is press and hold only (1.88.0)");
   assert.match(c, /#aiLine\.holding::after \{ transform:scaleX\(1\); transition:transform \.55s linear; \}/, "the fill matches HOLD_MS");
   assert.match(html, /var HOLD_MS = 550/);
   assert.match(html, /Press and hold a line Scales wrote to keep it as a thought\./, "the walkthrough says so");
@@ -747,7 +747,7 @@ test("the three moves are buttons in view; Skip asks once; keys work (1.34.0, 1.
   const html = read("index.html");
   for (const m of ["skip", "keep", "shed", "stay", "later"]) assert.match(html, new RegExp('choice\\("' + m + '"'), m + " button");
   assert.match(html, /class="choices" id="keys" role="group" aria-label="Choose"/);
-  assert.match(html, /if \(m === "skip"\) requestSkip\(\); else if \(m === "later"\) saveLater\(\); else if \(m === "peek"\) togglePeek\(\); else if \(m === "stay"\) keepIt\(\); else act\(m\);/);
+  assert.match(html, /if \(m === "skip"\) requestSkip\(\); else if \(m === "later"\) saveLater\(\); else if \(m === "stay"\) keepIt\(\); else act\(m\);/);
   assert.match(html, /k === "ArrowLeft"\) requestSkip\(\)/);
   assert.match(html, /k === "ArrowUp"\) act\("keep"\)/);
   assert.match(html, /k === "ArrowRight"\) act\("shed"\)/);
@@ -755,9 +755,9 @@ test("the three moves are buttons in view; Skip asks once; keys work (1.34.0, 1.
   assert.match(html, /var HOLD_MS = 550;/);
   assert.match(html, /if \(m === "edit"\) openEdit\(t\); else if \(shown && shown\.ai\) openKeep\(t, shown\.text, shown\.quote \? \{ author: shown\.author, src: shown\.src \} : null\);/);
   assert.doesNotMatch(html, /id="holdZone"|id="holdRing"|function openChoices/, "the press and hold menu is gone");
-  assert.match(html, /if \(phase === "push" \|\| askedId === current \|\| returned\(\) \|\| \(t\.skip_count \|\| 0\) < SKIP_ASK_AT\) \{ act\("skip"\); return; \}/, "Skip asks once each showing (1.84.0)");
-  assert.match(html, /coachSeen\(\); askedId = t\.id; phase = "push"; renderDeck\(\); showLine\(t, "push"\);/);
-  assert.match(html, /phase = "rest"; peekId = t\.id; renderDeck\(\); showLine\(t, "push"\);/, "Keep it goes back with the line showing");
+  assert.match(html, /var ask = C\.canLater\(all\(\), t\) \|\| \(t\.skip_count \|\| 0\) >= SKIP_ASK_AT;\n\s+if \(phase === "push" \|\| askedId === current \|\| !ask\) \{ act\("skip"\); return; \}/, "Skip asks Tonight or N days once each showing (1.88.0)");
+  assert.match(html, /coachSeen\(\); askedId = t\.id; phase = "push"; renderDeck\(\); if \(\(t\.skip_count \|\| 0\) >= SKIP_ASK_AT\) showLine\(t, "push"\);/, "the pushback line only for a pattern");
+  assert.match(html, /function keepIt\(\) \{\n.*\n\s+phase = "rest"; renderDeck\(\);/, "Stay with it goes back to the resting card");
   assert.match(html, /reflectT = setTimeout\(finishReflect, C\.REFLECT_SEC \* 1000\)/);
   assert.match(html, /if \(t\.skip_count > 0\) \{ t\.skip_count--; reflectLighter = true; \}/);
   assert.match(html, /id="reflNext">Next thought</);
@@ -772,7 +772,7 @@ test("the three moves are buttons in view; Skip asks once; keys work (1.34.0, 1.
   assert.match(html, /if \(cb\) \{ closeMenu\(\); setColl\(cb\.getAttribute\("data-coll"\)\); return; \}/);
   assert.match(html, /menu\.showModal\(\)/);
   assert.match(html, /p\.push\('<button type="button" class="pill" data-move="question">' \+ ICON_Q \+ "Not sure it\\u2019s true\?<\/button>"\);/, "the other side is one of the options under the question (1.84.0)");
-  assert.match(html, /data-move="save">/, "Save is a button beside Reply");
+  assert.doesNotMatch(html, /data-move="save">/, "no Save pill beside Reply: press and hold keeps a line (1.88.0)");
 });
 
 test("Black and White: one face, two flat looks, no shadows, glass or rounded panels (1.33.0)", () => {
@@ -1468,7 +1468,7 @@ test("Capture and Edit are lifted above the keyboard like the reply sheet", () =
 // ---------- 1.53.0: tap to see the line ----------
 test("Today's question shows the line; once read, Skip commits and Later is offered", () => {
   const html = read("index.html");
-  assert.match(html, /var DWELL_MS = 3000/, "the question comes on its own (1.83.0)");
+  assert.doesNotMatch(html, /var DWELL_MS = 3000|id="dwell"/, "nothing fades in at rest (1.88.0)");
   assert.doesNotMatch(html, /class="qbtn" data-move="peek"/);
 });
 

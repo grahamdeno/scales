@@ -45,6 +45,9 @@ questions, the best quote from today's voice, and replies.
 ## Design rules learned the hard way (October 2026)
 
 - One screen, one question; the buttons at the bottom answer it. No second lines on buttons.
+- Fewer things at rest (queued, 1.88.0): the resting card is the thought and Skip, Reflect, Lived only. Nothing fades
+  in under it. Answer it and Not sure it's true? live on Reflect. Skip and Later are one choice (Skip asks Tonight or
+  N days; the pushback line only after SKIP_ASK_AT skips). + Add to my thoughts is gone (press and hold keeps a line).
 - Words say what they do: "Answer it" / "Your take" / "Argue back", "+ Add to my thoughts" (never for a question),
   "Not sure it's true?". Avoid "Keep" for two meanings.
 - Nothing in the main loop scrolls. The thought is never cut: `fitThought` steps its type down, refits when the
@@ -65,7 +68,7 @@ questions, the best quote from today's voice, and replies.
 
 - App icons: Automatic, Light, Black, Paper and Glass (1.85.0; all but Automatic need Plus). Ember, Blue and Graphite
   were drawn and are on hold, not rejected. Glass's point could be a brighter blue at small sizes (a reviewer's note).
-- Whether to extend the quiet fade further, or tune DWELL_MS (3 s) and SKIP_ASK_AT (2).
+- Whether to extend the quiet fade further, or tune SKIP_ASK_AT (2). DWELL_MS is gone (1.88.0).
 - Reflect without Undo is a trial (`REFLECT_UNDO = false` in index.html).
 - Shoebox song-question fix (separate repo) is waiting on the owner.
 - App Store Connect listing: name "Scales: Weigh Your Thoughts", subtitle "Is it true? Do you live it?".

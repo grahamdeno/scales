@@ -1770,12 +1770,14 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     var l = shown, r = C.lastReply(t);
     if (!l || l.none || l.pending) { box.innerHTML = ""; return; }
     // 1.84.0: one row of small options, each named for what it does, and only where it fits the moment.
+    // 1.88.0: only after a choice. Reflect (and a thought back from Later) offers your take and the other side;
+    // the other side offers your argument and your reasons. The resting card and Skip have none. Keeping a line
+    // as a thought is press and hold on the line; the + Add to my thoughts pill is gone.
+    var reflecting = phase === "reflect" || returned();
+    if (!reflecting && phase !== "question") { box.innerHTML = ""; return; }
     var rk = replyKind(l), n = (t.replies || []).filter(function (x) { return x.line === String(l.text || "").trim(); }).length, p = [];
     p.push('<button type="button" class="pill" id="replyBtn">' + REPLY[rk].pill + (n ? ' <span class="pn" aria-label="' + n + ' so far">' + n + "</span>" : "") + "</button>");
-    // A question is not something to live by: Add to my thoughts is for quotes and statements only.
-    if (l.ai && !/\?\s*$/.test(String(l.text || "")) && (phase === "rest" || phase === "reflect")) p.push('<button type="button" class="pill" data-move="save">+ Add to my thoughts</button>');
-    if (phase === "rest" && !returned()) p.push('<button type="button" class="pill" data-move="question">' + ICON_Q + "Not sure it\u2019s true?</button>");
-    if (phase === "push") p.push('<button type="button" class="pill" data-move="question">' + ICON_Q + "Not sure it\u2019s true?</button>");
+    if (reflecting) p.push('<button type="button" class="pill" data-move="question">' + ICON_Q + "Not sure it\u2019s true?</button>");
     if (phase === "question" && !t.why) p.push('<button type="button" class="pill" data-move="why">+ Why I believe it</button>');
     box.innerHTML = '<div class="pills">' + p.join("") + "</div>";
   }
@@ -1857,12 +1859,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     coachSeen();
     if (kind === "skip") {
       // Not today: counted, rested until the next day, and owed one turn at the front.
-      var u = undoPoint(), canL = phase === "rest" && C.canLater(all(), t);
+      var u = undoPoint();
       C.applySkip(t, today(), restDays()); C.noteSkipDay(t, today()); noteMove(t, "skip"); noteDay(t, "skip");
       save(t); logActivity("skip"); flyOut("left");
-      // Tonight instead (1.84.1): the skip comes back off, and the thought waits for this evening.
-      toast("Skipped. " + backText(t.rest_until), function () { restore(u); toast("Undone."); }, null,
-        canL ? { label: new Date().getHours() < C.CHECKIN_HOUR ? "Tonight" : "Later", fn: function () { restore(u); setTimeout(saveLater, 0); } } : null);
+      // 1.88.0: Tonight is asked on the Skip screen, so the message offers only Undo.
+      toast("Skipped. " + backText(t.rest_until), function () { restore(u); toast("Undone."); });
       return;
     }
     if (kind === "keep") {
@@ -1884,11 +1885,13 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // Keep it (1.73.0): back from the Skip screen to the three choices, with the line still showing.
   function keepIt() {
     var t = onCard(); if (!t || phase !== "push") return;
-    phase = "rest"; peekId = t.id; renderDeck(); showLine(t, "push");
+    phase = "rest"; renderDeck();
   }
   // Question it (1.79.0).
   function questionIt() {
     var t = onCard(); if (!t) return;
+    // 1.88.0: it opens from Reflect, whose test has already counted; its timer stops here.
+    clearTimeout(reflectT); reflectUndo = null;
     dropUndo(); coachSeen(); phase = "question"; renderDeck(); showLine(t, "case");
   }
   // Not done with it (1.87.0; was It holds): kept as it is, counted as weighed for the day.
@@ -1906,8 +1909,11 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     // screen, or a thought back from Later, and the next Skip goes straight through.
     // 1.84.1: the check is for a pattern, not a single skip. Under SKIP_ASK_AT skips it goes straight through, with
     // Undo and Tonight in the toast.
-    if (phase === "push" || askedId === current || returned() || (t.skip_count || 0) < SKIP_ASK_AT) { act("skip"); return; }
-    coachSeen(); askedId = t.id; phase = "push"; renderDeck(); showLine(t, "push");
+    // 1.88.0: Skip and Later are one choice. Skip asks "Tonight or N days?" whenever Tonight is possible, and with the
+    // pushback line once a thought has been skipped SKIP_ASK_AT times. With nothing to ask, it goes straight through.
+    var ask = C.canLater(all(), t) || (t.skip_count || 0) >= SKIP_ASK_AT;
+    if (phase === "push" || askedId === current || !ask) { act("skip"); return; }
+    coachSeen(); askedId = t.id; phase = "push"; renderDeck(); if ((t.skip_count || 0) >= SKIP_ASK_AT) showLine(t, "push");
   }
   // Tap to see the line (1.53.0): a tap on the thought at rest shows the line Skip would show, and changes
   // nothing else. Once it has been read, Skip in the choices rests the thought straight away (the pushback
@@ -1916,22 +1922,8 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   function returned() { return phase === "rest" && !!current && laterId === current; }
   // A returned Later counts as read: Skip rests it straight away.
   function peeked() { return phase === "rest" && !!current && (peekId === current || laterId === current); }
-  var DWELL_MS = 3000, dwellT = 0, lineFor = null;
-  function dwell(t) {
-    if (phase !== "rest" || onCard() !== t || peeked()) return;
-    if (openSheet || menu.open) { dwellT = setTimeout(function () { dwell(t); }, 2000); return; }
-    coachSeen(); dropUndo();
-    peekId = t.id; paintReplies();
-    var d = $("dwell"); if (!d) return;
-    d.classList.add("on", "fresh");
-    setTimeout(function () { d.classList.remove("fresh"); }, QUIET_MS + 1200);
-  }
-  function togglePeek() {
-    var t = onCard(); if (!t || phase !== "rest" || returned()) return;
-    coachSeen();
-    peekId = peeked() ? null : t.id;
-    renderDeck();
-  }
+  // 1.88.0: nothing fades in at rest any more (DWELL_MS and the dwell are gone); dwellT stays as a cleared timer.
+  var dwellT = 0, lineFor = null;
   // Later (1.42.0): not a skip. It waits until this evening, then opens straight to Reflect.
   var fromLater = false;
   function saveLater() {
@@ -2224,7 +2216,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       (fold ? '<small class="foldhint" id="foldHint" aria-hidden="true">Tap to read it all</small>' : "");
     var line = '<div class="lineWrap"><p class="ai-p" id="aiLine"></p><small class="ai-src" id="aiSrc"></small>' +
       '<div class="replies" id="replies"></div></div>';
-    var how = '<span class="sr" id="cardHow">Choose Skip, Reflect or Lived at the bottom of the screen. After a few seconds a question for it appears below, with ways to answer it, add it to your thoughts, or see the other side. Press and hold the thought to edit it.</span>';
+    var how = '<span class="sr" id="cardHow">Choose Skip, Reflect or Lived at the bottom of the screen. Reflect shows a quote or a question to sit with, with your take and the other side under it. Press and hold the thought to edit it.</span>';
     if (phase === "reflect") {
       v.innerHTML = '<article class="card reflect" id="card" aria-label="Reflect" aria-describedby="cardHow">' +
         '<div class="phase"><span>' + (fromLater ? "Saved from earlier" : "Reflecting") + "</span></div>" +
@@ -2239,12 +2231,14 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       return;
     }
     if (phase === "push") {
-      // 1.84.0: one question, Set it down?; doubting it is one small option under the line.
+      // 1.84.0: one question, Set it down? 1.88.0: no options under the line, and the pushback line only once the
+      // thought has been skipped SKIP_ASK_AT times; before that the screen just asks Tonight or N days.
+      var pushy = (t.skip_count || 0) >= SKIP_ASK_AT;
       v.innerHTML = '<article class="card push" id="card" aria-label="Before you skip" aria-describedby="cardHow">' +
         '<div class="phase"><span>Before you skip' + (t.skip_count > 0 ? " \u00b7 skipped " + times(t.skip_count) + " before" : "") + "</span></div>" +
-        words + '<div class="mid under">' + line + "</div>" + how + "</article>" +
+        words + (pushy ? '<div class="mid under">' + line + "</div>" : "") + how + "</article>" +
         choicesHtml();
-      paintLine();
+      if (pushy) paintLine();
       return;
     }
     // Question it (1.79.0): the case against, your own reasons under it, then Let go, Revise or Keep it.
@@ -2267,18 +2261,12 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
       paintLine();
       return;
     }
-    // 1.83.0: no button for the question. After DWELL_MS on the thought, it fades in below, with Reply, Keep as a
-    // thought and Later at full strength for QUIET_MS; then they go quiet with the rest. Its space is kept from
-    // the start so the thought never moves.
+    // 1.88.0: at rest, the thought and Skip, Reflect, Lived. Nothing fades in under it; its question, the quote
+    // and the other side come after a choice.
     var pm = []; if (t.skip_count > 0) pm.push("Skipped " + times(t.skip_count)); if (String(t.collection || "").trim()) pm.push(esc(t.collection));
     v.innerHTML = '<article class="card' + (enter ? " enter" : "") + '" id="card" aria-label="Current thought" aria-describedby="cardHow">' + words +
       (pm.length ? '<p class="pmeta">' + pm.join(" \u00b7 ") + "</p>" : "") +
-      // 1.84.0: the question fades in with its options (Answer it, Add to my thoughts, Other side) in one row.
-      '<div class="dwell' + (peeked() ? " on" : "") + '" id="dwell">' + line + "</div>" + how + "</article>" +
-      choicesHtml();
-    if (lineFor !== t.id || !shown || shown.kind !== "push") { lineFor = t.id; showLine(t, "push"); } else paintLine();
-    // With VoiceOver on, nothing waits: the question and its buttons are there to be read straight away.
-    if (!peeked()) dwellT = setTimeout(function () { dwell(t); }, voiceOver ? 0 : DWELL_MS);
+      how + "</article>" + choicesHtml();
     wake();
   }
   // 1.84.2: the whole thought, always. The type steps down until the thought fits the space it has, to a floor
@@ -2346,7 +2334,7 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
     if (m === "letgo") { openLetGo(onCard()); return; }
     if (m === "why") { openEdit(onCard(), false, true); return; }
     if (m === "save") { if (shown && shown.ai) openKeep(onCard(), shown.text, shown.quote ? { author: shown.author, src: shown.src } : null); return; }
-    if (m === "skip") requestSkip(); else if (m === "later") saveLater(); else if (m === "peek") togglePeek(); else if (m === "stay") keepIt(); else act(m);
+    if (m === "skip") requestSkip(); else if (m === "later") saveLater(); else if (m === "stay") keepIt(); else act(m);
   });
 
   // The first-swipe tip retired in 1.73.0: the choices are on screen and say what they are.
