@@ -1,4 +1,5 @@
-// Checks every quoted line in content/sets.json word for word against its public-domain source text.
+// Checks the public-domain original behind every quoted line in content/sets.json, word for word, against its source text.
+// The modern English shown in the app is ours; "original" is what the source actually says.
 // Usage: node scripts/verify-sets.js <folder holding the Project Gutenberg texts>
 // A line marked "cut" stops before the end of the original sentence; only its final mark is ours.
 // Spacing, line breaks, footnote marks like [148], italics underscores and the case of the first letter are ignored.
@@ -21,7 +22,7 @@ for (const set of data.sets) {
     if (!cache[it.src]) cache[it.src] = norm(fs.readFileSync(path.join(root, src.file), "utf8"));
     const hay = cache[it.src];
     // A line marked cut ends where the original sentence goes on; its closing mark is ours.
-    const t = it.cut ? norm(it.text).replace(/[.,;:!?]+$/, "") : norm(it.text);
+    const t = it.cut ? norm(it.original || "").replace(/[.,;:!?]+$/, "") : norm(it.original || "");
     n++;
     const first = t.slice(1);
     const ok = hay.includes(t) || hay.includes(t[0].toLowerCase() + first) || hay.includes(t[0].toUpperCase() + first);
