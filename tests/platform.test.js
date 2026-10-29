@@ -94,7 +94,7 @@ test("TestFlight preview: Apple's AppTransaction for a Sandbox copy of this app 
   assert.match(src, /env\.PLUS_PREVIEW === "off"/, "the server can end the preview");
   const swift = read("ios/App/WebViewController.swift"), yml = read("ios/project.yml");
   assert.match(swift, /AppTransaction\.shared/); assert.match(swift, /ScalesPlusPreview/);
-  assert.match(yml, /ScalesPlusPreview: true/, "turn this off before the App Store submission");
+  assert.match(yml, /ScalesPlusPreview: false/, "off for the App Store: Scales 2 has no AI and Plus is not offered");
 });
 test("the AI server needs Scales Plus, fixes the model and limits, and only takes same-origin text messages", async () => {
   const mod = await import("../server/ai.mjs");

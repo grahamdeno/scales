@@ -41,9 +41,10 @@ read, never written or deleted.
 
 ## Before the App Store submission
 
-- Listing: name "Scales", subtitle "One thought at a time"; new description and screenshots from Scales 2.
-- Remove Scales Plus from sale in App Store Connect; set `ScalesPlusPreview: false` in `ios/project.yml` and
-  `PLUS_PREVIEW=off` in Cloudflare.
+- Done (29 October): Plus was never approved, so it was never on sale; `ScalesPlusPreview: false` in `ios/project.yml`;
+  `PLUS_PREVIEW=off` in Cloudflare. The App Store name is "Scales: One Thought at a Time" ("Scales" is taken by another
+  account); version 1.0, iPhone only. Listing text, URLs, App Privacy (Data Not Collected) and 4+ are set.
+- Left: choose the subtitle, EU trader status, attach the final build and `store/` screenshots, Submit for Review.
 
 ## Design rules
 
