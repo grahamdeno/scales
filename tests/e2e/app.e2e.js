@@ -63,6 +63,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const third = (await page.textContent("#words")).trim();
     ok(third !== second, tag + "pull down puts it away");
     ok(await page.locator("#toast.on").count() === 1, tag + "toast with Undo shows");
+    ok(!(await page.locator("#toastDel").isVisible()), tag + "your own thoughts never offer Delete when put away");
     await page.screenshot({ path: path.join(shots, w + "-2-putaway-toast.png") });
     await page.click("#toastUndo"); await page.waitForTimeout(500);
     ok((await page.textContent("#words")).trim() === second, tag + "Undo brings it back");
@@ -353,6 +354,17 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const st = Object.values(s5).find((t) => t.text === shown);
     ok(st && (st.by ? (await page.textContent("#by")).trim() === st.by && await page.locator("#by").isVisible() : !(await page.locator("#by").isVisible())), tag + "who said it shows under a quote (" + (st && st.by) + ")");
     await page.screenshot({ path: path.join(shots, w + "-first-meet.png") });
+    // A set line not yet kept can be deleted straight from the Put away message, and leaves no trace
+    const dropId = st.id;
+    await page.keyboard.press("ArrowDown"); await page.waitForTimeout(700);
+    ok(await page.locator("#toastDel").isVisible() && /Put away/.test(await page.textContent("#toast")), tag + "putting away a new set line offers Delete");
+    await page.screenshot({ path: path.join(shots, w + "-toast-delete.png") });
+    await page.click("#toastDel"); await page.waitForTimeout(300);
+    const afterDrop = await store();
+    const logIds = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.log.v1") || "[]").map((e) => e.id));
+    ok(!afterDrop[dropId] && !logIds.includes(dropId) && /Deleted/.test(await page.textContent("#toast")), tag + "Delete removes it and its visits");
+    ok(/4\s*$/.test(await page.textContent("#strip")), tag + "and the count drops to 4");
+    await page.waitForTimeout(1700);
     // A new thought typed with a quotation mark opens the Who said it line
     await page.click("#newBtn"); await page.waitForTimeout(500);
     ok(!(await page.locator("#startFive").isVisible()), tag + "Start with five is gone once there are thoughts");
@@ -394,7 +406,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.screenshot({ path: path.join(shots, w + "-settings-sets.png") });
     await fr.click(); await page.waitForTimeout(300);
     const s13 = Object.values(await store()).filter((t) => t.set === "franklin");
-    ok(s13.length === 13 && /12 lines added/.test(await page.textContent("#setsMsg")), tag + "Add the rest brings in the other 12 of 13 lines");
+    ok(s13.length === 13 && /1[23] lines added/.test(await page.textContent("#setsMsg")), tag + "Add the rest brings in the other 12 of 13 lines");
     ok(/Remove$/.test((await page.locator('#setList [data-set="franklin"]').textContent()).trim()), tag + "then it offers Remove");
     await page.locator('#setList [data-set="franklin"]').click(); await page.waitForTimeout(200);
     ok(/Tap again to remove/.test(await page.locator('#setList [data-set="franklin"]').textContent()), tag + "Remove asks for a second tap");
@@ -403,6 +415,23 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(Object.values(await store()).filter((t) => t.set === "franklin" && !t.away).length === 0 && /removed/.test(await page.textContent("#setsMsg")), tag + "the second tap removes the unseen lines");
     const ov2 = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     ok(ov2 <= 0, tag + "no sideways scroll in Settings (" + ov2 + ")");
+    // Delete the ones you put away, from the Sets page
+    await page.locator('#setList [data-set="stoics"]').click(); await page.waitForTimeout(300);
+    await page.evaluate(() => { const o = JSON.parse(localStorage.getItem("scales.next.thoughts.v1")); ["s-ep-power", "s-ep-demand", "s-ep-lost"].forEach((k) => { o[k].away = new Date().toISOString(); }); o["s-ep-lost"].note = "mine"; localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(o)); });
+    await page.reload(); await page.waitForTimeout(900);
+    await page.click("#strip"); await page.waitForTimeout(700); await page.click("#libGear"); await page.waitForTimeout(500); await page.click("#setSets"); await page.waitForTimeout(500);
+    const clr = page.locator('#setList [data-clear="stoics"]');
+    ok(await clr.isVisible() && /Delete the 2 you put away/.test(await clr.textContent()), tag + "a set with put-away lines offers to delete them (" + (await clr.textContent()) + ")");
+    await clr.click(); await page.waitForTimeout(200);
+    ok(/Tap again/.test(await page.locator('#setList [data-clear="stoics"]').textContent()), tag + "it asks for a second tap");
+    await page.locator('#setList [data-clear="stoics"]').click(); await page.waitForTimeout(300);
+    const sc = await store();
+    ok(!sc["s-ep-power"] && !sc["s-ep-demand"] && sc["s-ep-lost"] && sc["s-ep-views"] && !(await page.locator('#setList [data-clear="stoics"]').count()), tag + "it deletes those two and keeps the one with a note");
+    await page.screenshot({ path: path.join(shots, w + "-sets-page.png") });
+    // How Scales works: three demos and bold action words
+    await page.click("#setsBack"); await page.waitForTimeout(500); await page.click("#setHelp"); await page.waitForTimeout(700);
+    ok((await page.locator("#help .demo").count()) === 3 && (await page.locator("#help strong").count()) >= 6 && (await page.locator("#help .demo.play").count()) >= 1, tag + "How Scales works shows three moves and plays them");
+    await page.screenshot({ path: path.join(shots, w + "-help.png") });
     ok(!errs.length, tag + "no page errors (" + errs.join(" | ") + ")");
     await ctx.close();
   }

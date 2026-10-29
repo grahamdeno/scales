@@ -463,3 +463,28 @@ test("sets.js is built from the current content/sets.json", () => {
   const fs = require("fs"), path = require("path");
   assert.equal(fs.readFileSync(path.join(__dirname, "..", "sets.js"), "utf8"), require("../scripts/build-sets.js")());
 });
+
+test("onTrial: a set line until it is met twice, noted, changed or bookmarked; never your own", () => {
+  const now = at(2026, 10, 29), store = {};
+  N.addSet(store, SETS.sets.find((s) => s.id === "stoics"), now, []);
+  const t = store["s-ep-power"];
+  assert.ok(N.onTrial(t));
+  N.recordVisit(t, 5000, false, false, now); assert.ok(N.onTrial(t));
+  N.recordVisit(t, 5000, false, false, now); assert.ok(!N.onTrial(t));
+  const u = store["s-ep-views"]; u.note = "x"; assert.ok(!N.onTrial(u));
+  const v = store["s-ep-demand"]; v.bookmarked = now.toISOString(); assert.ok(!N.onTrial(v));
+  const w = store["s-ep-lost"]; w.works = 1; assert.ok(!N.onTrial(w));
+  assert.ok(!N.onTrial(N.make("mine", now)));
+});
+test("clearPutAway deletes a set's put-away lines but keeps marked, noted or changed ones", () => {
+  const now = at(2026, 10, 29), store = {};
+  N.addSet(store, SETS.sets.find((s) => s.id === "franklin"), now, []);
+  ["s-fr-order", "s-fr-silence", "s-fr-industry", "s-fr-justice"].forEach((id) => { store[id].away = now.toISOString(); });
+  store["s-fr-silence"].bookmarked = now.toISOString();
+  store["s-fr-industry"].note = "kept";
+  assert.equal(N.clearable(store, "franklin"), 2);
+  const r = N.clearPutAway(store, "franklin", ["x"]);
+  assert.equal(r.deleted, 2);
+  assert.ok(!store["s-fr-order"] && !store["s-fr-justice"] && store["s-fr-silence"] && store["s-fr-industry"] && store["s-fr-temperance"]);
+  assert.deepEqual(r.gone.sort(), ["s-fr-justice", "s-fr-order", "x"]);
+});
