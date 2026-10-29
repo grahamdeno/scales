@@ -60,11 +60,16 @@ a { color: inherit; text-decoration: none; }
 #hintUp { top: calc(var(--top) + 76px); }
 #hintDown { bottom: calc(var(--strip) + 68px); }
 .hint.on { font-weight: 700; }
-#empty { position: absolute; left: var(--pad); right: var(--pad); top: 0; bottom: var(--strip); display: flex; flex-direction: column; justify-content: center; gap: 10px; }
-#empty h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+/* The day's end is a message, not a thought (2.3.1): smaller, lighter, set high, with its choices as rows like Settings,
+   so it is never mistaken for a thought to swipe. */
+#empty { position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--top) + 150px); bottom: var(--strip); display: flex; flex-direction: column; justify-content: flex-start; gap: 6px; }
+#empty h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
 #empty p { margin: 0; font-size: 16px; color: var(--pist-muted); }
-#emptyActs { display: flex; flex-direction: column; align-items: flex-start; margin-top: 14px; }
-#emptyActs button { color: var(--pist-ink); font-weight: 700; font-size: 18px; padding: 12px 0; min-height: 44px; text-align: left; }
+#emptyActs { display: flex; flex-direction: column; margin-top: 28px; border-bottom: 1px solid rgba(42,30,46,.14); }
+#emptyActs button { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 52px; padding: 0; text-align: left;
+  color: var(--pist-ink); font-weight: 500; font-size: 17px; border-top: 1px solid rgba(42,30,46,.14); }
+#emptyActs button::after { content: "\203A"; font-size: 22px; color: var(--pist-muted); }
+#emptyActs button[hidden] { display: none; }
 @keyframes nudge { 0%,100% { transform: translateY(0) } 30% { transform: translateY(-14px) } 62% { transform: translateY(6px) } }
 @keyframes arrive { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: none } }
 .nudge #words { animation: nudge 1.3s cubic-bezier(.4,0,.2,1) 1; }
@@ -302,8 +307,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.3.0"></script>
-<script src="sets.js?v=2.3.0"></script>
+<script src="core.js?v=2.3.1"></script>
+<script src="sets.js?v=2.3.1"></script>
 <script>
 (function () {
   "use strict";
