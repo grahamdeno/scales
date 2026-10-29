@@ -1,5 +1,10 @@
 # Scales swap plan: when the new Scales becomes Scales
 
+**Status, 29 October 2026:** done through S6 and the load colour from S8, as 2.0.0. Graham decided on the day: no other
+users, Scales 1 can go today, Plus code left in place unused, no reminder for now, subtitle "One thought at a time".
+Scales 1's code is on the branch `scales-1.88.0` (and tag `v1.88.0`) instead of a served `/app/classic/`.
+Left: S7 (take Plus off sale), the rest of S9 (listing and screenshots), and the website.
+
 Step 11 of `docs/next-plan.md`. The new Scales (`/app/next/`, 2.0.0-next) replaces the current app (`/app/`, 1.88.0)
 in the iPhone app and on the web. Nothing here runs until Graham says go at the decision point (step S4).
 

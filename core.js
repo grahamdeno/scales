@@ -1,949 +1,137 @@
-// Scales core logic.
-// Pure functions with no DOM or storage access, shared by the app (loaded with a
-// <script> tag before the main script) and by the tests (loaded with require()).
-
-var ScalesCore = (function () {
+// Scales: the logic, kept apart from the page so it can be tested in Node.
+// One rule runs everything: the person only ever moves on (swipe up) or puts a thought away (pull down).
+// What a visit meant is read from how long it lasted and whether they wrote anything.
+(function (root) {
   "use strict";
+  var VERSION = "2.0.0";
 
-  // Release number shown in Settings, as MAJOR.MINOR.PATCH:
-  //   MAJOR  breaking changes, such as a stored-data change that needs migration
-  //   MINOR  new features and enhancements (PATCH resets to 0)
-  //   PATCH  defect fixes only
-  // Must match the service worker cache name ("scales-v" + VERSION) so a phone that
-  // shows this number is running this code. The tests fail if the two drift apart.
-  var VERSION = "1.88.0";
-  var BUILT = "2026-10-29";
+  // How a visit is read. Time counts only while the app is open and the thought is on screen.
+  var SKIP_MAX_MS = 7000;      // 7 s or less: skipped
+  var THOUGHT_MIN_MS = 11000;  // 11 s or more: thought about
+  var IDLE_MS = 5 * 60000;     // past 5 min with no touch, assume the phone was set down: only seen
 
-  // CAP        highest weight a thought can reach (4x as likely as a fresh one)
-  // MAX_WORDS  longest consideration the app will show. Long enough for one complete
-  //            thought, short enough to read at a glance on the card.
-  // MAX_TEXT   longest thought that can be captured or edited. Covers long imported
-  //            entries such as short poems; the card shrinks its type for long text.
-  var CAP = 4, MAX_WORDS = 25, MAX_TEXT = 1500;
-  // Limits for a thought's details, and the fixed origin choices.
-  var LIMITS = { collection: 40, title: 120, author: 80, why: 280 };
-  var ORIGINS = ["Handed to me", "Chosen", "Not sure"];
+  // A day starts at 4 AM, so a late night counts as the day it began.
+  var DAY_START_HOUR = 4;
+  var NEW_PER_DAY = 5;         // imported thoughts arrive this many a day, not all at once
 
-  // Maps a not today (skip) count to a prompt and built-in line tier: 0, 1 or 3.
-  function tier(s) { return s >= 3 ? 3 : (s >= 1 ? 1 : 0); }
-
-  // How likely a thought is to be picked: 1 + 0.5 per skip, capped at CAP.
-  function weight(t) { return Math.min(1 + 0.5 * t.skip_count, CAP); }
-
-  function words(s) { return s.trim().split(/\s+/).filter(Boolean).length; }
-
-  // Weighted random pick from the active pool. Items in the last few turns of
-  // history are left out first (1 turn for a pool of 3 or fewer, 3 otherwise);
-  // if that empties the pool, everything is eligible again. rand is injectable
-  // so tests can make the draw deterministic.
-  function pickFrom(pool, history, rand) {
-    if (!pool.length) return null;
-    rand = rand || Math.random;
-    var cd = pool.length <= 3 ? 1 : 3;
-    var recent = history.slice(-cd);
-    var eligible = pool.filter(function (t) { return recent.indexOf(t.id) < 0; });
-    if (!eligible.length) eligible = pool;
-    var sum = eligible.reduce(function (a, t) { return a + weight(t); }, 0);
-    var r = rand() * sum;
-    for (var i = 0; i < eligible.length; i++) { r -= weight(eligible[i]); if (r <= 0) return eligible[i]; }
-    return eligible[eligible.length - 1];
-  }
-
-  // Normalize a model answer: first non-empty line only, no leading label,
-  // no quotes, dashes turned into sentence breaks, spaces collapsed.
-  function clean(s) {
-    var first = (s || "").split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean)[0] || "";
-    return first.replace(/^(line|answer|consideration|response)\s*:\s*/i, "")
-      .replace(/["“”]/g, "").replace(/\s*[—–]\s*/g, ". ").replace(/\s+/g, " ").trim();
-  }
-
-  // Bring an over-long answer within MAX_WORDS by keeping whole sentences from the start.
-  // Returns "" when no complete sentence fits.
-  function fit(s) {
-    if (words(s) <= MAX_WORDS) return s;
-    var parts = s.match(/[^.?]+[.?]+/g) || [], out = "";
-    for (var i = 0; i < parts.length; i++) {
-      var next = (out + " " + parts[i]).trim();
-      if (words(next) > MAX_WORDS) break;
-      out = next;
-    }
-    return out;
-  }
-
-  // Phrases that grant grace instead of holding the standard. The prompt forbids
-  // them; this catches the model drifting back to a gentle tone anyway.
-  var SOFT = /\b(be (gentle|kind|easy) (with|on|to) yourself|give yourself (grace|permission|a break|time)|self[- ]compassion|it'?s (ok|okay|alright|fine)\b|no shame|you deserve (rest|a break)|that'?s (ok|okay)|allow yourself|it is (ok|okay|fine))/i;
-
-  // Check a model answer. Returns { line } when usable, or { reason } when not.
-  // The echo check only applies to longer thoughts: a short one ("Discipline is
-  // freedom") is naturally named inside a good line, so containing it is not a sign
-  // of a lazy answer.
-  function vet(raw, t) {
-    var s = fit(clean(raw));
-    if (!s) return { reason: words(clean(raw)) ? "too long" : "empty" };
-    if (s.indexOf("!") >= 0) return { reason: "cheerful tone" };
-    if (SOFT.test(s)) return { reason: "softened" };
-    var body = t.text.trim().toLowerCase(), low = s.toLowerCase();
-    if (low === body || (body.length >= 60 && low.indexOf(body.slice(0, 60)) >= 0)) return { reason: "echoed the thought" };
-    return { line: s };
-  }
-
-  // Thought texts are compared ignoring case, surrounding spaces and runs of spaces.
-  function normText(s) { return String(s || "").trim().replace(/\s+/g, " ").toLowerCase(); }
-
-  // Collections in use across list, most used first, then by name. Each entry is
-  // { name, count }. Matching ignores capitalization; the first spelling seen wins.
-  function collections(list) {
-    var by = {}, order = [];
-    list.forEach(function (t) {
-      var n = String(t.collection || "").trim(); if (!n) return;
-      var k = n.toLowerCase();
-      if (!by[k]) { by[k] = { name: n, count: 0 }; order.push(k); }
-      by[k].count++;
-    });
-    return order.map(function (k) { return by[k]; })
-      .sort(function (a, b) { return b.count - a.count || a.name.localeCompare(b.name); });
-  }
-
-  // A typed collection name, trimmed, spaces collapsed, cut to the limit, and spelled
-  // like an existing collection when it matches one apart from capitalization.
-  function canonCollection(list, name) {
-    var s = String(name || "").trim().replace(/\s+/g, " ").slice(0, LIMITS.collection);
-    if (!s) return "";
-    var hit = collections(list).filter(function (x) { return x.name.toLowerCase() === s.toLowerCase(); })[0];
-    return hit ? hit.name : s;
-  }
-
-  // Turn an edit (a string for wording only, or an object with any of text, collection,
-  // title, author, origin) into the full set of values it would save for thought t.
-  function editValues(list, t, edit) {
-    if (typeof edit === "string") edit = { text: edit };
-    edit = edit || {};
-    var pick = function (k, d) { return Object.prototype.hasOwnProperty.call(edit, k) ? edit[k] : d; };
-    var origin = String(pick("origin", t.origin || "") || "").trim();
-    return {
-      text: String(pick("text", t.text) || "").trim(),
-      collection: canonCollection(list, pick("collection", t.collection || "")),
-      title: String(pick("title", t.title || "") || "").trim().slice(0, LIMITS.title),
-      author: String(pick("author", t.author || "") || "").trim().slice(0, LIMITS.author),
-      origin: ORIGINS.indexOf(origin) >= 0 ? origin : "",
-      // 1.79.0: why you believe it, and what would change your mind. Optional.
-      why: String(pick("why", t.why || "") || "").trim().slice(0, LIMITS.why),
-      change: String(pick("change", t.change || "") || "").trim().slice(0, LIMITS.why)
-    };
-  }
-
-  // Check an edit to thought t against every thought in list.
-  // Returns { ok: true, values } or { reason, conflict } where conflict is the other thought.
-  function checkEdit(list, t, edit) {
-    var v = editValues(list, t, edit);
-    if (!v.text) return { reason: "empty" };
-    if (v.text.length > MAX_TEXT) return { reason: "too long" };
-    var same = v.text === t.text.trim() && v.collection === String(t.collection || "").trim() &&
-      v.title === String(t.title || "").trim() && v.author === String(t.author || "").trim() && v.origin === (t.origin || "") &&
-      v.why === String(t.why || "").trim() && v.change === String(t.change || "").trim();
-    if (same) return { reason: "unchanged" };
-    var key = normText(v.text);
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].id !== t.id && normText(list[i].text) === key) return { reason: "duplicate", conflict: list[i] };
-    }
-    return { ok: true, values: v };
-  }
-
-  // Apply a checked edit. Counts, dates, weight, status and evidence are kept.
-  // Only a change of wording on a thought still in the deck drops its saved model
-  // lines, so the next line is written for the new wording. Detail-only edits keep them,
-  // and a lived thought always keeps them: its last line is part of the record.
-  function applyEdit(t, edit, list) {
-    var v = editValues(list || [], t, edit);
-    var reworded = v.text !== t.text.trim();
-    t.text = v.text; t.collection = v.collection; t.title = v.title; t.author = v.author; t.origin = v.origin; t.why = v.why; t.change = v.change;
-    if (reworded && t.status === "active") t.recent_lines = [];
-    t.edited_at = new Date().toISOString();
-    return t;
-  }
-
-  // The two lines at the top of a card: the collection (or "Thought") and the origin.
-  function label(t) {
-    return { line1: String(t.collection || "").trim() || "Thought", line2: t.origin || "" };
-  }
-
-  // Check renaming the collection named from to the name to. Returns
-  // { ok, merge, target, moving, total } or { reason }.
-  function checkRename(list, from, to) {
-    var all = collections(list);
-    var src = all.filter(function (x) { return x.name.toLowerCase() === String(from).toLowerCase(); })[0];
-    if (!src) return { reason: "missing" };
-    var s = String(to || "").trim().replace(/\s+/g, " ");
-    if (!s) return { reason: "empty" };
-    if (s.length > LIMITS.collection) return { reason: "too long" };
-    if (s === src.name) return { reason: "unchanged" };
-    var hit = all.filter(function (x) { return x !== src && x.name.toLowerCase() === s.toLowerCase(); })[0];
-    if (hit) return { ok: true, merge: true, target: hit.name, moving: src.count, total: hit.count + src.count };
-    return { ok: true, merge: false, target: s, moving: src.count, total: src.count };
-  }
-
-  // Rename or merge: every thought in collection from moves to the checked target.
-  // Returns the number moved. Nothing else on a thought changes.
-  function renameCollection(list, from, to) {
-    var r = checkRename(list, from, to); if (!r.ok) return 0;
-    var k = String(from).toLowerCase(), n = 0;
-    list.forEach(function (t) { if (String(t.collection || "").trim().toLowerCase() === k) { t.collection = r.target; n++; } });
-    return n;
-  }
-
-  // Clear collection name from every thought in it. Returns the number cleared.
-  function removeCollection(list, name) {
-    var k = String(name).trim().toLowerCase(), n = 0;
-    list.forEach(function (t) { if (String(t.collection || "").trim().toLowerCase() === k) { t.collection = ""; n++; } });
-    return n;
-  }
-
-  // Fields every starter thought carries, as a worked example of each.
-  var STARTER_FIELDS = ["text", "title", "author", "origin", "tags", "link", "citation"];
-
-  // Merge one starter deck into list. Returns { add, updated }: add is the new thoughts
-  // to save (without ids), updated is how many existing ones changed. Rules:
-  //   - A starter line already in the deck is never added twice.
-  //   - An older wording listed in an item's "replaces" is updated in place to the new
-  //     wording, keeping counts, dates and status; a thought still in the deck drops its
-  //     saved AI lines, as with any change of wording.
-  //   - On a thought that matches a starter line, empty fields are filled from the deck;
-  //     values the user set are never overwritten. The collection is filled the same way.
-  function loadStarter(list, deckName, items, base) {
-    var byText = {}; list.forEach(function (t) { byText[normText(t.text)] = t; });
-    var add = [], updated = 0;
-    items.forEach(function (it, i) {
-      var t = byText[normText(it.text)];
-      if (!t) (it.replaces || []).some(function (old) { t = byText[normText(old)]; return !!t; });
-      if (t) {
-        var changed = false;
-        if (normText(t.text) !== normText(it.text)) {
-          t.text = it.text; changed = true;
-          if (t.status === "active") t.recent_lines = [];
-        }
-        var fill = { collection: deckName };
-        STARTER_FIELDS.forEach(function (k) { if (k !== "text") fill[k] = it[k]; });
-        Object.keys(fill).forEach(function (k) {
-          if (fill[k] && !String(t[k] || "").trim()) { t[k] = fill[k]; changed = true; }
-        });
-        if (changed) updated++;
-        return;
-      }
-      var n = { text: it.text, collection: deckName, created_at: new Date(base + i).toISOString(), status: "active",
-        skip_count: 0, lifetime_skips: 0, reflect_count: 0, consecutive_reflects: 0, recent_lines: [] };
-      STARTER_FIELDS.forEach(function (k) { if (k !== "text") n[k] = it[k] || ""; });
-      add.push(n);
-      byText[normText(it.text)] = n;
-    });
-    return { add: add, updated: updated };
-  }
-
-  // ---------- days, rest and the front of the stack ----------
-  // DAY_START_HOUR  a Scales day runs from 4:00 AM to 4:00 AM local time, so a late-night
-  //                 session still belongs to the day it started in.
-  // REST_DAYS       how long Not today sets a thought aside. Four days, so a reflex skip
-  //                 each morning cannot turn into a daily habit (1.25.0; was one day in 1.24.0).
-  // REST_MIN/MAX   the range offered in Settings (1.30.0). REST_DAYS stays the default.
-  var DAY_START_HOUR = 4, REST_DAYS = 4, REST_MIN = 1, REST_MAX = 7;
-  // A saved rest length, kept inside the range; anything unreadable falls back to the default.
-  function restDays(n) { n = parseInt(n, 10); return isNaN(n) ? REST_DAYS : Math.min(REST_MAX, Math.max(REST_MIN, n)); }
-
-  // The Scales day for a moment, as local YYYY-MM-DD. Shifting the clock back by the start
-  // hour with calendar arithmetic keeps daylight saving changes on the right day.
-  function dayOf(d) {
-    var x = new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours() - DAY_START_HOUR, d.getMinutes(), d.getSeconds());
+  function dayKey(d) {
+    var x = new Date(d.getTime() - DAY_START_HOUR * 3600000);
     return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0");
   }
-  // A day key n days later.
   function addDays(key, n) {
-    var p = key.split("-"), x = new Date(+p[0], +p[1] - 1, +p[2] + n, 12);
-    return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0");
+    var p = key.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2] + n);
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   }
-  // Resting: set aside with Not today and not yet back. rest_until is the first day it may return.
-  function isResting(t, today) { return !!t.rest_until && today < t.rest_until; }
+  function uid() { return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
-  // Not today: count it, rest it, and give it one turn at the front once it returns.
-  // days is the rest length from Settings; left out, it is REST_DAYS.
-  function applySkip(t, today, days) {
-    t.skip_count = (t.skip_count || 0) + 1;
-    t.lifetime_skips = (t.lifetime_skips || 0) + 1;
-    t.consecutive_reflects = 0;
-    t.rest_until = addDays(today, restDays(days == null ? REST_DAYS : days));
-    t.lead_due = true;
-    return t;
+  // A visit: how long it was on screen, and whether the person changed the words or the note.
+  function classify(ms, worked, idle) {
+    if (worked) return "worked";
+    if (idle) return "seen";
+    if (ms <= SKIP_MAX_MS) return "skipped";
+    if (ms >= THOUGHT_MIN_MS) return "thought";
+    return "seen";
   }
 
-  // Thoughts waiting for their turn at the front: set aside since they last led, and no
-  // longer resting. Most avoided first; ties go to the one waiting longest since last shown.
-  function frontQueue(list, today, excludeId) {
-    return list.filter(function (t) { return t.lead_due && !isResting(t, today) && t.id !== excludeId; })
-      .sort(function (a, b) {
-        return (b.skip_count || 0) - (a.skip_count || 0) || String(a.last_shown_at || "").localeCompare(String(b.last_shown_at || ""));
-      });
+  // When it comes back. Skipping brings it back sooner; thinking about it or working on it pushes it further out
+  // each time, so a thought you have clearly absorbed fades in how often it shows. It never leaves on its own.
+  function nextGap(t, kind) {
+    if (kind === "skipped") return 1;
+    if (kind === "seen") return 2;
+    if (kind === "thought") return Math.min(2 + 2 * (t.thinks || 0), 21);
+    if (kind === "worked") return Math.min(4 + 3 * (t.works || 0), 30);
+    return 2;
   }
 
-  // Choose the next card. Returns { card, lead, resting } where lead says it is taking its
-  // turn at the front and resting counts thoughts set aside today. card is null when the
-  // deck is empty, or when everything is resting and showAnyway is off.
-  function nextCard(list, history, today, showAnyway, rand) {
-    var current = history.length ? history[history.length - 1] : null;
-    var front = frontQueue(list, today, current);
-    var resting = list.filter(function (t) { return isResting(t, today); }).length;
-    if (front.length) return { card: front[0], lead: true, resting: resting };
-    var pool = showAnyway ? list : list.filter(function (t) { return !isResting(t, today); });
-    return { card: pickFrom(pool, history, rand), lead: false, resting: resting };
+  function recordVisit(t, ms, worked, idle, now) {
+    var kind = classify(ms, worked, idle), today = dayKey(now);
+    if (kind === "skipped") t.skips = (t.skips || 0) + 1;
+    if (kind === "thought") t.thinks = (t.thinks || 0) + 1;
+    if (kind === "worked") t.works = (t.works || 0) + 1;
+    // Engaging with a thought works off one skip, so its type lightens as the avoidance is worked off.
+    if ((kind === "thought" || kind === "worked") && t.skips > 0) t.skips -= 1;
+    t.due = addDays(today, nextGap(t, kind));
+    t.seen = now.toISOString();
+    t.visits = (t.visits || []).concat([{ at: now.toISOString(), kind: kind, ms: Math.round(ms) }]).slice(-30);
+    return kind;
   }
 
-  // The earliest day a resting thought returns, or "" when none is resting.
-  function nextReturn(list, today) {
-    return list.filter(function (t) { return isResting(t, today); })
-      .map(function (t) { return t.rest_until; }).sort()[0] || "";
+  // Type weight from avoidance: 600 for a fresh thought, 50 heavier with each skip, up to 800.
+  // (Feel review: 900 in Geist at 32 px read as shouting.)
+  function weight(t) { return Math.min(800, 600 + 50 * (t.skips || 0)); }
+
+  function make(text, now) {
+    var today = dayKey(now);
+    return { id: uid(), text: String(text).trim(), note: "", created: now.toISOString(), due: addDays(today, 1),
+      away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] };
   }
 
-  // Record that t is on screen. A turn at the front is used up when it is shown.
-  function markShown(t, now, lead) {
-    t.last_shown_at = now.toISOString();
-    if (lead || t.lead_due && !isResting(t, dayOf(now))) { t.lead_due = false; t.led_on = dayOf(now); }
-    return t;
-  }
+  function list(store) { return Object.keys(store).map(function (k) { return store[k]; }); }
+  function inRotation(store) { return list(store).filter(function (t) { return !t.away; }); }
+  function putAway(store) { return list(store).filter(function (t) { return !!t.away; }); }
 
-  // Undo (1.26.0). undoPoint copies everything a move or a delete can change: every thought
-  // (the move itself, plus the next card's turn at the front being used up when it is shown),
-  // the activity grid, the card history and the card on screen. applyUndo hands back fresh
-  // copies, so the same point can be applied again and later changes never leak into it.
-  function copy(x) { return x == null ? x : JSON.parse(JSON.stringify(x)); }
-  function undoPoint(thoughts, activity, history, current) {
-    return { thoughts: copy(thoughts || {}), activity: copy(activity || {}), history: copy(history || []), current: current || null };
-  }
-  function applyUndo(point) {
-    return { thoughts: copy(point.thoughts), activity: copy(point.activity), history: copy(point.history), current: point.current };
-  }
-
-  // Collection chips on the deck (1.27.0). A chip filters the deck to one collection; "" means all.
-  // Matching ignores capitalization and spacing, like collections() and canonCollection().
-  function collKey(n) { return String(n || "").trim().replace(/\s+/g, " ").toLowerCase(); }
-  function inCollection(t, name) { return !collKey(name) || collKey(t && t.collection) === collKey(name); }
-  // Chips for the deck: the collections that still have thoughts in the deck, most used first.
-  // Empty when no deck thought has a collection, so the row is not drawn at all.
-  function deckCollections(list) {
-    return collections(list.filter(function (t) { return t.status === "active"; }));
-  }
-  // The saved filter, spelled as the collection is now, or "" when that collection is gone from the
-  // deck (renamed, removed, or every thought in it lived), so the deck falls back to all.
-  function deckFilter(list, name) {
-    if (!collKey(name)) return "";
-    var hit = deckCollections(list).filter(function (c) { return collKey(c.name) === collKey(name); })[0];
-    return hit ? hit.name : "";
-  }
-
-  // Swipe reading (1.27.0), from the drag offset in pixels (dy is negative going up). The commit
-  // rules are the ones the deck has always used: past SWIPE left = skip, right = shed, up = keep
-  // while staying within 60px sideways. While dragging, kind is the move the card is heading for
-  // (sideways unless the drag is mostly upward), strength (0 to 1) drives the glow and stamps, and
-  // tilt is the card's rotation in degrees, capped so a long drag never spins it.
-  var SWIPE = 90;
-  function swipeIntent(dx, dy) {
-    dx = +dx || 0; dy = +dy || 0;
-    var commit = dx < -SWIPE ? "skip" : dx > SWIPE ? "shed" : (dy < -SWIPE && Math.abs(dx) < 60) ? "keep" : "";
-    var kind = commit, strength = 0;
-    if (!kind) {
-      if (Math.abs(dx) >= 60 || Math.abs(dx) > -dy) kind = dx < -8 ? "skip" : dx > 8 ? "shed" : "";
-      else kind = "keep";
-    }
-    if (kind === "keep") strength = Math.min(1, Math.max(0, -dy / SWIPE));
-    else if (kind) strength = Math.min(1, Math.abs(dx) / SWIPE);
-    var tilt = Math.max(-14, Math.min(14, dx / 20));
-    return { kind: kind, strength: Math.round(strength * 1000) / 1000, commit: !!commit, tilt: Math.round(tilt * 100) / 100 };
-  }
-
-  // Hold (1.33.0): the deck's one gesture. The ring is held down; how long and where the finger
-  // goes on release decide the move. A press shorter than HOLD_TAP is a tap and does nothing, so a
-  // stray touch never rests a thought for days. Lifting the finger HOLD_LIFT px or more toward
-  // the top before release is Lived at any point; holding the full HOLD_FULL is Testing it;
-  // letting go in between is Not today. ms is how long the ring was held, dy the vertical offset
-  // in pixels (negative going up). progress (0 to 1) drives the ring and how many words are inked.
-  var HOLD_FULL = 2400, HOLD_TAP = 300, HOLD_LIFT = 70;
-  // The hold menu (1.39.0): how long the press takes before the three choices open. The release no longer
-  // decides anything; holdOutcome is kept for reference and its tests.
-  var HOLD_REVEAL = 500;
-  function holdOutcome(ms, dy) {
-    ms = Math.max(0, +ms || 0); dy = +dy || 0;
-    var progress = Math.min(1, ms / HOLD_FULL);
-    var move = dy <= -HOLD_LIFT ? "shed" : ms < HOLD_TAP ? "" : progress >= 1 ? "keep" : "skip";
-    return { move: move, progress: Math.round(progress * 1000) / 1000 };
-  }
-
-  // Type weight (1.33.0): how heavy a thought is set, from its current Not today count. A fresh
-  // thought is 400; each Not today adds 125, to 900 at four or more. Testing it lowers the count,
-  // so the words lighten as the avoidance is worked off.
-  function inkWeight(t) { return 400 + Math.min(Math.max(+(t && t.skip_count) || 0, 0), 4) * 125; }
-
-  // Two lines per thought (1.34.0), kept on it in t.lines and reused every time it comes up:
-  //   push     shown when you let go early, to make you think twice about Not today
-  //   reflect  shown after you hold through, to sit with while Testing it
-  // A kept line is fresh while it was written for the current wording. A push line written before
-  // the thought reached Avoiding (three or more Not today) is refreshed once when it gets there,
-  // so the pushback sharpens instead of repeating. Testing it spends both lines (spendLines): the
-  // next time the thought comes up, new ones are written. Only model lines are kept.
-  // A reflect line is a quote (1.35.0): { text, author, src, voice } or { none: true } when no quote fit,
-  // which is kept too so the search is not repeated.
-  function lineFresh(t, kind) {
-    var l = t && t.lines && t.lines[kind];
-    if (!l || !(l.text || l.none) || l.of !== t.text) return false;
-    if (kind === "push" && (+t.skip_count || 0) >= 3 && (+l.skips || 0) < 3) return false;
-    return true;
-  }
-  function keepLine(t, kind, text, extra) {
-    t.lines = t.lines || {};
-    var l = { text: text || "", of: t.text, skips: +t.skip_count || 0 };
-    if (extra) Object.keys(extra).forEach(function (k) { l[k] = extra[k]; });
-    t.lines[kind] = l;
-    return l;
-  }
-
-  // ---------- quotes (1.35.0) ----------
-  // After a hold through, the reflect screen shows a real quote from today's voice, taken from the sourced
-  // quotes on its Wikiquote page. The model only chooses among them; it never writes one.
-  var WQ_PAGE = { jung: "Carl Jung", nietzsche: "Friedrich Nietzsche", dostoevsky: "Fyodor Dostoevsky", epictetus: "Epictetus",
-    marcus: "Marcus Aurelius" };
-  function wqPage(voice) { return (voice && (WQ_PAGE[voice.id] || voice.name)) || ""; }
-  function wqUrl(page) {
-    return "https://en.wikiquote.org/w/api.php?action=parse&prop=wikitext&format=json&formatversion=2&redirects=1&origin=*&page=" + encodeURIComponent(String(page).replace(/ /g, "_"));
-  }
-  // Wikitext to plain text: links keep their label, templates, references, comments and markup go.
-  function wqClean(s) {
-    s = String(s || "");
-    s = s.replace(/<!--[\s\S]*?-->/g, "").replace(/<ref[^>]*\/>/gi, "").replace(/<ref[^>]*>[\s\S]*?<\/ref>/gi, "");
-    for (var i = 0; i < 4 && /\{\{[^{}]*\}\}/.test(s); i++) s = s.replace(/\{\{[^{}]*\}\}/g, "");
-    s = s.replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, "$1").replace(/\[https?:\/\/[^\s\]]+\s?([^\]]*)\]/g, "$1");
-    s = s.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, "").replace(/'{2,}/g, "");
-    s = s.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&mdash;/g, ",").replace(/&ndash;/g, "-");
-    return s.replace(/\s+/g, " ").trim();
-  }
-  // Sections that are not the person's own sourced words.
-  var WQ_SKIP = /disputed|misattribut|attributed|about |quotes about|see also|external|references|sources|further|notes|bibliography|criticism|^about$/i;
-  // Every sourced quote on a Wikiquote page: { q, src }. src is the work (the section it sits under) or,
-  // failing that, its citation line. Quotes from skipped sections, and very short or very long ones, are left out.
-  function parseQuotes(wikitext, max) {
-    var out = [], h2 = "", h3 = "", last = null, skip = false;
-    String(wikitext || "").split(/\n/).forEach(function (line) {
-      var m = line.match(/^(={2,6})\s*(.*?)\s*\1\s*$/);
-      if (m) {
-        var name = wqClean(m[2]);
-        if (m[1].length === 2) { h2 = name; h3 = ""; skip = WQ_SKIP.test(name); }
-        else if (m[1].length === 3) { h3 = name; skip = WQ_SKIP.test(h2) || WQ_SKIP.test(name); }
-        last = null; return;
-      }
-      if (skip) return;
-      if (/^\*[^*:]/.test(line)) {
-        var q = wqClean(line.replace(/^\*\s*/, ""));
-        last = null;
-        if (q.length < 25 || q.length > 420) return;
-        last = { q: q, h2: h2, h3: h3, cite: "" };
-        out.push(last);
-      } else if (last && /^\*\*/.test(line) && /''|\d/.test(line)) {
-        // A citation line names a work in italics or gives a year or page. Lines without either are
-        // usually the original-language text, which is skipped.
-        last.cite = wqClean(line.replace(/^\*+\s*/, ""));
-      }
+  // What is due today, most avoided first, then the one waiting longest.
+  function dueToday(store, now) {
+    var today = dayKey(now);
+    return inRotation(store).filter(function (t) { return t.due <= today; }).sort(function (a, b) {
+      return (b.skips || 0) - (a.skips || 0) || (a.due < b.due ? -1 : a.due > b.due ? 1 : 0) || (a.created < b.created ? -1 : 1);
     });
-    return out.slice(0, max || 400).map(function (x) { return { q: x.q, src: quoteSource(x.h2, x.h3, x.cite) }; });
   }
-  // Where a quote is from, in a few words. A section named for a work is used as it is ("Psychology and
-  // Alchemy"), a book within a work joins it ("Meditations, Book II"), and a section named for a time
-  // ("1910s", "Quotes") gives way to the quote's own citation line.
-  var GENERIC = /^(quotes|sourced|quotations|\d{4}s?|\d{4}\s*[-\u2013]\s*\d{2,4}|\d{1,2}(st|nd|rd|th) century|undated|other|miscellaneous|various)$/i;
-  function quoteSource(h2, h3, cite) {
-    var year = /\s*\(\d{4}[^)]*\)\s*$/;
-    var work = "";
-    if (h3 && /^(book|part|chapter|letter|section)\b/i.test(h3) && h2 && !GENERIC.test(h2)) work = h2.replace(year, "") + ", " + h3;
-    else if (h3 && !GENERIC.test(h3)) work = h3.replace(year, "");
-    else if (h2 && !GENERIC.test(h2)) work = h2.replace(year, "");
-    return (work || cite || "").slice(0, 90).replace(/[,;:\s]+$/, "");
+  function pickNext(store, now, notId) {
+    var d = dueToday(store, now).filter(function (t) { return t.id !== notId; });
+    return d.length ? d[0] : null;
   }
-  // Rough topical overlap between a thought and a quote: shared word stems of four letters or more.
-  var STOP = " that this with from have they them their what when where which while your yours about would could should there these those been being into than then over only also just very more most such some like make made does done will shall must ever every never always other another because ";
-  function stems(s) {
-    var o = {};
-    String(s || "").toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).forEach(function (w) {
-      if (w.length < 4 || STOP.indexOf(" " + w + " ") >= 0) return;
-      o[w.slice(0, 5)] = 1;
+
+  // The earliest day anything comes back, for "Next one back ..." when nothing is due.
+  function nextDue(store) {
+    var r = inRotation(store).map(function (t) { return t.due; }).sort();
+    return r[0] || null;
+  }
+
+  // Your thoughts from Scales 1, copied once. Its data is never written to.
+  // Thoughts still in its deck join the rotation a few a day, most skipped first; lived and let-go ones arrive put away.
+  function importOld(old, now) {
+    var out = {}, today = dayKey(now), active = [], rest = [];
+    Object.keys(old || {}).forEach(function (k) {
+      var o = old[k]; if (!o || !String(o.text || "").trim()) return;
+      var t = { id: "o" + String(o.id || k), text: String(o.text).trim(), note: "", created: o.created_at || now.toISOString(),
+        due: today, away: null, skips: Math.min(4, o.skip_count || 0), thinks: o.reflect_count || 0, works: 0, seen: null, visits: [], from: "scales-1" };
+      if (o.status === "active") active.push(t); else { t.away = o.shed_at || o.letgo_at || now.toISOString(); rest.push(t); }
     });
-    return o;
-  }
-  // The quotes most likely to speak to a thought, best first: [{ i, score }], n of them at most.
-  function rankQuotes(text, quotes, n) {
-    var p = stems(text);
-    return (quotes || []).map(function (x, i) {
-      var q = stems(x.q), score = 0;
-      for (var k in q) if (p[k]) score++;
-      return { i: i, score: score };
-    }).sort(function (a, b) { return b.score - a.score || quotes[a.i].q.length - quotes[b.i].q.length; }).slice(0, n || 20);
-  }
-  // The prompt that asks the model to choose, and reading its answer: a number from the list, or 0 for none.
-  function quotePrompt(thought, voiceName, list) {
-    return "A user has written this thought to live by:\n" + thought + "\n\n" +
-      "Below are numbered quotes by " + voiceName + ". Choose the one quote that most directly speaks to this thought, so that reading it deepens, sharpens or challenges it. " +
-      "If none clearly speaks to it, answer 0. A loose or generic fit is a 0.\n" +
-      "Answer with the number only.\n\n" + list.map(function (q, i) { return (i + 1) + ". " + q.q; }).join("\n");
-  }
-  function readPick(answer, n) {
-    var m = String(answer || "").match(/\d+/); if (!m) return -1;
-    var k = parseInt(m[0], 10);
-    return k >= 1 && k <= n ? k - 1 : -1;
-  }
-  function spendLines(t) { if (t) t.lines = {}; }
-  // Seconds on the reflect screen before Next appears and the Testing it lowers the Not today count.
-  var REFLECT_SEC = 8;
-
-  // Ledger groups (1.33.0), for a thought still in the deck:
-  //   avoiding      set aside three or more times and not yet worked back down
-  //   nearly        no Not today left and either caught in the last 30 days, tested twice running,
-  //                 or tested three or more times
-  //   working       everything else
-  function ledgerGroup(t, today) {
-    var s = +t.skip_count || 0;
-    if (s >= 3) return "avoiding";
-    if (s === 0 && (catchCount(t, today) > 0 || (t.consecutive_reflects || 0) >= 2 || (t.reflect_count || 0) >= 3)) return "nearly";
-    return "working";
-  }
-
-  // Ledger bars (1.27.0): every thought counted once. Lived = lived; Not today = still in the
-  // deck and currently set aside more than worked through (skip_count above 0); Testing it = the
-  // rest of the deck. Percentages are whole numbers that add up to 100 (largest remainder), or all 0
-  // for an empty deck.
-  function outcomeMix(list) {
-    var n = { live: 0, work: 0, skip: 0 };
-    list.forEach(function (t) {
-      if (t.status === "shed") n.live++;
-      else if (t.status === "active") { if ((t.skip_count || 0) > 0) n.skip++; else n.work++; }
-    });
-    var total = n.live + n.work + n.skip, keys = ["live", "work", "skip"], pct = { live: 0, work: 0, skip: 0 };
-    if (total) {
-      var raw = keys.map(function (k) { return { k: k, v: n[k] * 100 / total }; });
-      raw.forEach(function (r) { pct[r.k] = Math.floor(r.v); });
-      var left = 100 - keys.reduce(function (a, k) { return a + pct[k]; }, 0);
-      raw.sort(function (a, b) { return (b.v - Math.floor(b.v)) - (a.v - Math.floor(a.v)) || keys.indexOf(a.k) - keys.indexOf(b.k); });
-      for (var i = 0; i < left; i++) pct[raw[i].k]++;
-    }
-    return { live: n.live, work: n.work, skip: n.skip, total: total, pct: pct };
-  }
-
-  // ---------- keep an AI line (1.30.0) ----------
-  // A model line can be better worded than the thought it was written for. It can be kept
-  // as a new thought beside the original, or replace the original's wording.
-  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  function shortDate(d) { return MONTHS[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear(); }
-
-  // Add: a new thought in the same collection, citing the line it came from and linked to
-  // the original by kept_from. Counts start at zero; no author is set, since the words came
-  // from the model. Returns { thought } (without an id) or { reason, conflict }.
-  function keepAsNew(list, t, line, now) {
-    var text = String(line || "").trim();
-    if (!text) return { reason: "empty" };
-    if (text.length > MAX_TEXT) return { reason: "too long" };
-    var key = normText(text);
-    for (var i = 0; i < list.length; i++) if (normText(list[i].text) === key) return { reason: "duplicate", conflict: list[i] };
-    return { thought: { text: text, collection: String(t.collection || "").trim(), title: "", author: "", origin: "", tags: "", link: "",
-      citation: "Kept from an AI line on " + shortDate(now), kept_from: t.id, kept_at: now.toISOString(),
-      created_at: now.toISOString(), status: "active", skip_count: 0, lifetime_skips: 0, reflect_count: 0,
-      consecutive_reflects: 0, recent_lines: [] } };
-  }
-
-  // Replace: the line becomes the thought's wording, as an edit would make it. Counts, dates,
-  // status and evidence stay; the earlier wording is saved in earlier (last five) so the Ledger
-  // can show it. Returns { thought } or { reason, conflict }.
-  function keepReplace(list, t, line, now) {
-    var r = checkEdit(list, t, { text: line });
-    if (!r.ok) return { reason: r.reason, conflict: r.conflict };
-    t.earlier = (t.earlier || []).concat([{ text: t.text, until: now.toISOString() }]).slice(-5);
-    applyEdit(t, { text: line }, list);
-    t.worded_from_ai = now.toISOString();
-    return { thought: t };
-  }
-
-  // ---------- voices: a thinker weighs in (1.31.0) ----------
-  // The point is perspective, not quotation: the model reasons from each thinker's known ideas
-  // and never presents its words as theirs. Thinkers who have died speak in the first person;
-  // living ones are written about in the third person, and a name the user adds is treated as
-  // living unless they mark it otherwise.
-  var VOICES = [
-    { id: "jung", name: "Carl Jung", short: "Jung", living: false, lens: "the shadow, projection, individuation, and what the unconscious is protecting" },
-    { id: "nietzsche", name: "Friedrich Nietzsche", short: "Nietzsche", living: false, lens: "self-overcoming, the will to power, becoming who you are, and contempt for comfortable mediocrity" },
-    { id: "dostoevsky", name: "Fyodor Dostoevsky", short: "Dostoevsky", living: false, lens: "freedom and responsibility, self-deception, suffering, and the lies a person tells himself" },
-    { id: "epictetus", name: "Epictetus", short: "Epictetus", living: false, lens: "what is in your control, judgment over events, and disciplined assent" },
-    { id: "marcus", name: "Marcus Aurelius", short: "Marcus Aurelius", living: false, lens: "duty, the brevity of life, acting well now, and the inner citadel" }
-  ];
-  // 1.60.0: living people are no longer built in (App Store 5.2.1). A name the user adds is still written about
-  // in the third person unless they mark it as someone no longer living.
-  var TALK_MAX = 6, REPLY_WORDS = 70;
-  var MOVES = { skip: "Skip", keep: "Reflect", shed: "Lived" };
-
-  // Every voice on offer: the built-in ones, then names the user added ({ name, first }).
-  function allVoices(custom) {
-    return VOICES.concat((custom || []).filter(function (c) { return c && String(c.name || "").trim(); }).map(function (c) {
-      var n = String(c.name).trim().replace(/\s+/g, " ").slice(0, 60);
-      return { id: "c:" + n.toLowerCase(), name: n, short: n.split(" ").slice(-1)[0], living: !c.first, lens: "", custom: true };
-    }));
-  }
-  // The chosen voices, in list order. chosen undefined means every built-in voice.
-  function chosenVoices(chosen, custom) {
-    var list = allVoices(custom);
-    if (!chosen) return list.filter(function (v) { return !v.custom; });
-    var out = list.filter(function (v) { return chosen.indexOf(v.id) >= 0; });
-    // Every chosen voice gone (1.60.0 removed the living built-ins): fall back to the built-in voices.
-    return out.length || !chosen.length ? out : list.filter(function (v) { return !v.custom; });
-  }
-  // Today's voice: one per Scales day, rotating through the chosen voices in order.
-  function voiceOfDay(voices, day) {
-    if (!voices || !voices.length) return null;
-    var p = String(day).split("-"), n = Math.floor(Date.UTC(+p[0], +p[1] - 1, +p[2]) / 86400000);
-    return voices[((n % voices.length) + voices.length) % voices.length];
-  }
-  function possessive(n) { return n + "'s"; }
-  // The label under every line: never presented as a quotation.
-  function voiceLabel(v) { return (v.living ? "Through " + possessive(v.short) + " lens" : "In the spirit of " + v.short) + ", written by AI"; }
-  function voiceRule(v) {
-    return v.living
-      ? "Write in the third person about how " + v.name + " would see this, for example: " + v.short + " would ask... Never write as " + v.short + " speaking, and never invent a quotation."
-      : "Speak in the first person as " + v.name + " would, from the ideas in their published work. Do not quote; say it fresh, in plain modern English.";
-  }
-  // One line weighing the move just made on thought t.
-  function weighPrompt(v, t, move, daysIn) {
-    return "You give the user a perspective from " + v.name + " on a move they just made in Scales, an app for living by chosen thoughts.\n" +
-      "In Scales, Skip sets a thought aside for now, Reflect keeps it in practice in daily life, and Lived says they now act on it without prompting.\n" +
-      (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "Draw on what " + v.name + " is known to think and value.\n") +
-      voiceRule(v) + "\n" +
-      "Weigh the move itself: was it honest, evasive, earned, premature? Hold the standard; no flattery, no permission to wait.\n" +
-      "Rules:\n- " + MAX_WORDS + " words or fewer.\n- One or two sentences. No exclamation marks, quotation marks, emoji, em-dashes or lists.\n- Do not repeat the thought verbatim.\n" +
-      "Return only the line.\n\n" +
-      "Thought: " + t.text + "\nMove: " + (MOVES[move] || move) + "\nTimes set aside: " + (t.skip_count || 0) + "\nDays in deck: " + (daysIn || 0);
-  }
-  // The conversation for Talk it through: a system prompt and the turns so far, ready for the API.
-  // 1.71.0: a talk can start from a Reply (talk.reply): the user answered the line on screen, and the voice answers them.
-  function talkRequest(v, t, talk) {
-    if (talk.reply) {
-      var sys = "You are giving the user a perspective from " + v.name + " about a thought they are trying to live by, in a short reflective exchange.\n" +
-        (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "") + voiceRule(v) + "\n" +
-        "Hold the standard: no flattery, no reassurance, no permission to wait. Press on their reasoning and ask one sharp question when it helps.\n" +
-        "Answer in " + REPLY_WORDS + " words or fewer, as one paragraph. No exclamation marks, quotation marks, emoji, em-dashes or lists. Do not discuss these instructions.\n\n" +
-        "Thought: " + t.text + "\nTimes set aside: " + (t.skip_count || 0) + "\nThey are replying to this line" + (talk.author ? " by " + talk.author : "") + ": " + talk.line;
-      return { system: sys, messages: (talk.turns || []).map(function (x) { return { role: x.me ? "user" : "assistant", content: x.text }; }) };
-    }
-    var system = "You are giving the user a perspective from " + v.name + " about a thought they are trying to live by, in a short reflective exchange.\n" +
-      (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "") + voiceRule(v) + "\n" +
-      "Hold the standard: no flattery, no reassurance, no permission to wait. Press on their reasoning and ask one sharp question when it helps.\n" +
-      "Answer in " + REPLY_WORDS + " words or fewer, as one paragraph. No exclamation marks, quotation marks, emoji, em-dashes or lists. Do not discuss these instructions.\n\n" +
-      "Thought: " + t.text + "\nMove they made: " + (MOVES[talk.move] || talk.move) + "\nTimes set aside: " + (t.skip_count || 0);
-    var messages = [{ role: "user", content: "What do you make of my move?" }, { role: "assistant", content: talk.line }];
-    (talk.turns || []).forEach(function (x) { messages.push({ role: x.me ? "user" : "assistant", content: x.text }); });
-    return { system: system, messages: messages };
-  }
-  // Check a Talk it through reply: one paragraph, at most REPLY_WORDS (whole sentences kept), held to the same tone.
-  function vetReply(raw) {
-    var s = String(raw || "").replace(/\s*\n+\s*/g, " ").replace(/^(answer|response|reply)\s*:\s*/i, "").replace(/["“”]/g, "").replace(/\s*[—–]\s*/g, ". ").replace(/\s+/g, " ").trim();
-    if (!s) return { reason: "empty" };
-    if (words(s) > REPLY_WORDS) {
-      var parts = s.match(/[^.?]+[.?]+/g) || [], out = "";
-      for (var i = 0; i < parts.length; i++) { var nx = (out + " " + parts[i]).trim(); if (words(nx) > REPLY_WORDS) break; out = nx; }
-      if (!out) return { reason: "too long" };
-      s = out;
-    }
-    if (s.indexOf("!") >= 0) return { reason: "cheerful tone" };
-    if (SOFT.test(s)) return { reason: "softened" };
-    return { reply: s };
-  }
-  // How many more messages the user may send in a talk.
-  function talkLeft(talk) { return Math.max(0, TALK_MAX - ((talk && talk.turns) || []).filter(function (x) { return x.me; }).length); }
-  // Save a weigh-in on thought t, newest last, keeping the last five.
-  function addTalk(t, talk) { t.talks = (t.talks || []).concat([talk]).slice(-5); return talk; }
-
-  // ---------- a day that ends (1.32.0) ----------
-  // Today's set: a number of thoughts you choose (SET_MIN to SET_MAX, SET_DEFAULT to start). Once that
-  // many moves are made, the deck closes with Done for today and asks which one you will act on: today's
-  // focus. The day's state lives in one small object, reset when a new Scales day starts.
-  var SET_MIN = 1, SET_MAX = 20, SET_DEFAULT = 5, CHECKIN_HOUR = 18, CATCH_WINDOW = 30, CATCH_SUGGEST = 3, ACT_EVERY = 3;
-  function setSize(n) { n = parseInt(n, 10); return isNaN(n) ? SET_DEFAULT : Math.min(SET_MAX, Math.max(SET_MIN, n)); }
-  function freshDay(day) { return { day: day, moved: [], focus: null, closed: false, more: false, checkin: null }; }
-  // The saved state if it is today's, otherwise a fresh day.
-  function dayState(saved, day) { return saved && saved.day === day ? saved : freshDay(day); }
-  // Record a move in today's set. moved keeps the order; a thought moved twice counts twice.
-  function noteDayMove(state, id, move) { state.moved.push({ id: id, move: move }); return state; }
-  // Where the day stands: "set" (still weighing), "done" (set finished, focus not chosen),
-  // "focus" (focus chosen, deck closed), or "more" (kept going after Done for today).
-  function dayPhase(state, size) {
-    if (state.more) return "more";
-    if (state.closed) return "focus";
-    return state.moved.length >= setSize(size) ? "done" : "set";
-  }
-  // The thoughts to choose today's focus from: the ones moved today, newest first, once each,
-  // leaving out any that no longer exist.
-  function focusChoices(state, byId) {
-    var seen = {}, out = [];
-    for (var i = state.moved.length - 1; i >= 0; i--) {
-      var m = state.moved[i], t = byId[m.id];
-      if (t && !seen[m.id]) { seen[m.id] = 1; out.push({ t: t, move: m.move }); }
-    }
+    active.sort(function (a, b) { return b.skips - a.skips || (a.created < b.created ? -1 : 1); });
+    active.forEach(function (t, i) { t.due = addDays(today, Math.floor(i / NEW_PER_DAY)); out[t.id] = t; });
+    rest.forEach(function (t) { out[t.id] = t; });
     return out;
   }
-  // One line on how the set went: "Two testing it, two set aside, one living it."
-  var NUM = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
-  // ---------- reminder text and the icon badge (1.51.0) ----------
-  // 1.58.0: the GitHub schedule and web push are gone; the iPhone app will schedule reminders on the device
-  // and use this text and count. The app saves the badge state where a service worker or the shell can read it.
-  // The badge: what is left of today's set, plus anything saved for Later that is back.
-  function badgeFrom(s, now) {
-    if (!s) return 0;
-    now = now || new Date();
-    var left = s.day === dayOf(now) ? (+s.left || 0) : Math.min(+s.size || 0, +s.active || 0);
-    var later = (s.laters || []).filter(function (l) { return laterDue({ later: l }, now); }).length;
-    return Math.max(0, left) + later;
-  }
-  // 1.87.0: the Home Screen badge is never a count. A reminder that fires with something waiting sets a plain 1,
-  // and opening Scales clears it; nothing else ever sets it. No climbing number calling you back.
-  function remindBadge(s, now) { return badgeFrom(s, now) > 0 ? 1 : 0; }
-  function pushText(kind, s, now) {
-    now = now || new Date();
-    var left = s ? (s.day === dayOf(now) ? (+s.left || 0) : Math.min(+s.size || 0, +s.active || 0)) : 0;
-    var later = s ? (s.laters || []).filter(function (l) { return laterDue({ later: l }, now); }).length : 0;
-    if (kind === "evening") {
-      if (later) return later === 1 ? "One thought saved for later is back." : later + " thoughts saved for later are back.";
-      return left ? left + " left in today’s set." : "Done for today. Nothing is waiting.";
-    }
-    return left ? "Today’s set is ready: " + left + (left === 1 ? " thought." : " thoughts.") : "Today’s set is ready.";
-  }
-  // ---------- backup reminders (1.50.0) ----------
-  // As in The Road: once the deck has something in it, ask for a backup when there has never been one or
-  // the last is more than a week old. Not now waits two days.
-  var BACKUP_EVERY = 7, BACKUP_SNOOZE = 2;
-  function needsBackup(count, last, snooze, now) {
-    if (!count) return false;
-    var t = +(now || Date.now());
-    if (snooze && t < +snooze) return false;
-    return !last || t - Date.parse(last) > BACKUP_EVERY * 86400000;
-  }
-  function backupAgo(last, now) {
-    if (!last) return "never";
-    var d = Math.floor((+(now || Date.now()) - Date.parse(last)) / 86400000);
-    return d <= 0 ? "today" : d === 1 ? "yesterday" : d + " days ago";
-  }
 
-  function daySummary(state) {
-    var n = { skip: 0, keep: 0, shed: 0 };
-    state.moved.forEach(function (m) { if (n[m.move] != null) n[m.move]++; });
-    var w = function (k) { return k <= 10 ? NUM[k] : String(k); };
-    var parts = [];
-    if (n.keep) parts.push(w(n.keep) + " reflected on");
-    if (n.skip) parts.push(w(n.skip) + " skipped");
-    if (n.shed) parts.push(w(n.shed) + " lived");
-    if (!parts.length) return "";
-    var s = parts.length > 1 ? parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1] : parts[0];
-    return s.charAt(0).toUpperCase() + s.slice(1) + ".";
-  }
-  // The evening check-in on today's focus: due from CHECKIN_HOUR until the Scales day ends, once.
-  function checkinDue(state, now) {
-    if (!state || !state.focus || state.checkin) return false;
-    if (dayOf(now) !== state.day) return false;
-    var h = now.getHours();
-    return h >= CHECKIN_HOUR || h < DAY_START_HOUR;
-  }
-  // Testing it asks for the smallest act every ACT_EVERY times (counted across the deck).
-  function askAct(count) { return count > 0 && count % ACT_EVERY === 0; }
-  // The smallest act written for t today, or "".
-  function actToday(t, day) { var a = (t.acts || []).filter(function (x) { return x.day === day; }); return a.length ? a[a.length - 1].text : ""; }
-  function addAct(t, day, text) { t.acts = (t.acts || []).concat([{ day: day, text: String(text || "").trim().slice(0, 200) }]).slice(-10); return t; }
-
-  // ---------- caught it ----------
-  // Real-life evidence for a thought still in the deck: a one-line note of when you lived it
-  // without the app. CATCH_SUGGEST catches within CATCH_WINDOW days suggest it may be Lived.
-  function addCatch(t, day, text) { t.caught = (t.caught || []).concat([{ day: day, text: String(text || "").trim().slice(0, 280) }]).slice(-30); noteMoveOf(t, day, "caught"); return t; }
-  // Moves (1.77.0): each thought keeps its last 30 moves with their day (skip, keep for Reflect, caught),
-  // for the marks on its Ledger row and for its history.
-  function noteMoveOf(t, day, m) { t.moves = (t.moves || []).concat([{ day: day, m: m }]).slice(-30); return t; }
-  // Question it (1.79.0). Weighing a thought ends one of three ways, and each counts as a move for the day.
-  //   keep:   it held up. Counted like a Reflect against its skips.
-  //   revise: the wording changed; the earlier wording is kept in its history.
-  //   let go: it didn't hold. It leaves the deck with the reason, and can be brought back.
-  function questionKeep(t, day) {
-    t.questioned = (t.questioned || 0) + 1;
-    if ((t.skip_count || 0) > 0) t.skip_count--;
-    noteMoveOf(t, day, "question");
-    return t;
-  }
-  function noteRevise(t, oldText, day, now) {
-    t.questioned = (t.questioned || 0) + 1;
-    t.earlier = (t.earlier || []).concat([{ text: oldText, until: (now || new Date()).toISOString() }]).slice(-5);
-    noteMoveOf(t, day, "revise");
-    return t;
-  }
-  function letGo(t, why, day, now) {
-    t.status = "letgo"; t.letgo_at = (now || new Date()).toISOString(); t.letgo_why = String(why || "").trim().slice(0, LIMITS.why);
-    t.later = null;
-    noteMoveOf(t, day, "letgo");
-    return t;
-  }
-  // Bring it back: into the deck with its counts; the last letting go stays in its history.
-  function bringBack(t, now) {
-    if (t.status !== "letgo") return t;
-    t.let_go = (t.let_go || []).concat([{ at: t.letgo_at, why: t.letgo_why || "" }]).slice(-5);
-    t.status = "active"; t.letgo_at = null; t.letgo_why = ""; t.back_at = (now || new Date()).toISOString();
-    return t;
-  }
-  // The case against (Scales Plus): the strongest honest argument against the thought, in the voice's terms.
-  function casePrompt(v, t) {
-    return "You make the strongest honest case against a thought the user holds, so they can weigh it. The app is Scales.\n" +
-      (v ? (v.lens ? "Argue as " + v.name + " might, drawing on " + v.short + "'s ideas about " + v.lens + ".\n" : "Argue as " + v.name + " might, from what " + v.name + " is known to think and value.\n") + voiceRule(v) + "\n" : "") +
-      "Rules:\n- Argue against the thought itself, not the person. Find where it fails, overreaches or costs something real.\n" +
-      "- 45 words or fewer. Two or three plain sentences. No questions at the end, no hedging, no both-sides summary.\n" +
-      "- No exclamation marks, quotation marks, emoji, em-dashes or lists. Do not repeat the thought verbatim.\n" +
-      "Return only the argument.\n\n" +
-      "Thought: " + t.text + (t.why ? "\nWhy they believe it: " + t.why : "") + (t.change ? "\nWhat would change their mind: " + t.change : "");
-  }
-
-  // The last n moves, oldest first. Before 1.77.0 only skip and caught days were kept, and Reflect only as a
-  // count, so older thoughts start with their undated Reflects, then their dated skips and catches.
-  function recentMoves(t, n) {
-    n = n || 5;
-    var mv = (t.moves || []).slice(), first = mv.length ? mv[0].day : "9999-99-99", old = [];
-    (t.skips_on || []).forEach(function (d) { if (d < first) old.push({ day: d, m: "skip" }); });
-    (t.caught || []).forEach(function (c) { if (c.day < first) old.push({ day: c.day, m: "caught" }); });
-    old.sort(function (a, b) { return a.day < b.day ? -1 : a.day > b.day ? 1 : 0; });
-    var keeps = Math.max(0, (t.reflect_count || 0) - mv.filter(function (x) { return x.m === "keep"; }).length), pre = [];
-    for (var i = 0; i < Math.min(keeps, n); i++) pre.push({ day: "", m: "keep" });
-    return pre.concat(old, mv).slice(-n);
-  }
-  // The one thought avoided most: skipped three or more times, most skips first, then most over its life.
-  function avoidedMost(list) {
-    return list.filter(function (t) { return t.status === "active" && (+t.skip_count || 0) >= 3; })
-      .sort(function (a, b) { return (b.skip_count - a.skip_count) || ((b.lifetime_skips || 0) - (a.lifetime_skips || 0)); })[0] || null;
-  }
-  function catchCount(t, today, windowDays) {
-    var from = addDays(today, -((windowDays || CATCH_WINDOW) - 1));
-    return (t.caught || []).filter(function (c) { return c.day >= from && c.day <= today; }).length;
-  }
-  function suggestLiving(t, today) { return t.status === "active" && catchCount(t, today) >= CATCH_SUGGEST; }
-  // Days a thought was set aside, kept for the weekly review (last 20).
-  // Later (1.42.0): a thought that deserves more time than you have right now. Chosen from the skip screen,
-  // it is not a skip: no count, no weight, no rest. It waits until the evening (CHECKIN_HOUR) of the day it
-  // was saved, or any later day, then opens straight to Reflect. At most LATER_MAX wait at once, and a
-  // thought that came back from Later is not offered Later again until you have sat with it for the full
-  // reflect time (t.later_blocked).
-  var LATER_MAX = 3;
-  function laterDue(t, now) {
-    if (!t || !t.later) return false;
-    var d = dayOf(now);
-    return d > t.later.day || (d === t.later.day && now.getHours() >= CHECKIN_HOUR);
-  }
-  function waiting(list) { return (list || []).filter(function (t) { return t.status === "active" && t.later; }); }
-  function canLater(list, t) { return !!t && !t.later && !t.later_blocked && waiting(list).length < LATER_MAX; }
-  function noteSkipDay(t, day) { t.skips_on = (t.skips_on || []).concat([day]).slice(-20); noteMoveOf(t, day, "skip"); return t; }
-
-  // Replies (1.40.0). On the skip and sit-with screens you can reply to the line or quote shown. A reply is
-  // kept on the thought with the words it answered: { at, day, kind, line, author, text }. kind is "push"
-  // for the line shown on Skip, "reflect" for the quote shown on Reflect. Replying never makes or changes
-  // a move. The last 40 are kept.
-  var REPLY_MAX = 280;
-  function addReply(t, text, to, day, at) {
-    text = String(text || "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim().slice(0, REPLY_MAX);
-    if (!t || !text) return null;
-    to = to || {};
-    var r = { at: at || new Date().toISOString(), day: day, kind: to.kind === "reflect" ? "reflect" : "push", line: String(to.line || "").trim(), author: to.author || "", text: text };
-    t.replies = (t.replies || []).concat([r]).slice(-40);
-    return r;
-  }
-  // The whole thread on a thought, oldest first: replies, plus any thoughts written in 1.37.0 (t.notes),
-  // which were replies to the skip line under another name.
-  function thread(t) {
-    var out = (t && t.replies || []).slice();
-    (t && t.notes || []).forEach(function (n) { out.push({ at: n.at, day: n.day, kind: "push", line: n.line || "", author: "", text: n.text }); });
-    return out.sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : 0; });
-  }
-  function lastReply(t) { var th = thread(t); return th.length ? th[th.length - 1] : null; }
-
-  // ---------- your week ----------
-  // The seven Scales days ending today, oldest first.
-  function weekDays(today) { var out = []; for (var i = 6; i >= 0; i--) out.push(addDays(today, -i)); return out; }
-  function weekday(day) { var p = day.split("-"); return new Date(+p[0], +p[1] - 1, +p[2], 12).getDay(); }
-  // The review opens itself on Sundays, once a week.
-  function isReviewDay(day) { return weekday(day) === 0; }
-  // Counts for the week from the activity log ({ i, s, c } per day) and the thoughts.
-  function weekStats(list, activity, today) {
-    var days = weekDays(today), from = days[0];
-    var per = days.map(function (d) {
-      var a = activity[d] || {}, w = (a.i || 0) + (a.s || 0), c = a.c || 0;
-      return { day: d, weighed: w, caught: c, kind: (a.s || c) ? "lv" : w ? "on" : "" };
+  // Catch-up: thoughts in Scales 1 that are not here yet join on the next open.
+  // Matched by id; a thought already here is never overwritten, and one deleted here (in gone) never comes back.
+  // Returns how many were added.
+  function mergeOld(store, old, now, gone) {
+    var fresh = importOld(old, now), added = 0, skip = {};
+    (gone || []).forEach(function (id) { skip[id] = true; });
+    Object.keys(fresh).forEach(function (id) {
+      if (store[id] || skip[id]) return;
+      var t = fresh[id];
+      if (!t.away) t.due = dayKey(now);
+      store[id] = t; added++;
     });
-    var living = list.filter(function (t) { return t.status === "shed" && t.shed_at && dayOf(new Date(t.shed_at)) >= from && dayOf(new Date(t.shed_at)) <= today; }).length;
-    var pushed = null, most = 0;
-    list.forEach(function (t) {
-      if (t.status !== "active") return;
-      var n = (t.skips_on || []).filter(function (d) { return d >= from && d <= today; }).length;
-      if (n > most || (n === most && n && pushed && (t.skip_count || 0) > (pushed.skip_count || 0))) { most = n; pushed = t; }
-    });
-    return { from: from, to: today, days: per, living: living, pushed: pushed, pushedTimes: most,
-      weighed: per.reduce(function (a, d) { return a + d.weighed; }, 0), caught: per.reduce(function (a, d) { return a + d.caught; }, 0) };
-  }
-  function weekPrompt(v, w) {
-    return "You give the user a perspective from " + v.name + " on their week in Scales, an app for living by chosen thoughts.\n" +
-      (v.lens ? "Draw on " + v.short + "'s ideas about " + v.lens + ".\n" : "") +
-      (v.living ? "Write in the third person about how " + v.name + " would see this week. Never write as " + v.short + " speaking, and never invent a quotation." :
-        "Speak in the first person as " + v.name + " would. Do not quote; say it fresh, in plain modern English.") + "\n" +
-      "Hold the standard; no flattery, no permission to wait. Point at the one thing that matters most for the coming week.\n" +
-      "Rules:\n- " + MAX_WORDS + " words or fewer.\n- One or two sentences. No exclamation marks, quotation marks, emoji, em-dashes or lists.\nReturn only the line.\n\n" +
-      "Thoughts weighed: " + w.weighed + "\nTimes caught living a thought without the app: " + w.caught + "\nNewly living: " + w.living +
-      (w.pushed ? "\nPushed back most, skipped " + w.pushedTimes + " times: " + w.pushed.text : "");
+    return added;
   }
 
-  // ---------- a thought's history, for the Ledger ----------
-  // Everything that happened to t, newest first: { at (YYYY-MM-DD), kind, text }.
-  function timeline(t) {
-    var ev = [], d = function (iso) { return iso ? dayOf(new Date(iso)) : ""; };
-    if (t.created_at) ev.push({ at: d(t.created_at), kind: "start", text: t.kept_from ? "Kept from an AI line" : "Captured" });
-    (t.skips_on || []).forEach(function (x) { ev.push({ at: x, kind: "skip", text: "Skipped" }); });
-    (t.moves || []).forEach(function (x) {
-      if (x.m === "keep") ev.push({ at: x.day, kind: "keep", text: "Reflected" });
-      else if (x.m === "question") ev.push({ at: x.day, kind: "question", text: "Questioned it, and kept it" });
-      else if (x.m === "revise") ev.push({ at: x.day, kind: "question", text: "Questioned it, and revised it" });
-    });
-    (t.let_go || []).forEach(function (x) { ev.push({ at: d(x.at), kind: "letgo", text: "Let go" + (x.why ? ": " + x.why : "") }); });
-    if (t.status === "letgo" && t.letgo_at) ev.push({ at: d(t.letgo_at), kind: "letgo", text: "Let go" + (t.letgo_why ? ": " + t.letgo_why : "") });
-    (t.acts || []).forEach(function (x) { ev.push({ at: x.day, kind: "act", text: "Smallest act: " + x.text }); });
-    (t.caught || []).forEach(function (x) { ev.push({ at: x.day, kind: "caught", text: "Caught it" + (x.text ? ": " + x.text : "") }); });
-    (t.talks || []).forEach(function (x) { if (x.line) ev.push({ at: x.day || d(x.at), kind: "talk", text: x.reply ? "Talked with " + (x.voice_name || "a thinker") : "Weighed in by " + (x.voice_name || "a thinker") + " on " + (MOVES[x.move] || x.move) }); });
-    (t.earlier || []).forEach(function (x) { ev.push({ at: d(x.until), kind: "edit", text: "Wording changed" }); });
-    if (t.status === "shed" && t.shed_at) ev.push({ at: d(t.shed_at), kind: "lived", text: "Lived" + (t.evidence ? ": " + t.evidence : "") });
-    var order = { start: 0, edit: 1, skip: 2, keep: 3, question: 4, act: 5, talk: 6, caught: 7, letgo: 8, lived: 9 };
-    return ev.sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : order[b.kind] - order[a.kind]; });
+  // "Tomorrow", "Today", a weekday for the coming week, else a short date.
+  function whenLabel(key, now) {
+    var today = dayKey(now);
+    if (!key || key <= today) return "Today";
+    if (key === addDays(today, 1)) return "Tomorrow";
+    var p = key.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]);
+    for (var i = 2; i <= 6; i++) if (key === addDays(today, i)) return d.toLocaleDateString("en-US", { weekday: "short" });
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
 
-  return { VERSION: VERSION, BUILT: BUILT, CAP: CAP, MAX_WORDS: MAX_WORDS, MAX_TEXT: MAX_TEXT,
-    tier: tier, weight: weight, words: words, pickFrom: pickFrom, clean: clean, fit: fit, vet: vet,
-    LIMITS: LIMITS, ORIGINS: ORIGINS, normText: normText, collections: collections, canonCollection: canonCollection,
-    editValues: editValues, checkEdit: checkEdit, applyEdit: applyEdit, label: label,
-    checkRename: checkRename, renameCollection: renameCollection, removeCollection: removeCollection,
-    STARTER_FIELDS: STARTER_FIELDS, loadStarter: loadStarter,
-    DAY_START_HOUR: DAY_START_HOUR, REST_DAYS: REST_DAYS, REST_MIN: REST_MIN, REST_MAX: REST_MAX, restDays: restDays, dayOf: dayOf, addDays: addDays, isResting: isResting,
-    applySkip: applySkip, nextReturn: nextReturn, frontQueue: frontQueue, nextCard: nextCard, markShown: markShown,
-    undoPoint: undoPoint, applyUndo: applyUndo,
-    inCollection: inCollection, deckCollections: deckCollections, deckFilter: deckFilter, outcomeMix: outcomeMix,
-    SWIPE: SWIPE, swipeIntent: swipeIntent,
-    HOLD_FULL: HOLD_FULL, HOLD_TAP: HOLD_TAP, HOLD_LIFT: HOLD_LIFT, HOLD_REVEAL: HOLD_REVEAL, holdOutcome: holdOutcome, inkWeight: inkWeight, ledgerGroup: ledgerGroup, noteMoveOf: noteMoveOf, recentMoves: recentMoves, avoidedMost: avoidedMost, questionKeep: questionKeep, noteRevise: noteRevise, letGo: letGo, bringBack: bringBack, casePrompt: casePrompt,
-    lineFresh: lineFresh, keepLine: keepLine, spendLines: spendLines, REFLECT_SEC: REFLECT_SEC,
-    WQ_PAGE: WQ_PAGE, wqPage: wqPage, wqUrl: wqUrl, wqClean: wqClean, parseQuotes: parseQuotes, rankQuotes: rankQuotes, quotePrompt: quotePrompt, readPick: readPick,
-    shortDate: shortDate, keepAsNew: keepAsNew, keepReplace: keepReplace,
-    VOICES: VOICES, TALK_MAX: TALK_MAX, REPLY_WORDS: REPLY_WORDS, MOVES: MOVES, allVoices: allVoices, chosenVoices: chosenVoices,
-    voiceOfDay: voiceOfDay, voiceLabel: voiceLabel, weighPrompt: weighPrompt, talkRequest: talkRequest, vetReply: vetReply,
-    talkLeft: talkLeft, addTalk: addTalk,
-    SET_MIN: SET_MIN, SET_MAX: SET_MAX, SET_DEFAULT: SET_DEFAULT, CHECKIN_HOUR: CHECKIN_HOUR, CATCH_WINDOW: CATCH_WINDOW, CATCH_SUGGEST: CATCH_SUGGEST, ACT_EVERY: ACT_EVERY,
-    setSize: setSize, freshDay: freshDay, dayState: dayState, noteDayMove: noteDayMove, dayPhase: dayPhase, focusChoices: focusChoices,
-    daySummary: daySummary, checkinDue: checkinDue, askAct: askAct, actToday: actToday, addAct: addAct,
-    addCatch: addCatch, catchCount: catchCount, suggestLiving: suggestLiving, noteSkipDay: noteSkipDay,
-    REPLY_MAX: REPLY_MAX, addReply: addReply, thread: thread, lastReply: lastReply,
-    LATER_MAX: LATER_MAX, laterDue: laterDue, waiting: waiting, canLater: canLater,
-    badgeFrom: badgeFrom, remindBadge: remindBadge, pushText: pushText,
-    BACKUP_EVERY: BACKUP_EVERY, BACKUP_SNOOZE: BACKUP_SNOOZE, needsBackup: needsBackup, backupAgo: backupAgo,
-    weekDays: weekDays, isReviewDay: isReviewDay, weekStats: weekStats, weekPrompt: weekPrompt, timeline: timeline };
-})();
-
-if (typeof module !== "undefined" && module.exports) module.exports = ScalesCore;
+  var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS,
+    dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
+    make: make, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext,
+    nextDue: nextDue, importOld: importOld, mergeOld: mergeOld, whenLabel: whenLabel };
+  if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
+})(this);
