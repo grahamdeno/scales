@@ -97,7 +97,7 @@
   {
    "id": "franklin",
    "name": "Franklin's Virtues",
-   "blurb": "The rules Benjamin Franklin worked on one at a time, in his own words.",
+   "blurb": "The rules Benjamin Franklin worked on, one at a time.",
    "items": [
     {
      "id": "fr-temperance",

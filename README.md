@@ -18,6 +18,15 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   when the thought returns. The library filters scroll: All, In rotation, Put away, New (the last 14 days), Bookmarked
   (with its count). A thought opened from Bookmarked is a review: nothing about its schedule changes and it is logged as
   `review`.
+- **Who said it, sets and a first open (2.3.0):** under a new thought, "Add who said it" opens one line; typing an
+  opening quotation mark opens it by itself. Blank means the thought is your own. The name shows quietly under the
+  thought, and Edit can change it (not counted as work). An empty Scales opens on Write with an example in the field
+  (gone on tap, never shown again) and "Or start with five", which adds five starter lines due today. Settings has
+  Sets: Franklin's Virtues, The Stoics, Know Yourself, After Jung, Questions to Sit With (`content/sets.json`, built
+  into `sets.js` by `scripts/build-sets.js`). Add brings a set in two lines a day; Remove (two taps) deletes the lines
+  not yet shown and puts away the ones met, leaving any you bookmarked, noted or changed. Quotes are in modern English;
+  each line's public-domain original is kept in `content/sets.json` and checked by `scripts/verify-sets.js`.
+  After "That's all for today": Meet one early (as a review), Write one, and Bookmarked.
 - **Settings (2.1.0):** Your data (Back up, Restore from a backup), Help (How Scales works), About (Privacy, Support,
   Send feedback, the version). Privacy is linked here because the App Store requires it inside the app.
 - **Reading a visit:** 20 s or less is skipped; 30 s or more is thought about; between is seen; an edit or a note is

@@ -238,13 +238,13 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Back up/.test(await page.textContent("#settings")) && /Restore from a backup/.test(await page.textContent("#settings")), tag + "Settings has Back up and Restore");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.2\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/Scales 2\.2\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.3\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/Scales 2\.3\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     await page.screenshot({ path: path.join(shots, w + "-8-settings.png") });
     const dl = page.waitForEvent("download", { timeout: 3000 });
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
-    ok(bk.app === "scales" && bk.version === "2.2.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.3.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -314,6 +314,81 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const after = await page.evaluate(() => localStorage.getItem("scales.thoughts.v1"));
     ok(JSON.stringify(JSON.parse(after)) === JSON.stringify(old), tag + "Scales 1's data unchanged");
     ok(errs.length === 0, tag + "no console errors" + (errs.length ? ": " + errs.join(" | ") : ""));
+    await ctx.close();
+  }
+  // 2.3.0: a first open with nothing in it; the example, Start with five, who said it, and Sets
+  for (const w of [390, 375]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: 844 }, hasTouch: true, deviceScaleFactor: 2 });
+    const page = await ctx.newPage();
+    const errs = [];
+    page.on("pageerror", (e) => errs.push(String(e)));
+    const tag = "[" + w + " first] ";
+    const store = () => page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.thoughts.v1") || "{}"));
+    await page.goto(base + "/"); await page.waitForTimeout(900);
+    ok(await page.locator("#vWrite").isVisible() && !(await page.locator("#writeCancel").isVisible()), tag + "an empty Scales opens on Write, with no Cancel");
+    ok((await page.getAttribute("#writeText", "placeholder")) === "I do my best thinking before I check my phone.", tag + "the first Write shows the example");
+    ok(await page.locator("#startFive").isVisible() && /start with five/i.test(await page.textContent("#startFive")), tag + "Or start with five is offered");
+    ok(!(await page.evaluate(() => document.activeElement && document.activeElement.id === "writeText")), tag + "the keyboard does not jump up over the example");
+    await page.screenshot({ path: path.join(shots, w + "-first-write.png") });
+    await page.click("#writeText");
+    ok((await page.getAttribute("#writeText", "placeholder")) === "", tag + "tapping the field clears the example");
+    const ov = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    ok(ov <= 0, tag + "no sideways scroll on the first Write (" + ov + ")");
+    await page.click("#startFive"); await page.waitForTimeout(900);
+    const s5 = await store();
+    ok(Object.keys(s5).length === 5 && Object.keys(s5).every((k) => k.startsWith("s-")), tag + "Start with five adds the five starters");
+    ok(await page.locator("#vMeet").isVisible() && (await page.textContent("#words")).trim().length > 0, tag + "and opens the first one");
+    const shown = (await page.textContent("#words")).trim();
+    const st = Object.values(s5).find((t) => t.text === shown);
+    ok(st && (st.by ? (await page.textContent("#by")).trim() === st.by && await page.locator("#by").isVisible() : !(await page.locator("#by").isVisible())), tag + "who said it shows under a quote (" + (st && st.by) + ")");
+    await page.screenshot({ path: path.join(shots, w + "-first-meet.png") });
+    // A new thought typed with a quotation mark opens the Who said it line
+    await page.click("#newBtn"); await page.waitForTimeout(500);
+    ok(!(await page.locator("#startFive").isVisible()), tag + "Start with five is gone once there are thoughts");
+    ok((await page.getAttribute("#writeText", "placeholder")) === "What's on your mind?", tag + "the example never shows again");
+    ok(!(await page.locator("#writeBy").isVisible()) && await page.locator("#writeByAdd").isVisible(), tag + "Who said it starts as a quiet link");
+    await page.fill("#writeText", "\u201CThe obstacle is the way.");
+    await page.dispatchEvent("#writeText", "input");
+    ok(await page.locator("#writeBy").isVisible(), tag + "an opening quotation mark opens the Who said it line");
+    await page.fill("#writeBy", "  A friend ");
+    await page.click("#writeKeep"); await page.waitForTimeout(1900);
+    const mine = Object.values(await store()).find((t) => t.text === "\u201CThe obstacle is the way.");
+    ok(mine && mine.by === "A friend", tag + "Keep saves who said it");
+    await page.click("#newBtn"); await page.waitForTimeout(400);
+    await page.fill("#writeText", "My own line"); await page.dispatchEvent("#writeText", "input");
+    ok(!(await page.locator("#writeBy").isVisible()), tag + "a plain thought leaves the line closed");
+    await page.click("#writeKeep"); await page.waitForTimeout(1900);
+    ok(Object.values(await store()).find((t) => t.text === "My own line").by === "", tag + "a thought with no name is your own");
+    // Edit changes who said it without counting as work
+    await page.click("#strip"); await page.waitForTimeout(700);
+    await page.fill("#q", "obstacle"); await page.waitForTimeout(200);
+    await page.click('#libList [data-open="' + mine.id + '"]'); await page.waitForTimeout(800);
+    await page.mouse.click(w / 2, 400); await page.waitForTimeout(700);
+    ok(await page.locator("#vEdit").isVisible() && (await page.inputValue("#editBy")) === "A friend", tag + "Edit shows who said it");
+    await page.fill("#editBy", "Ryan"); await page.click("#editDone"); await page.waitForTimeout(500);
+    const ui1 = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.ui.v1")));
+    ok((await store())[mine.id].by === "Ryan" && !ui1.worked && (await page.textContent("#by")).trim() === "Ryan", tag + "Edit saves who said it and it is not counted as work");
+    // Sets in Settings
+    await page.click("#strip"); await page.waitForTimeout(700);
+    await page.click("#libGear"); await page.waitForTimeout(600);
+    ok((await page.locator("#setList .setr").count()) === 5, tag + "Settings lists the five sets");
+    const fr = page.locator('#setList [data-set="franklin"]');
+    ok(/Add$/.test((await page.locator('#setList [data-set="jung"]').textContent()).trim()), tag + "a set not yet added says Add");
+    const stoics = page.locator('#setList [data-set="stoics"]');
+    ok(/Add$/.test((await stoics.textContent()).trim()), tag + "a set with only its starter lines here still says Add");
+    await page.screenshot({ path: path.join(shots, w + "-settings-sets.png") });
+    await fr.click(); await page.waitForTimeout(300);
+    const s13 = Object.values(await store()).filter((t) => t.set === "franklin");
+    ok(s13.length === 13 && /12 lines added/.test(await page.textContent("#setsMsg")), tag + "Add the rest brings in the other 12 of 13 lines");
+    ok(/Remove$/.test((await page.locator('#setList [data-set="franklin"]').textContent()).trim()), tag + "then it offers Remove");
+    await page.locator('#setList [data-set="franklin"]').click(); await page.waitForTimeout(200);
+    ok(/Tap again to remove/.test(await page.locator('#setList [data-set="franklin"]').textContent()), tag + "Remove asks for a second tap");
+    ok(Object.values(await store()).filter((t) => t.set === "franklin").length === 13, tag + "one tap removes nothing");
+    await page.locator('#setList [data-set="franklin"]').click(); await page.waitForTimeout(300);
+    ok(Object.values(await store()).filter((t) => t.set === "franklin" && !t.away).length === 0 && /removed/.test(await page.textContent("#setsMsg")), tag + "the second tap removes the unseen lines");
+    const ov2 = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    ok(ov2 <= 0, tag + "no sideways scroll in Settings (" + ov2 + ")");
+    ok(!errs.length, tag + "no page errors (" + errs.join(" | ") + ")");
     await ctx.close();
   }
   // the iPhone app's bridge: ready, quiet reminders, daily save with the old data, and the put away buzz

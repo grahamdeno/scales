@@ -385,3 +385,81 @@ test("restore review (2.2.0): a bookmark in an odd form is kept as now, and Scal
   assert.ok(!store.ox.bookmarked);
   assert.deepEqual(N.bookmarked(store).map((t) => t.id), ["a"]);
 });
+
+// ---- 2.3.0: who said it, sets, starters ----
+const SETS = require("../sets.js");
+test("make keeps who said it; blank means your own; looksQuoted spots an opening quotation mark", () => {
+  const now = at(2026, 10, 29);
+  assert.equal(N.make("x", now).by, "");
+  assert.equal(N.make("x", now, "  Seneca ").by, "Seneca");
+  assert.equal(N.make("x", now, "a".repeat(300)).by.length, 200);
+  assert.ok(N.looksQuoted('"Hello'));
+  assert.ok(N.looksQuoted("“Hello"));
+  assert.ok(N.looksQuoted("  'Hi"));
+  assert.ok(!N.looksQuoted("Hello"));
+});
+test("addSet: two a day in order, never doubles, brings back a deleted line", () => {
+  const now = at(2026, 10, 29), store = {};
+  const set = SETS.sets.find((s) => s.id === "franklin");
+  const r = N.addSet(store, set, now, ["s-fr-order", "other"]);
+  assert.equal(r.added, 13);
+  assert.deepEqual(r.gone, ["other"]);
+  const ts = N.fromSet(store, "franklin");
+  assert.equal(ts.length, 13);
+  const day0 = N.dayKey(now);
+  assert.equal(ts.filter((t) => t.due === day0).length, 2);
+  assert.equal(store["s-fr-temperance"].due, day0);
+  assert.equal(store["s-fr-order"].due, N.addDays(day0, 1));
+  assert.equal(store["s-fr-pride"].due, N.addDays(day0, 6));
+  assert.equal(store["s-fr-industry"].by, "Benjamin Franklin, Autobiography");
+  assert.equal(store["s-fr-industry"].set, "franklin");
+  assert.equal(N.addSet(store, set, now, []).added, 0);
+});
+test("removeSet: deletes unseen lines, puts away met ones, leaves the person's own work alone", () => {
+  const now = at(2026, 10, 29), store = {};
+  const set = SETS.sets.find((s) => s.id === "stoics");
+  N.addSet(store, set, now, []);
+  N.recordVisit(store["s-ep-power"], 40000, false, false, now);
+  store["s-ep-views"].bookmarked = now.toISOString();
+  store["s-ep-demand"].note = "mine";
+  store["s-ep-lost"].away = "2026-10-01T00:00:00Z";
+  store.mine = N.make("my own", now);
+  const r = N.removeSet(store, "stoics", now, ["x"]);
+  assert.equal(r.putAway, 1);
+  assert.equal(r.deleted, 19 - 4);
+  assert.ok(store["s-ep-power"].away);
+  assert.ok(!store["s-ep-views"].away && !store["s-ep-demand"].away);
+  assert.equal(store["s-ep-lost"].away, "2026-10-01T00:00:00Z");
+  assert.ok(store.mine && !store["s-ma-happy"]);
+  assert.ok(r.gone.includes("x") && r.gone.includes("s-ma-happy"));
+});
+test("addStarters: the five starter lines, all due today, from their sets", () => {
+  const now = at(2026, 10, 29), store = {};
+  assert.equal(N.addStarters(store, SETS.sets, SETS.starters, now), 5);
+  assert.equal(N.dueToday(store, now).length, 5);
+  assert.equal(store["s-q-busy"].by, "");
+  assert.equal(store["s-ma-dyed"].set, "stoics");
+  assert.equal(N.addStarters(store, SETS.sets, SETS.starters, now), 0);
+});
+test("restore keeps who said it and the set a thought came from; old files without them still load", () => {
+  const now = at(2026, 10, 29), store = {};
+  const t = N.make("q", now, "Pascal"); t.set = "know"; t.item = "pa-reed";
+  const r = N.restoreFrom(store, { app: "scales", version: "2.3.0", thoughts: { [t.id]: t } }, now, []);
+  assert.ok(r.ok);
+  assert.equal(store[t.id].by, "Pascal");
+  assert.equal(store[t.id].set, "know");
+  assert.equal(store[t.id].item, "pa-reed");
+  const s2 = {};
+  N.restoreFrom(s2, { app: "scales", version: "2.2.0", thoughts: { a: { id: "a", text: "old" } } }, now, []);
+  assert.equal(s2.a.by, "");
+  assert.equal(s2.a.set, undefined);
+});
+test("every set line has text and a unique id; starters exist", () => {
+  const ids = new Set();
+  SETS.sets.forEach((s) => s.items.forEach((it) => { assert.ok(it.text && it.text.trim()); assert.ok(!ids.has(it.id)); ids.add(it.id); }));
+  SETS.starters.forEach((s) => assert.ok(ids.has(s)));
+});
+test("sets.js is built from the current content/sets.json", () => {
+  const fs = require("fs"), path = require("path");
+  assert.equal(fs.readFileSync(path.join(__dirname, "..", "sets.js"), "utf8"), require("../scripts/build-sets.js")());
+});

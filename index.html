@@ -53,6 +53,8 @@ a { color: inherit; text-decoration: none; }
 #words { margin: 0; font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600; transition: font-weight 1.2s ease; overflow-wrap: anywhere; }
 #words.long { font-size: 24px; line-height: 1.25; }
 #words.vlong { font-size: 19px; line-height: 1.35; }
+/* Who said it (2.3.0): under the thought, quiet, like the note. */
+#by { margin: 12px 0 0; font-size: 15px; font-weight: 500; color: var(--pist-muted); overflow-wrap: anywhere; }
 #note { margin: 18px 0 0; font-size: 16px; line-height: 1.45; color: var(--pist-muted); white-space: pre-wrap; }
 .hint { position: absolute; left: 0; right: 0; margin: 0; text-align: center; font-size: 15px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .12s; }
 #hintUp { top: calc(var(--top) + 76px); }
@@ -95,6 +97,11 @@ textarea::placeholder { color: var(--plum-faint); }
 .big { font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 700; }
 .small { font-size: 17px; line-height: 1.45; border-top: 1px solid rgba(241,233,216,.2); padding-top: 14px; }
 .lbl { font-size: 13px; color: var(--plum-muted); margin-bottom: -14px; }
+/* "Add who said it": words, not a button; one line appears under the thought when tapped. */
+.bylink { align-self: flex-start; color: var(--plum-muted); font-size: 15px; padding: 10px 24px 10px 0; flex: none; }
+.byfield { flex: none; font: inherit; font-size: 17px; color: var(--plum-ink); background: transparent; border: 0; border-top: 1px solid rgba(241,233,216,.2); border-radius: 0;
+  padding: 14px 0 4px; outline: none; width: 100%; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
+.byfield::placeholder { color: var(--plum-faint); }
 .formfoot { position: absolute; left: var(--pad); right: var(--pad); bottom: calc(var(--bot) + 28px); display: flex; align-items: center; justify-content: space-between; }
 .quiet { color: var(--plum-muted); font-size: 15px; padding: 12px 0; }
 .quiet.armed { color: var(--plum-ink); font-weight: 700; }
@@ -159,6 +166,12 @@ textarea::placeholder { color: var(--plum-faint); }
   border-bottom: 1px solid rgba(241,233,216,.12); }
 .srow .v { font-size: 15px; color: var(--plum-muted); white-space: nowrap; }
 .srow .chev { color: var(--plum-muted); font-size: 20px; }
+/* Sets (2.3.0): the name and what it is, with the one thing you can do on the right. */
+.srow.setr { align-items: center; padding-top: 12px; padding-bottom: 12px; }
+.srow.setr .nm { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.srow.setr .nm small { font-size: 14px; color: var(--plum-muted); line-height: 1.35; }
+.srow .v.add { color: var(--pist); font-weight: 600; }
+.srow .v.armed { color: var(--plum-ink); font-weight: 700; }
 .snote { margin: 10px var(--pad) 0; font-size: 14px; line-height: 1.45; color: var(--plum-muted); }
 .snote.ok { color: var(--pist); }
 .icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px var(--pad) 0; }
@@ -183,6 +196,7 @@ textarea::placeholder { color: var(--plum-faint); }
   <div id="stage">
     <div id="carry">
       <p id="words"></p>
+      <p id="by" hidden></p>
       <p id="note" hidden></p>
     </div>
   </div>
@@ -207,8 +221,11 @@ textarea::placeholder { color: var(--plum-faint); }
   <div class="sheetform center" id="writeForm">
     <label class="sr" for="writeText">A thought</label>
     <textarea class="big" id="writeText" rows="5" maxlength="1500" placeholder="What's on your mind?"></textarea>
+    <button class="bylink" type="button" id="writeByAdd">Add who said it</button>
+    <label class="sr" for="writeBy">Who said it</label>
+    <input class="byfield" id="writeBy" type="text" maxlength="200" placeholder="Who said it?" autocomplete="off" hidden>
   </div>
-  <div class="formfoot"><span></span><button class="act" type="button" id="writeKeep" disabled>Keep</button></div>
+  <div class="formfoot"><button class="quiet" type="button" id="startFive" hidden>Or start with five</button><span></span><button class="act" type="button" id="writeKeep" disabled>Keep</button></div>
   <div class="kept" id="writeKept" hidden><p class="k1">Kept.</p><p class="k2">It comes back tomorrow.</p></div>
 </section>
 
@@ -219,6 +236,8 @@ textarea::placeholder { color: var(--plum-faint); }
   <div class="sheetform">
     <label class="sr" for="editText">The thought</label>
     <textarea class="big" id="editText" rows="4" maxlength="1500"></textarea>
+    <label class="lbl" for="editBy">Who said it</label>
+    <input class="byfield" id="editBy" type="text" maxlength="200" placeholder="Blank if it's yours" autocomplete="off">
     <label class="lbl" for="editNote">A note</label>
     <textarea class="small" id="editNote" rows="4" maxlength="1500" placeholder="Anything that came up"></textarea>
   </div>
@@ -251,6 +270,9 @@ textarea::placeholder { color: var(--plum-faint); }
     <input type="file" id="restoreFile" accept="application/json,.json" hidden>
     <p class="snote" id="restoreMsg" role="status" aria-live="polite"></p>
     <p class="snote" id="setSaved"></p>
+    <p class="sh">Sets</p>
+    <div id="setList"></div>
+    <p class="snote" id="setsMsg" role="status" aria-live="polite">Lines from a set arrive two a day.</p>
     <div id="iconSec" hidden>
       <p class="sh">App icon</p>
       <div class="icons" role="radiogroup" aria-label="App icon">
@@ -280,7 +302,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.2.0"></script>
+<script src="core.js?v=2.3.0"></script>
+<script src="sets.js?v=2.3.0"></script>
 <script>
 (function () {
   "use strict";
@@ -394,6 +417,7 @@ textarea::placeholder { color: var(--plum-faint); }
     var w = $("words");
     w.textContent = t.text; w.className = sizeClass(t.text);
     w.style.transition = "none"; w.style.fontWeight = C.weight(t); void w.offsetWidth; w.style.transition = "";
+    $("by").hidden = !t.by; $("by").textContent = t.by || "";
     $("note").hidden = !t.note; $("note").textContent = t.note || "";
     $("carry").classList.remove("arrive"); if (arrive) { void $("carry").offsetWidth; $("carry").classList.add("arrive"); }
     clockOn();
@@ -490,12 +514,27 @@ textarea::placeholder { color: var(--plum-faint); }
   var writeHome = false;
   function openWrite(home) {
     writeHome = !!home;
-    $("writeCancel").hidden = writeHome;
     $("writeText").value = ""; $("writeKeep").disabled = true;
-    $("writeKept").hidden = true; $("writeForm").hidden = false; $("writeKeep").parentNode.hidden = false; $("writeCancel").hidden = false;
+    $("writeBy").value = ""; $("writeBy").hidden = true; $("writeByAdd").hidden = false;
+    $("writeKept").hidden = true; $("writeForm").hidden = false; $("writeKeep").parentNode.hidden = false;
+    // With nothing to go back to (an empty Scales), there is no Cancel.
+    $("writeCancel").hidden = writeHome;
+    // The very first time, the field shows an example until it is tapped, and five ready-made thoughts are offered.
+    var first = !C.list(store).length;
+    $("writeText").placeholder = first ? EXAMPLE : "What's on your mind?";
+    $("startFive").hidden = !(first && window.ScalesSets);
     closeLib(); setMode("write");
-    setTimeout(function () { $("writeText").focus(); }, 60);
+    if (!first) setTimeout(function () { $("writeText").focus(); }, 60);
   }
+  var EXAMPLE = "I do my best thinking before I check my phone.";
+  $("writeText").addEventListener("focus", function () { if (this.placeholder === EXAMPLE) this.placeholder = ""; });
+  function showBy(focus) { $("writeByAdd").hidden = true; $("writeBy").hidden = false; if (focus) $("writeBy").focus(); }
+  $("writeByAdd").onclick = function () { showBy(true); };
+  $("startFive").onclick = function () {
+    var S = window.ScalesSets; if (!S) return;
+    C.addStarters(store, S.sets, S.starters, now()); save(); buzz("keep");
+    ui.cur = null; saveUi(); setMode("meet"); renderMeet(true);
+  };
   $("newBtn").onclick = function () { openWrite(false); };
   // After "That's all for today": three quiet ways to carry on. None of them changes when anything comes back.
   $("earlyBtn").onclick = function () {
@@ -505,11 +544,15 @@ textarea::placeholder { color: var(--plum-faint); }
   $("earlyWrite").onclick = function () { openWrite(false); };
   $("earlyMarked").onclick = function () { ui.view = "marked"; saveUi(); openLib(); };
   $("libNew").onclick = function () { openWrite(false); };
-  $("writeText").addEventListener("input", function () { $("writeKeep").disabled = !this.value.trim(); });
+  $("writeText").addEventListener("input", function () {
+    $("writeKeep").disabled = !this.value.trim();
+    // Typed with an opening quotation mark: it is probably a quote, so the "Who said it?" line opens (without the keyboard moving).
+    if ($("writeBy").hidden && C.looksQuoted(this.value)) showBy(false);
+  });
   $("writeCancel").onclick = function () { setMode("meet"); renderMeet(false); };
   $("writeKeep").onclick = function () {
     var text = $("writeText").value.trim(); if (!text) return;
-    var t = C.make(text, now()); store[t.id] = t; save();
+    var t = C.make(text, now(), $("writeBy").hidden ? "" : $("writeBy").value); store[t.id] = t; save();
     $("writeText").blur();
     buzz("keep");
     $("writeForm").hidden = true; $("writeKeep").parentNode.hidden = true; $("writeKept").hidden = false; $("writeCancel").hidden = true;
@@ -519,7 +562,7 @@ textarea::placeholder { color: var(--plum-faint); }
   // ---------- Edit ----------
   function openEdit() {
     var t = store[ui.cur]; if (!t) return;
-    $("editText").value = t.text; $("editNote").value = t.note || "";
+    $("editText").value = t.text; $("editNote").value = t.note || ""; $("editBy").value = t.by || "";
     setMark(!!t.bookmarked);
     disarm();
     setMode("edit");
@@ -533,6 +576,9 @@ textarea::placeholder { color: var(--plum-faint); }
     var t = store[ui.cur]; if (!t) return setMode("meet");
     var text = $("editText").value.trim(), note = $("editNote").value.trim();
     if (text && (text !== t.text || note !== (t.note || ""))) { t.text = text; t.note = note; ui.worked = true; save(); saveUi(); haptic("medium"); }
+    // Who said it is a label, like the bookmark: changing it never counts as work on the thought.
+    var by = $("editBy").value.trim().slice(0, 200);
+    if (text && by !== (t.by || "")) { t.by = by; save(); }
     // A bookmark is the person's own mark: it never counts as work on the thought and never changes when it returns.
     if (editMarked !== !!t.bookmarked) { t.bookmarked = editMarked ? now().toISOString() : null; save(); renderLibCount(); }
     setMode("meet"); renderMeet(false);
@@ -653,7 +699,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("q").addEventListener("input", renderLib);
   function renderLib() {
     var q = $("q").value.trim().toLowerCase(), n = now();
-    var match = function (t) { return !q || t.text.toLowerCase().indexOf(q) !== -1 || (t.note || "").toLowerCase().indexOf(q) !== -1; };
+    var match = function (t) { return !q || t.text.toLowerCase().indexOf(q) !== -1 || (t.note || "").toLowerCase().indexOf(q) !== -1 || (t.by || "").toLowerCase().indexOf(q) !== -1; };
     var on = C.inRotation(store).filter(match).sort(function (a, b) { return a.due < b.due ? -1 : a.due > b.due ? 1 : (b.skips || 0) - (a.skips || 0); });
     var off = C.putAway(store).filter(match).sort(function (a, b) { return a.away < b.away ? 1 : -1; });
     var view = ["on", "away", "new", "marked"].indexOf(ui.view) >= 0 ? ui.view : "all", h = "";
@@ -722,6 +768,8 @@ textarea::placeholder { color: var(--plum-faint); }
     $("restoreMsg").textContent = ""; $("restoreMsg").className = "snote";
     $("setSaved").textContent = savedLine();
     $("setVersion").textContent = "Scales " + C.VERSION;
+    $("setsMsg").textContent = "Lines from a set arrive two a day."; $("setsMsg").className = "snote";
+    renderSets();
     $("setFeedback").setAttribute("href", "mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback&body=" +
       encodeURIComponent("\n\n\nScales " + C.VERSION + (NATIVE ? ", iPhone app" : ", browser") + "\n"));
     openPage("settings", "settings");
@@ -740,6 +788,46 @@ textarea::placeholder { color: var(--plum-faint); }
       post({ type: "icon", name: name === "auto" ? "" : name });
     };
   });
+  // Sets (2.3.0). Add brings a set's lines in, two a day. Remove takes back the ones not yet shown and puts away
+  // the ones already met; a line you bookmarked, noted or changed stays. Remove asks for a second tap.
+  var setArmed = null;
+  function renderSets() {
+    var S = window.ScalesSets, box = $("setList"); box.innerHTML = "";
+    if (!S) return;
+    S.sets.forEach(function (s) {
+      var here = s.items.filter(function (it) { return Object.prototype.hasOwnProperty.call(store, "s-" + it.id); }).length;
+      var b = document.createElement("button"); b.type = "button"; b.className = "srow setr"; b.setAttribute("data-set", s.id);
+      var nm = document.createElement("span"); nm.className = "nm";
+      var n1 = document.createElement("span"); n1.textContent = s.name;
+      var n2 = document.createElement("small"); n2.textContent = s.items.length + " lines. " + s.blurb;
+      nm.appendChild(n1); nm.appendChild(n2);
+      var v = document.createElement("span");
+      var full = here === s.items.length;
+      v.className = "v" + (setArmed === s.id ? " armed" : full ? "" : " add");
+      v.textContent = setArmed === s.id ? "Tap again to remove" : full ? "Remove" : "Add";
+      b.appendChild(nm); b.appendChild(v);
+      b.onclick = function () { setTap(s, full); };
+      box.appendChild(b);
+    });
+  }
+  function setsMsg(t, ok) { $("setsMsg").textContent = t; $("setsMsg").className = "snote" + (ok ? " ok" : ""); }
+  function setTap(s, full) {
+    if (!full) {
+      var r = C.addSet(store, s, now(), lsGet(KEY_GONE, []));
+      if (!lsSet(KEY, store)) { store = lsGet(KEY, store); setsMsg("There isn't room on this phone to add that set.", false); return; }
+      lsSet(KEY_GONE, r.gone); setArmed = null; buzz("keep"); needsRender = true;
+      setsMsg(s.name + ": " + r.added + (r.added === 1 ? " line" : " lines") + " added. Two arrive each day, starting today.", true);
+      $("stripN").textContent = C.list(store).length; renderLib(); renderSets(); return;
+    }
+    if (setArmed !== s.id) { setArmed = s.id; haptic("tick"); renderSets(); return; }
+    var x = C.removeSet(store, s.id, now(), lsGet(KEY_GONE, []));
+    save(); lsSet(KEY_GONE, x.gone); setArmed = null; buzz("remove"); needsRender = true;
+    if (store[ui.cur] === undefined) { ui.cur = null; ui.ms = 0; ui.worked = false; ui.review = null; saveUi(); }
+    $("stripN").textContent = C.list(store).length; renderLib();
+    setsMsg(s.name + " removed. " + (x.putAway ? x.putAway + " you had met " + (x.putAway === 1 ? "is" : "are") + " in Put away. " : "") + "Lines you marked or changed stay.", true);
+    renderSets();
+  }
+  document.addEventListener("pointerdown", function (e) { if (setArmed && !e.target.closest("#setList")) { setArmed = null; renderSets(); } }, true);
   $("setBack").onclick = function () { closePage("settings", "library"); };
   $("setHelp").onclick = function () { openPage("help", "help"); };
   $("helpBack").onclick = function () { closePage("help", "settings"); };
