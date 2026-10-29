@@ -56,8 +56,9 @@
     return kind;
   }
 
-  // Type weight from avoidance: 600 for a fresh thought, heavier with each skip, up to 900.
-  function weight(t) { return Math.min(900, 600 + 75 * (t.skips || 0)); }
+  // Type weight from avoidance: 600 for a fresh thought, 50 heavier with each skip, up to 800.
+  // (Feel review: 900 in Geist at 32 px read as shouting.)
+  function weight(t) { return Math.min(800, 600 + 50 * (t.skips || 0)); }
 
   function make(text, now) {
     var today = dayKey(now);

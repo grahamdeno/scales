@@ -46,14 +46,14 @@ a { color: inherit; text-decoration: none; }
 
 /* ---- Meet ---- */
 #stage { position: absolute; left: 0; right: 0; top: 0; bottom: var(--strip); touch-action: none; }
-#carry { position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--top) + 64px); bottom: 24px; display: flex; flex-direction: column; justify-content: center; will-change: transform; }
+#carry { transform-origin: center bottom; position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--top) + 64px); bottom: 24px; display: flex; flex-direction: column; justify-content: center; will-change: transform; }
 #words { margin: 0; font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600; transition: font-weight 1.2s ease; overflow-wrap: anywhere; }
 #words.long { font-size: 24px; line-height: 1.25; }
 #words.vlong { font-size: 19px; line-height: 1.35; }
 #note { margin: 18px 0 0; font-size: 16px; line-height: 1.45; color: var(--pist-muted); white-space: pre-wrap; }
 .hint { position: absolute; left: 0; right: 0; margin: 0; text-align: center; font-size: 15px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .12s; }
 #hintUp { top: calc(var(--top) + 76px); }
-#hintDown { bottom: calc(var(--strip) + 28px); }
+#hintDown { bottom: calc(var(--strip) + 68px); }
 .hint.on { font-weight: 700; }
 #empty { position: absolute; left: var(--pad); right: var(--pad); top: 0; bottom: var(--strip); display: flex; flex-direction: column; justify-content: center; gap: 10px; }
 #empty h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
@@ -298,7 +298,9 @@ textarea::placeholder { color: var(--plum-faint); }
     var dy = e.clientY - drag.y; drag.dy = dy;
     if (Math.abs(dy) < 6 && Math.abs(e.clientX - drag.x) < 6) return;
     drag.moved = true;
-    $("carry").style.transform = "translateY(" + res(dy) + "px)";
+    var sc = dy > 0 ? 1 - Math.min(.06, (dy / DOWN) * .06) : 1;
+    $("carry").style.transform = "translateY(" + res(dy) + "px)" + (sc < 1 ? " scale(" + sc.toFixed(3) + ")" : "");
+    $("newBtn").style.opacity = dy > 0 ? Math.max(.35, 1 - dy / DOWN) : "";
     var pu = Math.max(0, -dy) / UP, pd = Math.max(0, dy) / DOWN;
     var hu = $("hintUp"), hd = $("hintDown");
     hu.style.opacity = dy < 0 ? (pu >= 1 ? 1 : .2 + .5 * pu) : 0; hu.classList.toggle("on", pu >= 1);
@@ -310,7 +312,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function release() {
     if (!drag) return;
     var d = drag; drag = null;
-    $("strip").style.height = "";
+    $("strip").style.height = ""; $("newBtn").style.opacity = "";
     if (!d.moved && Date.now() - d.t < 350) { openEdit(); return; }
     if (d.dy <= -UP) return goNext();
     if (d.dy >= DOWN) return goAway();
@@ -361,7 +363,7 @@ textarea::placeholder { color: var(--plum-faint); }
     writeHome = !!home;
     $("writeCancel").hidden = writeHome;
     $("writeText").value = ""; $("writeKeep").disabled = true;
-    $("writeKept").hidden = true; $("writeForm").hidden = false; $("writeKeep").parentNode.hidden = false;
+    $("writeKept").hidden = true; $("writeForm").hidden = false; $("writeKeep").parentNode.hidden = false; $("writeCancel").hidden = false;
     closeLib(); setMode("write");
     setTimeout(function () { $("writeText").focus(); }, 60);
   }
@@ -374,7 +376,7 @@ textarea::placeholder { color: var(--plum-faint); }
     var t = C.make(text, now()); store[t.id] = t; save();
     $("writeText").blur();
     haptic("success");
-    $("writeForm").hidden = true; $("writeKeep").parentNode.hidden = true; $("writeKept").hidden = false;
+    $("writeForm").hidden = true; $("writeKeep").parentNode.hidden = true; $("writeKept").hidden = false; $("writeCancel").hidden = true;
     setTimeout(function () { setMode("meet"); renderMeet(true); }, 1600);
   };
 
@@ -403,12 +405,12 @@ textarea::placeholder { color: var(--plum-faint); }
   // ---------- Library ----------
   function openLib() {
     clockOff(); $("q").value = ""; renderLib();
-    $("lib").classList.add("open"); $("lib").setAttribute("aria-hidden", "false"); $("libShade").classList.add("on");
+    $("lib").classList.add("open"); $("lib").setAttribute("aria-hidden", "false"); $("libShade").classList.add("on"); $("newBtn").style.visibility = "hidden";
     mode = "library";
   }
   function closeLib() {
     if (!$("lib").classList.contains("open")) return;
-    $("lib").classList.remove("open"); $("lib").setAttribute("aria-hidden", "true"); $("libShade").classList.remove("on"); $("q").blur();
+    $("lib").classList.remove("open"); $("lib").setAttribute("aria-hidden", "true"); $("libShade").classList.remove("on"); $("q").blur(); $("newBtn").style.visibility = "";
     if (mode === "library") { mode = "meet"; clockOn(); }
   }
   $("strip").onclick = openLib;

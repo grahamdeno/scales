@@ -63,10 +63,11 @@ test("recordVisit keeps only the last 30 visits and never removes the thought", 
   assert.equal(t.away, null);
 });
 
-test("weight: 600 fresh, 75 heavier per skip, capped at 900", () => {
+test("weight: 600 fresh, 50 heavier per skip, capped at 800", () => {
   assert.equal(N.weight({ skips: 0 }), 600);
-  assert.equal(N.weight({ skips: 2 }), 750);
-  assert.equal(N.weight({ skips: 9 }), 900);
+  assert.equal(N.weight({ skips: 2 }), 700);
+  assert.equal(N.weight({ skips: 4 }), 800);
+  assert.equal(N.weight({ skips: 9 }), 800);
   assert.equal(N.weight({}), 600);
 });
 

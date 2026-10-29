@@ -32,11 +32,26 @@ building, tests and shipping; **Haiku** for mechanical edits. Each step lists wh
 | 4 | Switch links: "Try the new Scales" in the current app's Settings > Help and about (keeps `?native=1` in the iPhone app); "Back to the current Scales" is already in the library | Sonnet | Done; current app bumped to 1.88.0, its worker now clears only `scales-v*` caches | Both directions work in a 390 px browser and keep `?native=1` |
 | 5 | Unit tests: `tests/next.test.js` for classify, nextGap, recordVisit, pickNext order, importOld (status mapping, 5 a day, old data untouched), whenLabel, 4 AM day start | Sonnet | Done; 159 pass | `node --test` passes |
 | 6 | Browser check at 390, 375 and 430 wide: swipe up, pull down + Undo, tap to edit, write, library search and Bring back, import from seeded old data, no console errors | Sonnet | Done; `tests/e2e/next.e2e.js` passes at 390, 375, 430 | Playwright script passes; screenshots of each screen |
-| 7 | Feel review of step 6 screenshots against the canvas boards (spacing, weights, plum fade, strip) | Opus | To do | Changes listed or "no change" |
+| 7 | Feel review of step 6 screenshots against the canvas boards (spacing, weights, plum fade, strip) | Opus | Done; 5 changes made, see "Feel review" below | Changes listed or "no change" |
 | 8 | Ship: branch, issue, PR, merge with `scripts/ship.sh`; confirm Pages deploy and that `/app/next/` loads | Sonnet | To do | Live at scales.tangomike.app/app/next/ |
 | 9 | Graham tries it on his phone for a few days | Graham | To do | Notes on thresholds (100 px up, 160 px down, 7 s / 11 s) and the plum fade |
 | 10 | Tune from his notes | Opus for feel, Sonnet for edits | Later | |
 | 11 | Swap: decide when `next/` replaces the current app, and how its data carries over | Opus | Later | A separate plan |
+
+## Feel review (step 7)
+
+Changed:
+- Avoided weight now 600 to 800 (50 per skip), was 600 to 900. 900 in Geist at 32 px read as shouting; the library stays 500 to 700, as on the board.
+- Pull down: the thought shrinks to 94% toward the strip and "New" fades to 35%, as on the Put away board.
+- "Put away" hint sits 68 px above the strip, was 28 px; the rising strip covered it.
+- Kept: Cancel hides while "Kept. It comes back tomorrow." shows.
+- Library open: "New" hides instead of peeking under the sheet's top edge.
+
+No change:
+- Thought size, line height, tracking, side margins, strip, toast, library rows, Write and Edit match the boards.
+- A grey thought in one step 6 screenshot was the arrive fade caught mid-way, not a colour error.
+- Edit's divider line sits between the note label and the note. It reads as a section break; leave it unless it bothers you on the phone.
+- Strip is 76 px plus the iPhone's home bar area (about 110 px on the phone); the board's 92 px had no safe area. Judge it by hand.
 
 ## Out of scope for this build
 
