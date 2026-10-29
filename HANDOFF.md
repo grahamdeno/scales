@@ -49,8 +49,11 @@ questions, the best quote from today's voice, and replies.
   "Not sure it's true?". Avoid "Keep" for two meanings.
 - Nothing in the main loop scrolls. The thought is never cut: `fitThought` steps its type down, refits when the
   font loads and when the card resizes; `fitLine` does the same for the line under it.
-- Quiet: after 3 s only the top bar, progress and labels dim. The thought, its question, the credit, the options
-  and the choices stay bright and act on the first touch.
+- Quiet: after 3 s the top bar, progress, labels and the option pills (Answer it, Not sure it's true?; 1.88.0)
+  dim, and a touch on them only wakes them. The thought, its question, the credit and the choices stay bright and
+  act on the first touch.
+- Releases are batched: the owner wants no more builds until there is a large enough set of changes. Queue work on
+  the batch-next branch; merge and ship only when he says the batch is ready.
 - AI in a voice is credited "Written by AI, as **Name**". Names stay readable.
 - The badge is a plain 1 set only by a scheduled reminder, cleared on open (1.86.0). Never a climbing count:
   the owner does not want the "your feed is calling" feeling.

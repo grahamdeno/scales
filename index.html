@@ -93,10 +93,12 @@ button { cursor:pointer; border:0; background:none; padding:0; }
 .sheet:focus, .sheet:focus-visible { outline:0; }
 #iconRow { flex-wrap:wrap; row-gap:12px; }
 /* Quiet (1.81.0, 1.84.1): 3 seconds without a touch dims the top bar, progress and labels to 12%. The thought,
-   its question and who wrote it (1.84.7), the options under it and the choices stay at full strength and answer the first touch. */
-.top, #setBand, #v-deck .pmeta, #v-deck .foot, #v-deck .phase, #v-deck .where { transition:opacity .25s ease; }
-body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .foot, body.quiet #v-deck .phase, body.quiet #v-deck .where { opacity:.12; transition:opacity 1.2s ease; }
-@media (prefers-reduced-motion: reduce) { .top, #setBand, #v-deck .pmeta, #v-deck .foot, #v-deck .phase, #v-deck .where, body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .foot, body.quiet #v-deck .phase, body.quiet #v-deck .where { transition:none; } }
+   its question and who wrote it (1.84.7) and the choices stay at full strength and answer the first touch.
+   1.88.0: the option pills under the thought (Answer it, Not sure it's true?, + Add to my thoughts) dim with the top
+   bar, and the touch that brings them back only wakes them, as on the top bar. */
+.top, #setBand, #v-deck .pmeta, #v-deck .foot, #v-deck .phase, #v-deck .where, #v-deck .lineWrap .pills { transition:opacity .25s ease; }
+body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .foot, body.quiet #v-deck .phase, body.quiet #v-deck .where, body.quiet #v-deck .lineWrap .pills { opacity:.12; transition:opacity 1.2s ease; }
+@media (prefers-reduced-motion: reduce) { .top, #setBand, #v-deck .pmeta, #v-deck .foot, #v-deck .phase, #v-deck .where, #v-deck .lineWrap .pills, body.quiet .top, body.quiet #setBand, body.quiet #v-deck .pmeta, body.quiet #v-deck .foot, body.quiet #v-deck .phase, body.quiet #v-deck .where, body.quiet #v-deck .lineWrap .pills { transition:none; } }
 .iconpick { display:flex; gap:12px; flex:none; }
 .iconpick button { display:flex; flex-direction:column; align-items:center; gap:6px; min-width:56px; font-size:var(--t-xs); color:var(--muted); }
 .iconpick img { width:44px; height:44px; border-radius:10px; display:block; }
@@ -2800,8 +2802,9 @@ textarea.big { font-size:1.2941rem; line-height:1.25; letter-spacing:-.015em; fo
   // button or start a press and hold; the next touch does. wokeAt is when that waking touch went down.
   var wokeAt = 0;
   function wake(e) {
-    // 1.84.1: only what is dimmed (the top bar and progress) wakes on the first touch; everything at full strength acts.
-    if (e && e.type === "pointerdown") wokeAt = document.body.classList.contains("quiet") && e.target.closest && e.target.closest(".top, #setBand") ? Date.now() : 0;
+    // 1.84.1: only what is dimmed (the top bar and progress; the option pills from 1.88.0) wakes on the first touch;
+    // everything at full strength acts.
+    if (e && e.type === "pointerdown") wokeAt = document.body.classList.contains("quiet") && e.target.closest && e.target.closest(".top, #setBand, #v-deck .lineWrap .pills") ? Date.now() : 0;
     clearTimeout(quietT); document.body.classList.remove("quiet");
     quietT = setTimeout(function () { if (quietOk()) document.body.classList.add("quiet"); }, QUIET_MS);
   }
