@@ -12,6 +12,7 @@
    "id": "franklin",
    "name": "Franklin's Virtues",
    "blurb": "The rules Benjamin Franklin worked on, one at a time.",
+   "from": "Benjamin Franklin",
    "items": [
     {
      "id": "fr-temperance",
@@ -84,6 +85,7 @@
    "id": "stoics",
    "name": "The Stoics",
    "blurb": "Epictetus and Marcus Aurelius on what is yours to govern.",
+   "from": "Epictetus and Marcus Aurelius",
    "items": [
     {
      "id": "ep-power",
@@ -186,6 +188,7 @@
    "id": "know",
    "name": "Know Yourself",
    "blurb": "Writers who looked hard at the mind, the self and the way we live.",
+   "from": "7 writers",
    "items": [
     {
      "id": "do-lie",
@@ -323,6 +326,7 @@
    "id": "jung",
    "name": "After Jung",
    "blurb": "Carl Jung's ideas, in our own words. His writing is still under copyright, so none of these are his exact words.",
+   "from": "After Carl Jung",
    "items": [
     {
      "id": "jg-darkness",
@@ -390,6 +394,7 @@
    "id": "questions",
    "name": "Questions to Sit With",
    "blurb": "Open questions written for Scales. Stay with one as long as it holds you.",
+   "from": "Written for Scales",
    "items": [
     {
      "id": "q-busy",

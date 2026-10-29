@@ -147,6 +147,11 @@ textarea::placeholder { color: var(--plum-faint); }
 .lrow .t { font-size: 17px; line-height: 1.3; }
 .lrow .m { font-size: 13px; color: var(--plum-muted); white-space: nowrap; }
 .lrow.away .t { color: var(--plum-muted); }
+/* The archive row: quiet, at the foot of All; and the way back at the top of Put away. */
+.lrow.arch { align-items: center; margin-top: 20px; min-height: 52px; }
+.lrow.arch .t { color: var(--plum-muted); font-size: 16px; }
+.lrow.arch .m { font-size: 15px; }
+#libList .lrow.arch:first-child { margin-top: 4px; }
 .bk { width: 11px; height: 14px; margin-left: 7px; color: var(--pist); vertical-align: -1px; }
 #editMark { right: 0; min-width: 0; padding: 20px var(--pad) 20px 28px; display: flex; align-items: center; gap: 8px; color: var(--plum-muted); }
 #editMark svg { width: 16px; height: 20px; }
@@ -259,7 +264,7 @@ textarea::placeholder { color: var(--plum-faint); }
       <button class="new" type="button" id="libNew"><span class="plus" aria-hidden="true">+</span>New</button></span></div>
     <label class="sr" for="q">Search your thoughts</label>
     <input id="q" type="search" placeholder="Search" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <div class="seg" id="seg" aria-label="Show"><button type="button" data-view="all">All</button><button type="button" data-view="on">In rotation</button><button type="button" data-view="away">Put away</button><button type="button" data-view="new">New</button><button type="button" data-view="marked" id="segMarked">Bookmarked</button></div>
+    <div class="seg" id="seg" aria-label="Show"><button type="button" data-view="all">All</button><button type="button" data-view="new">New</button><button type="button" data-view="marked" id="segMarked">Bookmarked</button></div>
   </header>
   <div id="libList"></div>
 </section>
@@ -269,15 +274,7 @@ textarea::placeholder { color: var(--plum-faint); }
   <button class="pback" type="button" id="setBack">&#8249; Your thoughts</button>
   <h1>Settings</h1>
   <div class="body">
-    <p class="sh">Your data</p>
-    <button class="srow" type="button" id="setBackup"><span>Back up</span><span class="v">Save a file</span></button>
-    <button class="srow" type="button" id="setRestore"><span>Restore from a backup</span><span class="v">Choose a file</span></button>
-    <input type="file" id="restoreFile" accept="application/json,.json" hidden>
-    <p class="snote" id="restoreMsg" role="status" aria-live="polite"></p>
-    <p class="snote" id="setSaved"></p>
-    <p class="sh">Sets</p>
-    <div id="setList"></div>
-    <p class="snote" id="setsMsg" role="status" aria-live="polite">Lines from a set arrive two a day.</p>
+    <button class="srow" type="button" id="setSets"><span>Sets</span><span class="chev" aria-hidden="true">&#8250;</span></button>
     <div id="iconSec" hidden>
       <p class="sh">App icon</p>
       <div class="icons" role="radiogroup" aria-label="App icon">
@@ -288,13 +285,27 @@ textarea::placeholder { color: var(--plum-faint); }
       </div>
       <p class="snote" id="iconMsg">Automatic is Pistachio in Light mode and Plum in Dark.</p>
     </div>
-    <p class="sh">Help</p>
+    <p class="sh">Your data</p>
+    <button class="srow" type="button" id="setBackup"><span>Back up</span><span class="v">Save a file</span></button>
+    <button class="srow" type="button" id="setRestore"><span>Restore from a backup</span><span class="v">Choose a file</span></button>
+    <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+    <p class="snote" id="restoreMsg" role="status" aria-live="polite"></p>
+    <p class="snote" id="setSaved"></p>
+    <p class="sh"></p>
     <button class="srow" type="button" id="setHelp"><span>How Scales works</span><span class="chev" aria-hidden="true">&#8250;</span></button>
-    <p class="sh">About</p>
     <a class="srow" id="setPrivacy" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy</span><span class="chev" aria-hidden="true">&#8250;</span></a>
     <a class="srow" id="setSupport" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support</span><span class="chev" aria-hidden="true">&#8250;</span></a>
     <a class="srow" id="setFeedback" href="mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback"><span>Send feedback</span><span class="chev" aria-hidden="true">&#8250;</span></a>
     <p class="snote" id="setVersion"></p>
+  </div>
+</section>
+<section class="page" id="sets" aria-label="Sets" aria-hidden="true">
+  <button class="pback" type="button" id="setsBack">&#8249; Settings</button>
+  <h1>Sets</h1>
+  <div class="body">
+    <p class="snote" id="setsIntro">Lines to think about. Add a set and two of its lines join you each day.</p>
+    <div id="setList"></div>
+    <p class="snote" id="setsMsg" role="status" aria-live="polite"></p>
   </div>
 </section>
 <section class="page" id="help" aria-label="How Scales works" aria-hidden="true">
@@ -307,8 +318,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.3.1"></script>
-<script src="sets.js?v=2.3.1"></script>
+<script src="core.js?v=2.4.0"></script>
+<script src="sets.js?v=2.4.0"></script>
 <script>
 (function () {
   "use strict";
@@ -697,17 +708,18 @@ textarea::placeholder { color: var(--plum-faint); }
     lt = null;
   });
 
-  $("seg").addEventListener("click", function (e) {
+  function pickView(e) {
     var b = e.target.closest("[data-view]"); if (!b) return;
     ui.view = b.getAttribute("data-view"); saveUi(); renderLib(); haptic("tick");
-  });
+  }
+  $("seg").addEventListener("click", pickView);
   $("q").addEventListener("input", renderLib);
   function renderLib() {
     var q = $("q").value.trim().toLowerCase(), n = now();
     var match = function (t) { return !q || t.text.toLowerCase().indexOf(q) !== -1 || (t.note || "").toLowerCase().indexOf(q) !== -1 || (t.by || "").toLowerCase().indexOf(q) !== -1; };
     var on = C.inRotation(store).filter(match).sort(function (a, b) { return a.due < b.due ? -1 : a.due > b.due ? 1 : (b.skips || 0) - (a.skips || 0); });
     var off = C.putAway(store).filter(match).sort(function (a, b) { return a.away < b.away ? 1 : -1; });
-    var view = ["on", "away", "new", "marked"].indexOf(ui.view) >= 0 ? ui.view : "all", h = "";
+    var view = ["away", "new", "marked"].indexOf(ui.view) >= 0 ? ui.view : "all", h = "";
     Array.prototype.forEach.call($("seg").children, function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-view") === view)); });
     renderLibCount();
     var mark = function (t) { return t.bookmarked ? '<svg class="bk" viewBox="0 0 16 20" aria-label="Bookmarked"><path d="M2 1.5h12v17l-6-4.5-6 4.5z" fill="currentColor"/></svg>' : ""; };
@@ -729,20 +741,26 @@ textarea::placeholder { color: var(--plum-faint); }
       var nw = C.recentlyAdded(store, n).filter(match);
       h += "<h3>Added in the last " + C.NEW_DAYS + " days · " + nw.length + "</h3>";
       h += nw.map(function (t) { return t.away ? awayRow(t) : rotRow(t, false); }).join("") || none(q ? "Nothing here matches." : "Nothing new in the last " + C.NEW_DAYS + " days.");
+    } else if (view === "away") {
+      // Put away is the archive: one tap from the foot of All, and a way back at the top.
+      h += '<button type="button" class="lrow arch" data-view="all"><span class="t">\u2039 All thoughts</span></button>';
+      h += "<h3>Put away \u00b7 " + off.length + "</h3>";
+      h += off.map(awayRow).join("") || none(q ? "Nothing matches." : "Pull a thought down to put it away.");
     } else {
-      if (view !== "away") {
-        h += "<h3>In rotation · " + on.length + "</h3>";
-        h += on.map(function (t) { return rotRow(t, false); }).join("") || none("Nothing here" + (q ? " matches." : " yet."));
-      }
-      if (view !== "on") {
-        h += "<h3" + (view === "all" ? ' style="margin-top:28px"' : "") + ">Put away · " + off.length + "</h3>";
-        h += off.map(awayRow).join("") || none(q ? "Nothing matches." : "Pull a thought down to put it away.");
+      h += "<h3>In rotation \u00b7 " + on.length + "</h3>";
+      h += on.map(function (t) { return rotRow(t, false); }).join("") || none("Nothing here" + (q ? " matches." : " yet."));
+      if (q) {
+        // A search looks at everything, so a put-away thought can still be found.
+        if (off.length) { h += '<h3 style="margin-top:28px">Put away \u00b7 ' + off.length + "</h3>"; h += off.map(awayRow).join(""); }
+      } else if (C.putAway(store).length) {
+        h += '<button type="button" class="lrow arch" data-view="away"><span class="t">Put away</span><span class="m">' + C.putAway(store).length + ' \u203a</span></button>';
       }
     }
     $("libList").innerHTML = h;
   }
   function renderLibCount() { var c = C.bookmarked(store).length; $("segMarked").textContent = c ? "Bookmarked · " + c : "Bookmarked"; }
   $("libList").addEventListener("click", function (e) {
+    if (e.target.closest(".arch")) { pickView(e); $("libList").scrollTop = 0; return; }
     var o = e.target.closest("[data-open]"), b = e.target.closest("[data-back]");
     if (o) {
       // Opening a thought from the list puts it on screen now. The thought you were on counts as visited.
@@ -773,8 +791,7 @@ textarea::placeholder { color: var(--plum-faint); }
     $("restoreMsg").textContent = ""; $("restoreMsg").className = "snote";
     $("setSaved").textContent = savedLine();
     $("setVersion").textContent = "Scales " + C.VERSION;
-    $("setsMsg").textContent = "Lines from a set arrive two a day."; $("setsMsg").className = "snote";
-    renderSets();
+    
     $("setFeedback").setAttribute("href", "mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback&body=" +
       encodeURIComponent("\n\n\nScales " + C.VERSION + (NATIVE ? ", iPhone app" : ", browser") + "\n"));
     openPage("settings", "settings");
@@ -804,7 +821,7 @@ textarea::placeholder { color: var(--plum-faint); }
       var b = document.createElement("button"); b.type = "button"; b.className = "srow setr"; b.setAttribute("data-set", s.id);
       var nm = document.createElement("span"); nm.className = "nm";
       var n1 = document.createElement("span"); n1.textContent = s.name;
-      var n2 = document.createElement("small"); n2.textContent = s.items.length + " lines. " + s.blurb;
+      var n2 = document.createElement("small"); n2.textContent = s.items.length + " lines \u00b7 " + (s.from || s.blurb);
       nm.appendChild(n1); nm.appendChild(n2);
       var v = document.createElement("span");
       var full = here === s.items.length;
@@ -833,6 +850,8 @@ textarea::placeholder { color: var(--plum-faint); }
     renderSets();
   }
   document.addEventListener("pointerdown", function (e) { if (setArmed && !e.target.closest("#setList")) { setArmed = null; renderSets(); } }, true);
+  $("setSets").onclick = function () { setArmed = null; $("setsMsg").textContent = ""; $("setsMsg").className = "snote"; renderSets(); openPage("sets", "sets"); };
+  $("setsBack").onclick = function () { setArmed = null; closePage("sets", "settings"); };
   $("setBack").onclick = function () { closePage("settings", "library"); };
   $("setHelp").onclick = function () { openPage("help", "help"); };
   $("helpBack").onclick = function () { closePage("help", "settings"); };
