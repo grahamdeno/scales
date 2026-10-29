@@ -98,8 +98,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             // 1.84.1: a named style (Haptics.swift); older pages send none and get a tick.
             haptics.play(body["style"] as? String ?? "tick")
         case "icon":
-            // Automatic is the main icon, which follows the Home Screen's Light, Dark or Tinted style.
-            // Light, Black, Paper and Glass stay fixed (1.80.1, 1.85.0). iOS says the icon changed itself.
+            // Automatic is the main icon, which follows the Home Screen's Light, Dark or Tinted style (Pistachio in Light,
+            // Plum in Dark). Pistachio, Plum and Bone stay fixed (2.2.0). iOS says the icon changed itself.
             let pick = body["name"] as? String ?? ""
             let name: String? = Self.fixedIcons[pick]
             // 1.86.1: when iOS refuses, the page is told why instead of the choice quietly snapping back.
@@ -121,7 +121,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     }
 
     /// The fixed icons, by the name the page uses. Automatic is the main icon and has no entry.
-    private static let fixedIcons = ["light": "AppIcon-Light", "black": "AppIcon-Black", "paper": "AppIcon-Paper", "glass": "AppIcon-Glass"]
+    private static let fixedIcons = ["pistachio": "AppIcon-Pistachio", "plum": "AppIcon-Plum", "bone": "AppIcon-Bone"]
 
     /// Which icon is on the Home Screen, for the choice in Settings.
     private func sendIcon(error: String? = nil) {

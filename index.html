@@ -147,6 +147,11 @@ textarea::placeholder { color: var(--plum-faint); }
 .srow .chev { color: var(--plum-muted); font-size: 20px; }
 .snote { margin: 10px var(--pad) 0; font-size: 14px; line-height: 1.45; color: var(--plum-muted); }
 .snote.ok { color: var(--pist); }
+.icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px var(--pad) 0; }
+.icons button { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; color: var(--plum-muted); }
+.icons img { width: 60px; height: 60px; border-radius: 14px; box-shadow: 0 0 0 1px rgba(241,233,216,.22); outline: 2px solid transparent; outline-offset: 3px; transition: outline-color .15s; }
+.icons button[aria-checked="true"] img { outline-color: var(--pist); }
+.icons button[aria-checked="true"] span { color: var(--plum-ink); font-weight: 600; }
 .help p { margin: 0 var(--pad) 18px; font-size: 17px; line-height: 1.5; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -230,6 +235,16 @@ textarea::placeholder { color: var(--plum-faint); }
     <input type="file" id="restoreFile" accept="application/json,.json" hidden>
     <p class="snote" id="restoreMsg" role="status" aria-live="polite"></p>
     <p class="snote" id="setSaved"></p>
+    <div id="iconSec" hidden>
+      <p class="sh">App icon</p>
+      <div class="icons" role="radiogroup" aria-label="App icon">
+        <button type="button" role="radio" aria-checked="true" data-icon="auto"><img src="icons/pick/auto.png" alt=""><span>Automatic</span></button>
+        <button type="button" role="radio" aria-checked="false" data-icon="pistachio"><img src="icons/pick/pistachio.png" alt=""><span>Pistachio</span></button>
+        <button type="button" role="radio" aria-checked="false" data-icon="plum"><img src="icons/pick/plum.png" alt=""><span>Plum</span></button>
+        <button type="button" role="radio" aria-checked="false" data-icon="bone"><img src="icons/pick/bone.png" alt=""><span>Bone</span></button>
+      </div>
+      <p class="snote" id="iconMsg">Automatic is Pistachio in Light mode and Plum in Dark.</p>
+    </div>
     <p class="sh">Help</p>
     <button class="srow" type="button" id="setHelp"><span>How Scales works</span><span class="chev" aria-hidden="true">&#8250;</span></button>
     <p class="sh">About</p>
@@ -654,6 +669,19 @@ textarea::placeholder { color: var(--plum-faint); }
     openPage("settings", "settings");
   }
   $("libGear").onclick = openSettings;
+  // App icon (iPhone app only; 2.2.0). The shell says which icon is on at start and after every change.
+  var icons = document.querySelectorAll("#iconSec [data-icon]");
+  function markIcon(name) { Array.prototype.forEach.call(icons, function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-icon") === name)); }); }
+  window.scalesIcon = function (name) { markIcon(name === "pistachio" || name === "plum" || name === "bone" ? name : "auto"); };
+  window.scalesIconError = function () { $("iconMsg").textContent = "That icon couldn't be set. Try again."; };
+  if (NATIVE) $("iconSec").hidden = false;
+  Array.prototype.forEach.call(icons, function (b) {
+    b.onclick = function () {
+      var name = b.getAttribute("data-icon"); markIcon(name); haptic("tick");
+      $("iconMsg").textContent = "Automatic is Pistachio in Light mode and Plum in Dark.";
+      post({ type: "icon", name: name === "auto" ? "" : name });
+    };
+  });
   $("setBack").onclick = function () { closePage("settings", "library"); };
   $("setHelp").onclick = function () { openPage("help", "help"); };
   $("helpBack").onclick = function () { closePage("help", "settings"); };

@@ -128,6 +128,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     // Settings: reached from the gear, back returns to the library still open
     await page.click("#libGear"); await page.waitForTimeout(600);
     ok(await page.locator("#settings.open").count() === 1, tag + "the gear opens Settings");
+    ok(!(await page.locator("#iconSec").isVisible()), tag + "no App icon choice in a browser");
     ok(/Back up/.test(await page.textContent("#settings")) && /Restore from a backup/.test(await page.textContent("#settings")), tag + "Settings has Back up and Restore");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
@@ -227,6 +228,18 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.keyboard.press("ArrowDown"); await page.waitForTimeout(400);
     const hs = await page.evaluate(() => window.__posts.filter((m) => m.type === "haptic").map((m) => m.style));
     ok(hs.join(",") === "thud,letgo", "native: put away buzzes thud then letgo (" + hs.join(",") + ")");
+    // App icon: shown only in the iPhone app; a choice is sent to the shell, and the shell's answer marks it
+    await page.waitForTimeout(5300); await page.click("#strip"); await page.waitForTimeout(600); await page.click("#libGear"); await page.waitForTimeout(500);
+    ok(await page.locator("#iconSec").isVisible(), "native: Settings shows App icon");
+    await page.evaluate(() => { window.__posts.length = 0; window.scalesIcon("auto"); });
+    await page.click('[data-icon="plum"]'); await page.waitForTimeout(100);
+    const ic = await page.evaluate(() => window.__posts.filter((m) => m.type === "icon"));
+    ok(ic.length === 1 && ic[0].name === "plum" && await page.getAttribute('[data-icon="plum"]', "aria-checked") === "true", "native: choosing Plum asks the shell for the plum icon");
+    await page.evaluate(() => window.scalesIcon("bone"));
+    ok(await page.getAttribute('[data-icon="bone"]', "aria-checked") === "true" && await page.getAttribute('[data-icon="plum"]', "aria-checked") === "false", "native: the shell's answer marks the icon that is on");
+    await page.click('[data-icon="auto"]'); await page.waitForTimeout(100);
+    ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "icon").pop())).name === "", "native: Automatic asks for the main icon");
+    await page.screenshot({ path: path.join(shots, "native-settings-icons.png") });
     await ctx.close();
   }
   // the trial address forwards home and keeps ?native=1
