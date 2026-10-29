@@ -62,4 +62,6 @@ read, never written or deleted.
 - A reminder may come back later; for now Scales is something you open on your own.
 - Library on plum, the first-time nudge, and the 5-a-day import pace were open questions; the owner has not raised them.
 - Times review, on or after 12 November: read `visits` in the daily backup and recommend the skip and thought lines
-  (see `docs/2.1-plan.md`, step 10).
+  (see `docs/2.1-plan.md`, step 10). Leave out visits with `kind: "review"` (opened from Bookmarked) and `undone: true`.
+- 2.2.0 is on `release-2.2`, not shipped: Bookmark, New filter, scrolling filters, Done and Keep as words, growing fields,
+  new icons with a picker, website copy. See `docs/2.1-plan.md`.

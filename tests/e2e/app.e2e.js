@@ -143,6 +143,66 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click('#seg [data-view="on"]'); await page.waitForTimeout(200);
     ok(/In rotation ·/.test(await page.textContent("#libList")) && !/Put away ·/.test(await page.textContent("#libList")), tag + "In rotation filter shows only rotation");
     await page.click('#seg [data-view="all"]'); await page.waitForTimeout(200);
+    // 2.2.0: New, Bookmarked, the scrolling filters, and the review rule
+    const segw = await page.evaluate(() => { const g = document.getElementById("seg"); return { sw: g.scrollWidth, cw: g.clientWidth, page: document.documentElement.scrollWidth - document.documentElement.clientWidth }; });
+    ok(segw.sw > segw.cw && segw.page <= 0, tag + "five filters scroll sideways inside their row, the page does not (" + JSON.stringify(segw) + ")");
+    await page.evaluate(() => { const g = document.getElementById("seg"); g.scrollLeft = g.scrollWidth; });
+    ok(await page.locator('#segMarked').isVisible(), tag + "Bookmarked can be scrolled to");
+    await page.click('#seg [data-view="new"]'); await page.waitForTimeout(200);
+    ok(/Added in the last 14 days · /.test(await page.textContent("#libList")) && /A brand new thought from the check/.test(await page.textContent("#libList")), tag + "New lists what was added in the last 14 days");
+    await page.click('#seg [data-view="all"]'); await page.waitForTimeout(100);
+    ok((await page.textContent("#segMarked")).trim() === "Bookmarked", tag + "no count while nothing is bookmarked");
+    await page.click("#libClose"); await page.waitForTimeout(600);
+    const readUi = () => page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.ui.v1")));
+    const readT = (id) => page.evaluate((i) => JSON.parse(localStorage.getItem("scales.next.thoughts.v1"))[i], id);
+    const cur = (await readUi()).cur;
+    // Cancel leaves a bookmark as it was
+    await page.mouse.click(w / 2, 400); await page.waitForTimeout(600);
+    await page.click("#editMark");
+    ok(await page.getAttribute("#editMark", "aria-pressed") === "true", tag + "Bookmark toggles on in Edit");
+    await page.click("#editCancel"); await page.waitForTimeout(500);
+    ok(!(await readT(cur)).bookmarked, tag + "Cancel leaves it unbookmarked");
+    // Done applies it, and a bookmark alone changes nothing about the schedule
+    const before0 = await readT(cur), worked0 = (await readUi()).worked;
+    await page.mouse.click(w / 2, 400); await page.waitForTimeout(600);
+    ok(await page.getAttribute("#editMark", "aria-pressed") === "false", tag + "Edit opens with the bookmark off");
+    await page.click("#editMark"); await page.screenshot({ path: path.join(shots, w + "-3d-edit-bookmark.png") });
+    await page.click("#editDone"); await page.waitForTimeout(500);
+    const after0 = await readT(cur);
+    ok(!!after0.bookmarked && after0.due === before0.due && after0.skips === before0.skips && after0.thinks === before0.thinks && after0.works === before0.works && after0.text === before0.text, tag + "Done sets the bookmark and changes nothing about the schedule");
+    ok((await readUi()).worked === worked0, tag + "a bookmark alone does not count as work on the thought");
+    // The library: count, filter, and the row mark
+    await page.click("#strip"); await page.waitForTimeout(700);
+    ok((await page.textContent("#segMarked")).trim() === "Bookmarked · 1", tag + "the Bookmarked filter shows the count");
+    ok(await page.locator("#libList .bk").count() === 1, tag + "a bookmarked thought carries a small mark in the list");
+    await page.evaluate(() => { const g = document.getElementById("seg"); g.scrollLeft = g.scrollWidth; });
+    await page.click("#segMarked"); await page.waitForTimeout(200);
+    ok(/Bookmarked · 1/.test(await page.textContent("#libList")) && (await page.locator("#libList [data-review]").count()) === 1, tag + "Bookmarked lists it, opened as a review");
+    await page.screenshot({ path: path.join(shots, w + "-6c-library-bookmarked.png") });
+    // A review changes nothing about when it comes back
+    await page.click("#libList [data-review]"); await page.waitForTimeout(700);
+    ok((await readUi()).review === cur && (await page.textContent("#words")).trim() === before0.text, tag + "tapping it opens it on screen as a review");
+    const rev0 = await readT(cur), logN = (await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.log.v1") || "[]"))).length;
+    await page.waitForTimeout(1200); await page.keyboard.press("ArrowUp"); await page.waitForTimeout(600);
+    const rev1 = await readT(cur), lg2 = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.log.v1") || "[]"));
+    ok(JSON.stringify([rev1.due, rev1.skips, rev1.thinks, rev1.works, rev1.seen, (rev1.visits || []).length]) === JSON.stringify([rev0.due, rev0.skips, rev0.thinks, rev0.works, rev0.seen, (rev0.visits || []).length]), tag + "a review leaves due, skips, thinks, works and visits exactly as they were");
+    ok(lg2.length === logN + 1 && lg2[lg2.length - 1].kind === "review" && lg2[lg2.length - 1].id === cur, tag + "the review is logged as a review, so the times review can leave it out");
+    // A put-away thought can be reviewed too, and stays put away
+    const awayId = await page.evaluate(() => { const o = JSON.parse(localStorage.getItem("scales.next.thoughts.v1")); const k = Object.keys(o).find((i) => o[i].away); o[k].bookmarked = new Date().toISOString(); localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(o)); return k; });
+    if (awayId) {
+      await page.reload(); await page.waitForTimeout(900);
+      await page.click("#strip"); await page.waitForTimeout(700);
+      await page.evaluate(() => { const g = document.getElementById("seg"); g.scrollLeft = g.scrollWidth; });
+      await page.click("#segMarked"); await page.waitForTimeout(200);
+      ok(/Bookmarked · 2/.test(await page.textContent("#libList")) && /Put away/.test(await page.textContent("#libList")), tag + "a bookmarked thought that is put away is listed, marked Put away");
+      await page.click('#libList .lrow.away[data-review]'); await page.waitForTimeout(700);
+      const aw = await readT(awayId);
+      ok((await page.textContent("#words")).trim() === aw.text && !!aw.away, tag + "a put-away thought can be reviewed on screen and stays put away");
+      await page.keyboard.press("ArrowUp"); await page.waitForTimeout(600);
+      ok(!!(await readT(awayId)).away && (await readT(awayId)).visits.length === aw.visits.length, tag + "after the review it is still put away and its history is unchanged");
+      await page.click("#strip"); await page.waitForTimeout(700);
+    } else { await page.click("#strip"); await page.waitForTimeout(700); }
+    await page.click('#seg [data-view="all"]'); await page.waitForTimeout(200);
     // Settings: reached from the gear, back returns to the library still open
     await page.click("#libGear"); await page.waitForTimeout(600);
     ok(await page.locator("#settings.open").count() === 1, tag + "the gear opens Settings");
@@ -150,13 +210,13 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Back up/.test(await page.textContent("#settings")) && /Restore from a backup/.test(await page.textContent("#settings")), tag + "Settings has Back up and Restore");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.1\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/Scales 2\.1\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.2\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/Scales 2\.2\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     await page.screenshot({ path: path.join(shots, w + "-8-settings.png") });
     const dl = page.waitForEvent("download", { timeout: 3000 });
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
-    ok(bk.app === "scales" && bk.version === "2.1.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.2.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");

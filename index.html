@@ -118,8 +118,12 @@ textarea::placeholder { color: var(--plum-faint); }
 #lib h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
 /* Words, not a button shape: pistachio on plum, with room around it for a thumb. */
 #lib .new { color: var(--pist); font-weight: 600; font-size: 16px; padding: 14px var(--pad) 14px 24px; margin-right: calc(-1 * var(--pad)); }
-#lib .seg { display: flex; gap: 8px; justify-content: flex-start; }
-.seg button { font-size: 14px; padding: 7px 13px; border-radius: 999px; color: var(--plum-muted); background: rgba(241,233,216,.06); }
+/* The filters scroll sideways when they do not fit; the right edge fades to show there is more. */
+#lib .seg { display: flex; gap: 8px; justify-content: flex-start; overflow-x: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x; scrollbar-width: none;
+  margin: 0 calc(-1 * var(--pad)); padding: 0 var(--pad); -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
+#lib .seg::-webkit-scrollbar { display: none; }
+#lib .seg::after { content: ""; flex: 0 0 24px; }
+.seg button { font-size: 14px; padding: 7px 13px; border-radius: 999px; color: var(--plum-muted); background: rgba(241,233,216,.06); white-space: nowrap; flex: none; }
 .seg button[aria-pressed="true"] { color: var(--plum); background: var(--plum-ink); font-weight: 600; }
 #q { width: 100%; font: inherit; font-size: 16px; color: var(--plum-ink); background: rgba(241,233,216,.08); border: 0; border-radius: 12px; padding: 12px 14px; outline: none; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
 #q::placeholder { color: var(--plum-faint); }
@@ -129,6 +133,10 @@ textarea::placeholder { color: var(--plum-faint); }
 .lrow .t { font-size: 17px; line-height: 1.3; }
 .lrow .m { font-size: 13px; color: var(--plum-muted); white-space: nowrap; }
 .lrow.away .t { color: var(--plum-muted); }
+.bk { width: 11px; height: 14px; margin-left: 7px; color: var(--pist); vertical-align: -1px; }
+#editMark { right: 0; min-width: 0; padding: 20px var(--pad) 20px 28px; display: flex; align-items: center; gap: 8px; color: var(--plum-muted); }
+#editMark svg { width: 16px; height: 20px; }
+#editMark[aria-pressed="true"] { color: var(--pist); font-weight: 600; }
 .lrow .back { font-size: 13px; font-weight: 600; color: var(--pist); white-space: nowrap; padding: 4px 0; }
 #libList { padding-bottom: calc(var(--bot) + 40px); }
 #lib header .top { display: flex; justify-content: space-between; align-items: center; }
@@ -204,6 +212,7 @@ textarea::placeholder { color: var(--plum-faint); }
 <!-- Edit: plum. The thought and a note. -->
 <section class="view" id="vEdit" hidden aria-label="Edit thought">
   <button class="corner l" id="editCancel" type="button">Cancel</button>
+  <button class="corner" id="editMark" type="button" aria-pressed="false"><svg viewBox="0 0 16 20" aria-hidden="true"><path d="M2 1.5h12v17l-6-4.5-6 4.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span>Bookmark</span></button>
   <div class="sheetform">
     <label class="sr" for="editText">The thought</label>
     <textarea class="big" id="editText" rows="4" maxlength="1500"></textarea>
@@ -223,7 +232,7 @@ textarea::placeholder { color: var(--plum-faint); }
       <button class="new" type="button" id="libNew"><span class="plus" aria-hidden="true">+</span>New</button></span></div>
     <label class="sr" for="q">Search your thoughts</label>
     <input id="q" type="search" placeholder="Search" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <div class="seg" id="seg" aria-label="Show"><button type="button" data-view="all">All</button><button type="button" data-view="on">In rotation</button><button type="button" data-view="away">Put away</button></div>
+    <div class="seg" id="seg" aria-label="Show"><button type="button" data-view="all">All</button><button type="button" data-view="on">In rotation</button><button type="button" data-view="away">Put away</button><button type="button" data-view="new">New</button><button type="button" data-view="marked" id="segMarked">Bookmarked</button></div>
   </header>
   <div id="libList"></div>
 </section>
@@ -268,7 +277,7 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.1.0"></script>
+<script src="core.js?v=2.2.0"></script>
 <script>
 (function () {
   "use strict";
@@ -333,7 +342,9 @@ textarea::placeholder { color: var(--plum-faint); }
   function endVisit(how) {
     var t = store[ui.cur]; if (!t) return null;
     clockOff();
-    var wasIdle = idle(), kind = C.recordVisit(t, ui.ms, ui.worked, wasIdle, now());
+    // A thought opened from Bookmarked is a review: logged as one, and it changes nothing about when the thought comes back.
+    var review = ui.review === ui.cur; ui.review = null;
+    var wasIdle = idle(), kind = review ? "review" : C.recordVisit(t, ui.ms, ui.worked, wasIdle, now());
     lsSet(KEY_LOG, C.logVisit(lsGet(KEY_LOG, []), { at: now().toISOString(), id: t.id, ms: ui.ms, worked: ui.worked, idle: wasIdle, kind: kind, how: how || "other", len: t.text.length }));
     ui.cur = null; ui.ms = 0; ui.worked = false; saveUi(); save();
     return kind;
@@ -362,7 +373,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function sizeClass(text) { var n = text.length; return n > 220 ? "vlong" : n > 90 ? "long" : ""; }
   function renderMeet(arrive) {
     var t = store[ui.cur];
-    if (!t || t.away) { ui.cur = null; ui.ms = 0; ui.worked = false; var n = C.pickNext(store, now()); if (n) ui.cur = n.id; saveUi(); t = store[ui.cur]; }
+    if (!t || (t.away && ui.review !== ui.cur)) { ui.cur = null; ui.ms = 0; ui.worked = false; ui.review = null; var n = C.pickNext(store, now()); if (n) ui.cur = n.id; saveUi(); t = store[ui.cur]; }
     $("stripN").textContent = C.list(store).length;
     if (!C.list(store).length) { openWrite(true); return; }
     $("carry").style.transition = "none"; $("carry").style.transform = ""; $("carry").style.opacity = "";
@@ -438,7 +449,7 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   // Both moves can be undone for 5 s: the thought comes back as it was, and the visit is not counted.
   var undoPoint = null;
-  function snapshot() { clockOff(); return { id: ui.cur, t: JSON.parse(JSON.stringify(store[ui.cur])), ms: ui.ms }; }
+  function snapshot() { clockOff(); return { id: ui.cur, t: JSON.parse(JSON.stringify(store[ui.cur])), ms: ui.ms, review: ui.review || null }; }
   function goNext() {
     if (!store[ui.cur]) return;
     var snap = snapshot(), id = ui.cur; endVisit("next");
@@ -448,7 +459,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function goAway() {
     if (!store[ui.cur]) return;
     var snap = snapshot(), id = ui.cur; endVisit("away");
-    store[id].away = now().toISOString(); save();
+    if (!store[id].away) store[id].away = now().toISOString(); save();
     buzz("putAway");
     undoPoint = snap;
     fly(1, function () { var n = C.pickNext(store, now(), id); ui.cur = n ? n.id : null; saveUi(); renderMeet(true); toast("Put away"); });
@@ -463,7 +474,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("toastUndo").onclick = function () {
     if (!undoPoint) return;
     clockOff();
-    store[undoPoint.id] = undoPoint.t; ui.cur = undoPoint.id; ui.ms = undoPoint.ms; ui.worked = false; undoPoint = null;
+    store[undoPoint.id] = undoPoint.t; ui.cur = undoPoint.id; ui.ms = undoPoint.ms; ui.worked = false; ui.review = undoPoint.review; undoPoint = null;
     // The undone visit stays in the log, marked, so it can be left out when the times are judged.
     var lg = lsGet(KEY_LOG, []); if (lg.length) { lg[lg.length - 1].undone = true; lsSet(KEY_LOG, lg); }
     save(); saveUi(); $("toast").classList.remove("on"); buzz("undo"); renderMeet(true);
@@ -496,14 +507,21 @@ textarea::placeholder { color: var(--plum-faint); }
   function openEdit() {
     var t = store[ui.cur]; if (!t) return;
     $("editText").value = t.text; $("editNote").value = t.note || "";
+    setMark(!!t.bookmarked);
     disarm();
     setMode("edit");
   }
+  // The bookmark is set here and applied with Done, like the words; Cancel leaves it as it was.
+  var editMarked = false;
+  function setMark(on) { editMarked = on; $("editMark").setAttribute("aria-pressed", String(on)); $("editMark").querySelector("path").setAttribute("fill", on ? "currentColor" : "none"); }
+  $("editMark").onclick = function () { setMark(!editMarked); haptic("tick"); };
   $("editCancel").onclick = function () { setMode("meet"); renderMeet(false); };
   $("editDone").onclick = function () {
     var t = store[ui.cur]; if (!t) return setMode("meet");
     var text = $("editText").value.trim(), note = $("editNote").value.trim();
     if (text && (text !== t.text || note !== (t.note || ""))) { t.text = text; t.note = note; ui.worked = true; save(); saveUi(); haptic("medium"); }
+    // A bookmark is the person's own mark: it never counts as work on the thought and never changes when it returns.
+    if (editMarked !== !!t.bookmarked) { t.bookmarked = editMarked ? now().toISOString() : null; save(); renderLibCount(); }
     setMode("meet"); renderMeet(false);
   };
   // Delete asks for a second tap rather than a dialog. A tap anywhere else takes it back.
@@ -625,30 +643,48 @@ textarea::placeholder { color: var(--plum-faint); }
     var match = function (t) { return !q || t.text.toLowerCase().indexOf(q) !== -1 || (t.note || "").toLowerCase().indexOf(q) !== -1; };
     var on = C.inRotation(store).filter(match).sort(function (a, b) { return a.due < b.due ? -1 : a.due > b.due ? 1 : (b.skips || 0) - (a.skips || 0); });
     var off = C.putAway(store).filter(match).sort(function (a, b) { return a.away < b.away ? 1 : -1; });
-    var view = ui.view === "on" || ui.view === "away" ? ui.view : "all", h = "";
+    var view = ["on", "away", "new", "marked"].indexOf(ui.view) >= 0 ? ui.view : "all", h = "";
     Array.prototype.forEach.call($("seg").children, function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-view") === view)); });
-    if (view !== "away") {
-      h += "<h3>In rotation · " + on.length + "</h3>";
-      h += on.map(function (t) {
-        return '<button type="button" class="lrow" data-open="' + esc(t.id) + '"><span class="t" style="font-weight:' + Math.min(700, C.weight(t) - 100) + '">' + esc(t.text) + '</span><span class="m">' + esc(C.whenLabel(t.due, n)) + "</span></button>";
-      }).join("") || '<p class="lrow"><span class="m">Nothing here' + (q ? " matches." : " yet.") + "</span></p>";
+    renderLibCount();
+    var mark = function (t) { return t.bookmarked ? '<svg class="bk" viewBox="0 0 16 20" aria-label="Bookmarked"><path d="M2 1.5h12v17l-6-4.5-6 4.5z" fill="currentColor"/></svg>' : ""; };
+    var rotRow = function (t, review) {
+      return '<button type="button" class="lrow" data-open="' + esc(t.id) + '"' + (review ? ' data-review="1"' : "") + '><span class="t" style="font-weight:' + Math.min(700, C.weight(t) - 100) + '">' + esc(t.text) + mark(t) + '</span><span class="m">' + esc(C.whenLabel(t.due, n)) + "</span></button>";
+    };
+    var awayRow = function (t) {
+      return '<div class="lrow away"><span class="t">' + esc(t.text) + mark(t) + '</span><button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button></div>';
+    };
+    var none = function (msg) { return '<p class="lrow"><span class="m">' + msg + "</span></p>"; };
+    if (view === "marked") {
+      var bm = C.bookmarked(store).filter(match);
+      h += "<h3>Bookmarked · " + bm.length + "</h3>";
+      h += bm.map(function (t) {
+        // Opening one here is a review: the thought comes up on screen, and nothing about its schedule changes.
+        return t.away ? '<button type="button" class="lrow away" data-open="' + esc(t.id) + '" data-review="1"><span class="t">' + esc(t.text) + mark(t) + '</span><span class="m">Put away</span></button>' : rotRow(t, true);
+      }).join("") || none(q ? "Nothing here matches." : "Bookmark a thought from its Edit screen.");
+    } else if (view === "new") {
+      var nw = C.recentlyAdded(store, n).filter(match);
+      h += "<h3>Added in the last " + C.NEW_DAYS + " days · " + nw.length + "</h3>";
+      h += nw.map(function (t) { return t.away ? awayRow(t) : rotRow(t, false); }).join("") || none(q ? "Nothing here matches." : "Nothing new in the last " + C.NEW_DAYS + " days.");
+    } else {
+      if (view !== "away") {
+        h += "<h3>In rotation · " + on.length + "</h3>";
+        h += on.map(function (t) { return rotRow(t, false); }).join("") || none("Nothing here" + (q ? " matches." : " yet."));
+      }
+      if (view !== "on") {
+        h += "<h3" + (view === "all" ? ' style="margin-top:28px"' : "") + ">Put away · " + off.length + "</h3>";
+        h += off.map(awayRow).join("") || none(q ? "Nothing matches." : "Pull a thought down to put it away.");
+      }
     }
-    if (view !== "on") {
-      h += "<h3" + (view === "all" ? ' style="margin-top:28px"' : "") + ">Put away · " + off.length + "</h3>";
-      h += off.map(function (t) {
-        return '<div class="lrow away"><span class="t">' + esc(t.text) + '</span><button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button></div>';
-      }).join("") || '<p class="lrow"><span class="m">' + (q ? "Nothing matches." : "Pull a thought down to put it away.") + "</span></p>";
-    }
-
     $("libList").innerHTML = h;
   }
+  function renderLibCount() { var c = C.bookmarked(store).length; $("segMarked").textContent = c ? "Bookmarked · " + c : "Bookmarked"; }
   $("libList").addEventListener("click", function (e) {
     var o = e.target.closest("[data-open]"), b = e.target.closest("[data-back]");
     if (o) {
       // Opening a thought from the list puts it on screen now. The thought you were on counts as visited.
       var id = o.getAttribute("data-open");
       if (ui.cur && ui.cur !== id) endVisit("list");
-      ui.cur = id; ui.ms = 0; ui.worked = false; saveUi();
+      ui.cur = id; ui.ms = 0; ui.worked = false; ui.review = o.hasAttribute("data-review") ? id : null; saveUi();
       closeLib(); renderMeet(true);
     } else if (b) {
       var t = store[b.getAttribute("data-back")]; if (!t) return;
