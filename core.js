@@ -95,6 +95,14 @@
     return d.length ? d[0] : null;
   }
 
+  // The one that would come back soonest, for "Meet one early" once today is done. Ties go to the more avoided one.
+  function soonest(store, notId) {
+    var r = inRotation(store).filter(function (t) { return t.id !== notId; }).sort(function (a, b) {
+      return a.due < b.due ? -1 : a.due > b.due ? 1 : (b.skips || 0) - (a.skips || 0) || (a.created < b.created ? -1 : 1);
+    });
+    return r[0] || null;
+  }
+
   // The earliest day anything comes back, for "Next one back ..." when nothing is due.
   function nextDue(store) {
     var r = inRotation(store).map(function (t) { return t.due; }).sort();
@@ -225,7 +233,7 @@
 
   var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
-    make: make, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext,
+    make: make, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);

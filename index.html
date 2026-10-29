@@ -61,6 +61,8 @@ a { color: inherit; text-decoration: none; }
 #empty { position: absolute; left: var(--pad); right: var(--pad); top: 0; bottom: var(--strip); display: flex; flex-direction: column; justify-content: center; gap: 10px; }
 #empty h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
 #empty p { margin: 0; font-size: 16px; color: var(--pist-muted); }
+#emptyActs { display: flex; flex-direction: column; align-items: flex-start; margin-top: 14px; }
+#emptyActs button { color: var(--pist-ink); font-weight: 700; font-size: 18px; padding: 12px 0; min-height: 44px; text-align: left; }
 @keyframes nudge { 0%,100% { transform: translateY(0) } 30% { transform: translateY(-14px) } 62% { transform: translateY(6px) } }
 @keyframes arrive { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: none } }
 .nudge #words { animation: nudge 1.3s cubic-bezier(.4,0,.2,1) 1; }
@@ -184,7 +186,8 @@ textarea::placeholder { color: var(--plum-faint); }
       <p id="note" hidden></p>
     </div>
   </div>
-  <div id="empty" hidden><h1>That's all for today.</h1><p id="emptySub"></p></div>
+  <div id="empty" hidden><h1>That's all for today.</h1><p id="emptySub"></p>
+    <div id="emptyActs"><button type="button" id="earlyBtn">Meet one early</button><button type="button" id="earlyWrite">Write one</button><button type="button" id="earlyMarked" hidden>Bookmarked</button></div></div>
   <p class="hint" id="hintDown" aria-hidden="true">Put away</p>
   <div class="sr" id="srActs">
     <button type="button" id="srNext">Next thought</button>
@@ -382,6 +385,9 @@ textarea::placeholder { color: var(--plum-faint); }
       $("carry").hidden = true; $("srActs").hidden = true; $("empty").hidden = false;
       var nd = C.nextDue(store);
       $("emptySub").textContent = nd ? nextBackText(C.whenLabel(nd, now())) : "Everything is put away.";
+      var bm = C.bookmarked(store).length;
+      $("earlyBtn").hidden = !C.soonest(store);
+      $("earlyMarked").hidden = !bm; $("earlyMarked").textContent = "Bookmarked \u00b7 " + bm;
       return;
     }
     $("empty").hidden = true; $("carry").hidden = false; $("srActs").hidden = false;
@@ -491,6 +497,13 @@ textarea::placeholder { color: var(--plum-faint); }
     setTimeout(function () { $("writeText").focus(); }, 60);
   }
   $("newBtn").onclick = function () { openWrite(false); };
+  // After "That's all for today": three quiet ways to carry on. None of them changes when anything comes back.
+  $("earlyBtn").onclick = function () {
+    var n = C.soonest(store); if (!n) return;
+    ui.cur = n.id; ui.ms = 0; ui.worked = false; ui.review = n.id; saveUi(); haptic("tick"); renderMeet(true);
+  };
+  $("earlyWrite").onclick = function () { openWrite(false); };
+  $("earlyMarked").onclick = function () { ui.view = "marked"; saveUi(); openLib(); };
   $("libNew").onclick = function () { openWrite(false); };
   $("writeText").addEventListener("input", function () { $("writeKeep").disabled = !this.value.trim(); });
   $("writeCancel").onclick = function () { setMode("meet"); renderMeet(false); };

@@ -102,6 +102,10 @@ test("pickNext: most skipped first, then oldest due; skips the current; ignores 
   assert.equal(N.pickNext({ e: store.e }, now), null);
   assert.equal(N.nextDue({ e: store.e, d: store.d }), "2026-10-30");
   assert.equal(N.nextDue({ d: store.d }), null);
+  // soonest: who comes back first when nothing is due (ignores put away and the one named)
+  assert.equal(N.soonest(store).id, "a");
+  assert.equal(N.soonest(store, "a").id, "c");
+  assert.equal(N.soonest({ d: store.d }), null);
   assert.equal(N.inRotation(store).length, 4);
   assert.equal(N.putAway(store).length, 1);
 });

@@ -203,6 +203,34 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
       await page.click("#strip"); await page.waitForTimeout(700);
     } else { await page.click("#strip"); await page.waitForTimeout(700); }
     await page.click('#seg [data-view="all"]'); await page.waitForTimeout(200);
+    // 2.3: after "That's all for today", three quiet ways to carry on, none of which changes a schedule
+    const saved = await page.evaluate(() => localStorage.getItem("scales.next.thoughts.v1"));
+    const soonId = await page.evaluate(() => {
+      const o = JSON.parse(localStorage.getItem("scales.next.thoughts.v1")); const ids = Object.keys(o).filter((i) => !o[i].away);
+      ids.forEach((i, n) => { o[i].due = "2099-01-" + String(10 + n).padStart(2, "0"); o[i].skips = 0; });
+      localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(o));
+      const u = JSON.parse(localStorage.getItem("scales.next.ui.v1")); u.cur = null; u.review = null; localStorage.setItem("scales.next.ui.v1", JSON.stringify(u));
+      return ids[0];
+    });
+    await page.reload(); await page.waitForTimeout(900);
+    ok(await page.locator("#empty").isVisible() && /all for today/.test(await page.textContent("#empty")), tag + "nothing due shows the closing screen");
+    ok(await page.locator("#earlyBtn").isVisible() && await page.locator("#earlyWrite").isVisible() && await page.locator("#earlyMarked").isVisible() && /Bookmarked · \d/.test(await page.textContent("#earlyMarked")), tag + "Meet one early, Write one and Bookmarked with its count are offered");
+    const early0 = await readT(soonId);
+    await page.click("#earlyBtn"); await page.waitForTimeout(700);
+    ok((await page.textContent("#words")).trim() === early0.text && (await readUi()).review === soonId, tag + "Meet one early brings the one due soonest, as a review");
+    await page.keyboard.press("ArrowUp"); await page.waitForTimeout(700);
+    const early1 = await readT(soonId);
+    ok(early1.due === early0.due && early1.skips === early0.skips && early1.thinks === early0.thinks && (early1.visits || []).length === (early0.visits || []).length, tag + "meeting it early leaves due, skips, thinks and visits as they were");
+    ok(await page.locator("#empty").isVisible(), tag + "it returns to the closing screen, one thought at a time");
+    await page.click("#earlyWrite"); await page.waitForTimeout(500);
+    ok(await page.locator("#vWrite").isVisible(), tag + "Write one opens a new thought");
+    await page.click("#writeCancel"); await page.waitForTimeout(500);
+    await page.click("#earlyMarked"); await page.waitForTimeout(700);
+    ok(await page.locator("#lib.open").count() === 1 && /Bookmarked · \d/.test(await page.textContent("#libList")), tag + "Bookmarked opens the library on its bookmarked list");
+    await page.evaluate((v) => { localStorage.setItem("scales.next.thoughts.v1", v); }, saved);
+    await page.reload(); await page.waitForTimeout(900);
+    await page.click("#strip"); await page.waitForTimeout(700);
+    await page.click('#seg [data-view="all"]'); await page.waitForTimeout(200);
     // Settings: reached from the gear, back returns to the library still open
     await page.click("#libGear"); await page.waitForTimeout(600);
     ok(await page.locator("#settings.open").count() === 1, tag + "the gear opens Settings");
