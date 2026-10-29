@@ -205,3 +205,15 @@ test("Scales saves daily through the iPhone app and quiets Scales 1's reminders"
   const swift = read("ios/App/Haptics.swift");
   for (const s of ["thud", "letgo", "signature", "medium", "success"]) assert.match(swift, new RegExp('case "' + s + '"'), s);
 });
+
+test("the visit log keeps raw times and the lines in force, newest 5000 (2.0.1)", () => {
+  const log = [];
+  N.logVisit(log, { at: "2026-10-29T12:00:00Z", id: "a", ms: 12345.6, worked: false, idle: false, kind: "thought", how: "next", len: 40 });
+  assert.deepEqual(log[0], { at: "2026-10-29T12:00:00Z", id: "a", ms: 12346, worked: false, idle: false, kind: "thought", how: "next", len: 40, lines: [N.SKIP_MAX_MS / 1000, N.THOUGHT_MIN_MS / 1000] });
+  for (let i = 0; i < N.LOG_MAX + 10; i++) N.logVisit(log, { at: "x", id: "b" + i, ms: 1, kind: "skipped", how: "next" });
+  assert.equal(log.length, N.LOG_MAX);
+  assert.equal(log[log.length - 1].id, "b" + (N.LOG_MAX + 9), "the newest stay");
+  const nx = read("index.html");
+  assert.match(nx, /visits: lsGet\(KEY_LOG, \[\]\)/, "the log travels in the daily backup");
+  assert.match(nx, /lg\[lg\.length - 1\]\.undone = true/, "an undone visit is marked");
+});

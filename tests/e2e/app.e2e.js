@@ -66,6 +66,15 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.screenshot({ path: path.join(shots, w + "-2-putaway-toast.png") });
     await page.click("#toastUndo"); await page.waitForTimeout(500);
     ok((await page.textContent("#words")).trim() === second, tag + "Undo brings it back");
+    // a near miss on + New never opens Edit
+    await page.mouse.click(165, 90); await page.waitForTimeout(700);
+    ok(!(await page.locator("#vEdit").isVisible()), tag + "a tap just right of + New does not open Edit");
+    if (await page.locator("#vWrite").isVisible()) { await page.click("#writeCancel"); await page.waitForTimeout(500); }
+    // a swipe up that starts on the Home bar does not drag the sheet
+    await page.mouse.move(w / 2, 840); await page.mouse.down();
+    for (let i = 1; i <= 10; i++) await page.mouse.move(w / 2, 840 - i * 40);
+    await page.mouse.up(); await page.waitForTimeout(600);
+    ok(await page.locator("#lib.open").count() === 0, tag + "a swipe from the Home bar leaves the library shut");
     // tap = edit
     await page.mouse.click(w / 2, 400); await page.waitForTimeout(700);
     ok(await page.locator("#vEdit").isVisible(), tag + "tap opens edit");
@@ -138,6 +147,9 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(["ready", "unschedule", "badge", "save"].every((t) => types.includes(t)), "native: ready, unschedule, badge and save sent (" + types.join(",") + ")");
     const saved = await page.evaluate(() => JSON.parse(window.__posts.find((m) => m.type === "save").json));
     ok(saved.scales1 && saved.scales1["scales.thoughts.v1"] && Object.keys(saved.thoughts).length === 10, "native: daily save carries both apps' thoughts");
+    await page.keyboard.press("ArrowUp"); await page.waitForTimeout(500);
+    const lg = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.log.v1") || "[]"));
+    ok(lg.length === 1 && lg[0].how === "next" && typeof lg[0].ms === "number" && lg[0].lines.length === 2, "visit log records the move with its raw time");
     await page.evaluate(() => { window.__posts.length = 0; });
     await page.keyboard.press("ArrowDown"); await page.waitForTimeout(400);
     const hs = await page.evaluate(() => window.__posts.filter((m) => m.type === "haptic").map((m) => m.style));

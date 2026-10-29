@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.0.0";
+  var VERSION = "2.0.1";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 7000;      // 7 s or less: skipped
@@ -104,6 +104,16 @@
     return out;
   }
 
+  // The visit log (2.0.1): every visit with its raw time, kept so the skip and thought lines can be judged from real
+  // use and every past visit re-read under different lines. The newest 5000 are kept; it travels in the daily backup.
+  var LOG_MAX = 5000;
+  function logVisit(log, e) {
+    log.push({ at: e.at, id: e.id, ms: Math.round(e.ms), worked: !!e.worked, idle: !!e.idle, kind: e.kind, how: e.how,
+      len: e.len || 0, lines: [SKIP_MAX_MS / 1000, THOUGHT_MIN_MS / 1000] });
+    if (log.length > LOG_MAX) log.splice(0, log.length - LOG_MAX);
+    return log;
+  }
+
   // Catch-up: thoughts in Scales 1 that are not here yet join on the next open.
   // Matched by id; a thought already here is never overwritten, and one deleted here (in gone) never comes back.
   // Returns how many were added.
@@ -132,6 +142,6 @@
   var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
     make: make, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext,
-    nextDue: nextDue, importOld: importOld, mergeOld: mergeOld, whenLabel: whenLabel };
+    nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, mergeOld: mergeOld, whenLabel: whenLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);

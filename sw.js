@@ -2,8 +2,8 @@
 // Network first: online, the latest files are fetched and the copy refreshed; offline, the copy is used.
 
 // Must match VERSION in core.js (a test checks), so phones drop the old copy.
-const CACHE = "scales-v2.0.0";
-const SHELL = ["./", "index.html", "core.js", "core.js?v=2.0.0", "manifest.webmanifest", "fonts/geist-latin.woff2",
+const CACHE = "scales-v2.0.1";
+const SHELL = ["./", "index.html", "core.js", "core.js?v=2.0.1", "manifest.webmanifest", "fonts/geist-latin.woff2",
   "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/favicon-32.png"];
 
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
