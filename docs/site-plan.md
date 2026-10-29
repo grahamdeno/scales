@@ -1,6 +1,7 @@
 # Website plan: scales.tangomike.app for Scales 2
 
-Words and page plan by Opus; build by Sonnet. The words below are final unless Graham changes them; the builder uses
+Words and page plan by Opus; build by Sonnet. Build after Scales 2.1.0 ships (`docs/2.1-plan.md`), which changes
+the times and two support answers. The words below are final unless Graham changes them; the builder uses
 them as written. Plain words, no em-dashes, no military metaphors.
 
 ## Build notes (for Sonnet)
