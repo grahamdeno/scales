@@ -53,6 +53,11 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await drag(-160);
     const second = (await page.textContent("#words")).trim();
     ok(second !== first, tag + "swipe up moves to the next thought (" + second + ")");
+    // swipe up shows Undo, and Undo brings the thought back
+    ok(await page.locator("#toast.on").count() === 1 && /Moved on/.test(await page.textContent("#toast")), tag + "Moved on toast shows after swipe up");
+    await page.click("#toastUndo"); await page.waitForTimeout(500);
+    ok((await page.textContent("#words")).trim() === first, tag + "Undo after swipe up brings the thought back");
+    await drag(-160);
     // pull down = put away + Undo
     await drag(220);
     const third = (await page.textContent("#words")).trim();
@@ -64,6 +69,10 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     // tap = edit
     await page.mouse.click(w / 2, 400); await page.waitForTimeout(700);
     ok(await page.locator("#vEdit").isVisible(), tag + "tap opens edit");
+    await page.click("#editDelete");
+    ok((await page.textContent("#editDelete")).trim() === "Tap again to delete", tag + "Delete asks for a second tap");
+    await page.mouse.click(w / 2, 700); await page.waitForTimeout(100);
+    ok((await page.textContent("#editDelete")).trim() === "Delete", tag + "tapping elsewhere takes Delete back");
     await page.fill("#editNote", "A note from the test");
     await page.screenshot({ path: path.join(shots, w + "-3-edit.png") });
     await page.click("#editDone"); await page.waitForTimeout(700);
@@ -78,8 +87,29 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.screenshot({ path: path.join(shots, w + "-5-kept.png") });
     await page.waitForTimeout(2200);
     ok(await page.locator("#vMeet").isVisible(), tag + "back on the thought after Keep");
-    // library
+    // library: pull the strip up to open it, pull the header down to shut it
+    const sb = await page.locator("#strip").boundingBox();
+    await page.mouse.move(w / 2, sb.y + 30); await page.mouse.down();
+    for (let i = 1; i <= 10; i++) await page.mouse.move(w / 2, sb.y + 30 - i * 40);
+    await page.mouse.up(); await page.waitForTimeout(600);
+    ok(await page.locator("#lib.open").count() === 1, tag + "pulling the strip up opens the library");
+    const hb = await page.locator("#lib h2").boundingBox();
+    await page.mouse.move(w / 2, hb.y + 5); await page.mouse.down();
+    for (let i = 1; i <= 10; i++) await page.mouse.move(w / 2, hb.y + 5 + i * 30);
+    await page.mouse.up(); await page.waitForTimeout(600);
+    ok(await page.locator("#lib.open").count() === 0, tag + "pulling the sheet down shuts it");
+    await page.mouse.move(w / 2, sb.y + 30); await page.mouse.down();
+    for (let i = 1; i <= 3; i++) { await page.mouse.move(w / 2, sb.y + 30 - i * 15); await page.waitForTimeout(60); }
+    await page.mouse.up(); await page.waitForTimeout(600);
+    ok(await page.locator("#lib.open").count() === 0, tag + "a short pull springs back shut");
     await page.click("#strip"); await page.waitForTimeout(700);
+    ok(await page.locator("#lib.open").count() === 1, tag + "tapping the strip opens the library");
+    await page.click('#seg [data-view="away"]'); await page.waitForTimeout(200);
+    ok(!/In rotation ·/.test(await page.textContent("#libList")) && /Put away ·/.test(await page.textContent("#libList")), tag + "Put away filter shows only put away");
+    await page.screenshot({ path: path.join(shots, w + "-6b-library-away.png") });
+    await page.click('#seg [data-view="on"]'); await page.waitForTimeout(200);
+    ok(/In rotation ·/.test(await page.textContent("#libList")) && !/Put away ·/.test(await page.textContent("#libList")), tag + "In rotation filter shows only rotation");
+    await page.click('#seg [data-view="all"]'); await page.waitForTimeout(200);
     await page.screenshot({ path: path.join(shots, w + "-6-library.png") });
     const lib = await page.textContent("#lib");
     ok(/brand new thought/.test(lib) && /A thought I lived/.test(lib), tag + "library lists new thought and put-away ones");
@@ -94,6 +124,26 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const after = await page.evaluate(() => localStorage.getItem("scales.thoughts.v1"));
     ok(JSON.stringify(JSON.parse(after)) === JSON.stringify(old), tag + "current app's data unchanged");
     ok(errs.length === 0, tag + "no console errors" + (errs.length ? ": " + errs.join(" | ") : ""));
+    await ctx.close();
+  }
+  // the iPhone app's bridge: ready, quiet reminders, daily save with the old data, and the put away buzz
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    await page.addInitScript((o) => {
+      window.__posts = [];
+      window.webkit = { messageHandlers: { scales: { postMessage: (m) => window.__posts.push(m) } } };
+      if (!sessionStorage.getItem("s")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("s", "1"); }
+    }, old);
+    await page.goto(base + "/next/?native=1"); await page.waitForTimeout(2000);
+    const types = await page.evaluate(() => window.__posts.map((m) => m.type));
+    ok(["ready", "unschedule", "badge", "save"].every((t) => types.includes(t)), "native: ready, unschedule, badge and save sent (" + types.join(",") + ")");
+    const saved = await page.evaluate(() => JSON.parse(window.__posts.find((m) => m.type === "save").json));
+    ok(saved.scales1 && saved.scales1["scales.thoughts.v1"] && Object.keys(saved.thoughts).length === 10, "native: daily save carries both apps' thoughts");
+    await page.evaluate(() => { window.__posts.length = 0; });
+    await page.keyboard.press("ArrowDown"); await page.waitForTimeout(400);
+    const hs = await page.evaluate(() => window.__posts.filter((m) => m.type === "haptic").map((m) => m.style));
+    ok(hs.join(",") === "thud,letgo", "native: put away buzzes thud then letgo (" + hs.join(",") + ")");
     await ctx.close();
   }
   // native link keeps ?native=1 both ways

@@ -178,3 +178,33 @@ test("the new app reads the old data and never writes to it", () => {
   assert.ok(!/removeItem\(\s*["']scales\.thoughts\.v1["']/.test(nx), "no delete of the old key");
   assert.match(nx, /scales\.next\.thoughts\.v1/);
 });
+
+test("mergeOld: adds thoughts written in the current app later, never overwrites, never revives a deleted one", () => {
+  const now = at(2026, 10, 29);
+  const store = N.importOld({ a: { id: "a", text: "First", status: "active" } }, now);
+  store.oa.text = "Edited here";
+  const old = {
+    a: { id: "a", text: "First, edited there", status: "active" },
+    b: { id: "b", text: "Written there later", status: "active" },
+    c: { id: "c", text: "Deleted here", status: "active" },
+    d: { id: "d", text: "Lived there", status: "shed", shed_at: "2026-10-28T00:00:00Z" }
+  };
+  const before = JSON.stringify(old);
+  assert.equal(N.mergeOld(store, old, now, ["oc"]), 2);
+  assert.equal(store.oa.text, "Edited here", "this app's copy wins");
+  assert.equal(store.ob.due, "2026-10-29", "a new one is due today");
+  assert.equal(store.oc, undefined, "a deleted one stays deleted");
+  assert.ok(store.od.away, "a lived one arrives put away");
+  assert.equal(JSON.stringify(old), before, "the old data is never changed");
+  assert.equal(N.mergeOld(store, old, now, ["oc"]), 0, "running it again adds nothing");
+});
+
+test("wiring: the new app saves daily through the iPhone app and quiets the old reminders", () => {
+  const nx = read("next/index.html");
+  assert.match(nx, /post\(\{ type: "save", json: JSON\.stringify\(backupData\(\)\), day: C\.dayKey\(now\(\)\) \}\)/);
+  assert.match(nx, /post\(\{ type: "ready" \}\); post\(\{ type: "unschedule" \}\); post\(\{ type: "badge", count: 0 \}\);/);
+  assert.match(nx, /"scales\.thoughts\.v1", "scales\.prefs\.v1", "scales\.activity\.v1", "scales\.quotes\.v1"/, "backups carry the current app's data as it is");
+  assert.ok(!/scales\.apikey\.v1/.test(nx), "never copies the API key");
+  const swift = read("ios/App/Haptics.swift");
+  for (const s of ["thud", "letgo", "signature", "medium", "success"]) assert.match(swift, new RegExp('case "' + s + '"'), s);
+});
