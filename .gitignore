@@ -4,3 +4,4 @@
 # The iPhone app's asset catalog is JSON; personal exports never live under ios/.
 !ios/**/*.json
 .DS_Store
+next-shots/

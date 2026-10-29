@@ -188,6 +188,12 @@ textarea::placeholder { color: var(--plum-faint); }
   var C = window.ScalesNext;
   var $ = function (id) { return document.getElementById(id); };
   var NATIVE = !!window.scalesNative || /[?&]native=1/.test(location.search);
+  // "Next one back tomorrow." / "on Fri." / "Nov 3." / "today."
+  function nextBackText(label) {
+    if (label === "Today" || label === "Tomorrow") return "Next one back " + label.toLowerCase() + ".";
+    if (/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$/.test(label)) return "Next one back on " + label + ".";
+    return "Next one back " + label + ".";
+  }
   var KEY = "scales.next.thoughts.v1", KEY_UI = "scales.next.ui.v1", OLD = "scales.thoughts.v1";
 
   function lsGet(k, d) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
@@ -258,7 +264,7 @@ textarea::placeholder { color: var(--plum-faint); }
     if (!t) {
       $("carry").hidden = true; $("srActs").hidden = true; $("empty").hidden = false;
       var nd = C.nextDue(store);
-      $("emptySub").textContent = nd ? "Next one back " + C.whenLabel(nd, now()).replace(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$/, "on $1") .toLowerCase().replace(/^on (\w)/, function (m, c) { return "on " + c.toUpperCase(); }) + "." : "Everything is put away.";
+      $("emptySub").textContent = nd ? nextBackText(C.whenLabel(nd, now())) : "Everything is put away.";
       return;
     }
     $("empty").hidden = true; $("carry").hidden = false; $("srActs").hidden = false;
