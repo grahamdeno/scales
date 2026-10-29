@@ -259,6 +259,9 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
       await p2.setInputFiles("#restoreFile", await d.path()); await p2.waitForTimeout(500);
       const ids = await p2.evaluate(() => Object.keys(JSON.parse(localStorage.getItem("scales.next.thoughts.v1") || "{}")));
       const want = Object.keys(bk.thoughts).filter((id) => !(bk.gone || []).includes(id));
+      const bms = await p2.evaluate(() => { const o = JSON.parse(localStorage.getItem("scales.next.thoughts.v1") || "{}"); return Object.keys(o).filter((k) => o[k].bookmarked).sort(); });
+      const wantBm = Object.keys(bk.thoughts).filter((k) => bk.thoughts[k].bookmarked).sort();
+      ok(wantBm.length >= 1 && JSON.stringify(bms) === JSON.stringify(wantBm), tag + "bookmarks come across on a new phone (" + bms.length + " of " + wantBm.length + ")");
       ok(want.every((id) => ids.includes(id)), tag + "A Back up file restores every thought on a new phone (" + n0 + " before, " + ids.length + " after, " + want.length + " in the file)");
       await ctx2.close();
     }

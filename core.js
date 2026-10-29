@@ -160,7 +160,8 @@
       due: typeof t.due === "string" && DAY_RE.test(t.due) ? t.due : today,
       // A put-away thought stays put away, whatever form the date took.
       away: typeof t.away === "string" && t.away ? t.away : t.away ? nowIso : null,
-      bookmarked: typeof t.bookmarked === "string" && t.bookmarked ? t.bookmarked : t.bookmarked ? nowIso : null,
+      // Kept as a time so the Bookmarked list can sort by it; a mark in any other form still means bookmarked, as of now.
+      bookmarked: t.bookmarked ? (typeof t.bookmarked === "string" && isFinite(Date.parse(t.bookmarked)) ? t.bookmarked : nowIso) : null,
       skips: Math.min(4, num(t.skips, 0)), thinks: num(t.thinks, 0), works: num(t.works, 0),
       seen: typeof t.seen === "string" ? t.seen : null, visits: visits, from: typeof t.from === "string" ? t.from : undefined };
   }

@@ -314,7 +314,7 @@ textarea::placeholder { color: var(--plum-faint); }
   if (!store) { store = C.importOld(lsGet(OLD, {}), now()); lsSet(KEY, store); }
   // Every open: anything still in Scales 1 that is not here yet joins. Nothing here is overwritten.
   else if (C.mergeOld(store, lsGet(OLD, {}), now(), lsGet(KEY_GONE, []))) lsSet(KEY, store);
-  var ui = Object.assign({ cur: null, ms: 0, worked: false, nudged: false, view: "all", saved: null }, lsGet(KEY_UI, {}));
+  var ui = Object.assign({ cur: null, ms: 0, worked: false, nudged: false, view: "all", saved: null, review: null }, lsGet(KEY_UI, {}));
   function save() { lsSet(KEY, store); }
   function saveUi() { lsSet(KEY_UI, ui); }
 

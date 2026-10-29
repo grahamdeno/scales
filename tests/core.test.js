@@ -371,3 +371,13 @@ test("restore (2.2.0): bookmarks come across, bad ones are cleaned, and an exist
   assert.ok(store.d.bookmarked, "any truthy mark still means bookmarked");
   assert.equal(store.e.bookmarked, null);
 });
+
+test("restore review (2.2.0): a bookmark in an odd form is kept as now, and Scales 1 thoughts arrive unbookmarked", () => {
+  const store = {};
+  N.restoreFrom(store, scales2File({ a: mk2("a", { bookmarked: "yesterday" }), b: mk2("b", { bookmarked: "" }), c: mk2("c", { bookmarked: 0 }) },
+    { scales1: { "scales.thoughts.v1": { x: { id: "x", text: "Old", status: "active" } } } }), NOW, []);
+  assert.equal(store.a.bookmarked, NOW.toISOString());
+  assert.equal(store.b.bookmarked, null); assert.equal(store.c.bookmarked, null);
+  assert.ok(!store.ox.bookmarked);
+  assert.deepEqual(N.bookmarked(store).map((t) => t.id), ["a"]);
+});
