@@ -39,8 +39,8 @@ Nav: Scales (icon) · Support · Privacy · button "Get the iPhone beta"
 
 **One thought at a time.**
 
-Write down what's on your mind. Scales hands it back later, one thought at a time, and notices how long you stay
-with each one.
+Write down what's on your mind. Scales hands it back later, one thought at a time, and lets how long you stay
+decide when it comes back.
 
 Buttons: "Get the iPhone beta" · "Open in your browser" (`/app/`)
 
@@ -150,11 +150,11 @@ On your phone. The iPhone app also saves everything once a day, and when you lea
 Files, On My iPhone, Scales when iCloud is off).
 
 **Can I make a backup myself?**
-Yes. Pull up Your thoughts and tap Back up at the bottom of the list.
+Yes. Open Your thoughts, tap the gear, and choose Back up.
 
 **How do I move to a new phone?**
-Restoring from a backup isn't in Scales yet. Keep your backups in iCloud Drive and email us; we'll help you bring
-your thoughts across.
+Install Scales on the new phone. Open Your thoughts, tap the gear, choose Restore from a backup, and pick the latest
+file in iCloud Drive, Scales. Restoring adds what's missing and never overwrites.
 
 **How do I delete everything?**
 Delete the app. Then remove the Scales folder in iCloud Drive if you don't want the backups. Nothing is kept anywhere
@@ -209,8 +209,5 @@ Buttons: "Home" · "Open the app"
 
 ## For Graham
 
-- **Restore is missing.** Scales 2 saves backups but can't read one back. The support page says so honestly. Adding
-  Restore (a file picker in the library that merges a backup, never overwriting) is a small Sonnet job; worth doing
-  before anyone else installs it.
-- The hero line "and notices how long you stay with each one" is the one claim that may feel watched. Alternative:
-  "and lets how long you stay decide when it comes back."
+- Restore is in 2.1.0 (Settings), so the support answers point there.
+- Hero line decided (29 October): "and lets how long you stay decide when it comes back."

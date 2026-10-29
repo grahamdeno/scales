@@ -138,44 +138,51 @@
   // because choosing a backup is asking for it.
   var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
   function num(v, d) { return typeof v === "number" && isFinite(v) && v >= 0 ? Math.floor(v) : d; }
-  function cleanThought(t, today) {
+  var own = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k); };
+  function cleanThought(t, today, nowIso) {
     if (!t || typeof t !== "object" || typeof t.id !== "string" || !t.id || typeof t.text !== "string" || !t.text.trim()) return null;
     var visits = Array.isArray(t.visits) ? t.visits.filter(function (v) { return v && typeof v === "object"; }).slice(-30) : [];
     return { id: t.id, text: t.text.trim().slice(0, 1500), note: typeof t.note === "string" ? t.note.slice(0, 1500) : "",
-      created: typeof t.created === "string" ? t.created : new Date(0).toISOString(),
+      created: typeof t.created === "string" && t.created ? t.created : nowIso,
       due: typeof t.due === "string" && DAY_RE.test(t.due) ? t.due : today,
-      away: typeof t.away === "string" && t.away ? t.away : null,
-      skips: num(t.skips, 0), thinks: num(t.thinks, 0), works: num(t.works, 0),
+      // A put-away thought stays put away, whatever form the date took.
+      away: typeof t.away === "string" && t.away ? t.away : t.away ? nowIso : null,
+      skips: Math.min(4, num(t.skips, 0)), thinks: num(t.thinks, 0), works: num(t.works, 0),
       seen: typeof t.seen === "string" ? t.seen : null, visits: visits, from: typeof t.from === "string" ? t.from : undefined };
   }
   function restoreFrom(store, data, now, gone) {
-    var res = { ok: false, kind: null, added: 0, gone: (gone || []).slice(), visits: [] };
+    var res = { ok: false, kind: null, added: 0, ids: [], gone: (gone || []).slice(), visits: [] };
     if (!data || typeof data !== "object" || Array.isArray(data) || !data.thoughts || typeof data.thoughts !== "object" || Array.isArray(data.thoughts)) return res;
-    var today = dayKey(now), incoming = {}, fileGone = Array.isArray(data.gone) ? data.gone.filter(function (x) { return typeof x === "string"; }) : [];
-    var v2 = data.app === "scales-next" || (data.app === "scales" && typeof data.version === "string" && /^2\./.test(data.version));
-    var v1 = data.app === "scales" && !v2;
-    if (!v2 && !v1) return res;
+    var today = dayKey(now), nowIso = now.toISOString(), incoming = Object.create(null);
+    var fileGone = Array.isArray(data.gone) ? data.gone.filter(function (x) { return typeof x === "string"; }) : [];
+    // Scales 1 wrote version 1 (a number). Scales 2 and the trial write "2.x.y". Anything else is a file from a Scales
+    // this one does not know (a later one, most likely) and is refused rather than guessed at.
+    var ver = data.version;
+    var v2 = data.app === "scales-next" || (data.app === "scales" && typeof ver === "string" && /^2\./.test(ver));
+    var v1 = data.app === "scales" && (ver === 1 || ver === "1" || (typeof ver === "string" && /^1\./.test(ver)));
+    if (!v2 && !v1) { if (data.app === "scales" || data.app === "scales-next") res.kind = "newer"; return res; }
     res.kind = v2 ? "scales2" : "scales1";
     if (v2) {
-      Object.keys(data.thoughts).forEach(function (k) { var t = cleanThought(data.thoughts[k], today); if (t) incoming[t.id] = t; });
+      Object.keys(data.thoughts).forEach(function (k) { var t = cleanThought(data.thoughts[k], today, nowIso); if (t) incoming[t.id] = t; });
       // Scales 1's own thoughts carried inside a Scales 2 backup join too, spread over the coming days as on first open.
       var old = data.scales1 && typeof data.scales1 === "object" ? data.scales1["scales.thoughts.v1"] : null;
-      if (old && typeof old === "object") {
+      if (old && typeof old === "object" && !Array.isArray(old)) {
         var fresh = importOld(old, now);
-        Object.keys(fresh).forEach(function (id) { if (!incoming[id]) incoming[id] = cleanThought(fresh[id], today) || fresh[id]; });
+        Object.keys(fresh).forEach(function (id) { if (!(id in incoming)) incoming[id] = fresh[id]; });
       }
     } else {
       var f1 = importOld(data.thoughts, now);
       Object.keys(f1).forEach(function (id) { incoming[id] = f1[id]; });
     }
-    var goneSet = {}; res.gone.forEach(function (id) { goneSet[id] = true; });
-    var skipFile = {}; fileGone.forEach(function (id) { skipFile[id] = true; });
+    var goneSet = Object.create(null); res.gone.forEach(function (id) { goneSet[id] = true; });
+    var skipFile = Object.create(null); fileGone.forEach(function (id) { skipFile[id] = true; });
     Object.keys(incoming).forEach(function (id) {
-      if (store[id] || skipFile[id]) return;
-      store[id] = incoming[id]; res.added++;
-      if (goneSet[id]) { delete goneSet[id]; }
+      // "__proto__" can't be stored as a key of a plain object without changing the object itself, so it is skipped.
+      if (id === "__proto__" || own(store, id) || skipFile[id]) return;
+      store[id] = incoming[id]; res.added++; res.ids.push(id);
+      delete goneSet[id];
     });
-    fileGone.forEach(function (id) { if (!store[id]) goneSet[id] = true; });
+    fileGone.forEach(function (id) { if (!own(store, id)) goneSet[id] = true; });
     res.gone = Object.keys(goneSet);
     res.ok = true;
     if (v2 && Array.isArray(data.visits)) res.visits = data.visits.filter(function (e) { return e && typeof e === "object" && typeof e.at === "string" && typeof e.id === "string" && typeof e.ms === "number"; });

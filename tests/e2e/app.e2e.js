@@ -147,6 +147,36 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok((await page.textContent("#restoreMsg")).trim() === "Added 1 thought.", tag + "A Scales 1 backup restores too");
     await page.setInputFiles("#restoreFile", fb); await page.waitForTimeout(400);
     ok(/isn't a Scales backup/.test(await page.textContent("#restoreMsg")), tag + "A file that is not a backup is refused");
+    // Restore review: a file from a later Scales is refused with its own words
+    const fn = path.join(shots, "newer.json");
+    fs.writeFileSync(fn, JSON.stringify({ app: "scales", version: "3.0.0", thoughts: { n1: mk("n1", "From the future") } }));
+    await page.setInputFiles("#restoreFile", fn); await page.waitForTimeout(400);
+    ok(/from a newer Scales/.test(await page.textContent("#restoreMsg")), tag + "A backup from a later Scales is refused, not misread");
+    // Restore review: when the phone has no room, nothing changes
+    const before = await page.evaluate(() => localStorage.getItem("scales.next.thoughts.v1"));
+    const beforeGone = await page.evaluate(() => localStorage.getItem("scales.next.gone.v1"));
+    await page.evaluate(() => { window.__set = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error("QuotaExceededError"); }; });
+    const f3 = path.join(shots, "restore3.json");
+    fs.writeFileSync(f3, JSON.stringify({ app: "scales", version: "2.1.0", thoughts: { q1: mk("q1", "No room for me") }, gone: ["qq"] }));
+    await page.setInputFiles("#restoreFile", f3); await page.waitForTimeout(400);
+    await page.evaluate(() => { Storage.prototype.setItem = window.__set; });
+    ok(/wasn't room/.test(await page.textContent("#restoreMsg")) &&
+      before === await page.evaluate(() => localStorage.getItem("scales.next.thoughts.v1")) &&
+      beforeGone === await page.evaluate(() => localStorage.getItem("scales.next.gone.v1")) &&
+      !/No room for me/.test(await page.textContent("#libList")), tag + "With no room to save, the restore changes nothing");
+    // Restore review: the file Back up made, restored on a new phone, brings every thought across
+    if (w === 390) {
+      const ctx2 = await browser.newContext({ viewport: { width: 390, height: 844 } }); const p2 = await ctx2.newPage();
+      await p2.goto(base + "/"); await p2.waitForTimeout(600);
+      await p2.evaluate(() => { localStorage.clear(); }); await p2.reload(); await p2.waitForTimeout(600);
+      const n0 = await p2.evaluate(() => Object.keys(JSON.parse(localStorage.getItem("scales.next.thoughts.v1") || "{}")).length);
+      await p2.evaluate(() => { const i = document.getElementById("restoreFile"); i.value = ""; });
+      await p2.setInputFiles("#restoreFile", await d.path()); await p2.waitForTimeout(500);
+      const ids = await p2.evaluate(() => Object.keys(JSON.parse(localStorage.getItem("scales.next.thoughts.v1") || "{}")));
+      const want = Object.keys(bk.thoughts).filter((id) => !(bk.gone || []).includes(id));
+      ok(want.every((id) => ids.includes(id)), tag + "A Back up file restores every thought on a new phone (" + n0 + " before, " + ids.length + " after, " + want.length + " in the file)");
+      await ctx2.close();
+    }
     // Help, and back
     await page.click("#setHelp"); await page.waitForTimeout(500);
     ok(await page.locator("#help.open").count() === 1 && /20 seconds or less/.test(await page.textContent("#help")) && /30 seconds or more/.test(await page.textContent("#help")), tag + "How Scales works opens with the new times");

@@ -261,7 +261,7 @@ textarea::placeholder { color: var(--plum-faint); }
   var KEY = "scales.next.thoughts.v1", KEY_UI = "scales.next.ui.v1", KEY_GONE = "scales.next.gone.v1", KEY_LOG = "scales.next.log.v1", OLD = "scales.thoughts.v1";
 
   function lsGet(k, d) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
-  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   function post(msg) { if (!NATIVE) return; try { window.webkit.messageHandlers.scales.postMessage(msg); } catch (_) {} }
   function haptic(style) { post({ type: "haptic", style: style }); }
   // Longer moments, built from the iPhone app's own styles, so no new app build is needed.
@@ -662,12 +662,17 @@ textarea::placeholder { color: var(--plum-faint); }
     rd.onload = function () {
       var data = null; try { data = JSON.parse(String(rd.result)); } catch (e) {}
       var r = C.restoreFrom(store, data, now(), lsGet(KEY_GONE, []));
-      if (!r.ok) { restoreMsg("That file isn't a Scales backup.", false); return; }
-      if (r.added) save();
+      if (!r.ok) { restoreMsg(r.kind === "newer" ? "That backup is from a newer Scales. Update Scales, then try again." : "That file isn't a Scales backup.", false); return; }
+      // Thoughts first. If they can't be stored, take them back out and change nothing else.
+      if (r.added && !lsSet(KEY, store)) {
+        r.ids.forEach(function (id) { delete store[id]; });
+        restoreMsg("There wasn't room on this phone to add them. Nothing changed.", false); return;
+      }
       lsSet(KEY_GONE, r.gone);
       if (r.visits.length) { var lg = lsGet(KEY_LOG, []); C.mergeLog(lg, r.visits); lsSet(KEY_LOG, lg); }
       $("stripN").textContent = C.list(store).length; needsRender = true; renderLib();
       restoreMsg(r.added ? "Added " + r.added + (r.added === 1 ? " thought." : " thoughts.") : "Nothing new in that backup.", true);
+      if (r.added) dailySave();
       if (r.added) haptic("success");
     };
     rd.readAsText(f);

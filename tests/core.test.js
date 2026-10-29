@@ -284,7 +284,7 @@ test("restore: damaged thoughts are skipped or cleaned, never trusted", () => {
   assert.equal(r.added, 2);
   assert.equal(store.odd.due, "2026-10-29", "a bad date becomes today");
   assert.equal(store.odd.skips, 0); assert.equal(store.odd.thinks, 0); assert.equal(store.odd.works, 2);
-  assert.equal(store.odd.away, null); assert.equal(store.odd.note, ""); assert.deepEqual(store.odd.visits, []);
+  assert.ok(store.odd.away, "a put-away mark in an odd form still means put away"); assert.equal(store.odd.note, ""); assert.deepEqual(store.odd.visits, []);
 });
 
 test("restore: deletions travel, but a thought in the file comes back even if it was deleted here", () => {
@@ -306,4 +306,38 @@ test("restore: visit-log entries merge without duplicates and stay in time order
   assert.deepEqual(log.map((x) => x.id), ["a", "c", "b"]);
   const r = N.restoreFrom({}, scales2File({ a: mk2("a") }, { visits: [e("2026-10-28T00:00:00Z", "a"), { bad: true }] }), NOW, []);
   assert.equal(r.visits.length, 1);
+});
+
+test("restore review (2.1.0): a backup from a later Scales is refused, not read as Scales 1", () => {
+  const store = { a: mk2("a") }, snap = JSON.stringify(store);
+  for (const v of ["3.0.0", "10.1", 2, null, undefined]) {
+    const r = N.restoreFrom(store, { app: "scales", version: v, thoughts: { b: mk2("b") } }, NOW, []);
+    assert.equal(r.ok, false, String(v)); assert.equal(r.kind, "newer");
+  }
+  assert.equal(JSON.stringify(store), snap, "nothing added, and no o-prefixed copies");
+  assert.equal(N.restoreFrom({}, { app: "scales", version: "1", thoughts: {} }, NOW, []).kind, "scales1");
+});
+
+test("restore review (2.1.0): ids that look like built-in names are handled like any other", () => {
+  const store = {};
+  const file = scales2File(JSON.parse('{"a":{"id":"constructor","text":"C"},"b":{"id":"toString","text":"T"},"c":{"id":"__proto__","text":"P"}}'));
+  const r = N.restoreFrom(store, file, NOW, []);
+  assert.deepEqual(Object.keys(store).sort(), ["constructor", "toString"]);
+  assert.equal(r.added, 2); assert.deepEqual(r.ids.sort(), ["constructor", "toString"]);
+  assert.equal(Object.getPrototypeOf(store), Object.prototype, "nothing reaches the object's prototype");
+  assert.equal(N.restoreFrom(store, file, NOW, []).added, 0);
+});
+
+test("restore review (2.1.0): r.ids lists exactly what was added, so the page can take it back if saving fails", () => {
+  const store = { a: mk2("a") };
+  const r = N.restoreFrom(store, scales2File({ a: mk2("a"), b: mk2("b"), c: mk2("c") }), NOW, []);
+  assert.deepEqual(r.ids.sort(), ["b", "c"]);
+  r.ids.forEach((id) => delete store[id]);
+  assert.deepEqual(Object.keys(store), ["a"]);
+});
+
+test("restore review (2.1.0): restored counts stay in range and missing dates become now", () => {
+  const store = {};
+  N.restoreFrom(store, scales2File({ x: mk2("x", { skips: 40, created: 7 }) }), NOW, []);
+  assert.equal(store.x.skips, 4); assert.equal(store.x.created, NOW.toISOString());
 });
