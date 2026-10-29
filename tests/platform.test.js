@@ -95,7 +95,9 @@ test("TestFlight preview: Apple's AppTransaction for a Sandbox copy of this app 
   const swift = read("ios/App/WebViewController.swift"), yml = read("ios/project.yml");
   assert.match(swift, /AppTransaction\.shared/); assert.match(swift, /ScalesPlusPreview/);
   assert.match(yml, /UIDeviceFamily: \[1\]/, "iPhone only, or the App Store asks for iPad screenshots");
-  assert.ok((yml.match(/TARGETED_DEVICE_FAMILY: "1"/g) || []).length >= 2, "iPhone only at the project and the target");
+  const tgt = yml.slice(yml.indexOf("\ntargets:"), yml.indexOf("\nschemes:"));
+  assert.equal((tgt.match(/^    settings:/gm) || []).length, 1, "one settings block on the target: a second one is silently ignored");
+  assert.match(tgt, /^        TARGETED_DEVICE_FAMILY: "1"/m, "iPhone only on the target itself, where it beats XcodeGen's iOS default of 1,2");
   assert.match(read(".github/workflows/ios.yml"), /UIDeviceFamily/, "CI stops an upload that lists iPad");
   assert.match(yml, /ScalesPlusPreview: false/, "off for the App Store: Scales 2 has no AI and Plus is not offered");
 });

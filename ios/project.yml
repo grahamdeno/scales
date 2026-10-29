@@ -20,9 +20,6 @@ targets:
   Scales:
     type: application
     platform: iOS
-    settings:
-      base:
-        TARGETED_DEVICE_FAMILY: "1"
     sources: [App]
     info:
       path: App/Info.plist
@@ -63,6 +60,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.grahamdeno.scales
+        # iPhone only: XcodeGen's iOS preset says "1,2" (iPhone and iPad) for an app target, and a target setting beats the
+        # project-level one, so it is set here. (A second `settings:` key on this target is silently ignored, so keep one.)
+        TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # Pistachio, Plum and Bone, chosen in Settings; the main icon (Automatic) follows the Home Screen (2.2.0).
         ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: AppIcon-Pistachio AppIcon-Plum AppIcon-Bone
