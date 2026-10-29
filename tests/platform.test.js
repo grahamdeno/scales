@@ -27,7 +27,7 @@ test("the Scales 2 website: four pages, strict CSP, no inline code, no Scales 1 
     for (const bad of ["Scales Plus", "Ledger", "Reflect", "Lived", "Wikiquote", "Weigh your thoughts", "Skip"]) {
       assert.ok(!h.includes(bad), p + " still mentions " + bad);
     }
-    assert.match(h, /href="\/site\.css"/);
+    assert.match(h, /href="\/site\.css\?v=2\.1\.0"/);
   }
   assert.doesNotMatch(read("site/site.css"), /\u2014|smoke|#0a84ff|blue/i);
   assert.match(read("site/site.css"), /--pist:#B9C9A3/);
@@ -39,7 +39,7 @@ test("the Scales 2 website: four pages, strict CSP, no inline code, no Scales 1 
   assert.match(sup, /tap the gear, and choose Back up/); assert.match(sup, /Restoring adds what's missing and never\s+overwrites|Restoring adds what's missing and never overwrites/);
   for (const f of ["shot-meet.png", "shot-pull.png", "shot-library.png", "icon.png"]) assert.ok(fs.existsSync(path.join(__dirname, "..", "site", "img", f)), f);
   const wf = read(".github/workflows/site.yml");
-  assert.match(wf, /check \/ "One thought at a time"/); assert.match(wf, /check \/site\.css "--pist"/);
+  assert.match(wf, /check \/ "One thought at a time"/); assert.match(wf, /check "\/site\.css\?v=2\.1\.0" "--pist"/);
 });
 
 // ---------- 1.72.0: Scales Plus, checked on the server ----------

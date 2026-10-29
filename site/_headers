@@ -9,3 +9,5 @@
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
+/site.css
+  Cache-Control: public, max-age=0, must-revalidate
