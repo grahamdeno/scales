@@ -1,0 +1,711 @@
+{
+ "about": "Scales sets. Quoted lines are given in modern English; each keeps its public-domain original (\"original\"), checked word for word against the source by scripts/verify-sets.js. \"After Jung\" lines are Jung's ideas in our own words, not quotes. Questions are written for Scales.",
+ "starters": [
+  "fr-resolution",
+  "ep-views",
+  "ma-dyed",
+  "pa-chamber",
+  "q-busy"
+ ],
+ "sources": {
+  "franklin": {
+   "title": "Autobiography",
+   "by": "Benjamin Franklin",
+   "edition": "Project Gutenberg #20203",
+   "file": "Autobiography-of-Benjamin-Franklin_20203/20203.txt",
+   "rendering": "Modernized for Scales from Franklin's own wording"
+  },
+  "epictetus": {
+   "title": "The Enchiridion",
+   "by": "Epictetus",
+   "edition": "Thomas Wentworth Higginson translation (1865), Project Gutenberg #45109",
+   "file": "The-Enchiridion_45109/45109-0.txt",
+   "rendering": "Modern English for Scales, from the Higginson translation"
+  },
+  "marcus": {
+   "title": "Meditations",
+   "by": "Marcus Aurelius",
+   "edition": "George Long translation (1862), Project Gutenberg #6920",
+   "file": "Thoughts-of-Marcus-Aurelius_6920/6920.txt",
+   "rendering": "Modern English for Scales, from the George Long translation"
+  },
+  "karamazov": {
+   "title": "The Brothers Karamazov",
+   "by": "Fyodor Dostoevsky",
+   "edition": "Constance Garnett translation (1912), Project Gutenberg #28054",
+   "file": "The-Brothers-Karamazov_28054/28054.txt",
+   "rendering": "Modern English for Scales, from the Garnett translation"
+  },
+  "crime": {
+   "title": "Crime and Punishment",
+   "by": "Fyodor Dostoevsky",
+   "edition": "Constance Garnett translation (1914), Project Gutenberg #2554",
+   "file": "Crime-and-Punishment_2554/2554.txt",
+   "rendering": "Modern English for Scales, from the Garnett translation"
+  },
+  "underground": {
+   "title": "Notes from Underground",
+   "by": "Fyodor Dostoevsky",
+   "edition": "Constance Garnett translation (1918), Project Gutenberg #600",
+   "file": "Notes-from-the-Underground_600/600.txt",
+   "rendering": "Modern English for Scales, from the Garnett translation"
+  },
+  "nietzsche": {
+   "title": "Beyond Good and Evil",
+   "by": "Friedrich Nietzsche",
+   "edition": "German original (1886), Project Gutenberg #7204",
+   "file": "jenseits.txt",
+   "rendering": "Translated from the German for Scales"
+  },
+  "descartes": {
+   "title": "Discourse on Method",
+   "by": "René Descartes",
+   "edition": "John Veitch translation, Project Gutenberg #59",
+   "file": "Discourse-on-the-Method-of-Rightly-Conducting-One-s-Reason-and-of-Seeking-Truth-in-the-Sciences_59/59.txt",
+   "rendering": "Modern English for Scales, from the Veitch translation"
+  },
+  "montaigne": {
+   "title": "Essays",
+   "by": "Michel de Montaigne",
+   "edition": "Charles Cotton translation, Project Gutenberg #3600",
+   "file": "Essays-of-Michel-de-Montaigne---Complete_3600/3600.txt",
+   "rendering": "Modern English for Scales, from the Cotton translation"
+  },
+  "pascal": {
+   "title": "Pensées",
+   "by": "Blaise Pascal",
+   "edition": "W. F. Trotter translation (1910), Project Gutenberg #18269",
+   "file": "Pascal-s-Pens-es_18269/18269-0.txt",
+   "rendering": "Modern English for Scales, from the Trotter translation"
+  },
+  "emerson": {
+   "title": "Self-Reliance",
+   "by": "Ralph Waldo Emerson",
+   "edition": "Essays (1841), Project Gutenberg #16643",
+   "file": "Essays-by-Ralph-Waldo-Emerson_16643/16643.txt",
+   "rendering": "Lightly modernized for Scales"
+  },
+  "thoreau": {
+   "title": "Walden",
+   "by": "Henry David Thoreau",
+   "edition": "Walden (1854), Project Gutenberg #205",
+   "file": "Walden-and-On-The-Duty-Of-Civil-Disobedience_205/205.txt",
+   "rendering": "Lightly modernized for Scales"
+  }
+ },
+ "sets": [
+  {
+   "id": "franklin",
+   "name": "Franklin's Virtues",
+   "blurb": "The rules Benjamin Franklin worked on, one at a time.",
+   "items": [
+    {
+     "id": "fr-temperance",
+     "src": "franklin",
+     "where": "Temperance",
+     "text": "Don't eat until you feel dull. Don't drink until you feel tipsy.",
+     "original": "Eat not to dullness; drink not to elevation."
+    },
+    {
+     "id": "fr-silence",
+     "src": "franklin",
+     "where": "Silence",
+     "text": "Say only what may help others or yourself. Avoid idle talk.",
+     "original": "Speak not but what may benefit others or yourself; avoid trifling conversation."
+    },
+    {
+     "id": "fr-order",
+     "src": "franklin",
+     "where": "Order",
+     "text": "Give everything you own its place, and every part of your work its time.",
+     "original": "Let all your things have their places; let each part of your business have its time."
+    },
+    {
+     "id": "fr-resolution",
+     "src": "franklin",
+     "where": "Resolution",
+     "text": "Decide to do what you should, then do what you decided, without fail.",
+     "original": "Resolve to perform what you ought; perform without fail what you resolve."
+    },
+    {
+     "id": "fr-frugality",
+     "src": "franklin",
+     "where": "Frugality",
+     "text": "Spend only to do good for others or yourself. In other words, waste nothing.",
+     "original": "Make no expense but to do good to others or yourself; i. e., waste nothing."
+    },
+    {
+     "id": "fr-industry",
+     "src": "franklin",
+     "where": "Industry",
+     "text": "Don't waste time. Always be doing something useful. Cut out everything unnecessary.",
+     "original": "Lose no time; be always employ'd in something useful; cut off all unnecessary actions."
+    },
+    {
+     "id": "fr-sincerity",
+     "src": "franklin",
+     "where": "Sincerity",
+     "text": "Don't deceive in ways that hurt. Think honestly and fairly, and speak the same way.",
+     "original": "Use no hurtful deceit; think innocently and justly; and, if you speak, speak accordingly."
+    },
+    {
+     "id": "fr-justice",
+     "src": "franklin",
+     "where": "Justice",
+     "text": "Wrong no one, either by harming them or by failing to do what you owe them.",
+     "original": "Wrong none by doing injuries, or omitting the benefits that are your duty."
+    },
+    {
+     "id": "fr-moderation",
+     "src": "franklin",
+     "where": "Moderation",
+     "text": "Avoid extremes. Don't resent an injury as much as you think it deserves.",
+     "original": "Avoid extreams; forbear resenting injuries so much as you think they deserve."
+    },
+    {
+     "id": "fr-cleanliness",
+     "src": "franklin",
+     "where": "Cleanliness",
+     "text": "Keep your body, your clothes and your home clean.",
+     "original": "Tolerate no uncleanliness in body, cloaths, or habitation."
+    },
+    {
+     "id": "fr-tranquillity",
+     "src": "franklin",
+     "where": "Tranquillity",
+     "text": "Don't be upset by small things, or by accidents that are common or can't be avoided.",
+     "original": "Be not disturbed at trifles, or at accidents common or unavoidable."
+    },
+    {
+     "id": "fr-humility",
+     "src": "franklin",
+     "where": "Humility",
+     "text": "Imitate Jesus and Socrates.",
+     "original": "Imitate Jesus and Socrates."
+    },
+    {
+     "id": "fr-pride",
+     "src": "franklin",
+     "where": "On pride",
+     "text": "Even if I believed I had completely overcome my pride, I would probably be proud of my humility.",
+     "original": "Even if I could conceive that I had compleatly overcome it, I should probably be proud of my humility."
+    }
+   ]
+  },
+  {
+   "id": "stoics",
+   "name": "The Stoics",
+   "blurb": "Epictetus and Marcus Aurelius on what is yours to govern.",
+   "items": [
+    {
+     "id": "ep-power",
+     "src": "epictetus",
+     "where": "1",
+     "text": "Some things are within our power, and some things are not.",
+     "original": "There are things which are within our power, and there are things which are beyond our power."
+    },
+    {
+     "id": "ep-views",
+     "src": "epictetus",
+     "where": "5",
+     "text": "People are not disturbed by things, but by the views they take of them.",
+     "original": "Men are disturbed not by things, but by the views which they take of things."
+    },
+    {
+     "id": "ep-demand",
+     "src": "epictetus",
+     "where": "8",
+     "text": "Don't ask for things to happen the way you want. Want them to happen the way they do, and your life will go well.",
+     "original": "Demand not that events should happen as you wish; but wish them to happen as they do happen, and you will go on well."
+    },
+    {
+     "id": "ep-lost",
+     "src": "epictetus",
+     "where": "11",
+     "text": "Never say of anything, “I have lost it.” Say, “I have given it back.”",
+     "original": "Never say of anything, “I have lost it,” but, “I have restored it.”"
+    },
+    {
+     "id": "ep-foolish",
+     "src": "epictetus",
+     "where": "13",
+     "text": "If you want to improve, be willing to look foolish and ignorant about outside things.",
+     "original": "If you would improve, be content to be thought foolish and dull with regard to externals."
+    },
+    {
+     "id": "ep-actions",
+     "src": "epictetus",
+     "where": "46",
+     "text": "Don't call yourself a philosopher, and don't lecture people about your principles. Show them in what you do.",
+     "original": "Never proclaim yourself a philosopher, nor make much talk among the ignorant about your principles, but show them by actions."
+    },
+    {
+     "id": "ep-delay",
+     "src": "epictetus",
+     "where": "50",
+     "text": "How long will you wait before you demand the best of yourself, and stop going against your own good judgment?",
+     "original": "How long, then, will you delay to demand of yourself the noblest improvements, and in no instance to transgress the judgments of reason?"
+    },
+    {
+     "id": "ma-morning",
+     "src": "marcus",
+     "where": "II.1",
+     "text": "Begin each morning by telling yourself: today I will meet people who are meddling, ungrateful, arrogant, dishonest, jealous and unfriendly.",
+     "original": "Begin the morning by saying to thyself, I shall meet with the busybody, the ungrateful, arrogant, deceitful, envious, unsocial."
+    },
+    {
+     "id": "ma-present",
+     "cut": true,
+     "src": "marcus",
+     "where": "II.14",
+     "text": "The present moment is the only thing anyone can lose.",
+     "original": "The present is the only thing of which a man can be deprived."
+    },
+    {
+     "id": "ma-retreat",
+     "cut": true,
+     "src": "marcus",
+     "where": "IV.3",
+     "text": "There is no quieter or more untroubled place to retreat to than your own mind.",
+     "original": "For nowhere either with more quiet or more freedom from trouble does a man retire than into his own soul."
+    },
+    {
+     "id": "ma-opinion",
+     "src": "marcus",
+     "where": "IV.3",
+     "text": "The universe is change. Life is how you see it.",
+     "original": "The universe is transformation: life is opinion."
+    },
+    {
+     "id": "ma-tenthousand",
+     "src": "marcus",
+     "where": "IV.17",
+     "text": "Don't live as if you had ten thousand years. Death is near. While you are alive, and while you still can, be good.",
+     "original": "Do not act as if thou wert going to live ten thousand years. Death hangs over thee. While thou livest, while it is in thy power, be good."
+    },
+    {
+     "id": "ma-neighbor",
+     "cut": true,
+     "src": "marcus",
+     "where": "IV.18",
+     "text": "How much trouble you avoid when you stop watching what others say, do or think, and pay attention only to what you are doing.",
+     "original": "How much trouble he avoids who does not look to see what his neighbor says or does or thinks, but only to what he does himself."
+    },
+    {
+     "id": "ma-dyed",
+     "src": "marcus",
+     "where": "V.16",
+     "text": "Your mind takes on the color of the thoughts you think most often. The soul is dyed by its thoughts.",
+     "original": "Such as are thy habitual thoughts, such also will be the character of thy mind; for the soul is dyed by the thoughts."
+    },
+    {
+     "id": "ma-avenge",
+     "src": "marcus",
+     "where": "VI.6",
+     "text": "The best revenge is not to become like the person who wronged you.",
+     "original": "The best way of avenging thyself is not to become like [the wrong-doer]."
+    },
+    {
+     "id": "ma-happy",
+     "src": "marcus",
+     "where": "VII.67",
+     "text": "Very little is needed to live a happy life.",
+     "original": "Very little indeed is necessary for living a happy life."
+    },
+    {
+     "id": "ma-pained",
+     "src": "marcus",
+     "where": "VIII.47",
+     "text": "When something outside you causes you pain, it is not the thing that disturbs you but your judgment of it. And you can drop that judgment right now.",
+     "original": "If thou art pained by any external thing, it is not this thing that disturbs thee, but thy own judgment about it. And it is in thy power to wipe out this judgment now."
+    },
+    {
+     "id": "ma-goodman",
+     "src": "marcus",
+     "where": "X.16",
+     "text": "Stop arguing about what a good person should be. Be one.",
+     "original": "No longer talk at all about the kind of man that a good man ought to be, but be such."
+    },
+    {
+     "id": "ma-right",
+     "src": "marcus",
+     "where": "XII.17",
+     "text": "If it isn't right, don't do it. If it isn't true, don't say it.",
+     "original": "If it is not right, do not do it: if it is not true, do not say it."
+    }
+   ]
+  },
+  {
+   "id": "know",
+   "name": "Know Yourself",
+   "blurb": "Writers who looked hard at the mind, the self and the way we live.",
+   "items": [
+    {
+     "id": "do-lie",
+     "src": "karamazov",
+     "where": "Book II, ch. 2",
+     "text": "Above all, don't lie to yourself. If you lie to yourself and listen to your own lie, you reach the point where you can't see the truth inside you or around you, and you lose respect for yourself and for others.",
+     "original": "Above all, don't lie to yourself. The man who lies to himself and listens to his own lie comes to such a pass that he cannot distinguish the truth within him, or around him, and so loses all respect for himself and for others."
+    },
+    {
+     "id": "do-pain",
+     "src": "crime",
+     "where": "Part III, ch. 5",
+     "text": "Pain and suffering always come with a broad mind and a deep heart.",
+     "original": "Pain and suffering are always inevitable for a large intelligence and a deep heart."
+    },
+    {
+     "id": "do-conscious",
+     "src": "underground",
+     "where": "Part I, ch. 2",
+     "text": "I swear that being too conscious is an illness, a real and complete illness.",
+     "original": "I swear, gentlemen, that to be too conscious is an illness--a real thorough-going illness."
+    },
+    {
+     "id": "ni-memory",
+     "src": "nietzsche",
+     "where": "68",
+     "text": "“I did that,” says my memory. “I could not have done that,” says my pride, and will not give in. In the end, memory gives way.",
+     "original": "\"Das habe ich gethan\" sagt mein Gedächtniss. Das kann ich nicht gethan haben - sagt mein Stolz und bleibt unerbittlich. Endlich - giebt das Gedächtniss nach."
+    },
+    {
+     "id": "ni-monsters",
+     "src": "nietzsche",
+     "where": "146",
+     "text": "Whoever fights monsters should take care not to become a monster in the process. And if you stare long into an abyss, the abyss stares back into you.",
+     "original": "Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein."
+    },
+    {
+     "id": "ni-tests",
+     "src": "nietzsche",
+     "where": "41",
+     "text": "Don't dodge your own tests, even though they may be the most dangerous game there is, and in the end you take them with no witness and no judge but yourself.",
+     "original": "Man soll seinen Proben nicht aus dem Wege gehn, obgleich sie vielleicht das gefährlichste Spiel sind, das man spielen kann, und zuletzt nur Proben, die vor uns selber als Zeugen und vor keinem anderen Richter abgelegt werden."
+    },
+    {
+     "id": "ni-despise",
+     "src": "nietzsche",
+     "where": "78",
+     "original": "Wer sich selbst verachtet, achtet sich doch immer noch dabei als Verächter.",
+     "text": "Whoever despises himself still respects himself as the one doing the despising."
+    },
+    {
+     "id": "ni-desire",
+     "src": "nietzsche",
+     "where": "175",
+     "original": "Man liebt zuletzt seine Begierde, und nicht das Begehrte.",
+     "text": "In the end, we love our desire, not the thing we desired."
+    },
+    {
+     "id": "de-apply",
+     "src": "descartes",
+     "where": "Part I",
+     "text": "Having a good mind is not enough. What matters most is using it well.",
+     "original": "For to be possessed of a vigorous mind is not enough; the prime requisite is rightly to apply it."
+    },
+    {
+     "id": "de-slowly",
+     "src": "descartes",
+     "where": "Part I",
+     "text": "Those who move slowly can go much further, if they keep to the right road, than those who run and leave it.",
+     "original": "Those who travel very slowly may yet make far greater progress, provided they keep always to the straight road, than those who, while they run, forsake it."
+    },
+    {
+     "id": "de-conquer",
+     "cut": true,
+     "src": "descartes",
+     "where": "Part III",
+     "text": "Try to master yourself rather than fortune, and to change your desires rather than the order of the world.",
+     "original": "My third maxim was to endeavor always to conquer myself rather than fortune, and change my desires rather than the order of the world."
+    },
+    {
+     "id": "mo-own",
+     "src": "montaigne",
+     "where": "Of solitude",
+     "text": "The greatest thing in the world is to know that you belong to yourself.",
+     "original": "The greatest thing in the world is for a man to know that he is his own."
+    },
+    {
+     "id": "mo-backshop",
+     "src": "montaigne",
+     "where": "Of solitude",
+     "text": "Keep a back room of your own, entirely free, where you can find your real freedom and solitude.",
+     "original": "We must reserve a backshop, wholly our own and entirely free, wherein to settle our true liberty, our principal solitude and retreat."
+    },
+    {
+     "id": "mo-fear",
+     "cut": true,
+     "src": "montaigne",
+     "where": "Of fear",
+     "text": "The thing I am most afraid of is fear.",
+     "original": "The thing in the world I am most afraid of is fear."
+    },
+    {
+     "id": "mo-ourselves",
+     "cut": true,
+     "src": "montaigne",
+     "where": "Of the inconstancy of our actions",
+     "text": "We are as different from ourselves as we are from other people.",
+     "original": "There is as much difference betwixt us and ourselves as betwixt us and others."
+    },
+    {
+     "id": "mo-study",
+     "cut": true,
+     "src": "montaigne",
+     "where": "Of experience",
+     "text": "I study myself more than any other subject. It is my metaphysics and my physics.",
+     "original": "I study myself more than any other subject; 'tis my metaphysic, my physic."
+    },
+    {
+     "id": "pa-chamber",
+     "src": "pascal",
+     "where": "139",
+     "text": "All human unhappiness comes from one thing: people cannot stay quietly in their own room.",
+     "original": "All the unhappiness of men arises from one single fact, that they cannot stay quietly in their own chamber."
+    },
+    {
+     "id": "pa-present",
+     "src": "pascal",
+     "where": "172",
+     "text": "We never really live; we only hope to live. Always getting ready to be happy, we never are.",
+     "original": "So we never live, but we hope to live; and, as we are always preparing to be happy, it is inevitable we should never be so."
+    },
+    {
+     "id": "pa-reed",
+     "src": "pascal",
+     "where": "348",
+     "text": "I should look for my dignity not in how much space I take up, but in how I govern my thoughts.",
+     "original": "It is not from space that I must seek my dignity, but from the government of my thought."
+    },
+    {
+     "id": "em-thought",
+     "src": "emerson",
+     "where": "Self-Reliance",
+     "text": "To believe your own thought, to believe that what is true for you in your private heart is true for everyone: that is genius.",
+     "original": "To believe your own thought, to believe that what is true for you in your private heart is true for all men,--that is genius."
+    },
+    {
+     "id": "em-trust",
+     "src": "emerson",
+     "where": "Self-Reliance",
+     "text": "Trust yourself. Every heart answers to that iron string.",
+     "original": "Trust thyself: every heart vibrates to that iron string."
+    },
+    {
+     "id": "em-peace",
+     "src": "emerson",
+     "where": "Self-Reliance",
+     "text": "Nothing can bring you peace but yourself.",
+     "original": "Nothing can bring you peace but yourself."
+    },
+    {
+     "id": "th-desperation",
+     "src": "thoreau",
+     "where": "Economy",
+     "text": "Most people lead lives of quiet desperation.",
+     "original": "The mass of men lead lives of quiet desperation."
+    },
+    {
+     "id": "th-cost",
+     "src": "thoreau",
+     "where": "Economy",
+     "text": "The cost of a thing is the amount of life you have to exchange for it, now or later.",
+     "original": "The cost of a thing is the amount of what I will call life which is required to be exchanged for it, immediately or in the long run."
+    },
+    {
+     "id": "th-deliberately",
+     "src": "thoreau",
+     "where": "Where I Lived, and What I Lived For",
+     "text": "I went to the woods because I wanted to live deliberately, to face only the essential facts of life, and see if I could learn what it had to teach, so that when I came to die I would not find I had never lived.",
+     "original": "I went to the woods because I wished to live deliberately, to front only the essential facts of life, and see if I could not learn what it had to teach, and not, when I came to die, discover that I had not lived."
+    },
+    {
+     "id": "th-simplify",
+     "src": "thoreau",
+     "where": "Where I Lived, and What I Lived For",
+     "text": "Simplify, simplify.",
+     "original": "Simplify, simplify."
+    }
+   ]
+  },
+  {
+   "id": "jung",
+   "name": "After Jung",
+   "kind": "after",
+   "blurb": "Carl Jung's ideas, in our own words. His writing is still under copyright, so none of these are his exact words.",
+   "items": [
+    {
+     "id": "jg-darkness",
+     "by": "After Carl Jung",
+     "basis": "Letters, vol. 1",
+     "text": "The better I know my own darkness, the better I can deal with the darkness in other people."
+    },
+    {
+     "id": "jg-inside",
+     "by": "After Carl Jung",
+     "basis": "Letter to Fanny Bowditch, 22 October 1916",
+     "text": "My vision clears only when I look into my own heart. Looking outward, I dream. Looking inward, I wake."
+    },
+    {
+     "id": "jg-accept",
+     "by": "After Carl Jung",
+     "basis": "Modern Man in Search of a Soul",
+     "text": "I can't change what I refuse to accept. Condemning it only holds it in place."
+    },
+    {
+     "id": "jg-light",
+     "by": "After Carl Jung",
+     "basis": "Alchemical Studies, CW 13",
+     "text": "I don't grow by picturing the light. I grow by looking honestly at what I keep in the dark."
+    },
+    {
+     "id": "jg-fate",
+     "by": "After Carl Jung",
+     "basis": "Aion, CW 9ii, par. 126",
+     "text": "What I won't face inside me tends to happen to me outside, and I call it fate."
+    },
+    {
+     "id": "jg-question",
+     "by": "After Carl Jung",
+     "basis": "The Archetypes and the Collective Unconscious, CW 9i",
+     "text": "Asking the right question is half of solving the problem."
+    },
+    {
+     "id": "jg-another",
+     "by": "After Carl Jung",
+     "basis": "Psychological Reflections",
+     "text": "There is someone in me I have not met yet."
+    },
+    {
+     "id": "jg-passion",
+     "by": "After Carl Jung",
+     "basis": "Memories, Dreams, Reflections",
+     "text": "I haven't mastered a passion I have never fully lived through."
+    },
+    {
+     "id": "jg-roots",
+     "by": "After Carl Jung",
+     "basis": "Aion, CW 9ii",
+     "text": "Nothing grows tall unless its roots reach down into dark places."
+    },
+    {
+     "id": "jg-children",
+     "by": "After Carl Jung",
+     "basis": "Essays on a Science of Mythology",
+     "text": "Children learn from who I am, not from what I tell them."
+    },
+    {
+     "id": "jg-irritate",
+     "by": "After Carl Jung",
+     "basis": "Memories, Dreams, Reflections",
+     "text": "What irritates me in other people can show me something about myself."
+    },
+    {
+     "id": "jg-shadow",
+     "by": "After Carl Jung",
+     "basis": "Modern Man in Search of a Soul",
+     "text": "I can't be whole without a shadow. Having a dark side is part of being real."
+    }
+   ]
+  },
+  {
+   "id": "questions",
+   "name": "Questions to Sit With",
+   "blurb": "Open questions written for Scales. Stay with one as long as it holds you.",
+   "items": [
+    {
+     "id": "q-busy",
+     "text": "What am I avoiding by staying busy?"
+    },
+    {
+     "id": "q-setdown",
+     "text": "What am I carrying that I could set down, and what would get lighter if I did?"
+    },
+    {
+     "id": "q-keepsaying",
+     "text": "What do I keep saying I'll do, and what is really stopping me?"
+    },
+    {
+     "id": "q-approval",
+     "text": "Whose approval am I still working for?"
+    },
+    {
+     "id": "q-noone",
+     "text": "What would I do this week if no one would ever know?"
+    },
+    {
+     "id": "q-fine",
+     "text": "Where am I telling people I'm fine when I'm not?"
+    },
+    {
+     "id": "q-want",
+     "text": "What do I actually want, apart from what I think I should want?"
+    },
+    {
+     "id": "q-story",
+     "text": "What story about myself am I tired of telling?"
+    },
+    {
+     "id": "q-fiveyears",
+     "text": "What did I believe five years ago that I no longer believe?"
+    },
+    {
+     "id": "q-habits",
+     "text": "Which of my habits would I choose again if I were starting today?"
+    },
+    {
+     "id": "q-stopped",
+     "text": "What am I afraid would happen if I stopped?"
+    },
+    {
+     "id": "q-around",
+     "text": "Who do I become around the people I spend the most time with?"
+    },
+    {
+     "id": "q-attention",
+     "text": "Where does my attention go when nothing is asking for it?"
+    },
+    {
+     "id": "q-count",
+     "text": "What would make today count, even if nothing else goes right?"
+    },
+    {
+     "id": "q-certainty",
+     "text": "Where am I waiting for certainty before I act?"
+    },
+    {
+     "id": "q-lost",
+     "text": "What did I love doing that I stopped making time for?"
+    },
+    {
+     "id": "q-friend",
+     "text": "What would I tell a friend in my position?"
+    },
+    {
+     "id": "q-walkpast",
+     "text": "What good thing do I walk past every day without noticing?"
+    },
+    {
+     "id": "q-hide",
+     "text": "What part of me do I work hardest to keep others from seeing?"
+    },
+    {
+     "id": "q-unsaid",
+     "text": "What do I need to say to someone that I haven't said?"
+    },
+    {
+     "id": "q-mind",
+     "text": "When did I last change my mind about something that mattered?"
+    },
+    {
+     "id": "q-having",
+     "text": "Am I collecting things, or becoming someone?"
+    },
+    {
+     "id": "q-later",
+     "text": "What am I postponing until later that belongs to now?"
+    }
+   ]
+  }
+ ]
+}

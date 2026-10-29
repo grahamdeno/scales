@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.2.0";
+  var VERSION = "2.3.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -60,11 +60,15 @@
   // (Feel review: 900 in Geist at 32 px read as shouting.)
   function weight(t) { return Math.min(800, 600 + 50 * (t.skips || 0)); }
 
-  function make(text, now) {
+  // by (2.3.0): who said it, when the thought is a quote. Blank means it is the person's own.
+  function make(text, now, by) {
     var today = dayKey(now);
-    return { id: uid(), text: String(text).trim(), note: "", created: now.toISOString(), due: addDays(today, 1),
+    return { id: uid(), text: String(text).trim(), note: "", by: cleanBy(by), created: now.toISOString(), due: addDays(today, 1),
       away: null, bookmarked: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] };
   }
+  function cleanBy(by) { return typeof by === "string" ? by.trim().slice(0, 200) : ""; }
+  // A thought typed with an opening quotation mark is probably a quote, so the "Who said it?" line opens by itself.
+  function looksQuoted(text) { return /^\s*["\u201C\u2018\u201E\u00AB']/.test(String(text || "")); }
 
   function list(store) { return Object.keys(store).map(function (k) { return store[k]; }); }
   function inRotation(store) { return list(store).filter(function (t) { return !t.away; }); }
@@ -95,6 +99,14 @@
     return d.length ? d[0] : null;
   }
 
+  // The one that would come back soonest, for "Meet one early" once today is done. Ties go to the more avoided one.
+  function soonest(store, notId) {
+    var r = inRotation(store).filter(function (t) { return t.id !== notId; }).sort(function (a, b) {
+      return a.due < b.due ? -1 : a.due > b.due ? 1 : (b.skips || 0) - (a.skips || 0) || (a.created < b.created ? -1 : 1);
+    });
+    return r[0] || null;
+  }
+
   // The earliest day anything comes back, for "Next one back ..." when nothing is due.
   function nextDue(store) {
     var r = inRotation(store).map(function (t) { return t.due; }).sort();
@@ -115,6 +127,54 @@
     active.forEach(function (t, i) { t.due = addDays(today, Math.floor(i / NEW_PER_DAY)); out[t.id] = t; });
     rest.forEach(function (t) { out[t.id] = t; });
     return out;
+  }
+
+  // ---- Sets (2.3.0) ----
+  // A set is a list of lines from content/sets.json (built into sets.js). A line becomes an ordinary thought with the
+  // id "s-" + its line id, so adding a set twice never makes doubles, and it records which set it came from.
+  // Set thoughts arrive SET_PER_DAY a day, in the set's order, so a set never floods the day. Once here, a set
+  // thought is treated exactly like one the person wrote: the same visits, the same schedule.
+  var SET_PER_DAY = 2;
+  function setThought(item, setId, now, due) {
+    return { id: "s-" + item.id, text: String(item.text).trim(), note: "", by: cleanBy(item.by), created: now.toISOString(), due: due,
+      away: null, bookmarked: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [], from: "set", set: setId, item: item.id };
+  }
+  // Adds the lines of a set that are not already here. Choosing a set is asking for it, so a line deleted earlier
+  // comes back and leaves the deleted list. Returns { added, gone }.
+  function addSet(store, set, now, gone) {
+    var today = dayKey(now), added = 0, g = (gone || []).slice();
+    (set.items || []).forEach(function (it) {
+      var id = "s-" + it.id;
+      if (own(store, id) || !it.text) return;
+      store[id] = setThought(it, set.id, now, addDays(today, Math.floor(added / SET_PER_DAY)));
+      added++;
+      var k = g.indexOf(id); if (k >= 0) g.splice(k, 1);
+    });
+    return { added: added, gone: g };
+  }
+  // Thoughts from a set: all of them, and how many are still in rotation.
+  function fromSet(store, setId) { return list(store).filter(function (t) { return t.set === setId; }); }
+  // Removing a set takes back what the person has not made their own. A line never yet shown is deleted (and
+  // remembered as deleted). A line they have met is put away, not deleted, so its history stays. One they have
+  // bookmarked, written a note on or changed is left exactly where it is. Returns { deleted, putAway, gone }.
+  function removeSet(store, setId, now, gone) {
+    var res = { deleted: 0, putAway: 0, gone: (gone || []).slice() };
+    fromSet(store, setId).forEach(function (t) {
+      if (t.bookmarked || t.note || (t.works || 0) > 0 || t.away) return;
+      if (!(t.visits || []).length && !t.seen) { delete store[t.id]; res.deleted++; if (res.gone.indexOf(t.id) < 0) res.gone.push(t.id); }
+      else { t.away = now.toISOString(); res.putAway++; }
+    });
+    return res;
+  }
+  // First open with nothing here: the five starter lines, all due today, so there is something to meet at once.
+  function addStarters(store, sets, starterIds, now) {
+    var today = dayKey(now), n = 0, byId = {};
+    (sets || []).forEach(function (s) { (s.items || []).forEach(function (it) { byId[it.id] = { it: it, set: s.id }; }); });
+    (starterIds || []).forEach(function (sid) {
+      var x = byId[sid]; if (!x || own(store, "s-" + sid)) return;
+      store["s-" + sid] = setThought(x.it, x.set, now, today); n++;
+    });
+    return n;
   }
 
   // The visit log (2.0.1): every visit with its raw time, kept so the skip and thought lines can be judged from real
@@ -163,7 +223,9 @@
       // Kept as a time so the Bookmarked list can sort by it; a mark in any other form still means bookmarked, as of now.
       bookmarked: t.bookmarked ? (typeof t.bookmarked === "string" && isFinite(Date.parse(t.bookmarked)) ? t.bookmarked : nowIso) : null,
       skips: Math.min(4, num(t.skips, 0)), thinks: num(t.thinks, 0), works: num(t.works, 0),
-      seen: typeof t.seen === "string" ? t.seen : null, visits: visits, from: typeof t.from === "string" ? t.from : undefined };
+      seen: typeof t.seen === "string" ? t.seen : null, visits: visits, from: typeof t.from === "string" ? t.from : undefined,
+      by: cleanBy(t.by), set: typeof t.set === "string" && t.set ? t.set.slice(0, 40) : undefined,
+      item: typeof t.item === "string" && t.item ? t.item.slice(0, 60) : undefined };
   }
   function restoreFrom(store, data, now, gone) {
     var res = { ok: false, kind: null, added: 0, ids: [], gone: (gone || []).slice(), visits: [] };
@@ -225,7 +287,7 @@
 
   var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
-    make: make, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext,
+    make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);

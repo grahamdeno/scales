@@ -5,3 +5,4 @@
 !ios/**/*.json
 .DS_Store
 e2e-shots/
+!content/sets.json
