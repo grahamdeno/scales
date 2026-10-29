@@ -341,3 +341,43 @@ test("restore review (2.1.0): restored counts stay in range and missing dates be
   N.restoreFrom(store, scales2File({ x: mk2("x", { skips: 40, created: 7 }) }), NOW, []);
   assert.equal(store.x.skips, 4); assert.equal(store.x.created, NOW.toISOString());
 });
+
+// ---------- Bookmarks and Recently added (2.2.0) ----------
+test("bookmarks: newest first, in rotation or put away, and a visit never changes one", () => {
+  const store = { a: mk2("a", { bookmarked: "2026-10-20T10:00:00.000Z" }), b: mk2("b"), c: mk2("c", { bookmarked: "2026-10-25T10:00:00.000Z", away: "2026-10-26T00:00:00Z" }) };
+  assert.deepEqual(N.bookmarked(store).map((t) => t.id), ["c", "a"]);
+  assert.equal(N.make("x", NOW).bookmarked, null);
+  const t = store.a, due = t.due;
+  N.recordVisit(t, 2000, false, false, NOW);
+  assert.equal(t.bookmarked, "2026-10-20T10:00:00.000Z", "a visit leaves the bookmark alone");
+  assert.notEqual(N.weight(mk2("w", { bookmarked: "2026-10-20T10:00:00.000Z" })), 0);
+  assert.equal(N.weight(mk2("w", { bookmarked: "2026-10-20T10:00:00.000Z" })), N.weight(mk2("w")), "weight ignores bookmarks");
+  assert.ok(due);
+});
+test("recently added: made in the last 14 days, newest first; editing does not change the date", () => {
+  const store = { old: mk2("old", { created: "2026-09-01T00:00:00.000Z" }), n1: mk2("n1", { created: "2026-10-20T00:00:00.000Z" }), n2: mk2("n2", { created: "2026-10-27T00:00:00.000Z" }),
+    edge: mk2("edge", { created: new Date(NOW.getTime() - 14 * 86400000).toISOString() }), bad: mk2("bad", { created: "not a date" }) };
+  assert.deepEqual(N.recentlyAdded(store, NOW).map((t) => t.id), ["n2", "n1", "edge"]);
+  store.old.text = "Edited just now"; store.old.seen = NOW.toISOString();
+  assert.ok(!N.recentlyAdded(store, NOW).some((t) => t.id === "old"), "an edit does not make a thought new");
+});
+test("restore (2.2.0): bookmarks come across, bad ones are cleaned, and an existing thought keeps its own", () => {
+  const store = { a: mk2("a", { bookmarked: null }) };
+  const file = scales2File({ a: mk2("a", { bookmarked: "2026-10-01T00:00:00Z" }), b: mk2("b", { bookmarked: "2026-10-02T00:00:00Z" }), c: mk2("c", { bookmarked: true }), d: mk2("d", { bookmarked: 5 }), e: mk2("e") });
+  N.restoreFrom(store, file, NOW, []);
+  assert.equal(store.a.bookmarked, null, "a thought already here is untouched");
+  assert.equal(store.b.bookmarked, "2026-10-02T00:00:00Z");
+  assert.ok(typeof store.c.bookmarked === "string", "true still means bookmarked");
+  assert.ok(store.d.bookmarked, "any truthy mark still means bookmarked");
+  assert.equal(store.e.bookmarked, null);
+});
+
+test("restore review (2.2.0): a bookmark in an odd form is kept as now, and Scales 1 thoughts arrive unbookmarked", () => {
+  const store = {};
+  N.restoreFrom(store, scales2File({ a: mk2("a", { bookmarked: "yesterday" }), b: mk2("b", { bookmarked: "" }), c: mk2("c", { bookmarked: 0 }) },
+    { scales1: { "scales.thoughts.v1": { x: { id: "x", text: "Old", status: "active" } } } }), NOW, []);
+  assert.equal(store.a.bookmarked, NOW.toISOString());
+  assert.equal(store.b.bookmarked, null); assert.equal(store.c.bookmarked, null);
+  assert.ok(!store.ox.bookmarked);
+  assert.deepEqual(N.bookmarked(store).map((t) => t.id), ["a"]);
+});

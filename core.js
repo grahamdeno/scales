@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.1.0";
+  var VERSION = "2.2.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -63,12 +63,25 @@
   function make(text, now) {
     var today = dayKey(now);
     return { id: uid(), text: String(text).trim(), note: "", created: now.toISOString(), due: addDays(today, 1),
-      away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] };
+      away: null, bookmarked: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] };
   }
 
   function list(store) { return Object.keys(store).map(function (k) { return store[k]; }); }
   function inRotation(store) { return list(store).filter(function (t) { return !t.away; }); }
   function putAway(store) { return list(store).filter(function (t) { return !!t.away; }); }
+
+  // Bookmarks (2.2.0): the person's own mark on a thought, a timestamp of when they set it. It changes nothing about
+  // when a thought comes back, how heavy it is or whether it is in rotation. Newest bookmark first.
+  var NEW_DAYS = 14;
+  function bookmarked(store) {
+    return list(store).filter(function (t) { return !!t.bookmarked; }).sort(function (a, b) { return a.bookmarked < b.bookmarked ? 1 : a.bookmarked > b.bookmarked ? -1 : 0; });
+  }
+  // Recently added: made in the last NEW_DAYS days, newest first. Editing never changes the date a thought was made.
+  function recentlyAdded(store, now, days) {
+    var cut = now.getTime() - (days || NEW_DAYS) * 86400000;
+    return list(store).filter(function (t) { var c = Date.parse(t.created); return isFinite(c) && c >= cut && c <= now.getTime() + 86400000; })
+      .sort(function (a, b) { return a.created < b.created ? 1 : a.created > b.created ? -1 : 0; });
+  }
 
   // What is due today, most avoided first, then the one waiting longest.
   function dueToday(store, now) {
@@ -147,6 +160,8 @@
       due: typeof t.due === "string" && DAY_RE.test(t.due) ? t.due : today,
       // A put-away thought stays put away, whatever form the date took.
       away: typeof t.away === "string" && t.away ? t.away : t.away ? nowIso : null,
+      // Kept as a time so the Bookmarked list can sort by it; a mark in any other form still means bookmarked, as of now.
+      bookmarked: t.bookmarked ? (typeof t.bookmarked === "string" && isFinite(Date.parse(t.bookmarked)) ? t.bookmarked : nowIso) : null,
       skips: Math.min(4, num(t.skips, 0)), thinks: num(t.thinks, 0), works: num(t.works, 0),
       seen: typeof t.seen === "string" ? t.seen : null, visits: visits, from: typeof t.from === "string" ? t.from : undefined };
   }
@@ -210,7 +225,7 @@
 
   var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
-    make: make, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext,
+    make: make, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);

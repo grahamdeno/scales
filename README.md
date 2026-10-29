@@ -14,6 +14,10 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   and a note; Delete takes two taps, and a tap anywhere else takes the first one back.
 - **The library (plum):** the strip at the bottom, "Your thoughts". Pull it up or tap it; pull the sheet down or tap
   outside to shut it. Search, filter (All, In rotation, Put away), Bring back. The gear opens Settings.
+- **Bookmark (2.2.0):** the bookmark at the top right of Edit marks a thought as one to come back to. It never changes
+  when the thought returns. The library filters scroll: All, In rotation, Put away, New (the last 14 days), Bookmarked
+  (with its count). A thought opened from Bookmarked is a review: nothing about its schedule changes and it is logged as
+  `review`.
 - **Settings (2.1.0):** Your data (Back up, Restore from a backup), Help (How Scales works), About (Privacy, Support,
   Send feedback, the version). Privacy is linked here because the App Store requires it inside the app.
 - **Reading a visit:** 20 s or less is skipped; 30 s or more is thought about; between is seen; an edit or a note is

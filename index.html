@@ -42,8 +42,9 @@ a { color: inherit; text-decoration: none; }
 /* The corner buttons reach well past their words (2.0.1), so a thumb slightly off still lands on them. */
 .corner { position: absolute; top: calc(var(--top) + 4px); font-size: 16px; font-weight: 500; padding: 20px 28px 20px var(--pad); min-width: 150px; text-align: left; z-index: 3; }
 .corner.l { left: 0; } .corner.r { right: var(--pad); }
-.pill { background: var(--pist); color: var(--pist-ink); border-radius: 999px; padding: 13px 26px; font-weight: 700; font-size: 17px; }
-.pill:disabled { opacity: 0; pointer-events: none; }
+/* Keep and Done are words, like every other action here: pistachio, bold, with a wide tap area. */
+.act { color: var(--pist); font-weight: 700; font-size: 18px; padding: 16px 0 16px 36px; margin-right: 0; }
+.act:disabled { opacity: 0; pointer-events: none; }
 
 /* ---- Meet ---- */
 /* The stage starts below the corner, so a near miss on + New never opens Edit. */
@@ -82,7 +83,10 @@ body.plum #strip { opacity: 0; pointer-events: none; }
 .plus { font-weight: 400; margin-right: 3px; }
 
 /* ---- Write and Edit (plum) ---- */
-.sheetform { position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--top) + 76px); bottom: calc(var(--bot) + 100px); display: flex; flex-direction: column; gap: 22px; }
+.sheetform { position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--top) + 76px); bottom: calc(var(--bot) + 100px); display: flex; flex-direction: column; gap: 22px;
+  overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+/* The fields grow to fit what is written, so nothing is ever hidden; the form scrolls as a whole when it runs long. */
+.sheetform textarea { overflow: hidden; flex: none; }
 .sheetform.center { justify-content: center; }
 textarea { font: inherit; color: var(--plum-ink); background: transparent; border: 0; outline: none; resize: none; width: 100%; padding: 0; caret-color: var(--pist); user-select: text; -webkit-user-select: text; touch-action: auto; }
 textarea::placeholder { color: var(--plum-faint); }
@@ -97,7 +101,12 @@ textarea::placeholder { color: var(--plum-faint); }
 
 /* ---- Library ---- */
 #lib { position: absolute; left: 0; right: 0; top: calc(var(--top) + 36px); bottom: 0; background: var(--plum); color: var(--plum-ink); border-radius: 22px 22px 0 0;
-  display: flex; flex-direction: column; transform: translateY(100%); transition: transform .35s cubic-bezier(.2,.8,.2,1); z-index: 6; }
+  display: flex; flex-direction: column; z-index: 6;
+  /* Shut, the sheet rests exactly where the strip is (its top on the strip's top), hidden once it has arrived.
+     It rises from the strip and settles back into it, never below it. */
+  transform: translateY(calc(100% - var(--strip))); visibility: hidden;
+  transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s linear .35s; }
+#lib.open, #lib.drag { visibility: visible; transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s; }
 #lib.open { transform: none; }
 #lib.drag { transition: none; }
 #libShade { position: absolute; inset: 0; z-index: 5; display: none; }
@@ -109,8 +118,12 @@ textarea::placeholder { color: var(--plum-faint); }
 #lib h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
 /* Words, not a button shape: pistachio on plum, with room around it for a thumb. */
 #lib .new { color: var(--pist); font-weight: 600; font-size: 16px; padding: 14px var(--pad) 14px 24px; margin-right: calc(-1 * var(--pad)); }
-#lib .seg { display: flex; gap: 8px; justify-content: flex-start; }
-.seg button { font-size: 14px; padding: 7px 13px; border-radius: 999px; color: var(--plum-muted); background: rgba(241,233,216,.06); }
+/* The filters scroll sideways when they do not fit; the right edge fades to show there is more. */
+#lib .seg { display: flex; gap: 8px; justify-content: flex-start; overflow-x: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x; scrollbar-width: none;
+  margin: 0 calc(-1 * var(--pad)); padding: 0 var(--pad); -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
+#lib .seg::-webkit-scrollbar { display: none; }
+#lib .seg::after { content: ""; flex: 0 0 24px; }
+.seg button { font-size: 14px; padding: 7px 13px; border-radius: 999px; color: var(--plum-muted); background: rgba(241,233,216,.06); white-space: nowrap; flex: none; }
 .seg button[aria-pressed="true"] { color: var(--plum); background: var(--plum-ink); font-weight: 600; }
 #q { width: 100%; font: inherit; font-size: 16px; color: var(--plum-ink); background: rgba(241,233,216,.08); border: 0; border-radius: 12px; padding: 12px 14px; outline: none; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
 #q::placeholder { color: var(--plum-faint); }
@@ -120,6 +133,10 @@ textarea::placeholder { color: var(--plum-faint); }
 .lrow .t { font-size: 17px; line-height: 1.3; }
 .lrow .m { font-size: 13px; color: var(--plum-muted); white-space: nowrap; }
 .lrow.away .t { color: var(--plum-muted); }
+.bk { width: 11px; height: 14px; margin-left: 7px; color: var(--pist); vertical-align: -1px; }
+#editMark { right: 0; min-width: 0; padding: 20px var(--pad) 20px 28px; display: flex; align-items: center; gap: 8px; color: var(--plum-muted); }
+#editMark svg { width: 16px; height: 20px; }
+#editMark[aria-pressed="true"] { color: var(--pist); font-weight: 600; }
 .lrow .back { font-size: 13px; font-weight: 600; color: var(--pist); white-space: nowrap; padding: 4px 0; }
 #libList { padding-bottom: calc(var(--bot) + 40px); }
 #lib header .top { display: flex; justify-content: space-between; align-items: center; }
@@ -142,6 +159,11 @@ textarea::placeholder { color: var(--plum-faint); }
 .srow .chev { color: var(--plum-muted); font-size: 20px; }
 .snote { margin: 10px var(--pad) 0; font-size: 14px; line-height: 1.45; color: var(--plum-muted); }
 .snote.ok { color: var(--pist); }
+.icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px var(--pad) 0; }
+.icons button { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; color: var(--plum-muted); }
+.icons img { width: 60px; height: 60px; border-radius: 14px; box-shadow: 0 0 0 1px rgba(241,233,216,.22); outline: 2px solid transparent; outline-offset: 3px; transition: outline-color .15s; }
+.icons button[aria-checked="true"] img { outline-color: var(--pist); }
+.icons button[aria-checked="true"] span { color: var(--plum-ink); font-weight: 600; }
 .help p { margin: 0 var(--pad) 18px; font-size: 17px; line-height: 1.5; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -183,20 +205,21 @@ textarea::placeholder { color: var(--plum-faint); }
     <label class="sr" for="writeText">A thought</label>
     <textarea class="big" id="writeText" rows="5" maxlength="1500" placeholder="What's on your mind?"></textarea>
   </div>
-  <div class="formfoot"><span></span><button class="pill" type="button" id="writeKeep" disabled>Keep</button></div>
+  <div class="formfoot"><span></span><button class="act" type="button" id="writeKeep" disabled>Keep</button></div>
   <div class="kept" id="writeKept" hidden><p class="k1">Kept.</p><p class="k2">It comes back tomorrow.</p></div>
 </section>
 
 <!-- Edit: plum. The thought and a note. -->
 <section class="view" id="vEdit" hidden aria-label="Edit thought">
   <button class="corner l" id="editCancel" type="button">Cancel</button>
+  <button class="corner" id="editMark" type="button" aria-pressed="false"><svg viewBox="0 0 16 20" aria-hidden="true"><path d="M2 1.5h12v17l-6-4.5-6 4.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span>Bookmark</span></button>
   <div class="sheetform">
     <label class="sr" for="editText">The thought</label>
     <textarea class="big" id="editText" rows="4" maxlength="1500"></textarea>
     <label class="lbl" for="editNote">A note</label>
     <textarea class="small" id="editNote" rows="4" maxlength="1500" placeholder="Anything that came up"></textarea>
   </div>
-  <div class="formfoot"><button class="quiet" type="button" id="editDelete">Delete</button><button class="pill" type="button" id="editDone">Done</button></div>
+  <div class="formfoot"><button class="quiet" type="button" id="editDelete">Delete</button><button class="act" type="button" id="editDone">Done</button></div>
 </section>
 
 <!-- The library: the strip, opened. Everything you have written, findable. -->
@@ -209,7 +232,7 @@ textarea::placeholder { color: var(--plum-faint); }
       <button class="new" type="button" id="libNew"><span class="plus" aria-hidden="true">+</span>New</button></span></div>
     <label class="sr" for="q">Search your thoughts</label>
     <input id="q" type="search" placeholder="Search" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <div class="seg" id="seg" aria-label="Show"><button type="button" data-view="all">All</button><button type="button" data-view="on">In rotation</button><button type="button" data-view="away">Put away</button></div>
+    <div class="seg" id="seg" aria-label="Show"><button type="button" data-view="all">All</button><button type="button" data-view="on">In rotation</button><button type="button" data-view="away">Put away</button><button type="button" data-view="new">New</button><button type="button" data-view="marked" id="segMarked">Bookmarked</button></div>
   </header>
   <div id="libList"></div>
 </section>
@@ -225,6 +248,16 @@ textarea::placeholder { color: var(--plum-faint); }
     <input type="file" id="restoreFile" accept="application/json,.json" hidden>
     <p class="snote" id="restoreMsg" role="status" aria-live="polite"></p>
     <p class="snote" id="setSaved"></p>
+    <div id="iconSec" hidden>
+      <p class="sh">App icon</p>
+      <div class="icons" role="radiogroup" aria-label="App icon">
+        <button type="button" role="radio" aria-checked="true" data-icon="auto"><img src="icons/pick/auto.png" alt=""><span>Automatic</span></button>
+        <button type="button" role="radio" aria-checked="false" data-icon="pistachio"><img src="icons/pick/pistachio.png" alt=""><span>Pistachio</span></button>
+        <button type="button" role="radio" aria-checked="false" data-icon="plum"><img src="icons/pick/plum.png" alt=""><span>Plum</span></button>
+        <button type="button" role="radio" aria-checked="false" data-icon="bone"><img src="icons/pick/bone.png" alt=""><span>Bone</span></button>
+      </div>
+      <p class="snote" id="iconMsg">Automatic is Pistachio in Light mode and Plum in Dark.</p>
+    </div>
     <p class="sh">Help</p>
     <button class="srow" type="button" id="setHelp"><span>How Scales works</span><span class="chev" aria-hidden="true">&#8250;</span></button>
     <p class="sh">About</p>
@@ -244,7 +277,7 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.1.0"></script>
+<script src="core.js?v=2.2.0"></script>
 <script>
 (function () {
   "use strict";
@@ -281,7 +314,7 @@ textarea::placeholder { color: var(--plum-faint); }
   if (!store) { store = C.importOld(lsGet(OLD, {}), now()); lsSet(KEY, store); }
   // Every open: anything still in Scales 1 that is not here yet joins. Nothing here is overwritten.
   else if (C.mergeOld(store, lsGet(OLD, {}), now(), lsGet(KEY_GONE, []))) lsSet(KEY, store);
-  var ui = Object.assign({ cur: null, ms: 0, worked: false, nudged: false, view: "all", saved: null }, lsGet(KEY_UI, {}));
+  var ui = Object.assign({ cur: null, ms: 0, worked: false, nudged: false, view: "all", saved: null, review: null }, lsGet(KEY_UI, {}));
   function save() { lsSet(KEY, store); }
   function saveUi() { lsSet(KEY_UI, ui); }
 
@@ -309,7 +342,9 @@ textarea::placeholder { color: var(--plum-faint); }
   function endVisit(how) {
     var t = store[ui.cur]; if (!t) return null;
     clockOff();
-    var wasIdle = idle(), kind = C.recordVisit(t, ui.ms, ui.worked, wasIdle, now());
+    // A thought opened from Bookmarked is a review: logged as one, and it changes nothing about when the thought comes back.
+    var review = ui.review === ui.cur; ui.review = null;
+    var wasIdle = idle(), kind = review ? "review" : C.recordVisit(t, ui.ms, ui.worked, wasIdle, now());
     lsSet(KEY_LOG, C.logVisit(lsGet(KEY_LOG, []), { at: now().toISOString(), id: t.id, ms: ui.ms, worked: ui.worked, idle: wasIdle, kind: kind, how: how || "other", len: t.text.length }));
     ui.cur = null; ui.ms = 0; ui.worked = false; saveUi(); save();
     return kind;
@@ -317,6 +352,10 @@ textarea::placeholder { color: var(--plum-faint); }
 
   // ---------- modes ----------
   var mode = "meet";
+  function grow(ta) { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; }
+  function growAll() { Array.prototype.forEach.call(document.querySelectorAll(".sheetform textarea"), grow); }
+  document.addEventListener("input", function (e) { if (e.target.matches && e.target.matches(".sheetform textarea")) grow(e.target); });
+  window.addEventListener("resize", function () { if (mode === "write" || mode === "edit") growAll(); });
   function setMode(m) {
     if (mode === "meet" && m !== "meet") clockOff();
     mode = m;
@@ -327,13 +366,14 @@ textarea::placeholder { color: var(--plum-faint); }
     document.body.classList.toggle("plum", m === "write" || m === "edit");
     $("themeColor").setAttribute("content", document.body.classList.contains("plum") ? "#3B2240" : "#B9C9A3");
     if (m === "meet") clockOn();
+    if (m === "write" || m === "edit") growAll();
   }
 
   // ---------- Meet ----------
   function sizeClass(text) { var n = text.length; return n > 220 ? "vlong" : n > 90 ? "long" : ""; }
   function renderMeet(arrive) {
     var t = store[ui.cur];
-    if (!t || t.away) { ui.cur = null; ui.ms = 0; ui.worked = false; var n = C.pickNext(store, now()); if (n) ui.cur = n.id; saveUi(); t = store[ui.cur]; }
+    if (!t || (t.away && ui.review !== ui.cur)) { ui.cur = null; ui.ms = 0; ui.worked = false; ui.review = null; var n = C.pickNext(store, now()); if (n) ui.cur = n.id; saveUi(); t = store[ui.cur]; }
     $("stripN").textContent = C.list(store).length;
     if (!C.list(store).length) { openWrite(true); return; }
     $("carry").style.transition = "none"; $("carry").style.transform = ""; $("carry").style.opacity = "";
@@ -409,7 +449,7 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   // Both moves can be undone for 5 s: the thought comes back as it was, and the visit is not counted.
   var undoPoint = null;
-  function snapshot() { clockOff(); return { id: ui.cur, t: JSON.parse(JSON.stringify(store[ui.cur])), ms: ui.ms }; }
+  function snapshot() { clockOff(); return { id: ui.cur, t: JSON.parse(JSON.stringify(store[ui.cur])), ms: ui.ms, review: ui.review || null }; }
   function goNext() {
     if (!store[ui.cur]) return;
     var snap = snapshot(), id = ui.cur; endVisit("next");
@@ -419,7 +459,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function goAway() {
     if (!store[ui.cur]) return;
     var snap = snapshot(), id = ui.cur; endVisit("away");
-    store[id].away = now().toISOString(); save();
+    if (!store[id].away) store[id].away = now().toISOString(); save();
     buzz("putAway");
     undoPoint = snap;
     fly(1, function () { var n = C.pickNext(store, now(), id); ui.cur = n ? n.id : null; saveUi(); renderMeet(true); toast("Put away"); });
@@ -434,7 +474,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("toastUndo").onclick = function () {
     if (!undoPoint) return;
     clockOff();
-    store[undoPoint.id] = undoPoint.t; ui.cur = undoPoint.id; ui.ms = undoPoint.ms; ui.worked = false; undoPoint = null;
+    store[undoPoint.id] = undoPoint.t; ui.cur = undoPoint.id; ui.ms = undoPoint.ms; ui.worked = false; ui.review = undoPoint.review; undoPoint = null;
     // The undone visit stays in the log, marked, so it can be left out when the times are judged.
     var lg = lsGet(KEY_LOG, []); if (lg.length) { lg[lg.length - 1].undone = true; lsSet(KEY_LOG, lg); }
     save(); saveUi(); $("toast").classList.remove("on"); buzz("undo"); renderMeet(true);
@@ -467,14 +507,21 @@ textarea::placeholder { color: var(--plum-faint); }
   function openEdit() {
     var t = store[ui.cur]; if (!t) return;
     $("editText").value = t.text; $("editNote").value = t.note || "";
+    setMark(!!t.bookmarked);
     disarm();
     setMode("edit");
   }
+  // The bookmark is set here and applied with Done, like the words; Cancel leaves it as it was.
+  var editMarked = false;
+  function setMark(on) { editMarked = on; $("editMark").setAttribute("aria-pressed", String(on)); $("editMark").querySelector("path").setAttribute("fill", on ? "currentColor" : "none"); }
+  $("editMark").onclick = function () { setMark(!editMarked); haptic("tick"); };
   $("editCancel").onclick = function () { setMode("meet"); renderMeet(false); };
   $("editDone").onclick = function () {
     var t = store[ui.cur]; if (!t) return setMode("meet");
     var text = $("editText").value.trim(), note = $("editNote").value.trim();
     if (text && (text !== t.text || note !== (t.note || ""))) { t.text = text; t.note = note; ui.worked = true; save(); saveUi(); haptic("medium"); }
+    // A bookmark is the person's own mark: it never counts as work on the thought and never changes when it returns.
+    if (editMarked !== !!t.bookmarked) { t.bookmarked = editMarked ? now().toISOString() : null; save(); renderLibCount(); }
     setMode("meet"); renderMeet(false);
   };
   // Delete asks for a second tap rather than a dialog. A tap anywhere else takes it back.
@@ -509,7 +556,8 @@ textarea::placeholder { color: var(--plum-faint); }
   // The sheet follows the finger: pull the strip up to open it, pull the sheet (or the list, from its top) down to shut it.
   var lib = $("lib"), sheet = null;
   function sheetH() { return lib.offsetHeight || 1; }
-  function sheetTo(y) { lib.classList.add("drag"); lib.style.transform = "translateY(" + Math.max(0, y) + "px)"; }
+  function restY() { return Math.max(0, sheetH() - $("strip").offsetHeight); } // shut: the sheet's top on the strip's top
+  function sheetTo(y) { lib.classList.add("drag"); lib.style.transform = "translateY(" + Math.min(restY(), Math.max(0, y)) + "px)"; }
   function sheetSettle(open) {
     lib.classList.remove("drag"); lib.style.transform = "";
     if (open) { if (!lib.classList.contains("open")) { openLib(); haptic("tick"); } }
@@ -540,7 +588,7 @@ textarea::placeholder { color: var(--plum-faint); }
     sheet.dy = e.clientY - sheet.y;
     if (!sheet.moved && Math.abs(sheet.dy) < 8) return;
     sheet.moved = true; stripTap = false;
-    if (sheet.dy < 0) { $("libShade").classList.add("on"); if (!lib.classList.contains("prep")) { lib.classList.add("prep"); renderLib(); } sheetTo(sheetH() + sheet.dy); }
+    if (sheet.dy < 0) { $("libShade").classList.add("on"); if (!lib.classList.contains("prep")) { lib.classList.add("prep"); renderLib(); } sheetTo(restY() + sheet.dy); }
   });
   function stripUp() {
     if (!sheet || sheet.from !== "strip") return;
@@ -595,30 +643,48 @@ textarea::placeholder { color: var(--plum-faint); }
     var match = function (t) { return !q || t.text.toLowerCase().indexOf(q) !== -1 || (t.note || "").toLowerCase().indexOf(q) !== -1; };
     var on = C.inRotation(store).filter(match).sort(function (a, b) { return a.due < b.due ? -1 : a.due > b.due ? 1 : (b.skips || 0) - (a.skips || 0); });
     var off = C.putAway(store).filter(match).sort(function (a, b) { return a.away < b.away ? 1 : -1; });
-    var view = ui.view === "on" || ui.view === "away" ? ui.view : "all", h = "";
+    var view = ["on", "away", "new", "marked"].indexOf(ui.view) >= 0 ? ui.view : "all", h = "";
     Array.prototype.forEach.call($("seg").children, function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-view") === view)); });
-    if (view !== "away") {
-      h += "<h3>In rotation · " + on.length + "</h3>";
-      h += on.map(function (t) {
-        return '<button type="button" class="lrow" data-open="' + esc(t.id) + '"><span class="t" style="font-weight:' + Math.min(700, C.weight(t) - 100) + '">' + esc(t.text) + '</span><span class="m">' + esc(C.whenLabel(t.due, n)) + "</span></button>";
-      }).join("") || '<p class="lrow"><span class="m">Nothing here' + (q ? " matches." : " yet.") + "</span></p>";
+    renderLibCount();
+    var mark = function (t) { return t.bookmarked ? '<svg class="bk" viewBox="0 0 16 20" aria-label="Bookmarked"><path d="M2 1.5h12v17l-6-4.5-6 4.5z" fill="currentColor"/></svg>' : ""; };
+    var rotRow = function (t, review) {
+      return '<button type="button" class="lrow" data-open="' + esc(t.id) + '"' + (review ? ' data-review="1"' : "") + '><span class="t" style="font-weight:' + Math.min(700, C.weight(t) - 100) + '">' + esc(t.text) + mark(t) + '</span><span class="m">' + esc(C.whenLabel(t.due, n)) + "</span></button>";
+    };
+    var awayRow = function (t) {
+      return '<div class="lrow away"><span class="t">' + esc(t.text) + mark(t) + '</span><button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button></div>';
+    };
+    var none = function (msg) { return '<p class="lrow"><span class="m">' + msg + "</span></p>"; };
+    if (view === "marked") {
+      var bm = C.bookmarked(store).filter(match);
+      h += "<h3>Bookmarked · " + bm.length + "</h3>";
+      h += bm.map(function (t) {
+        // Opening one here is a review: the thought comes up on screen, and nothing about its schedule changes.
+        return t.away ? '<button type="button" class="lrow away" data-open="' + esc(t.id) + '" data-review="1"><span class="t">' + esc(t.text) + mark(t) + '</span><span class="m">Put away</span></button>' : rotRow(t, true);
+      }).join("") || none(q ? "Nothing here matches." : "Bookmark a thought from its Edit screen.");
+    } else if (view === "new") {
+      var nw = C.recentlyAdded(store, n).filter(match);
+      h += "<h3>Added in the last " + C.NEW_DAYS + " days · " + nw.length + "</h3>";
+      h += nw.map(function (t) { return t.away ? awayRow(t) : rotRow(t, false); }).join("") || none(q ? "Nothing here matches." : "Nothing new in the last " + C.NEW_DAYS + " days.");
+    } else {
+      if (view !== "away") {
+        h += "<h3>In rotation · " + on.length + "</h3>";
+        h += on.map(function (t) { return rotRow(t, false); }).join("") || none("Nothing here" + (q ? " matches." : " yet."));
+      }
+      if (view !== "on") {
+        h += "<h3" + (view === "all" ? ' style="margin-top:28px"' : "") + ">Put away · " + off.length + "</h3>";
+        h += off.map(awayRow).join("") || none(q ? "Nothing matches." : "Pull a thought down to put it away.");
+      }
     }
-    if (view !== "on") {
-      h += "<h3" + (view === "all" ? ' style="margin-top:28px"' : "") + ">Put away · " + off.length + "</h3>";
-      h += off.map(function (t) {
-        return '<div class="lrow away"><span class="t">' + esc(t.text) + '</span><button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button></div>';
-      }).join("") || '<p class="lrow"><span class="m">' + (q ? "Nothing matches." : "Pull a thought down to put it away.") + "</span></p>";
-    }
-
     $("libList").innerHTML = h;
   }
+  function renderLibCount() { var c = C.bookmarked(store).length; $("segMarked").textContent = c ? "Bookmarked · " + c : "Bookmarked"; }
   $("libList").addEventListener("click", function (e) {
     var o = e.target.closest("[data-open]"), b = e.target.closest("[data-back]");
     if (o) {
       // Opening a thought from the list puts it on screen now. The thought you were on counts as visited.
       var id = o.getAttribute("data-open");
       if (ui.cur && ui.cur !== id) endVisit("list");
-      ui.cur = id; ui.ms = 0; ui.worked = false; saveUi();
+      ui.cur = id; ui.ms = 0; ui.worked = false; ui.review = o.hasAttribute("data-review") ? id : null; saveUi();
       closeLib(); renderMeet(true);
     } else if (b) {
       var t = store[b.getAttribute("data-back")]; if (!t) return;
@@ -648,6 +714,19 @@ textarea::placeholder { color: var(--plum-faint); }
     openPage("settings", "settings");
   }
   $("libGear").onclick = openSettings;
+  // App icon (iPhone app only; 2.2.0). The shell says which icon is on at start and after every change.
+  var icons = document.querySelectorAll("#iconSec [data-icon]");
+  function markIcon(name) { Array.prototype.forEach.call(icons, function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-icon") === name)); }); }
+  window.scalesIcon = function (name) { markIcon(name === "pistachio" || name === "plum" || name === "bone" ? name : "auto"); };
+  window.scalesIconError = function () { $("iconMsg").textContent = "That icon couldn't be set. Try again."; };
+  if (NATIVE) $("iconSec").hidden = false;
+  Array.prototype.forEach.call(icons, function (b) {
+    b.onclick = function () {
+      var name = b.getAttribute("data-icon"); markIcon(name); haptic("tick");
+      $("iconMsg").textContent = "Automatic is Pistachio in Light mode and Plum in Dark.";
+      post({ type: "icon", name: name === "auto" ? "" : name });
+    };
+  });
   $("setBack").onclick = function () { closePage("settings", "library"); };
   $("setHelp").onclick = function () { openPage("help", "help"); };
   $("helpBack").onclick = function () { closePage("help", "settings"); };
