@@ -97,7 +97,12 @@ textarea::placeholder { color: var(--plum-faint); }
 
 /* ---- Library ---- */
 #lib { position: absolute; left: 0; right: 0; top: calc(var(--top) + 36px); bottom: 0; background: var(--plum); color: var(--plum-ink); border-radius: 22px 22px 0 0;
-  display: flex; flex-direction: column; transform: translateY(100%); transition: transform .35s cubic-bezier(.2,.8,.2,1); z-index: 6; }
+  display: flex; flex-direction: column; z-index: 6;
+  /* Shut, the sheet rests exactly where the strip is (its top on the strip's top), hidden once it has arrived.
+     It rises from the strip and settles back into it, never below it. */
+  transform: translateY(calc(100% - var(--strip))); visibility: hidden;
+  transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s linear .35s; }
+#lib.open, #lib.drag { visibility: visible; transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s; }
 #lib.open { transform: none; }
 #lib.drag { transition: none; }
 #libShade { position: absolute; inset: 0; z-index: 5; display: none; }
@@ -509,7 +514,8 @@ textarea::placeholder { color: var(--plum-faint); }
   // The sheet follows the finger: pull the strip up to open it, pull the sheet (or the list, from its top) down to shut it.
   var lib = $("lib"), sheet = null;
   function sheetH() { return lib.offsetHeight || 1; }
-  function sheetTo(y) { lib.classList.add("drag"); lib.style.transform = "translateY(" + Math.max(0, y) + "px)"; }
+  function restY() { return Math.max(0, sheetH() - $("strip").offsetHeight); } // shut: the sheet's top on the strip's top
+  function sheetTo(y) { lib.classList.add("drag"); lib.style.transform = "translateY(" + Math.min(restY(), Math.max(0, y)) + "px)"; }
   function sheetSettle(open) {
     lib.classList.remove("drag"); lib.style.transform = "";
     if (open) { if (!lib.classList.contains("open")) { openLib(); haptic("tick"); } }
@@ -540,7 +546,7 @@ textarea::placeholder { color: var(--plum-faint); }
     sheet.dy = e.clientY - sheet.y;
     if (!sheet.moved && Math.abs(sheet.dy) < 8) return;
     sheet.moved = true; stripTap = false;
-    if (sheet.dy < 0) { $("libShade").classList.add("on"); if (!lib.classList.contains("prep")) { lib.classList.add("prep"); renderLib(); } sheetTo(sheetH() + sheet.dy); }
+    if (sheet.dy < 0) { $("libShade").classList.add("on"); if (!lib.classList.contains("prep")) { lib.classList.add("prep"); renderLib(); } sheetTo(restY() + sheet.dy); }
   });
   function stripUp() {
     if (!sheet || sheet.from !== "strip") return;

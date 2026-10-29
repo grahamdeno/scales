@@ -98,15 +98,21 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(await page.locator("#vMeet").isVisible(), tag + "back on the thought after Keep");
     // library: pull the strip up to open it, pull the header down to shut it
     const sb = await page.locator("#strip").boundingBox();
+    const libTop = () => page.evaluate(() => document.getElementById("lib").getBoundingClientRect().top);
+    ok(Math.abs(await libTop() - sb.y) < 1.5 && !(await page.locator("#lib").isVisible()), tag + "shut, the sheet rests on the strip, hidden (" + Math.round(await libTop()) + " vs " + Math.round(sb.y) + ")");
     await page.mouse.move(w / 2, sb.y + 30); await page.mouse.down();
+    await page.mouse.move(w / 2, sb.y + 20); await page.mouse.move(w / 2, sb.y - 10);
+    ok(Math.abs(await libTop() - (sb.y - 40)) < 2 && await page.locator("#lib").isVisible(), tag + "pulled 40 px, the sheet's top is 40 px above the strip's top, not rising from below");
     for (let i = 1; i <= 10; i++) await page.mouse.move(w / 2, sb.y + 30 - i * 40);
     await page.mouse.up(); await page.waitForTimeout(600);
     ok(await page.locator("#lib.open").count() === 1, tag + "pulling the strip up opens the library");
     const hb = await page.locator("#lib h2").boundingBox();
     await page.mouse.move(w / 2, hb.y + 5); await page.mouse.down();
-    for (let i = 1; i <= 10; i++) await page.mouse.move(w / 2, hb.y + 5 + i * 30);
+    for (let i = 1; i <= 40; i++) await page.mouse.move(w / 2, hb.y + 5 + i * 30);
+    ok(await libTop() <= sb.y + 1, tag + "pulled far down, the sheet stops at the strip (" + Math.round(await libTop()) + " vs " + Math.round(sb.y) + ")");
     await page.mouse.up(); await page.waitForTimeout(600);
     ok(await page.locator("#lib.open").count() === 0, tag + "pulling the sheet down shuts it");
+    ok(Math.abs(await libTop() - sb.y) < 1.5 && !(await page.locator("#lib").isVisible()), tag + "shut again, the sheet is back on the strip and hidden");
     await page.mouse.move(w / 2, sb.y + 30); await page.mouse.down();
     for (let i = 1; i <= 3; i++) { await page.mouse.move(w / 2, sb.y + 30 - i * 15); await page.waitForTimeout(60); }
     await page.mouse.up(); await page.waitForTimeout(600);
