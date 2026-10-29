@@ -84,11 +84,29 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok((await page.textContent("#editDelete")).trim() === "Delete", tag + "tapping elsewhere takes Delete back");
     await page.fill("#editNote", "A note from the test");
     await page.screenshot({ path: path.join(shots, w + "-3-edit.png") });
+    // Done is a word, not a pill
+    const dn = await page.evaluate(() => { const b = getComputedStyle(document.getElementById("editDone")); return { r: b.borderRadius, bg: b.backgroundColor, c: b.color }; });
+    ok(dn.bg === "rgba(0, 0, 0, 0)" && parseFloat(dn.r) === 0 && dn.c === "rgb(185, 201, 163)", tag + "Done is plain pistachio text, not a pill (" + JSON.stringify(dn) + ")");
+    // A long thought: the box grows to fit (nothing hidden inside it) and the form scrolls as a whole; Done stays in place
+    const long = Array.from({ length: 40 }, (_, i) => "word" + i).join(" ") + " the end of a long thought";
+    const doneY = (await page.locator("#editDone").boundingBox()).y;
+    await page.fill("#editText", long); await page.waitForTimeout(150);
+    const g = await page.evaluate(() => { const t = document.getElementById("editText"), f = t.parentNode; return { inner: t.scrollHeight - t.clientHeight, grew: t.clientHeight > 200, formScrolls: f.scrollHeight > f.clientHeight }; });
+    ok(g.inner <= 1 && g.grew && g.formScrolls, tag + "a long thought grows its box to fit; the form scrolls (" + JSON.stringify(g) + ")");
+    ok(Math.abs((await page.locator("#editDone").boundingBox()).y - doneY) < 1, tag + "Done stays where it was");
+    await page.screenshot({ path: path.join(shots, w + "-3b-edit-long.png") });
+    await page.evaluate(() => { const f = document.getElementById("editText").parentNode; f.scrollTop = f.scrollHeight; });
+    await page.waitForTimeout(100);
+    const nb = await page.locator("#editNote").boundingBox(), fb2 = await page.locator("#editDone").boundingBox();
+    ok(nb.y + nb.height <= fb2.y + 2 && Math.abs(fb2.y - doneY) < 1, tag + "scrolled to the end, the note is reachable above Done, which has not moved");
+    await page.screenshot({ path: path.join(shots, w + "-3c-edit-long-end.png") });
+    await page.fill("#editText", "Active thought number 1"); await page.waitForTimeout(100);
     await page.click("#editDone"); await page.waitForTimeout(700);
     ok(await page.locator("#vMeet").isVisible(), tag + "Done returns to the thought");
     // write
     await page.click("#newBtn"); await page.waitForTimeout(700);
     ok(await page.locator("#vWrite").isVisible(), tag + "New opens write");
+    ok(await page.evaluate(() => getComputedStyle(document.getElementById("writeKeep")).borderRadius === "0px"), tag + "Keep is a word too");
     await page.fill("#writeText", "A brand new thought from the check");
     await page.screenshot({ path: path.join(shots, w + "-4-write.png") });
     await page.click("#writeKeep"); await page.waitForTimeout(500);
