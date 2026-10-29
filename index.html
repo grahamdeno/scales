@@ -39,14 +39,16 @@ a { color: inherit; text-decoration: none; }
 .view { position: absolute; inset: 0; }
 [hidden] { display: none !important; }
 
-.corner { position: absolute; top: calc(var(--top) + 12px); font-size: 16px; font-weight: 500; padding: 12px 0; z-index: 3; }
-.corner.l { left: var(--pad); } .corner.r { right: var(--pad); }
+/* The corner buttons reach well past their words (2.0.1), so a thumb slightly off still lands on them. */
+.corner { position: absolute; top: calc(var(--top) + 4px); font-size: 16px; font-weight: 500; padding: 20px 28px 20px var(--pad); min-width: 150px; text-align: left; z-index: 3; }
+.corner.l { left: 0; } .corner.r { right: var(--pad); }
 .pill { background: var(--pist); color: var(--pist-ink); border-radius: 999px; padding: 13px 26px; font-weight: 700; font-size: 17px; }
 .pill:disabled { opacity: 0; pointer-events: none; }
 
 /* ---- Meet ---- */
-#stage { position: absolute; left: 0; right: 0; top: 0; bottom: var(--strip); touch-action: none; }
-#carry { transform-origin: center bottom; position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--top) + 64px); bottom: 24px; display: flex; flex-direction: column; justify-content: center; will-change: transform; }
+/* The stage starts below the corner, so a near miss on + New never opens Edit. */
+#stage { position: absolute; left: 0; right: 0; top: calc(var(--top) + 72px); bottom: var(--strip); touch-action: none; }
+#carry { transform-origin: center bottom; position: absolute; left: var(--pad); right: var(--pad); top: 0; bottom: 24px; display: flex; flex-direction: column; justify-content: center; will-change: transform; }
 #words { margin: 0; font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600; transition: font-weight 1.2s ease; overflow-wrap: anywhere; }
 #words.long { font-size: 24px; line-height: 1.25; }
 #words.vlong { font-size: 19px; line-height: 1.35; }
@@ -105,7 +107,8 @@ textarea::placeholder { color: var(--plum-faint); }
 #lib header { padding: 0 var(--pad) 14px; display: flex; flex-direction: column; gap: 14px; touch-action: none; }
 #lib header div { display: flex; justify-content: space-between; align-items: baseline; }
 #lib h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
-#lib .new { background: var(--pist); color: var(--pist-ink); font-weight: 700; font-size: 15px; padding: 8px 16px; border-radius: 999px; }
+/* Words, not a button shape: pistachio on plum, with room around it for a thumb. */
+#lib .new { color: var(--pist); font-weight: 600; font-size: 16px; padding: 14px var(--pad) 14px 24px; margin-right: calc(-1 * var(--pad)); }
 #lib .seg { display: flex; gap: 8px; justify-content: flex-start; }
 .seg button { font-size: 14px; padding: 7px 13px; border-radius: 999px; color: var(--plum-muted); background: rgba(241,233,216,.06); }
 .seg button[aria-pressed="true"] { color: var(--plum); background: var(--plum-ink); font-weight: 600; }
@@ -118,13 +121,32 @@ textarea::placeholder { color: var(--plum-faint); }
 .lrow .m { font-size: 13px; color: var(--plum-muted); white-space: nowrap; }
 .lrow.away .t { color: var(--plum-muted); }
 .lrow .back { font-size: 13px; font-weight: 600; color: var(--pist); white-space: nowrap; padding: 4px 0; }
-.libfoot { margin-top: 36px; display: flex; flex-direction: column; gap: 4px; }
-.libfoot a, .libfoot button { color: var(--plum-muted); font-size: 15px; padding: 10px 0; text-align: left; }
-.libfoot small { color: var(--plum-faint); font-size: 12px; padding-top: 8px; }
+#libList { padding-bottom: calc(var(--bot) + 40px); }
+#lib header .top { display: flex; justify-content: space-between; align-items: center; }
+#lib .hbtns { display: flex; align-items: center; margin-right: calc(-1 * var(--pad)); }
+#lib .gear { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: var(--plum-ink); opacity: .7; }
+#lib .gear svg { width: 24px; height: 24px; }
+#lib .new { margin-right: 0; }
+
+/* ---- Settings and Help (2.1.0): plum pages that slide in from the right over the library ---- */
+.page { position: absolute; inset: 0; background: var(--plum); color: var(--plum-ink); z-index: 8; display: flex; flex-direction: column;
+  transform: translateX(100%); visibility: hidden; transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s .35s; touch-action: none; }
+.page.open { transform: none; visibility: visible; transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s; }
+.page .pback { align-self: flex-start; margin-top: calc(var(--top) + 4px); padding: 20px 28px 12px var(--pad); font-size: 16px; font-weight: 500; }
+.page h1 { margin: 0; padding: 0 var(--pad) 10px; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+.page .body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 0 0 calc(var(--bot) + 40px); }
+.page .sh { margin: 26px var(--pad) 4px; font-size: 13px; font-weight: 500; color: var(--plum-muted); }
+.srow { display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%; min-height: 52px; padding: 0 var(--pad); font-size: 17px; text-align: left;
+  border-bottom: 1px solid rgba(241,233,216,.12); }
+.srow .v { font-size: 15px; color: var(--plum-muted); white-space: nowrap; }
+.srow .chev { color: var(--plum-muted); font-size: 20px; }
+.snote { margin: 10px var(--pad) 0; font-size: 14px; line-height: 1.45; color: var(--plum-muted); }
+.snote.ok { color: var(--pist); }
+.help p { margin: 0 var(--pad) 18px; font-size: 17px; line-height: 1.5; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; }
-  #carry, #lib, body { transition-duration: 0s !important; }
+  #carry, #lib, body, .page { transition-duration: 0s !important; }
 }
 </style>
 </head>
@@ -182,7 +204,9 @@ textarea::placeholder { color: var(--plum-faint); }
 <section id="lib" aria-label="Your thoughts" aria-hidden="true">
   <button class="grabbtn" type="button" id="libClose" aria-label="Close the list"><i></i></button>
   <header>
-    <div><h2>Your thoughts</h2><button class="new" type="button" id="libNew"><span class="plus" aria-hidden="true">+</span>New</button></div>
+    <div class="top"><h2>Your thoughts</h2><span class="hbtns">
+      <button class="gear" type="button" id="libGear" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+      <button class="new" type="button" id="libNew"><span class="plus" aria-hidden="true">+</span>New</button></span></div>
     <label class="sr" for="q">Search your thoughts</label>
     <input id="q" type="search" placeholder="Search" autocomplete="off" autocapitalize="off" spellcheck="false">
     <div class="seg" id="seg" aria-label="Show"><button type="button" data-view="all">All</button><button type="button" data-view="on">In rotation</button><button type="button" data-view="away">Put away</button></div>
@@ -190,7 +214,37 @@ textarea::placeholder { color: var(--plum-faint); }
   <div id="libList"></div>
 </section>
 
-<script src="core.js?v=2.0.0"></script>
+<!-- Settings: your data, help, privacy. Reached from the gear in the library. -->
+<section class="page" id="settings" aria-label="Settings" aria-hidden="true">
+  <button class="pback" type="button" id="setBack">&#8249; Your thoughts</button>
+  <h1>Settings</h1>
+  <div class="body">
+    <p class="sh">Your data</p>
+    <button class="srow" type="button" id="setBackup"><span>Back up</span><span class="v">Save a file</span></button>
+    <button class="srow" type="button" id="setRestore"><span>Restore from a backup</span><span class="v">Choose a file</span></button>
+    <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+    <p class="snote" id="restoreMsg" role="status" aria-live="polite"></p>
+    <p class="snote" id="setSaved"></p>
+    <p class="sh">Help</p>
+    <button class="srow" type="button" id="setHelp"><span>How Scales works</span><span class="chev" aria-hidden="true">&#8250;</span></button>
+    <p class="sh">About</p>
+    <a class="srow" id="setPrivacy" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+    <a class="srow" id="setSupport" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+    <a class="srow" id="setFeedback" href="mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback"><span>Send feedback</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+    <p class="snote" id="setVersion"></p>
+  </div>
+</section>
+<section class="page" id="help" aria-label="How Scales works" aria-hidden="true">
+  <button class="pback" type="button" id="helpBack">&#8249; Settings</button>
+  <h1>How Scales works</h1>
+  <div class="body help">
+    <p>Swipe up to move on. Pull down to put a thought away; it waits in Your thoughts. Tap a thought to edit it or add a note. Undo stays for five seconds after either move.</p>
+    <p>Scales reads how long you stay. 20 seconds or less: it comes back tomorrow, a little bolder. 30 seconds or more: it rests longer each time. An edit or a note: it rests longest.</p>
+    <p>Nothing leaves unless you put it away.</p>
+  </div>
+</section>
+
+<script src="core.js?v=2.1.0"></script>
 <script>
 (function () {
   "use strict";
@@ -204,10 +258,10 @@ textarea::placeholder { color: var(--plum-faint); }
     return "Next one back " + label + ".";
   }
   // The keys keep the "next" name from the trial, so nothing written then has to move.
-  var KEY = "scales.next.thoughts.v1", KEY_UI = "scales.next.ui.v1", KEY_GONE = "scales.next.gone.v1", OLD = "scales.thoughts.v1";
+  var KEY = "scales.next.thoughts.v1", KEY_UI = "scales.next.ui.v1", KEY_GONE = "scales.next.gone.v1", KEY_LOG = "scales.next.log.v1", OLD = "scales.thoughts.v1";
 
   function lsGet(k, d) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
-  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   function post(msg) { if (!NATIVE) return; try { window.webkit.messageHandlers.scales.postMessage(msg); } catch (_) {} }
   function haptic(style) { post({ type: "haptic", style: style }); }
   // Longer moments, built from the iPhone app's own styles, so no new app build is needed.
@@ -239,7 +293,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function clockOff() { if (since != null) { ui.ms += Date.now() - since; since = null; saveUi(); } clearTimeout(softT); }
   function elapsed() { return ui.ms + (since != null ? Date.now() - since : 0); }
   function idle() { return Date.now() - lastTouch > C.IDLE_MS; }
-  // At 11 s the type eases one step lighter: the only sign that the time counted.
+  // At 30 s the type eases one step lighter: the only sign that the time counted.
   function scheduleSoften() {
     clearTimeout(softT);
     var t = store[ui.cur]; if (!t) return;
@@ -252,10 +306,11 @@ textarea::placeholder { color: var(--plum-faint); }
   ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, function () { lastTouch = Date.now(); }, true); });
 
   // Ends the current visit: classifies it and schedules the thought's return.
-  function endVisit() {
+  function endVisit(how) {
     var t = store[ui.cur]; if (!t) return null;
     clockOff();
-    var kind = C.recordVisit(t, ui.ms, ui.worked, idle(), now());
+    var wasIdle = idle(), kind = C.recordVisit(t, ui.ms, ui.worked, wasIdle, now());
+    lsSet(KEY_LOG, C.logVisit(lsGet(KEY_LOG, []), { at: now().toISOString(), id: t.id, ms: ui.ms, worked: ui.worked, idle: wasIdle, kind: kind, how: how || "other", len: t.text.length }));
     ui.cur = null; ui.ms = 0; ui.worked = false; saveUi(); save();
     return kind;
   }
@@ -357,13 +412,13 @@ textarea::placeholder { color: var(--plum-faint); }
   function snapshot() { clockOff(); return { id: ui.cur, t: JSON.parse(JSON.stringify(store[ui.cur])), ms: ui.ms }; }
   function goNext() {
     if (!store[ui.cur]) return;
-    var snap = snapshot(), id = ui.cur; endVisit();
+    var snap = snapshot(), id = ui.cur; endVisit("next");
     undoPoint = snap;
     fly(-1, function () { var n = C.pickNext(store, now(), id); ui.cur = n ? n.id : null; saveUi(); renderMeet(true); toast("Moved on"); });
   }
   function goAway() {
     if (!store[ui.cur]) return;
-    var snap = snapshot(), id = ui.cur; endVisit();
+    var snap = snapshot(), id = ui.cur; endVisit("away");
     store[id].away = now().toISOString(); save();
     buzz("putAway");
     undoPoint = snap;
@@ -380,6 +435,8 @@ textarea::placeholder { color: var(--plum-faint); }
     if (!undoPoint) return;
     clockOff();
     store[undoPoint.id] = undoPoint.t; ui.cur = undoPoint.id; ui.ms = undoPoint.ms; ui.worked = false; undoPoint = null;
+    // The undone visit stays in the log, marked, so it can be left out when the times are judged.
+    var lg = lsGet(KEY_LOG, []); if (lg.length) { lg[lg.length - 1].undone = true; lsSet(KEY_LOG, lg); }
     save(); saveUi(); $("toast").classList.remove("on"); buzz("undo"); renderMeet(true);
   };
 
@@ -443,7 +500,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function closeLib() {
     if (!$("lib").classList.contains("open")) return;
     $("lib").classList.remove("open"); $("lib").setAttribute("aria-hidden", "true"); $("libShade").classList.remove("on"); $("q").blur(); $("newBtn").style.visibility = "";
-    if (mode === "library") { mode = "meet"; clockOn(); }
+    if (mode === "library") { mode = "meet"; if (needsRender) { needsRender = false; renderMeet(false); } else clockOn(); }
   }
   var libCloseBlock = 0;
   $("libClose").onclick = function () { if (Date.now() - libCloseBlock > 400) closeLib(); };
@@ -466,8 +523,15 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   // Opening, from the strip
   var stripTap = true;
+  // The bottom edge belongs to the iPhone (swipe up to go home or switch apps). A touch that starts there never
+  // drags the sheet; a tap anywhere on the strip still opens it.
+  var botProbe = document.createElement("div");
+  botProbe.style.cssText = "position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom);visibility:hidden;pointer-events:none";
+  document.body.appendChild(botProbe);
+  function homeBarZone() { return Math.max(botProbe.offsetHeight + 10, 30); }
   $("strip").addEventListener("pointerdown", function (e) {
     if (mode !== "meet") return;
+    if (e.clientY > window.innerHeight - homeBarZone()) { stripTap = true; return; }
     try { $("strip").setPointerCapture(e.pointerId); } catch (_) {}
     sheet = { y: e.clientY, t: Date.now(), dy: 0, from: "strip", moved: false }; stripTap = true;
   });
@@ -489,7 +553,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("strip").addEventListener("click", function () { if (stripTap) openLib(); stripTap = true; });
   // Shutting, from the grabber or the header
   function headDown(e) {
-    if (!lib.classList.contains("open") || e.target.closest("input, #libNew, .seg button")) return;
+    if (!lib.classList.contains("open") || e.target.closest("input, #libNew, #libGear, .seg button")) return;
     sheet = { y: e.clientY, t: Date.now(), dy: 0, from: "head", moved: false };
   }
   document.addEventListener("pointerdown", function (e) { if (e.target.closest("#lib header, #libClose")) headDown(e); });
@@ -545,16 +609,15 @@ textarea::placeholder { color: var(--plum-faint); }
         return '<div class="lrow away"><span class="t">' + esc(t.text) + '</span><button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button></div>';
       }).join("") || '<p class="lrow"><span class="m">' + (q ? "Nothing matches." : "Pull a thought down to put it away.") + "</span></p>";
     }
-    h += '<div class="libfoot"><button type="button" id="backup">Back up</button><small>Scales ' + esc(C.VERSION) + ". " + esc(savedLine()) + "</small></div>";
+
     $("libList").innerHTML = h;
-    $("backup").onclick = backup;
   }
   $("libList").addEventListener("click", function (e) {
     var o = e.target.closest("[data-open]"), b = e.target.closest("[data-back]");
     if (o) {
       // Opening a thought from the list puts it on screen now. The thought you were on counts as visited.
       var id = o.getAttribute("data-open");
-      if (ui.cur && ui.cur !== id) endVisit();
+      if (ui.cur && ui.cur !== id) endVisit("list");
       ui.cur = id; ui.ms = 0; ui.worked = false; saveUi();
       closeLib(); renderMeet(true);
     } else if (b) {
@@ -567,11 +630,54 @@ textarea::placeholder { color: var(--plum-faint); }
   function backupData() {
     var raw = {};
     ["scales.thoughts.v1", "scales.prefs.v1", "scales.activity.v1", "scales.quotes.v1"].forEach(function (k) { var v = lsGet(k, null); if (v != null) raw[k] = v; });
-    return { app: "scales", version: C.VERSION, exported_at: now().toISOString(), thoughts: store, gone: lsGet(KEY_GONE, []), scales1: raw };
+    return { app: "scales", version: C.VERSION, exported_at: now().toISOString(), thoughts: store, gone: lsGet(KEY_GONE, []), visits: lsGet(KEY_LOG, []), scales1: raw };
   }
   // In the iPhone app: saved without asking to iCloud Drive, Scales (or Files), each day and whenever you leave.
   function dailySave() { if (NATIVE) post({ type: "save", json: JSON.stringify(backupData()), day: C.dayKey(now()) }); }
   window.scalesSaved = function (r) { ui.saved = { ok: !!(r && r.ok), where: r && r.where, at: now().toISOString() }; saveUi(); };
+  // ---------- Settings and Help ----------
+  var needsRender = false;
+  function openPage(id, m) { var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; }
+  function closePage(id, m) { var p = $(id); p.classList.remove("open"); p.setAttribute("aria-hidden", "true"); mode = m; }
+  function openSettings() {
+    $("restoreMsg").textContent = ""; $("restoreMsg").className = "snote";
+    $("setSaved").textContent = savedLine();
+    $("setVersion").textContent = "Scales " + C.VERSION;
+    $("setFeedback").setAttribute("href", "mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback&body=" +
+      encodeURIComponent("\n\n\nScales " + C.VERSION + (NATIVE ? ", iPhone app" : ", browser") + "\n"));
+    openPage("settings", "settings");
+  }
+  $("libGear").onclick = openSettings;
+  $("setBack").onclick = function () { closePage("settings", "library"); };
+  $("setHelp").onclick = function () { openPage("help", "help"); };
+  $("helpBack").onclick = function () { closePage("help", "settings"); };
+  $("setBackup").onclick = backup;
+  $("setRestore").onclick = function () { $("restoreFile").value = ""; $("restoreFile").click(); };
+  function restoreMsg(text, ok) { $("restoreMsg").textContent = text; $("restoreMsg").className = "snote" + (ok ? " ok" : ""); }
+  $("restoreFile").addEventListener("change", function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    if (f.size > 20 * 1024 * 1024) { restoreMsg("That file is too big to be a Scales backup.", false); return; }
+    var rd = new FileReader();
+    rd.onerror = function () { restoreMsg("That file couldn't be read.", false); };
+    rd.onload = function () {
+      var data = null; try { data = JSON.parse(String(rd.result)); } catch (e) {}
+      var r = C.restoreFrom(store, data, now(), lsGet(KEY_GONE, []));
+      if (!r.ok) { restoreMsg(r.kind === "newer" ? "That backup is from a newer Scales. Update Scales, then try again." : "That file isn't a Scales backup.", false); return; }
+      // Thoughts first. If they can't be stored, take them back out and change nothing else.
+      if (r.added && !lsSet(KEY, store)) {
+        r.ids.forEach(function (id) { delete store[id]; });
+        restoreMsg("There wasn't room on this phone to add them. Nothing changed.", false); return;
+      }
+      lsSet(KEY_GONE, r.gone);
+      if (r.visits.length) { var lg = lsGet(KEY_LOG, []); C.mergeLog(lg, r.visits); lsSet(KEY_LOG, lg); }
+      $("stripN").textContent = C.list(store).length; needsRender = true; renderLib();
+      restoreMsg(r.added ? "Added " + r.added + (r.added === 1 ? " thought." : " thoughts.") : "Nothing new in that backup.", true);
+      if (r.added) dailySave();
+      if (r.added) haptic("success");
+    };
+    rd.readAsText(f);
+  });
+
   function savedLine() {
     if (!NATIVE) return "Your thoughts stay on this phone.";
     var s = ui.saved; if (!s || !s.ok) return "Saved each day to iCloud Drive, Scales.";

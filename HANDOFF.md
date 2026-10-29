@@ -6,7 +6,7 @@ For a new working session. Read this, then README.md.
 
 Scales 2 (from 2.0.0, October 2026): "One thought at a time." One of the person's own thoughts on a pistachio ground.
 Swipe up to move on, pull down to put it away, tap to edit; both moves undo for 5 s. No verdict buttons: the app reads
-each visit by time (7 s or less skipped, 11 s or more thought about) and edits, and schedules the return. Nothing leaves
+each visit by time (20 s or less skipped, 30 s or more thought about) and edits, and schedules the return. Nothing leaves
 unless the person puts it away. Plum is for when their hand is on it: Write, Edit, the library.
 
 Scales 1 (Skip, Reflect, Lived, the Ledger, voices, AI with Scales Plus) ended at 1.88.0. Its code and release notes are
@@ -61,3 +61,5 @@ read, never written or deleted.
 - A bespoke put-away haptic would need an iPhone build (today it is thud plus letgo, sent from the page).
 - A reminder may come back later; for now Scales is something you open on your own.
 - Library on plum, the first-time nudge, and the 5-a-day import pace were open questions; the owner has not raised them.
+- Times review, on or after 12 November: read `visits` in the daily backup and recommend the skip and thought lines
+  (see `docs/2.1-plan.md`, step 10).

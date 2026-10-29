@@ -56,10 +56,10 @@ jobs:
           sleep 20
           fail=0
           check() { body=$(curl -fsSL "https://scales.tangomike.app$1") || { echo "::error::$1 did not load"; fail=1; return; }; echo "$body" | grep -q "$2" && echo "::notice::$1 ok" || { echo "::error::$1 is missing: $2"; fail=1; }; }
-          check / "Weigh your thoughts"
+          check / "One thought at a time"
           check /support "Support."
           check /privacy "Privacy."
-          check /site.css "site.css\|--smoke"
+          check /site.css "--pist"
           check /app/ "Scales"
           code=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "content-type: application/json" -H "Origin: https://scales.tangomike.app" -d '{}' https://scales.tangomike.app/api/ai)
           [ "$code" = "402" ] && echo "::notice::/api/ai asks for Scales Plus (402)" || { echo "::error::/api/ai answered $code, expected 402"; fail=1; }

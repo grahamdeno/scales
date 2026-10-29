@@ -11,12 +11,12 @@ const root = path.join(__dirname, "..");
 const read = (f) => fs.readFileSync(path.join(root, f), "utf8");
 const at = (y, mo, d, h = 12, mi = 0) => new Date(y, mo - 1, d, h, mi);
 
-test("classify: 7 s or less is skipped, 11 s or more is thought about, between is seen", () => {
+test("classify: 20 s or less is skipped, 30 s or more is thought about, between is seen", () => {
   assert.equal(N.classify(0, false, false), "skipped");
-  assert.equal(N.classify(7000, false, false), "skipped");
-  assert.equal(N.classify(7001, false, false), "seen");
-  assert.equal(N.classify(10999, false, false), "seen");
-  assert.equal(N.classify(11000, false, false), "thought");
+  assert.equal(N.classify(20000, false, false), "skipped");
+  assert.equal(N.classify(20001, false, false), "seen");
+  assert.equal(N.classify(29999, false, false), "seen");
+  assert.equal(N.classify(30000, false, false), "thought");
   assert.equal(N.classify(60000, false, false), "thought");
 });
 
@@ -44,7 +44,7 @@ test("recordVisit: counts, due date, and engaging works off one skip", () => {
   assert.equal(N.recordVisit(t, 3000, false, false, now), "skipped");
   assert.equal(t.skips, 1);
   assert.equal(t.due, "2026-10-30");
-  assert.equal(N.recordVisit(t, 12000, false, false, now), "thought");
+  assert.equal(N.recordVisit(t, 31000, false, false, now), "thought");
   assert.equal(t.thinks, 1);
   assert.equal(t.skips, 0, "thinking about it works off the skip");
   assert.equal(t.due, "2026-11-02", "the count includes this visit: 2 + 2 x 1 = 4 days");
@@ -204,4 +204,140 @@ test("Scales saves daily through the iPhone app and quiets Scales 1's reminders"
   assert.ok(!/scales\.apikey\.v1/.test(nx), "never copies the API key");
   const swift = read("ios/App/Haptics.swift");
   for (const s of ["thud", "letgo", "signature", "medium", "success"]) assert.match(swift, new RegExp('case "' + s + '"'), s);
+});
+
+test("the visit log keeps raw times and the lines in force, newest 5000 (2.0.1)", () => {
+  const log = [];
+  N.logVisit(log, { at: "2026-10-29T12:00:00Z", id: "a", ms: 12345.6, worked: false, idle: false, kind: "thought", how: "next", len: 40 });
+  assert.deepEqual(log[0], { at: "2026-10-29T12:00:00Z", id: "a", ms: 12346, worked: false, idle: false, kind: "thought", how: "next", len: 40, lines: [N.SKIP_MAX_MS / 1000, N.THOUGHT_MIN_MS / 1000] });
+  for (let i = 0; i < N.LOG_MAX + 10; i++) N.logVisit(log, { at: "x", id: "b" + i, ms: 1, kind: "skipped", how: "next" });
+  assert.equal(log.length, N.LOG_MAX);
+  assert.equal(log[log.length - 1].id, "b" + (N.LOG_MAX + 9), "the newest stay");
+  const nx = read("index.html");
+  assert.match(nx, /visits: lsGet\(KEY_LOG, \[\]\)/, "the log travels in the daily backup");
+  assert.match(nx, /lg\[lg\.length - 1\]\.undone = true/, "an undone visit is marked");
+});
+
+// ---------- Restore (2.1.0) ----------
+const mk2 = (id, o) => Object.assign({ id, text: "Thought " + id, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] }, o);
+const NOW = at(2026, 10, 29);
+const scales2File = (thoughts, extra) => Object.assign({ app: "scales", version: "2.1.0", exported_at: "2026-10-28T00:00:00Z", thoughts, gone: [] }, extra);
+
+test("restore: a Scales 2 backup adds only what is missing and never changes what is here", () => {
+  const store = { a: mk2("a", { text: "Edited here", skips: 3 }) };
+  const file = scales2File({ a: mk2("a", { text: "Old wording" }), b: mk2("b"), c: mk2("c", { away: "2026-10-02T00:00:00Z" }) });
+  const before = JSON.stringify(store.a);
+  const r = N.restoreFrom(store, file, NOW, []);
+  assert.equal(r.ok, true); assert.equal(r.kind, "scales2"); assert.equal(r.added, 2);
+  assert.equal(JSON.stringify(store.a), before, "an existing thought is untouched");
+  assert.ok(store.b && store.c.away, "put away stays put away");
+  assert.equal(Object.keys(store).length, 3);
+});
+
+test("restore: the same file twice adds nothing the second time", () => {
+  const store = {}, file = scales2File({ a: mk2("a"), b: mk2("b") });
+  assert.equal(N.restoreFrom(store, file, NOW, []).added, 2);
+  const snap = JSON.stringify(store);
+  assert.equal(N.restoreFrom(store, file, NOW, []).added, 0);
+  assert.equal(JSON.stringify(store), snap);
+});
+
+test("restore: a Scales 1 backup arrives like the first import: 5 a day, lived and let-go put away", () => {
+  const thoughts = {};
+  for (let i = 0; i < 7; i++) thoughts["k" + i] = { id: "k" + i, text: "Old " + i, status: "active", skip_count: 0, created_at: "2026-01-0" + (i + 1) + "T00:00:00Z" };
+  thoughts.s = { id: "s", text: "Lived", status: "shed", shed_at: "2026-09-01T00:00:00Z" };
+  const store = {};
+  const r = N.restoreFrom(store, { app: "scales", version: 1, thoughts, activity: {}, prefs: {} }, NOW, []);
+  assert.equal(r.ok, true); assert.equal(r.kind, "scales1"); assert.equal(r.added, 8);
+  assert.equal(N.dueToday(store, NOW).length, 5);
+  assert.ok(store.os.away);
+  assert.equal(N.restoreFrom(store, { app: "scales", version: 1, thoughts, activity: {}, prefs: {} }, NOW, []).added, 0, "again adds nothing");
+});
+
+test("restore: Scales 1's thoughts inside a Scales 2 backup join too, once", () => {
+  const store = {};
+  const file = scales2File({ a: mk2("a") }, { scales1: { "scales.thoughts.v1": { x: { id: "x", text: "From Scales 1", status: "active" } } } });
+  assert.equal(N.restoreFrom(store, file, NOW, []).added, 2);
+  assert.ok(store.ox);
+  assert.equal(N.restoreFrom(store, file, NOW, []).added, 0);
+});
+
+test("restore: a trial (scales-next) backup is accepted; other files are refused and change nothing", () => {
+  const store = { a: mk2("a") }, snap = JSON.stringify(store);
+  assert.equal(N.restoreFrom(store, { app: "scales-next", version: "2.0.0-next.2", thoughts: { b: mk2("b") } }, NOW, []).added, 1);
+  const s2 = { a: mk2("a") }, snap2 = JSON.stringify(s2);
+  for (const bad of [null, [], "x", 5, {}, { app: "other", thoughts: {} }, { app: "scales", version: "2.1.0" }, { app: "scales", version: "2.1.0", thoughts: [] }, { thoughts: { a: mk2("a") } }]) {
+    const r = N.restoreFrom(s2, bad, NOW, ["zz"]);
+    assert.equal(r.ok, false, JSON.stringify(bad)); assert.equal(r.added, 0); assert.deepEqual(r.gone, ["zz"]);
+  }
+  assert.equal(JSON.stringify(s2), snap2);
+  assert.ok(snap);
+});
+
+test("restore: damaged thoughts are skipped or cleaned, never trusted", () => {
+  const store = {};
+  const file = scales2File({
+    ok: mk2("ok"), noText: mk2("noText", { text: "  " }), noId: { text: "x" }, num: mk2("num", { text: 5 }), nul: null,
+    odd: mk2("odd", { due: "tomorrow", skips: -3, thinks: "many", works: 2.7, away: 5, note: 7, visits: "no" })
+  });
+  const r = N.restoreFrom(store, file, NOW, []);
+  assert.equal(r.added, 2);
+  assert.equal(store.odd.due, "2026-10-29", "a bad date becomes today");
+  assert.equal(store.odd.skips, 0); assert.equal(store.odd.thinks, 0); assert.equal(store.odd.works, 2);
+  assert.ok(store.odd.away, "a put-away mark in an odd form still means put away"); assert.equal(store.odd.note, ""); assert.deepEqual(store.odd.visits, []);
+});
+
+test("restore: deletions travel, but a thought in the file comes back even if it was deleted here", () => {
+  const store = { keep: mk2("keep") };
+  const file = scales2File({ back: mk2("back"), keep: mk2("keep") }, { gone: ["ogone", "keep"] });
+  const r = N.restoreFrom(store, file, NOW, ["back", "other"]);
+  assert.deepEqual(r.gone.sort(), ["ogone", "other"], "back leaves the list; keep is here so it is not listed; the file's ogone joins");
+  assert.ok(store.back && store.keep);
+  const s2 = {};
+  N.restoreFrom(s2, scales2File({ a: mk2("a"), z: mk2("z") }, { gone: ["z"] }), NOW, []);
+  assert.ok(s2.a && !s2.z, "a thought the file itself lists as deleted is not added");
+});
+
+test("restore: visit-log entries merge without duplicates and stay in time order", () => {
+  const e = (at, id) => ({ at, id, ms: 1000, kind: "skipped" });
+  const log = [e("2026-10-29T10:00:00Z", "a"), e("2026-10-29T12:00:00Z", "b")];
+  const added = N.mergeLog(log, [e("2026-10-29T12:00:00Z", "b"), e("2026-10-29T11:00:00Z", "c")]);
+  assert.equal(added, 1);
+  assert.deepEqual(log.map((x) => x.id), ["a", "c", "b"]);
+  const r = N.restoreFrom({}, scales2File({ a: mk2("a") }, { visits: [e("2026-10-28T00:00:00Z", "a"), { bad: true }] }), NOW, []);
+  assert.equal(r.visits.length, 1);
+});
+
+test("restore review (2.1.0): a backup from a later Scales is refused, not read as Scales 1", () => {
+  const store = { a: mk2("a") }, snap = JSON.stringify(store);
+  for (const v of ["3.0.0", "10.1", 2, null, undefined]) {
+    const r = N.restoreFrom(store, { app: "scales", version: v, thoughts: { b: mk2("b") } }, NOW, []);
+    assert.equal(r.ok, false, String(v)); assert.equal(r.kind, "newer");
+  }
+  assert.equal(JSON.stringify(store), snap, "nothing added, and no o-prefixed copies");
+  assert.equal(N.restoreFrom({}, { app: "scales", version: "1", thoughts: {} }, NOW, []).kind, "scales1");
+});
+
+test("restore review (2.1.0): ids that look like built-in names are handled like any other", () => {
+  const store = {};
+  const file = scales2File(JSON.parse('{"a":{"id":"constructor","text":"C"},"b":{"id":"toString","text":"T"},"c":{"id":"__proto__","text":"P"}}'));
+  const r = N.restoreFrom(store, file, NOW, []);
+  assert.deepEqual(Object.keys(store).sort(), ["constructor", "toString"]);
+  assert.equal(r.added, 2); assert.deepEqual(r.ids.sort(), ["constructor", "toString"]);
+  assert.equal(Object.getPrototypeOf(store), Object.prototype, "nothing reaches the object's prototype");
+  assert.equal(N.restoreFrom(store, file, NOW, []).added, 0);
+});
+
+test("restore review (2.1.0): r.ids lists exactly what was added, so the page can take it back if saving fails", () => {
+  const store = { a: mk2("a") };
+  const r = N.restoreFrom(store, scales2File({ a: mk2("a"), b: mk2("b"), c: mk2("c") }), NOW, []);
+  assert.deepEqual(r.ids.sort(), ["b", "c"]);
+  r.ids.forEach((id) => delete store[id]);
+  assert.deepEqual(Object.keys(store), ["a"]);
+});
+
+test("restore review (2.1.0): restored counts stay in range and missing dates become now", () => {
+  const store = {};
+  N.restoreFrom(store, scales2File({ x: mk2("x", { skips: 40, created: 7 }) }), NOW, []);
+  assert.equal(store.x.skips, 4); assert.equal(store.x.created, NOW.toISOString());
 });

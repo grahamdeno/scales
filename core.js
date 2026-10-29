@@ -3,11 +3,11 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.0.0";
+  var VERSION = "2.1.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
-  var SKIP_MAX_MS = 7000;      // 7 s or less: skipped
-  var THOUGHT_MIN_MS = 11000;  // 11 s or more: thought about
+  var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
+  var THOUGHT_MIN_MS = 30000;  // 30 s or more: thought about (2.1.0; was 11 s)
   var IDLE_MS = 5 * 60000;     // past 5 min with no touch, assume the phone was set down: only seen
 
   // A day starts at 4 AM, so a late night counts as the day it began.
@@ -104,6 +104,16 @@
     return out;
   }
 
+  // The visit log (2.0.1): every visit with its raw time, kept so the skip and thought lines can be judged from real
+  // use and every past visit re-read under different lines. The newest 5000 are kept; it travels in the daily backup.
+  var LOG_MAX = 5000;
+  function logVisit(log, e) {
+    log.push({ at: e.at, id: e.id, ms: Math.round(e.ms), worked: !!e.worked, idle: !!e.idle, kind: e.kind, how: e.how,
+      len: e.len || 0, lines: [SKIP_MAX_MS / 1000, THOUGHT_MIN_MS / 1000] });
+    if (log.length > LOG_MAX) log.splice(0, log.length - LOG_MAX);
+    return log;
+  }
+
   // Catch-up: thoughts in Scales 1 that are not here yet join on the next open.
   // Matched by id; a thought already here is never overwritten, and one deleted here (in gone) never comes back.
   // Returns how many were added.
@@ -119,6 +129,75 @@
     return added;
   }
 
+  // ---- Restore (2.1.0) ----
+  // Adds what a backup file holds that this phone does not. It merges and never overwrites: a thought whose id is
+  // already here is left exactly as it is, and nothing is removed. Reads a Scales 2 backup, a trial ("scales-next")
+  // backup, or a Scales 1 backup. Anything else is refused. Returns
+  //   { ok, kind, added, gone, visits }  where gone is the phone's deleted-ids list to keep and visits are log entries
+  // from the file to merge with mergeLog. A thought the person deleted on this phone comes back if the file has it,
+  // because choosing a backup is asking for it.
+  var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+  function num(v, d) { return typeof v === "number" && isFinite(v) && v >= 0 ? Math.floor(v) : d; }
+  var own = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k); };
+  function cleanThought(t, today, nowIso) {
+    if (!t || typeof t !== "object" || typeof t.id !== "string" || !t.id || typeof t.text !== "string" || !t.text.trim()) return null;
+    var visits = Array.isArray(t.visits) ? t.visits.filter(function (v) { return v && typeof v === "object"; }).slice(-30) : [];
+    return { id: t.id, text: t.text.trim().slice(0, 1500), note: typeof t.note === "string" ? t.note.slice(0, 1500) : "",
+      created: typeof t.created === "string" && t.created ? t.created : nowIso,
+      due: typeof t.due === "string" && DAY_RE.test(t.due) ? t.due : today,
+      // A put-away thought stays put away, whatever form the date took.
+      away: typeof t.away === "string" && t.away ? t.away : t.away ? nowIso : null,
+      skips: Math.min(4, num(t.skips, 0)), thinks: num(t.thinks, 0), works: num(t.works, 0),
+      seen: typeof t.seen === "string" ? t.seen : null, visits: visits, from: typeof t.from === "string" ? t.from : undefined };
+  }
+  function restoreFrom(store, data, now, gone) {
+    var res = { ok: false, kind: null, added: 0, ids: [], gone: (gone || []).slice(), visits: [] };
+    if (!data || typeof data !== "object" || Array.isArray(data) || !data.thoughts || typeof data.thoughts !== "object" || Array.isArray(data.thoughts)) return res;
+    var today = dayKey(now), nowIso = now.toISOString(), incoming = Object.create(null);
+    var fileGone = Array.isArray(data.gone) ? data.gone.filter(function (x) { return typeof x === "string"; }) : [];
+    // Scales 1 wrote version 1 (a number). Scales 2 and the trial write "2.x.y". Anything else is a file from a Scales
+    // this one does not know (a later one, most likely) and is refused rather than guessed at.
+    var ver = data.version;
+    var v2 = data.app === "scales-next" || (data.app === "scales" && typeof ver === "string" && /^2\./.test(ver));
+    var v1 = data.app === "scales" && (ver === 1 || ver === "1" || (typeof ver === "string" && /^1\./.test(ver)));
+    if (!v2 && !v1) { if (data.app === "scales" || data.app === "scales-next") res.kind = "newer"; return res; }
+    res.kind = v2 ? "scales2" : "scales1";
+    if (v2) {
+      Object.keys(data.thoughts).forEach(function (k) { var t = cleanThought(data.thoughts[k], today, nowIso); if (t) incoming[t.id] = t; });
+      // Scales 1's own thoughts carried inside a Scales 2 backup join too, spread over the coming days as on first open.
+      var old = data.scales1 && typeof data.scales1 === "object" ? data.scales1["scales.thoughts.v1"] : null;
+      if (old && typeof old === "object" && !Array.isArray(old)) {
+        var fresh = importOld(old, now);
+        Object.keys(fresh).forEach(function (id) { if (!(id in incoming)) incoming[id] = fresh[id]; });
+      }
+    } else {
+      var f1 = importOld(data.thoughts, now);
+      Object.keys(f1).forEach(function (id) { incoming[id] = f1[id]; });
+    }
+    var goneSet = Object.create(null); res.gone.forEach(function (id) { goneSet[id] = true; });
+    var skipFile = Object.create(null); fileGone.forEach(function (id) { skipFile[id] = true; });
+    Object.keys(incoming).forEach(function (id) {
+      // "__proto__" can't be stored as a key of a plain object without changing the object itself, so it is skipped.
+      if (id === "__proto__" || own(store, id) || skipFile[id]) return;
+      store[id] = incoming[id]; res.added++; res.ids.push(id);
+      delete goneSet[id];
+    });
+    fileGone.forEach(function (id) { if (!own(store, id)) goneSet[id] = true; });
+    res.gone = Object.keys(goneSet);
+    res.ok = true;
+    if (v2 && Array.isArray(data.visits)) res.visits = data.visits.filter(function (e) { return e && typeof e === "object" && typeof e.at === "string" && typeof e.id === "string" && typeof e.ms === "number"; });
+    return res;
+  }
+  // Adds visit-log entries a log does not have (matched by time and thought), oldest first, newest LOG_MAX kept.
+  function mergeLog(log, incoming) {
+    var seen = {}; log.forEach(function (e) { seen[e.at + "|" + e.id] = true; });
+    var add = incoming.filter(function (e) { return !seen[e.at + "|" + e.id]; });
+    var all = log.concat(add).sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : 0; });
+    if (all.length > LOG_MAX) all = all.slice(all.length - LOG_MAX);
+    log.length = 0; all.forEach(function (e) { log.push(e); });
+    return add.length;
+  }
+
   // "Tomorrow", "Today", a weekday for the coming week, else a short date.
   function whenLabel(key, now) {
     var today = dayKey(now);
@@ -132,6 +211,6 @@
   var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
     make: make, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext,
-    nextDue: nextDue, importOld: importOld, mergeOld: mergeOld, whenLabel: whenLabel };
+    nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);

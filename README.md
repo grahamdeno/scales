@@ -13,8 +13,10 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
 - **Write and Edit (plum):** "What's on your mind?", Keep. A new thought comes back tomorrow. Edit holds the thought
   and a note; Delete takes two taps, and a tap anywhere else takes the first one back.
 - **The library (plum):** the strip at the bottom, "Your thoughts". Pull it up or tap it; pull the sheet down or tap
-  outside to shut it. Search, filter (All, In rotation, Put away), Bring back, Back up.
-- **Reading a visit:** 7 s or less is skipped; 11 s or more is thought about; between is seen; an edit or a note is
+  outside to shut it. Search, filter (All, In rotation, Put away), Bring back. The gear opens Settings.
+- **Settings (2.1.0):** Your data (Back up, Restore from a backup), Help (How Scales works), About (Privacy, Support,
+  Send feedback, the version). Privacy is linked here because the App Store requires it inside the app.
+- **Reading a visit:** 20 s or less is skipped; 30 s or more is thought about; between is seen; an edit or a note is
   worked on. Time counts only while the app is open and the thought is on screen; over 5 minutes with no touch counts
   as seen.
 - **Coming back:** skipped 1 day; seen 2 days; thought about 2 + 2 per time (21 at most); worked on 4 + 3 per time
@@ -32,7 +34,11 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
 - **Daily save (iPhone app):** at each open and whenever the app goes to the background, everything is saved as
   "Scales backup.json" plus a dated copy (the last 14 kept) in iCloud Drive > Scales, or Files > On My iPhone > Scales.
   The file includes Scales 1's thoughts, settings, activity and quotes exactly as they are (never its API key).
-- **Back up** in the library saves the same file wherever you choose.
+- **Back up** (Settings) saves the same file wherever you choose. **Restore from a backup** (Settings) merges a Scales 2,
+  trial or Scales 1 backup file: it adds thoughts this phone does not have and never changes or removes one that is here.
+- **Visit log (2.0.1):** every visit is logged with its raw time and the skip and thought lines in force
+  (`scales.next.log.v1`, newest 5000; also in the daily backup as `visits`). It is for judging the 20 s and 30 s lines
+  from real use.
 
 ## Haptics (iPhone app)
 
