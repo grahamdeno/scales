@@ -15,7 +15,7 @@ jobs:
           node-version: 24
       - run: node --test
 
-  # The main loop in a real browser at iPhone size (1.68.0): tests/e2e/loop.e2e.js.
+  # Scales in a real browser at 390, 375 and 430 wide (2.0.0): tests/e2e/app.e2e.js.
   browser:
     runs-on: ubuntu-latest
     steps:
@@ -28,10 +28,10 @@ jobs:
       - name: Browser tests
         run: |
           set +e
-          node --test tests/e2e/loop.e2e.js > e2e.log 2>&1
+          node tests/e2e/app.e2e.js > e2e.log 2>&1
           code=$?
           # Surface failures as annotations, so they can be read without the full log.
-          grep -E -A3 "^not ok|  error:|Error:" e2e.log | grep -v "^--$" | head -60 | sed 's/^/::error::/'
+          grep -E -A3 "^FAIL|Error:" e2e.log | grep -v "^--$" | head -60 | sed 's/^/::error::/'
           tail -n 5 e2e.log
           exit $code
 

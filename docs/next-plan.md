@@ -34,9 +34,9 @@ building, tests and shipping; **Haiku** for mechanical edits. Each step lists wh
 | 6 | Browser check at 390, 375 and 430 wide: swipe up, pull down + Undo, tap to edit, write, library search and Bring back, import from seeded old data, no console errors | Sonnet | Done; `tests/e2e/next.e2e.js` passes at 390, 375, 430 | Playwright script passes; screenshots of each screen |
 | 7 | Feel review of step 6 screenshots against the canvas boards (spacing, weights, plum fade, strip) | Opus | Done; 5 changes made, see "Feel review" below | Changes listed or "no change" |
 | 8 | Ship: branch, issue, PR, merge with `scripts/ship.sh`; confirm Pages deploy and that `/app/next/` loads | Sonnet | To do | Live at scales.tangomike.app/app/next/ |
-| 9 | Graham tries it on his phone for a few days | Graham | In progress | Notes on thresholds (100 px up, 160 px down, 7 s / 11 s) and the plum fade |
-| 10 | Tune from his notes | Opus for feel, Sonnet for edits | Later | |
-| 11 | Swap: decide when `next/` replaces the current app, and how its data carries over | Opus | Drafted: `docs/swap-plan.md` | A separate plan |
+| 9 | Graham tries it on his phone for a few days | Graham | Done: swipes and times feel right; asked for undo after next, a draggable library, + New, Delete take-back, filters, longer haptics | Notes on thresholds (100 px up, 160 px down, 7 s / 11 s) and the plum fade |
+| 10 | Tune from his notes | Opus for feel, Sonnet for edits | Done: 2.0.0-next.2 | |
+| 11 | Swap: decide when `next/` replaces the current app, and how its data carries over | Opus | Done: 2.0.0, see `docs/swap-plan.md` | A separate plan |
 
 ## Feel review (step 7)
 

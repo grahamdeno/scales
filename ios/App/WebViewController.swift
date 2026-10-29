@@ -43,8 +43,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         web.scrollView.showsVerticalScrollIndicator = false
         web.scrollView.showsHorizontalScrollIndicator = false
         web.isOpaque = false
-        // The smoke band (1.75.0), in every look, so nothing flashes while Scales loads.
-        web.backgroundColor = UIColor(red: 0xDC / 255, green: 0xD9 / 255, blue: 0xD3 / 255, alpha: 1)
+        // Pistachio (2.0.0), the ground Scales opens on, so nothing flashes while it loads.
+        web.backgroundColor = UIColor(red: 0xB9 / 255, green: 0xC9 / 255, blue: 0xA3 / 255, alpha: 1)
         web.scrollView.backgroundColor = web.backgroundColor
         if #available(iOS 16.4, *) { web.isInspectable = true }
         view = web

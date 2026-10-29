@@ -1,9 +1,9 @@
-// Browser check for the new Scales (next/): Playwright, Chromium, phone sizes.
-// Run: node tests/e2e/next.e2e.js   (serves the repo on a local port; screenshots go to $SHOTS or ./next-shots)
+// Browser check for Scales: Playwright, Chromium, phone sizes.
+// Run: node tests/e2e/app.e2e.js   (serves the repo on a local port; screenshots go to $SHOTS or ./e2e-shots)
 const http = require("http"), fs = require("fs"), path = require("path");
 const { chromium } = require("playwright");
 const root = path.join(__dirname, "..", "..");
-const shots = process.env.SHOTS || path.join(root, "next-shots");
+const shots = process.env.SHOTS || path.join(root, "e2e-shots");
 fs.mkdirSync(shots, { recursive: true });
 const types = { ".html": "text/html", ".js": "text/javascript", ".webmanifest": "application/manifest+json", ".png": "image/png", ".woff2": "font/woff2", ".json": "application/json" };
 const server = http.createServer((q, s) => {
@@ -33,7 +33,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     page.on("console", (m) => { if (m.type() === "error") errs.push(m.text()); });
     await page.addInitScript((o) => { if (!localStorage.getItem("scales.thoughts.v1") && !sessionStorage.getItem("seeded")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("seeded", "1"); } }, old);
     const tag = "[" + w + "] ";
-    await page.goto(base + "/next/");
+    await page.goto(base + "/");
     await page.waitForSelector("#words:not(:empty)");
     const first = (await page.textContent("#words")).trim();
     ok(first === "Active thought number 3", tag + "most skipped thought comes first (" + first + ")");
@@ -118,11 +118,9 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#lib [data-back]"); await page.waitForTimeout(300);
     ok(!(await page.locator('#lib .lrow.away .back').count()), tag + "Bring back moves it into rotation");
     await page.screenshot({ path: path.join(shots, w + "-7-library-search.png") });
-    const link = await page.getAttribute('#lib a[href^="../"]', "href");
-    ok(link === "../", tag + "back link goes to ../ (" + link + ")");
     // old data untouched
     const after = await page.evaluate(() => localStorage.getItem("scales.thoughts.v1"));
-    ok(JSON.stringify(JSON.parse(after)) === JSON.stringify(old), tag + "current app's data unchanged");
+    ok(JSON.stringify(JSON.parse(after)) === JSON.stringify(old), tag + "Scales 1's data unchanged");
     ok(errs.length === 0, tag + "no console errors" + (errs.length ? ": " + errs.join(" | ") : ""));
     await ctx.close();
   }
@@ -135,7 +133,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
       window.webkit = { messageHandlers: { scales: { postMessage: (m) => window.__posts.push(m) } } };
       if (!sessionStorage.getItem("s")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("s", "1"); }
     }, old);
-    await page.goto(base + "/next/?native=1"); await page.waitForTimeout(2000);
+    await page.goto(base + "/?native=1"); await page.waitForTimeout(2000);
     const types = await page.evaluate(() => window.__posts.map((m) => m.type));
     ok(["ready", "unschedule", "badge", "save"].every((t) => types.includes(t)), "native: ready, unschedule, badge and save sent (" + types.join(",") + ")");
     const saved = await page.evaluate(() => JSON.parse(window.__posts.find((m) => m.type === "save").json));
@@ -146,18 +144,14 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(hs.join(",") === "thud,letgo", "native: put away buzzes thud then letgo (" + hs.join(",") + ")");
     await ctx.close();
   }
-  // native link keeps ?native=1 both ways
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
-  const page = await ctx.newPage();
-  await page.goto(base + "/next/?native=1"); await page.waitForTimeout(500);
-  const jf = await page.evaluate(() => localStorage.length);
-  await page.evaluate(() => { localStorage.setItem("scales.next.thoughts.v1", JSON.stringify({ x: { id: "x", text: "hi", note: "", created: new Date().toISOString(), due: "2000-01-01", away: null, skips: 0, thinks: 0, works: 0, visits: [] } })); });
-  await page.reload(); await page.waitForTimeout(500);
-  await page.click("#strip"); await page.waitForTimeout(600);
-  ok((await page.getAttribute('#lib a[href^="../"]', "href")) === "../?native=1", "native: back link keeps ?native=1");
-  await page.goto(base + "/index.html"); await page.waitForTimeout(800);
-  const h = await page.evaluate(() => document.getElementById("tryNext").getAttribute("href"));
-  ok(h === "next/", "old app: web link is next/ (" + h + ")");
+  // the trial address forwards home and keeps ?native=1
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    await page.goto(base + "/next/?native=1"); await page.waitForTimeout(800);
+    ok(new URL(page.url()).pathname === "/" && new URL(page.url()).search === "?native=1", "/next/ forwards to / with ?native=1 (" + page.url() + ")");
+    await ctx.close();
+  }
   await browser.close(); server.close();
   console.log(fails ? fails + " FAILED" : "ALL PASSED");
   process.exit(fails ? 1 : 0);
