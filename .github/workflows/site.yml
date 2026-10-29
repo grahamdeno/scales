@@ -55,7 +55,7 @@ jobs:
         run: |
           sleep 20
           fail=0
-          check() { body=$(curl -fsSL "https://scales.tangomike.app$1") || { echo "::error::$1 did not load"; fail=1; return; }; echo "$body" | grep -q "$2" && echo "::notice::$1 ok" || { echo "::error::$1 is missing: $2"; fail=1; }; }
+          check() { body=$(curl -fsSL "https://scales.tangomike.app$1") || { echo "::error::$1 did not load"; fail=1; return; }; echo "$body" | grep -q -- "$2" && echo "::notice::$1 ok" || { echo "::error::$1 is missing: $2"; fail=1; }; }
           check / "One thought at a time"
           check /support "Support."
           check /privacy "Privacy."
