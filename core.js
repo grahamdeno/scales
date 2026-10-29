@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.3.1";
+  var VERSION = "2.4.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -166,6 +166,23 @@
     });
     return res;
   }
+  // A set line is still on trial until the person keeps it: met twice or more, or noted, changed or bookmarked.
+  // While on trial, putting it away offers Delete too, so a line that isn't for them never sits in the archive.
+  function onTrial(t) {
+    return !!(t && t.set && !t.bookmarked && !t.note && !(t.works > 0) && (t.visits || []).length < 2);
+  }
+  // Deletes the put-away lines of a set, except any the person bookmarked, noted or changed. Returns { deleted, gone }.
+  function clearPutAway(store, setId, gone) {
+    var res = { deleted: 0, gone: (gone || []).slice() };
+    fromSet(store, setId).forEach(function (t) {
+      if (!t.away || t.bookmarked || t.note || (t.works || 0) > 0) return;
+      delete store[t.id]; res.deleted++; if (res.gone.indexOf(t.id) < 0) res.gone.push(t.id);
+    });
+    return res;
+  }
+  function clearable(store, setId) {
+    return fromSet(store, setId).filter(function (t) { return t.away && !t.bookmarked && !t.note && !((t.works || 0) > 0); }).length;
+  }
   // First open with nothing here: the five starter lines, all due today, so there is something to meet at once.
   function addStarters(store, sets, starterIds, now) {
     var today = dayKey(now), n = 0, byId = {};
@@ -287,7 +304,7 @@
 
   var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
-    make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, soonest: soonest,
+    make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);

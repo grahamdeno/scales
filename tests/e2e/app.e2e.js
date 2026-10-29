@@ -63,6 +63,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const third = (await page.textContent("#words")).trim();
     ok(third !== second, tag + "pull down puts it away");
     ok(await page.locator("#toast.on").count() === 1, tag + "toast with Undo shows");
+    ok(!(await page.locator("#toastDel").isVisible()), tag + "your own thoughts never offer Delete when put away");
     await page.screenshot({ path: path.join(shots, w + "-2-putaway-toast.png") });
     await page.click("#toastUndo"); await page.waitForTimeout(500);
     ok((await page.textContent("#words")).trim() === second, tag + "Undo brings it back");
@@ -137,15 +138,22 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(await page.locator("#lib.open").count() === 0, tag + "a short pull springs back shut");
     await page.click("#strip"); await page.waitForTimeout(700);
     ok(await page.locator("#lib.open").count() === 1, tag + "tapping the strip opens the library");
-    await page.click('#seg [data-view="away"]'); await page.waitForTimeout(200);
-    ok(!/In rotation ·/.test(await page.textContent("#libList")) && /Put away ·/.test(await page.textContent("#libList")), tag + "Put away filter shows only put away");
+    // 2.4.0: three filters; Put away is a quiet row at the foot of All, one tap to the archive and one back
+    ok((await page.locator("#seg button").count()) === 3 && !(await page.locator('#seg [data-view="away"]').count()) && !(await page.locator('#seg [data-view="on"]').count()), tag + "the filters are All, New and Bookmarked");
+    const segw0 = await page.evaluate(() => { const g = document.getElementById("seg"); return { sw: g.scrollWidth, cw: g.clientWidth }; });
+    ok(segw0.sw <= segw0.cw + 40 && await page.locator("#segMarked").isVisible(), tag + "all three fit without scrolling (" + JSON.stringify(segw0) + ")");
+    ok(/In rotation ·/.test(await page.textContent("#libList")) && !/Put away ·/.test(await page.textContent("#libList")) && (await page.locator("#libList .arch").count()) === 1, tag + "All shows what is in rotation, then one quiet Put away row");
+    await page.click("#libList .arch"); await page.waitForTimeout(200);
+    ok(!/In rotation ·/.test(await page.textContent("#libList")) && /Put away ·/.test(await page.textContent("#libList")), tag + "the Put away row opens only the put away thoughts");
     await page.screenshot({ path: path.join(shots, w + "-6b-library-away.png") });
-    await page.click('#seg [data-view="on"]'); await page.waitForTimeout(200);
-    ok(/In rotation ·/.test(await page.textContent("#libList")) && !/Put away ·/.test(await page.textContent("#libList")), tag + "In rotation filter shows only rotation");
-    await page.click('#seg [data-view="all"]'); await page.waitForTimeout(200);
+    await page.click("#libList .arch"); await page.waitForTimeout(200);
+    ok(/In rotation ·/.test(await page.textContent("#libList")), tag + "and the way back at the top returns to All");
+    await page.fill("#q", "a"); await page.waitForTimeout(200);
+    ok(/Put away ·/.test(await page.textContent("#libList")) && (await page.locator("#libList .arch").count()) === 0, tag + "a search looks at put away thoughts too");
+    await page.fill("#q", ""); await page.waitForTimeout(200);
     // 2.2.0: New, Bookmarked, the scrolling filters, and the review rule
     const segw = await page.evaluate(() => { const g = document.getElementById("seg"); return { sw: g.scrollWidth, cw: g.clientWidth, page: document.documentElement.scrollWidth - document.documentElement.clientWidth }; });
-    ok(segw.sw > segw.cw && segw.page <= 0, tag + "five filters scroll sideways inside their row, the page does not (" + JSON.stringify(segw) + ")");
+    ok(segw.sw <= segw.cw && segw.page <= 0, tag + "the three filters fit their row, and the page does not scroll sideways (" + JSON.stringify(segw) + ")");
     await page.evaluate(() => { const g = document.getElementById("seg"); g.scrollLeft = g.scrollWidth; });
     ok(await page.locator('#segMarked').isVisible(), tag + "Bookmarked can be scrolled to");
     await page.click('#seg [data-view="new"]'); await page.waitForTimeout(200);
@@ -238,13 +246,13 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Back up/.test(await page.textContent("#settings")) && /Restore from a backup/.test(await page.textContent("#settings")), tag + "Settings has Back up and Restore");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.3\.1/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/Scales 2\.3\.1/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.4\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/Scales 2\.4\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     await page.screenshot({ path: path.join(shots, w + "-8-settings.png") });
     const dl = page.waitForEvent("download", { timeout: 3000 });
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
-    ok(bk.app === "scales" && bk.version === "2.3.1" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.4.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -294,6 +302,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
       await ctx2.close();
     }
     // Help, and back
+    ok(!(await page.textContent("#settings")).includes("Help") || !/^Help$/m.test(await page.evaluate(() => Array.from(document.querySelectorAll("#settings .sh")).map((e) => e.textContent).join("\n"))), tag + "no Help or About headings");
     await page.click("#setHelp"); await page.waitForTimeout(500);
     ok(await page.locator("#help.open").count() === 1 && /20 seconds or less/.test(await page.textContent("#help")) && /30 seconds or more/.test(await page.textContent("#help")), tag + "How Scales works opens with the new times");
     await page.screenshot({ path: path.join(shots, w + "-9-help.png") });
@@ -304,7 +313,10 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Restored one/.test(await page.textContent("#lib")), tag + "the library shows what was restored");
     await page.screenshot({ path: path.join(shots, w + "-6-library.png") });
     const lib = await page.textContent("#lib");
-    ok(/brand new thought/.test(lib) && /A thought I lived/.test(lib), tag + "library lists new thought and put-away ones");
+    await page.click("#libList .arch"); await page.waitForTimeout(200);
+    const libAway = await page.textContent("#lib");
+    await page.click("#libList .arch"); await page.waitForTimeout(200);
+    ok(/brand new thought/.test(lib) && /A thought I lived/.test(libAway), tag + "library lists the new thought, and the put-away ones behind the Put away row");
     await page.fill("#q", "lived"); await page.waitForTimeout(300);
     ok(!/Active thought number 1/.test(await page.textContent("#lib")) && /A thought I lived/.test(await page.textContent("#lib")), tag + "search filters");
     await page.click("#lib [data-back]"); await page.waitForTimeout(300);
@@ -342,6 +354,17 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const st = Object.values(s5).find((t) => t.text === shown);
     ok(st && (st.by ? (await page.textContent("#by")).trim() === st.by && await page.locator("#by").isVisible() : !(await page.locator("#by").isVisible())), tag + "who said it shows under a quote (" + (st && st.by) + ")");
     await page.screenshot({ path: path.join(shots, w + "-first-meet.png") });
+    // A set line not yet kept can be deleted straight from the Put away message, and leaves no trace
+    const dropId = st.id;
+    await page.keyboard.press("ArrowDown"); await page.waitForTimeout(700);
+    ok(await page.locator("#toastDel").isVisible() && /Put away/.test(await page.textContent("#toast")), tag + "putting away a new set line offers Delete");
+    await page.screenshot({ path: path.join(shots, w + "-toast-delete.png") });
+    await page.click("#toastDel"); await page.waitForTimeout(300);
+    const afterDrop = await store();
+    const logIds = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.log.v1") || "[]").map((e) => e.id));
+    ok(!afterDrop[dropId] && !logIds.includes(dropId) && /Deleted/.test(await page.textContent("#toast")), tag + "Delete removes it and its visits");
+    ok(/4\s*$/.test(await page.textContent("#strip")), tag + "and the count drops to 4");
+    await page.waitForTimeout(1700);
     // A new thought typed with a quotation mark opens the Who said it line
     await page.click("#newBtn"); await page.waitForTimeout(500);
     ok(!(await page.locator("#startFive").isVisible()), tag + "Start with five is gone once there are thoughts");
@@ -371,7 +394,11 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     // Sets in Settings
     await page.click("#strip"); await page.waitForTimeout(700);
     await page.click("#libGear"); await page.waitForTimeout(600);
-    ok((await page.locator("#setList .setr").count()) === 5, tag + "Settings lists the five sets");
+    ok(/Sets/.test(await page.textContent("#setSets")) && await page.locator("#setSets").isVisible(), tag + "Settings has a Sets row");
+    await page.click("#setSets"); await page.waitForTimeout(600);
+    ok(await page.locator("#sets.open").count() === 1, tag + "Sets opens its own page");
+    ok((await page.locator("#setList .setr").count()) === 5, tag + "the Sets page lists the five sets");
+    ok(/13 lines · Benjamin Franklin/.test(await page.locator('#setList [data-set="franklin"]').textContent()) && /Written for Scales/.test(await page.locator('#setList [data-set="questions"]').textContent()), tag + "each set says how many lines and from whom");
     const fr = page.locator('#setList [data-set="franklin"]');
     ok(/Add$/.test((await page.locator('#setList [data-set="jung"]').textContent()).trim()), tag + "a set not yet added says Add");
     const stoics = page.locator('#setList [data-set="stoics"]');
@@ -379,7 +406,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.screenshot({ path: path.join(shots, w + "-settings-sets.png") });
     await fr.click(); await page.waitForTimeout(300);
     const s13 = Object.values(await store()).filter((t) => t.set === "franklin");
-    ok(s13.length === 13 && /12 lines added/.test(await page.textContent("#setsMsg")), tag + "Add the rest brings in the other 12 of 13 lines");
+    ok(s13.length === 13 && /1[23] lines added/.test(await page.textContent("#setsMsg")), tag + "Add the rest brings in the other 12 of 13 lines");
     ok(/Remove$/.test((await page.locator('#setList [data-set="franklin"]').textContent()).trim()), tag + "then it offers Remove");
     await page.locator('#setList [data-set="franklin"]').click(); await page.waitForTimeout(200);
     ok(/Tap again to remove/.test(await page.locator('#setList [data-set="franklin"]').textContent()), tag + "Remove asks for a second tap");
@@ -388,6 +415,23 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(Object.values(await store()).filter((t) => t.set === "franklin" && !t.away).length === 0 && /removed/.test(await page.textContent("#setsMsg")), tag + "the second tap removes the unseen lines");
     const ov2 = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     ok(ov2 <= 0, tag + "no sideways scroll in Settings (" + ov2 + ")");
+    // Delete the ones you put away, from the Sets page
+    await page.locator('#setList [data-set="stoics"]').click(); await page.waitForTimeout(300);
+    await page.evaluate(() => { const o = JSON.parse(localStorage.getItem("scales.next.thoughts.v1")); ["s-ep-power", "s-ep-demand", "s-ep-lost"].forEach((k) => { o[k].away = new Date().toISOString(); }); o["s-ep-lost"].note = "mine"; localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(o)); });
+    await page.reload(); await page.waitForTimeout(900);
+    await page.click("#strip"); await page.waitForTimeout(700); await page.click("#libGear"); await page.waitForTimeout(500); await page.click("#setSets"); await page.waitForTimeout(500);
+    const clr = page.locator('#setList [data-clear="stoics"]');
+    ok(await clr.isVisible() && /Delete the 2 you put away/.test(await clr.textContent()), tag + "a set with put-away lines offers to delete them (" + (await clr.textContent()) + ")");
+    await clr.click(); await page.waitForTimeout(200);
+    ok(/Tap again/.test(await page.locator('#setList [data-clear="stoics"]').textContent()), tag + "it asks for a second tap");
+    await page.locator('#setList [data-clear="stoics"]').click(); await page.waitForTimeout(300);
+    const sc = await store();
+    ok(!sc["s-ep-power"] && !sc["s-ep-demand"] && sc["s-ep-lost"] && sc["s-ep-views"] && !(await page.locator('#setList [data-clear="stoics"]').count()), tag + "it deletes those two and keeps the one with a note");
+    await page.screenshot({ path: path.join(shots, w + "-sets-page.png") });
+    // How Scales works: three demos and bold action words
+    await page.click("#setsBack"); await page.waitForTimeout(500); await page.click("#setHelp"); await page.waitForTimeout(700);
+    ok((await page.locator("#help .demo").count()) === 3 && (await page.locator("#help strong").count()) >= 6 && (await page.locator("#help .demo.play").count()) >= 1, tag + "How Scales works shows three moves and plays them");
+    await page.screenshot({ path: path.join(shots, w + "-help.png") });
     ok(!errs.length, tag + "no page errors (" + errs.join(" | ") + ")");
     await ctx.close();
   }
