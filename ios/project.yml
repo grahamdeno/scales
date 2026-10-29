@@ -20,6 +20,9 @@ targets:
   Scales:
     type: application
     platform: iOS
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: "1"
     sources: [App]
     info:
       path: App/Info.plist
@@ -33,6 +36,8 @@ targets:
         UIRequiresFullScreen: true
         UIApplicationSupportsIndirectInputEvents: true
         ITSAppUsesNonExemptEncryption: false
+        # iPhone only (2.2.0): the App Store asks for iPad screenshots of any build that lists iPad (1 is iPhone, 2 is iPad).
+        UIDeviceFamily: [1]
         # The daily save shows in Files, On My iPhone, Scales (1.77.0).
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true

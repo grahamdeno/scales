@@ -94,6 +94,9 @@ test("TestFlight preview: Apple's AppTransaction for a Sandbox copy of this app 
   assert.match(src, /env\.PLUS_PREVIEW === "off"/, "the server can end the preview");
   const swift = read("ios/App/WebViewController.swift"), yml = read("ios/project.yml");
   assert.match(swift, /AppTransaction\.shared/); assert.match(swift, /ScalesPlusPreview/);
+  assert.match(yml, /UIDeviceFamily: \[1\]/, "iPhone only, or the App Store asks for iPad screenshots");
+  assert.ok((yml.match(/TARGETED_DEVICE_FAMILY: "1"/g) || []).length >= 2, "iPhone only at the project and the target");
+  assert.match(read(".github/workflows/ios.yml"), /UIDeviceFamily/, "CI stops an upload that lists iPad");
   assert.match(yml, /ScalesPlusPreview: false/, "off for the App Store: Scales 2 has no AI and Plus is not offered");
 });
 test("the AI server needs Scales Plus, fixes the model and limits, and only takes same-origin text messages", async () => {
