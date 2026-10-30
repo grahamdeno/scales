@@ -362,9 +362,11 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#toastDel"); await page.waitForTimeout(300);
     const afterDrop = await store();
     const logIds = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.log.v1") || "[]").map((e) => e.id));
-    ok(!afterDrop[dropId] && !logIds.includes(dropId) && /Deleted/.test(await page.textContent("#toast")), tag + "Delete removes it and its visits");
+    ok(!afterDrop[dropId] && !logIds.includes(dropId), tag + "Delete removes it and its visits");
+    ok(/Deleted\. It won't come back\./.test(await page.textContent("#toast")) && await page.locator("#toast.on.done").count() === 1 && !(await page.locator("#toastUndo").isVisible()), tag + "and says so clearly, with no Undo");
+    await page.screenshot({ path: path.join(shots, w + "-toast-deleted.png") });
     ok(/4\s*$/.test(await page.textContent("#strip")), tag + "and the count drops to 4");
-    await page.waitForTimeout(1700);
+    await page.waitForTimeout(3000);
     // A new thought typed with a quotation mark opens the Who said it line
     await page.click("#newBtn"); await page.waitForTimeout(500);
     ok(!(await page.locator("#startFive").isVisible()), tag + "Start with five is gone once there are thoughts");
@@ -513,6 +515,50 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const ov = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     ok(ov <= 0, tag + "no sideways scroll (" + ov + ")");
     ok(!errs.length, tag + "no page errors (" + errs.join(" | ") + ")");
+    await ctx.close();
+  }
+  // 2.5.0: Dark. The reading ground turns plum with bone words; the plum screens go deeper; pistachio stays the accent
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: "dark", deviceScaleFactor: 2, hasTouch: true });
+    const page = await ctx.newPage();
+    await page.addInitScript((o) => { if (!sessionStorage.getItem("d")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("d", "1"); } }, old);
+    await page.goto(base + "/"); await page.waitForSelector("#words:not(:empty)"); await page.waitForTimeout(600);
+    const meet = await page.evaluate(() => ({ bg: getComputedStyle(document.body).backgroundColor, ink: getComputedStyle(document.getElementById("words")).color, theme: document.getElementById("themeColor").content }));
+    ok(meet.bg === "rgb(59, 34, 64)" && meet.ink === "rgb(241, 233, 216)", "dark: Meet is plum with bone words (" + JSON.stringify(meet) + ")");
+    const strip = await page.evaluate(() => getComputedStyle(document.getElementById("strip")).backgroundColor);
+    ok(strip !== meet.bg, "dark: the strip is a deeper plum than the ground (" + strip + ")");
+    await page.screenshot({ path: path.join(shots, "dark-1-meet.png") });
+    // Line breaks typed into a thought show on the main screen
+    await page.click("#newBtn"); await page.waitForTimeout(400);
+    await page.fill("#writeText", "1.\tSpeak the truth.\n\n\n\n2.\tBe reliable."); await page.dispatchEvent("#writeText", "input");
+    await page.click("#writeKeep"); await page.waitForTimeout(1900);
+    const lbId = await page.evaluate(() => { const o = JSON.parse(localStorage.getItem("scales.next.thoughts.v1")); return Object.keys(o).find((k) => /Be reliable/.test(o[k].text)); });
+    await page.click("#strip"); await page.waitForTimeout(700); await page.click('#libList [data-open="' + lbId + '"]'); await page.waitForTimeout(800);
+    const lb = await page.evaluate(() => ({ ws: getComputedStyle(document.getElementById("words")).whiteSpace, t: document.getElementById("words").textContent, h: document.getElementById("words").getBoundingClientRect().height }));
+    ok(lb.ws === "pre-line" && lb.t === "1.\tSpeak the truth.\n\n2.\tBe reliable." && lb.h > 60, "line breaks show as typed, with extra empty lines kept to one (" + JSON.stringify(lb) + ")");
+    await page.screenshot({ path: path.join(shots, "linebreaks.png") });
+    await page.keyboard.press("ArrowDown"); await page.waitForTimeout(700);
+    const tb = await page.evaluate(() => getComputedStyle(document.getElementById("toast")).backgroundColor);
+    ok(tb === "rgb(185, 201, 163)", "dark: the Put away message is pistachio so it shows on plum (" + tb + ")");
+    await page.screenshot({ path: path.join(shots, "dark-2-toast.png") });
+    await page.click("#toastUndo"); await page.waitForTimeout(500);
+    await page.mouse.click(195, 400); await page.waitForTimeout(700);
+    const ed = await page.evaluate(() => ({ bg: getComputedStyle(document.body).backgroundColor, theme: document.getElementById("themeColor").content }));
+    ok(ed.bg !== meet.bg && /23132A/i.test(ed.theme), "dark: Edit is the deeper plum, and the browser bar follows it (" + JSON.stringify(ed) + ")");
+    await page.screenshot({ path: path.join(shots, "dark-3-edit.png") });
+    await page.click("#editCancel"); await page.waitForTimeout(500);
+    await page.click("#strip"); await page.waitForTimeout(700);
+    await page.screenshot({ path: path.join(shots, "dark-4-library.png") });
+    await page.click("#libGear"); await page.waitForTimeout(600);
+    await page.screenshot({ path: path.join(shots, "dark-5-settings.png") });
+    await ctx.close();
+  }
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: "light" });
+    const page = await ctx.newPage();
+    await page.addInitScript((o) => { if (!sessionStorage.getItem("l")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("l", "1"); } }, old);
+    await page.goto(base + "/"); await page.waitForSelector("#words:not(:empty)");
+    ok((await page.evaluate(() => getComputedStyle(document.body).backgroundColor)) === "rgb(185, 201, 163)", "light: Meet is still pistachio");
     await ctx.close();
   }
   // the iPhone app's bridge: ready, quiet reminders, daily save with the old data, and the put away buzz
