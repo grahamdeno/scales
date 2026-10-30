@@ -11,6 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/favicon-32.png">
+<script>try { var lk = (JSON.parse(localStorage.getItem("scales.next.ui.v1")) || {}).look; if (lk === "light" || lk === "dark") document.documentElement.setAttribute("data-look", lk); } catch (e) {}</script>
 <style>
 @font-face { font-family:"Geist"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/geist-latin.woff2") format("woff2"); }
 
@@ -29,11 +30,16 @@
   --strip: calc(76px + var(--bot));
   --ease-back: cubic-bezier(.34,1.56,.64,1);
 }
+/* Dark follows the phone, unless Settings, Appearance says Light or Dark (2.8.0; data-look on <html>). */
 @media (prefers-color-scheme: dark) {
-  :root { --ground: #3B2240; --ground-ink: #F1E9D8; --ground-muted: #BBA7BE; --ground-line: rgba(241,233,216,.14);
+  :root:not([data-look="light"]) { --ground: #3B2240; --ground-ink: #F1E9D8; --ground-muted: #BBA7BE; --ground-line: rgba(241,233,216,.14);
     --plum: #23132A; --plum-muted: #B09CB4; --plum-faint: #85718A;
     --toast-bg: var(--pist); --toast-ink: #2A1E2E; color-scheme: dark; }
 }
+:root[data-look="dark"] { --ground: #3B2240; --ground-ink: #F1E9D8; --ground-muted: #BBA7BE; --ground-line: rgba(241,233,216,.14);
+  --plum: #23132A; --plum-muted: #B09CB4; --plum-faint: #85718A;
+  --toast-bg: var(--pist); --toast-ink: #2A1E2E; color-scheme: dark; }
+:root[data-look="light"] { color-scheme: light; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
 body {
@@ -194,6 +200,7 @@ textarea::placeholder { color: var(--plum-faint); }
   border-bottom: 1px solid rgba(241,233,216,.12); }
 .srow .v { font-size: 15px; color: var(--plum-muted); white-space: nowrap; }
 .srow .chev { color: var(--plum-muted); font-size: 20px; }
+.srow .v .chev { margin-left: 6px; vertical-align: -1px; }
 /* Sets (2.3.0): the name and what it is, with the one thing you can do on the right. */
 .srow.setr { align-items: center; padding-top: 12px; padding-bottom: 12px; }
 .srow.setr .nm { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -225,6 +232,9 @@ textarea::placeholder { color: var(--plum-faint); }
 .srow.clr.armed { color: var(--plum-ink); font-weight: 700; }
 .snote { margin: 10px var(--pad) 0; font-size: 14px; line-height: 1.45; color: var(--plum-muted); }
 .snote.ok { color: var(--pist); }
+/* Settings, Look (2.8.0): Appearance is three choices in a row, like the library filters. */
+.lookseg { display: flex; gap: 8px; margin: 8px var(--pad) 0; }
+.lookseg button[aria-checked="true"] { color: var(--plum); background: var(--plum-ink); font-weight: 600; }
 .icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px var(--pad) 0; }
 .icons button { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; color: var(--plum-muted); }
 .icons img { width: 60px; height: 60px; border-radius: 14px; box-shadow: 0 0 0 1px rgba(241,233,216,.22); outline: 2px solid transparent; outline-offset: 3px; transition: outline-color .15s; }
@@ -338,9 +348,44 @@ textarea::placeholder { color: var(--plum-faint); }
   <button class="pback" type="button" id="setBack">&#8249; Your thoughts</button>
   <h1>Settings</h1>
   <div class="body">
+    <p class="sh">Add thoughts</p>
     <button class="srow" type="button" id="setSets"><span>Sets</span><span class="chev" aria-hidden="true">&#8250;</span></button>
-    <div id="iconSec" hidden>
-      <p class="sh">App icon</p>
+    <button class="srow" type="button" id="setImport"><span>Import thoughts</span><span class="chev" aria-hidden="true">&#8250;</span></button>
+    <p class="sh">Look</p>
+    <div id="lookSec" hidden>
+      <div class="seg lookseg" id="lookSeg" role="radiogroup" aria-label="Appearance">
+        <button type="button" role="radio" data-look="auto" aria-checked="true">Automatic</button>
+        <button type="button" role="radio" data-look="light" aria-checked="false">Light</button>
+        <button type="button" role="radio" data-look="dark" aria-checked="false">Dark</button>
+      </div>
+      <p class="snote" id="lookMsg">Automatic follows your iPhone.</p>
+    </div>
+    <button class="srow" type="button" id="setIcon" hidden><span>App icon</span><span class="v"><span id="setIconV">Automatic</span> <span class="chev" aria-hidden="true">&#8250;</span></span></button>
+    <p class="sh">Your data</p>
+    <button class="srow" type="button" id="setBackup"><span>Back up</span><span class="v">Save a file</span></button>
+    <button class="srow" type="button" id="setRestore"><span>Restore from a backup</span><span class="v">Choose a file</span></button>
+    <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+    <p class="snote" id="restoreMsg" role="status" aria-live="polite"></p>
+    <p class="snote" id="setSaved"></p>
+    <p class="sh">Help</p>
+    <button class="srow" type="button" id="setHelp"><span>How Scales works</span><span class="chev" aria-hidden="true">&#8250;</span></button>
+    <a class="srow" id="setFeedback" href="mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback"><span>Send feedback</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+    <a class="srow" id="setSupport" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+    <p class="sh">About</p>
+    <a class="srow" id="setPrivacy" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+    <div class="srow" id="setVersionRow" role="text"><span>Version</span><span class="v" id="setVersion"></span></div>
+    <div id="aiSec" hidden>
+      <p class="sh">Apple Intelligence (TestFlight test)</p>
+      <button class="srow" type="button" id="setAI"><span>Themes and your week</span><span class="chev" aria-hidden="true">&#8250;</span></button>
+      <p class="snote" id="aiState"></p>
+    </div>
+  </div>
+</section>
+<section class="page" id="iconPage" aria-label="App icon" aria-hidden="true">
+  <button class="pback" type="button" id="iconBack">&#8249; Settings</button>
+  <h1>App icon</h1>
+  <div class="body">
+    <div id="iconSec">
       <div class="icons" role="radiogroup" aria-label="App icon">
         <button type="button" role="radio" aria-checked="true" data-icon="auto"><img src="icons/pick/auto.png" alt=""><span>Automatic</span></button>
         <button type="button" role="radio" aria-checked="false" data-icon="pistachio"><img src="icons/pick/pistachio.png" alt=""><span>Pistachio</span></button>
@@ -349,24 +394,6 @@ textarea::placeholder { color: var(--plum-faint); }
       </div>
       <p class="snote" id="iconMsg">Automatic is Pistachio in Light mode and Plum in Dark.</p>
     </div>
-    <p class="sh">Your data</p>
-    <button class="srow" type="button" id="setBackup"><span>Back up</span><span class="v">Save a file</span></button>
-    <button class="srow" type="button" id="setRestore"><span>Restore from a backup</span><span class="v">Choose a file</span></button>
-    <input type="file" id="restoreFile" accept="application/json,.json" hidden>
-    <button class="srow" type="button" id="setImport"><span>Import thoughts</span><span class="v">Paste or a file</span></button>
-    <p class="snote" id="restoreMsg" role="status" aria-live="polite"></p>
-    <p class="snote" id="setSaved"></p>
-    <p class="sh"></p>
-    <button class="srow" type="button" id="setHelp"><span>How Scales works</span><span class="chev" aria-hidden="true">&#8250;</span></button>
-    <a class="srow" id="setPrivacy" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy</span><span class="chev" aria-hidden="true">&#8250;</span></a>
-    <a class="srow" id="setSupport" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support</span><span class="chev" aria-hidden="true">&#8250;</span></a>
-    <a class="srow" id="setFeedback" href="mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback"><span>Send feedback</span><span class="chev" aria-hidden="true">&#8250;</span></a>
-    <div id="aiSec" hidden>
-      <p class="sh">Apple Intelligence (TestFlight test)</p>
-      <button class="srow" type="button" id="setAI"><span>Themes and your week</span><span class="chev" aria-hidden="true">&#8250;</span></button>
-      <p class="snote" id="aiState"></p>
-    </div>
-    <p class="snote" id="setVersion"></p>
   </div>
 </section>
 <section class="page" id="sets" aria-label="Sets" aria-hidden="true">
@@ -425,8 +452,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.7.0"></script>
-<script src="sets.js?v=2.7.0"></script>
+<script src="core.js?v=2.8.0"></script>
+<script src="sets.js?v=2.8.0"></script>
 <script>
 (function () {
   "use strict";
@@ -930,7 +957,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function openSettings() {
     $("restoreMsg").textContent = ""; $("restoreMsg").className = "snote";
     $("setSaved").textContent = savedLine();
-    $("setVersion").textContent = "Scales " + C.VERSION;
+    $("setVersion").textContent = C.VERSION + (window.scalesNative && window.scalesNative.build ? " (" + window.scalesNative.build + ")" : "");
     
     $("setFeedback").setAttribute("href", "mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback&body=" +
       encodeURIComponent("\n\n\nScales " + C.VERSION + (NATIVE ? ", iPhone app" : ", browser") + "\n"));
@@ -938,11 +965,33 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   $("libGear").onclick = openSettings;
   // App icon (iPhone app only; 2.2.0). The shell says which icon is on at start and after every change.
+  var ICON_NAMES = { auto: "Automatic", pistachio: "Pistachio", plum: "Plum", bone: "Bone" };
   var icons = document.querySelectorAll("#iconSec [data-icon]");
-  function markIcon(name) { Array.prototype.forEach.call(icons, function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-icon") === name)); }); }
+  function markIcon(name) { Array.prototype.forEach.call(icons, function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-icon") === name)); }); $("setIconV").textContent = ICON_NAMES[name] || "Automatic"; }
   window.scalesIcon = function (name) { markIcon(name === "pistachio" || name === "plum" || name === "bone" ? name : "auto"); };
   window.scalesIconError = function () { $("iconMsg").textContent = "That icon couldn't be set. Try again."; };
-  if (NATIVE) $("iconSec").hidden = false;
+  if (NATIVE) $("setIcon").hidden = false;
+  $("setIcon").onclick = function () { openPage("iconPage", "icon"); };
+  $("iconBack").onclick = function () { closePage("iconPage", "settings"); };
+  // Appearance (2.8.0): Automatic follows the phone; Light or Dark holds whatever the phone says. The iPhone app is told
+  // too, so the status bar and keyboard match. An iPhone app too old to hear it doesn't offer the choice.
+  var LOOKS = { auto: 1, light: 1, dark: 1 };
+  function markLook() {
+    var v = LOOKS[ui.look] ? ui.look : "auto";
+    Array.prototype.forEach.call(document.querySelectorAll("#lookSeg [data-look]"), function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-look") === v)); });
+  }
+  function applyLook(tell) {
+    var v = LOOKS[ui.look] ? ui.look : "auto";
+    if (v === "auto") document.documentElement.removeAttribute("data-look"); else document.documentElement.setAttribute("data-look", v);
+    themeColor(); markLook();
+    if (tell) post({ type: "look", value: v === "auto" ? "" : v });
+  }
+  if (!NATIVE || (window.scalesNative && window.scalesNative.look)) $("lookSec").hidden = false;
+  $("lookMsg").textContent = NATIVE ? "Automatic follows your iPhone." : "Automatic follows your device.";
+  Array.prototype.forEach.call(document.querySelectorAll("#lookSeg [data-look]"), function (b) {
+    b.onclick = function () { ui.look = b.getAttribute("data-look"); saveUi(); haptic("tick"); applyLook(true); };
+  });
+  applyLook(false);
   Array.prototype.forEach.call(icons, function (b) {
     b.onclick = function () {
       var name = b.getAttribute("data-icon"); markIcon(name); haptic("tick");
@@ -1215,6 +1264,7 @@ textarea::placeholder { color: var(--plum-faint); }
   if (NATIVE) {
     // Tell the iPhone app the page is up, clear the reminders Scales 1 scheduled, and save today's copy.
     post({ type: "ready" }); post({ type: "unschedule" }); post({ type: "badge", count: 0 });
+    post({ type: "look", value: LOOKS[ui.look] && ui.look !== "auto" ? ui.look : "" });
     if (TESTFLIGHT) post({ type: "aiStatus" });
     setTimeout(dailySave, 1500);
     document.addEventListener("visibilitychange", function () { if (document.hidden) dailySave(); });
