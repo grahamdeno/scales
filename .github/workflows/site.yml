@@ -59,7 +59,7 @@ jobs:
           check / "One thought at a time"
           check /support "Support."
           check /privacy "Privacy."
-          check "/site.css?v=2.1.0" "--pist"
+          check "/site.css?v=2.2.0" "--pist"
           check /app/ "Scales"
           code=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "content-type: application/json" -H "Origin: https://scales.tangomike.app" -d '{}' https://scales.tangomike.app/api/ai)
           [ "$code" = "402" ] && echo "::notice::/api/ai asks for Scales Plus (402)" || { echo "::error::/api/ai answered $code, expected 402"; fail=1; }
