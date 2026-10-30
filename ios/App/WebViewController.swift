@@ -28,7 +28,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
         // 2.6.0: a TestFlight copy says so, so tests meant only for TestFlight can show there and nowhere else.
         let testflight = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
-        content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios', build: '\(build)', testflight: \(testflight) };",
+        content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios', build: '\(build)', testflight: \(testflight), look: true };",
                                            injectionTime: .atDocumentStart, forMainFrameOnly: true))
         config.userContentController = content
 
@@ -57,6 +57,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         web.scrollView.backgroundColor = web.backgroundColor
         if #available(iOS 16.4, *) { web.isInspectable = true }
         view = web
+        // 2.8.0: the Appearance chosen in Settings (Automatic, Light or Dark) holds from the first frame.
+        applyLook(UserDefaults.standard.string(forKey: Self.lookKey) ?? "")
         web.load(URLRequest(url: home))
         NotificationCenter.default.addObserver(forName: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil, queue: .main) { [weak self] _ in self?.sendA11y() }
         // Renewals, refunds and purchases made elsewhere (another device, Ask to Buy) arrive here.
@@ -117,6 +119,12 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             UIApplication.shared.setAlternateIconName(name) { err in
                 DispatchQueue.main.async { self.sendIcon(error: err.map { "\(pick): \($0.localizedDescription)" }) }
             }
+        case "look":
+            // 2.8.0: Settings, Appearance. Light or Dark overrides the phone; Automatic follows it. The status bar,
+            // keyboard and loading color follow too, and the choice is kept for the next launch.
+            let look = body["value"] as? String ?? ""
+            UserDefaults.standard.set(look, forKey: Self.lookKey)
+            applyLook(look)
         case "save":
             save(json: body["json"] as? String ?? "", day: body["day"] as? String ?? "")
         case "aiStatus":
@@ -176,6 +184,19 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     }
 
     /// The fixed icons, by the name the page uses. Automatic is the main icon and has no entry.
+    private static let lookKey = "scales.look"
+    private func applyLook(_ look: String) {
+        let style: UIUserInterfaceStyle = look == "light" ? .light : look == "dark" ? .dark : .unspecified
+        overrideUserInterfaceStyle = style
+        view.window?.overrideUserInterfaceStyle = style
+        setNeedsStatusBarAppearanceUpdate()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        view.window?.overrideUserInterfaceStyle = overrideUserInterfaceStyle
+    }
+
     private static let fixedIcons = ["pistachio": "AppIcon-Pistachio", "plum": "AppIcon-Plum", "bone": "AppIcon-Bone"]
 
     /// Which icon is on the Home Screen, for the choice in Settings.

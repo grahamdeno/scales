@@ -246,13 +246,13 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Back up/.test(await page.textContent("#settings")) && /Restore from a backup/.test(await page.textContent("#settings")), tag + "Settings has Back up and Restore");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.7\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/Scales 2\.7\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.8\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/^2\.8\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     await page.screenshot({ path: path.join(shots, w + "-8-settings.png") });
     const dl = page.waitForEvent("download", { timeout: 3000 });
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
-    ok(bk.app === "scales" && bk.version === "2.7.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.8.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -302,7 +302,8 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
       await ctx2.close();
     }
     // Help, and back
-    ok(!(await page.textContent("#settings")).includes("Help") || !/^Help$/m.test(await page.evaluate(() => Array.from(document.querySelectorAll("#settings .sh")).map((e) => e.textContent).join("\n"))), tag + "no Help or About headings");
+    const heads = await page.evaluate(() => Array.from(document.querySelectorAll("#settings .sh")).filter((e) => e.offsetParent).map((e) => e.textContent).join("|"));
+    ok(heads === "Add thoughts|Look|Your data|Help|About", tag + "Settings is grouped: " + heads);
     await page.click("#setHelp"); await page.waitForTimeout(500);
     ok(await page.locator("#help.open").count() === 1 && /20 seconds or less/.test(await page.textContent("#help")) && /30 seconds or more/.test(await page.textContent("#help")), tag + "How Scales works opens with the new times");
     await page.screenshot({ path: path.join(shots, w + "-9-help.png") });
@@ -584,9 +585,12 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(hs.join(",") === "thud,letgo", "native: put away buzzes thud then letgo (" + hs.join(",") + ")");
     // App icon: shown only in the iPhone app; a choice is sent to the shell, and the shell's answer marks it
     await page.waitForTimeout(5300); await page.click("#strip"); await page.waitForTimeout(600); await page.click("#libGear"); await page.waitForTimeout(500);
-    ok(await page.locator("#iconSec").isVisible(), "native: Settings shows App icon");
+    ok(await page.locator("#setIcon").isVisible(), "native: Settings shows App icon");
+    ok(!(await page.locator("#lookSec").isVisible()), "native: an iPhone build too old for Appearance doesn't offer it");
     ok(!(await page.locator("#aiSec").isVisible()), "native: an App Store copy never shows the Apple Intelligence test");
     await page.evaluate(() => { window.__posts.length = 0; window.scalesIcon("auto"); });
+    await page.click("#setIcon"); await page.waitForTimeout(400);
+    ok(await page.locator("#iconSec").isVisible(), "native: App icon opens its own page");
     await page.click('[data-icon="plum"]'); await page.waitForTimeout(100);
     const ic = await page.evaluate(() => window.__posts.filter((m) => m.type === "icon"));
     ok(ic.length === 1 && ic[0].name === "plum" && await page.getAttribute('[data-icon="plum"]', "aria-checked") === "true", "native: choosing Plum asks the shell for the plum icon");
@@ -595,6 +599,8 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click('[data-icon="auto"]'); await page.waitForTimeout(100);
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "icon").pop())).name === "", "native: Automatic asks for the main icon");
     await page.screenshot({ path: path.join(shots, "native-settings-icons.png") });
+    await page.click("#iconBack"); await page.waitForTimeout(400);
+    ok(/Automatic/.test(await page.textContent("#setIconV")) && await page.locator("#settings").isVisible(), "native: back on Settings, the App icon row names the icon that is on");
     await ctx.close();
   }
   // 2.7.0: wide screens (iPhone Duo inner screen, half-width, iPad-sized, desktop) keep one centered phone-width column
@@ -614,6 +620,35 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
       ok(await page.evaluate(() => document.getElementById("words").textContent) === gone0, tag + "a tap in the side margin changes nothing");
       await page.click("#libBtn, [data-open-library], #strip", { position: { x: 30, y: 20 }, timeout: 2000 }).catch(() => {});
     }
+    await ctx.close();
+  }
+  // 2.8.0: Settings, Appearance. Automatic follows the device; Light or Dark holds against it, is kept, and the iPhone app is told
+  for (const scheme of ["dark", "light"]) {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: scheme });
+    const page = await ctx.newPage();
+    await page.addInitScript(() => { window.__posts = []; window.scalesNative = { version: 1, platform: "ios", build: "38", testflight: false, look: true };
+      window.webkit = { messageHandlers: { scales: { postMessage: (m) => window.__posts.push(m) } } }; });
+    await page.goto(base + "/?native=1"); await page.waitForTimeout(900);
+    const bg = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--ground").trim().toLowerCase());
+    const tag = "appearance (phone " + scheme + "): ";
+    const auto = await bg();
+    ok(scheme === "dark" ? auto === "#3b2240" : (auto === "#b9c9a3" || auto === "var(--pist)"), tag + "Automatic follows the phone (" + auto + ")");
+    ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop() || {})).value === "", tag + "the iPhone app hears Automatic at start");
+    await page.evaluate(() => document.getElementById("libGear").click()); await page.waitForTimeout(500);
+    ok(await page.locator("#lookSec").isVisible() && await page.getAttribute('[data-look="auto"]', "aria-checked") === "true", tag + "Settings offers Appearance with Automatic on");
+    ok(/^2\.8\.0 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
+    const other = scheme === "dark" ? "light" : "dark";
+    await page.click('[data-look="' + other + '"]'); await page.waitForTimeout(300);
+    ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop())).value === other, tag + "choosing " + other + " tells the iPhone app");
+    ok(await page.evaluate(() => document.documentElement.getAttribute("data-look")) === other, tag + "the page turns " + other);
+    await page.screenshot({ path: path.join(shots, "appearance-" + scheme + "-to-" + other + ".png") });
+    await page.reload(); await page.waitForTimeout(900);
+    const kept = await bg();
+    ok(other === "dark" ? kept === "#3b2240" : (kept === "#b9c9a3" || kept === "var(--pist)"), tag + other + " is kept after a reload (" + kept + ")");
+    await page.evaluate(() => document.getElementById("libGear").click()); await page.waitForTimeout(500);
+    await page.click('[data-look="auto"]'); await page.waitForTimeout(300);
+    ok(await page.evaluate(() => !document.documentElement.hasAttribute("data-look")) && (await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop())).value === "", tag + "Automatic again follows the phone");
+    await page.screenshot({ path: path.join(shots, "settings-" + scheme + ".png"), fullPage: true });
     await ctx.close();
   }
   // the trial address forwards home and keeps ?native=1

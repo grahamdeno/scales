@@ -34,6 +34,10 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
 - **Dark (2.5.0):** follows the phone. The reading ground turns plum with bone words, like the Plum icon; Write, Edit,
   the library and Settings go a deeper plum so moving between them still changes ground; pistachio stays the accent,
   and the Put away message turns pistachio so it shows on plum. Colors are tokens (`--ground*`) at the top of index.html.
+- **Settings (2.8.0):** grouped as Add thoughts (Sets, Import), Look (Appearance, App icon), Your data (Back up, Restore),
+  Help (How Scales works, Send feedback, Support) and About (Privacy, version and build). Appearance is Automatic, Light
+  or Dark; Light and Dark hold against the phone and the iPhone app matches its status bar and keyboard (needs build 38
+  or later; older builds don't show the choice). App icon has its own page.
 - **Settings (2.1.0):** Your data (Back up, Restore from a backup), Help (How Scales works), About (Privacy, Support,
   Send feedback, the version). Privacy is linked here because the App Store requires it inside the app.
 - **Reading a visit:** 20 s or less is skipped; 30 s or more is thought about; between is seen; an edit or a note is
