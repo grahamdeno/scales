@@ -59,7 +59,8 @@ a { color: inherit; text-decoration: none; }
 /* The stage starts below the corner, so a near miss on + New never opens Edit. */
 #stage { position: absolute; left: 0; right: 0; top: calc(var(--top) + 72px); bottom: var(--strip); touch-action: none; }
 #carry { transform-origin: center bottom; position: absolute; left: var(--pad); right: var(--pad); top: 0; bottom: 24px; display: flex; flex-direction: column; justify-content: center; will-change: transform; }
-#words { margin: 0; font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600; transition: font-weight 1.2s ease; overflow-wrap: anywhere; }
+/* Line breaks you typed show as typed (2.5.0); runs of spaces and tabs read as one space. */
+#words { white-space: pre-line; margin: 0; font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600; transition: font-weight 1.2s ease; overflow-wrap: anywhere; }
 #words.long { font-size: 24px; line-height: 1.25; }
 #words.vlong { font-size: 19px; line-height: 1.35; }
 /* Who said it (2.3.0): under the thought, quiet, like the note. */
@@ -463,7 +464,10 @@ textarea::placeholder { color: var(--plum-faint); }
   }
 
   // ---------- Meet ----------
-  function sizeClass(text) { var n = text.length; return n > 220 ? "vlong" : n > 90 ? "long" : ""; }
+  // Each line break takes about a line's room, so it counts toward the size like 30 letters.
+  function sizeClass(text) { var n = text.length + 30 * (text.match(/\n/g) || []).length; return n > 220 ? "vlong" : n > 90 ? "long" : ""; }
+  // More than one empty line in a row shows as one.
+  function shown(text) { return String(text).replace(/[ \t]*\n[ \t]*/g, "\n").replace(/\n{3,}/g, "\n\n"); }
   function renderMeet(arrive) {
     var t = store[ui.cur];
     if (!t || (t.away && ui.review !== ui.cur)) { ui.cur = null; ui.ms = 0; ui.worked = false; ui.review = null; var n = C.pickNext(store, now()); if (n) ui.cur = n.id; saveUi(); t = store[ui.cur]; }
@@ -482,7 +486,7 @@ textarea::placeholder { color: var(--plum-faint); }
     }
     $("empty").hidden = true; $("carry").hidden = false; $("srActs").hidden = false;
     var w = $("words");
-    w.textContent = t.text; w.className = sizeClass(t.text);
+    w.textContent = shown(t.text); w.className = sizeClass(t.text);
     w.style.transition = "none"; w.style.fontWeight = C.weight(t); void w.offsetWidth; w.style.transition = "";
     $("by").hidden = !t.by; $("by").textContent = t.by || "";
     $("note").hidden = !t.note; $("note").textContent = t.note || "";

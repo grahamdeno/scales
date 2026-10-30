@@ -448,6 +448,15 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const strip = await page.evaluate(() => getComputedStyle(document.getElementById("strip")).backgroundColor);
     ok(strip !== meet.bg, "dark: the strip is a deeper plum than the ground (" + strip + ")");
     await page.screenshot({ path: path.join(shots, "dark-1-meet.png") });
+    // Line breaks typed into a thought show on the main screen
+    await page.click("#newBtn"); await page.waitForTimeout(400);
+    await page.fill("#writeText", "1.\tSpeak the truth.\n\n\n\n2.\tBe reliable."); await page.dispatchEvent("#writeText", "input");
+    await page.click("#writeKeep"); await page.waitForTimeout(1900);
+    const lbId = await page.evaluate(() => { const o = JSON.parse(localStorage.getItem("scales.next.thoughts.v1")); return Object.keys(o).find((k) => /Be reliable/.test(o[k].text)); });
+    await page.click("#strip"); await page.waitForTimeout(700); await page.click('#libList [data-open="' + lbId + '"]'); await page.waitForTimeout(800);
+    const lb = await page.evaluate(() => ({ ws: getComputedStyle(document.getElementById("words")).whiteSpace, t: document.getElementById("words").textContent, h: document.getElementById("words").getBoundingClientRect().height }));
+    ok(lb.ws === "pre-line" && lb.t === "1.\tSpeak the truth.\n\n2.\tBe reliable." && lb.h > 60, "line breaks show as typed, with extra empty lines kept to one (" + JSON.stringify(lb) + ")");
+    await page.screenshot({ path: path.join(shots, "linebreaks.png") });
     await page.keyboard.press("ArrowDown"); await page.waitForTimeout(700);
     const tb = await page.evaluate(() => getComputedStyle(document.getElementById("toast")).backgroundColor);
     ok(tb === "rgb(185, 201, 163)", "dark: the Put away message is pistachio so it shows on plum (" + tb + ")");
