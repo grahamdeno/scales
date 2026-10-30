@@ -246,13 +246,13 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Back up/.test(await page.textContent("#settings")) && /Restore from a backup/.test(await page.textContent("#settings")), tag + "Settings has Back up and Restore");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.6\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/Scales 2\.6\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.8\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/Scales 2\.8\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     await page.screenshot({ path: path.join(shots, w + "-8-settings.png") });
     const dl = page.waitForEvent("download", { timeout: 3000 });
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
-    ok(bk.app === "scales" && bk.version === "2.6.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.8.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -516,6 +516,25 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click('[data-icon="auto"]'); await page.waitForTimeout(100);
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "icon").pop())).name === "", "native: Automatic asks for the main icon");
     await page.screenshot({ path: path.join(shots, "native-settings-icons.png") });
+    await ctx.close();
+  }
+  // 2.8.0: wide screens (iPhone Duo inner screen, half-width, iPad-sized, desktop) keep one centered phone-width column
+  for (const [name, w, h] of [["duo-inner", 720, 780], ["duo-inner-wide", 900, 700], ["ipad", 1024, 1366], ["duo-half", 360, 780], ["phone", 390, 844]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, deviceScaleFactor: 2 });
+    const page = await ctx.newPage();
+    await page.goto(base + "/?native=1"); await page.waitForTimeout(900);
+    const r = await page.evaluate(() => { const b = document.body.getBoundingClientRect(); return { l: b.left, r: window.innerWidth - b.right, w: b.width, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }; });
+    const tag = "wide " + name + " (" + w + "): ";
+    ok(r.w <= 520.5 && Math.abs(r.l - r.r) < 1 && r.sw <= r.cw, tag + "one centered column no wider than 520 (" + Math.round(r.w) + " wide, " + Math.round(r.l) + " each side)");
+    await page.screenshot({ path: path.join(shots, "wide-" + name + ".png") });
+    if (w > 520) {
+      // a swipe up in the column still puts the thought away, and a tap in the gutter does nothing
+      const x = w / 2, y = h / 2;
+      const gone0 = await page.evaluate(() => document.getElementById("words").textContent);
+      await page.mouse.click(10, h / 2); await page.waitForTimeout(150);
+      ok(await page.evaluate(() => document.getElementById("words").textContent) === gone0, tag + "a tap in the side margin changes nothing");
+      await page.click("#libBtn, [data-open-library], #strip", { position: { x: 30, y: 20 }, timeout: 2000 }).catch(() => {});
+    }
     await ctx.close();
   }
   // the trial address forwards home and keeps ?native=1

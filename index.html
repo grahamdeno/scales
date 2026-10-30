@@ -33,6 +33,11 @@ body {
   position: fixed; inset: 0; touch-action: none; user-select: none; -webkit-user-select: none;
 }
 body.plum { background: var(--plum); color: var(--plum-ink); }
+/* Wide screens (2.8.0): the iPhone Duo's inner screen, iPad-sized windows, a desktop browser. Scales stays one phone-width
+   column, centered, so lines stay short and thumbs reach everything. The ground color still fills the whole screen,
+   because a body's background spreads to the page behind it. */
+body { width: min(100%, var(--col)); margin-inline: auto; }
+:root { --col: 520px; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 a { color: inherit; text-decoration: none; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -377,8 +382,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.6.0"></script>
-<script src="sets.js?v=2.6.0"></script>
+<script src="core.js?v=2.8.0"></script>
+<script src="sets.js?v=2.8.0"></script>
 <script>
 (function () {
   "use strict";
