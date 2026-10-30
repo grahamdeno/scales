@@ -362,9 +362,11 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#toastDel"); await page.waitForTimeout(300);
     const afterDrop = await store();
     const logIds = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.log.v1") || "[]").map((e) => e.id));
-    ok(!afterDrop[dropId] && !logIds.includes(dropId) && /Deleted/.test(await page.textContent("#toast")), tag + "Delete removes it and its visits");
+    ok(!afterDrop[dropId] && !logIds.includes(dropId), tag + "Delete removes it and its visits");
+    ok(/Deleted\. It won't come back\./.test(await page.textContent("#toast")) && await page.locator("#toast.on.done").count() === 1 && !(await page.locator("#toastUndo").isVisible()), tag + "and says so clearly, with no Undo");
+    await page.screenshot({ path: path.join(shots, w + "-toast-deleted.png") });
     ok(/4\s*$/.test(await page.textContent("#strip")), tag + "and the count drops to 4");
-    await page.waitForTimeout(1700);
+    await page.waitForTimeout(3000);
     // A new thought typed with a quotation mark opens the Who said it line
     await page.click("#newBtn"); await page.waitForTimeout(500);
     ok(!(await page.locator("#startFive").isVisible()), tag + "Start with five is gone once there are thoughts");

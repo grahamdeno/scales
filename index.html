@@ -99,6 +99,8 @@ body.plum #strip { opacity: 0; pointer-events: none; }
 #toast span { opacity: .75; }
 #toast button { padding: 10px 14px; font-weight: 700; }
 #toast #toastDel { padding-left: 4px; }
+#toast.done { padding: 12px 18px; }
+#toast.done span { opacity: 1; font-weight: 600; }
 .plus { font-weight: 400; margin-right: 3px; }
 
 /* ---- Write and Edit (plum) ---- */
@@ -566,7 +568,7 @@ textarea::placeholder { color: var(--plum-faint); }
   var toastT = 0;
   var dropId = null;
   function toast(msg, canDrop) {
-    dropId = canDrop || null; $("toastDel").hidden = !dropId; $("toastUndo").hidden = false;
+    dropId = canDrop || null; $("toastDel").hidden = !dropId; $("toastUndo").hidden = false; $("toast").classList.remove("done");
     $("toastMsg").textContent = msg; $("toast").classList.add("on");
     clearTimeout(toastT); toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; }, 5000);
   }
@@ -576,11 +578,17 @@ textarea::placeholder { color: var(--plum-faint); }
     delete store[id]; save();
     var g = lsGet(KEY_GONE, []); if (g.indexOf(id) < 0) { g.push(id); lsSet(KEY_GONE, g); }
     lsSet(KEY_LOG, lsGet(KEY_LOG, []).filter(function (e) { return e.id !== id; }));
-    undoPoint = null; dropId = null; clearTimeout(toastT);
-    $("toastMsg").textContent = "Deleted"; $("toastUndo").hidden = true; $("toastDel").hidden = true;
-    toastT = setTimeout(function () { $("toast").classList.remove("on"); $("toastUndo").hidden = false; }, 1500);
+    undoPoint = null; dropId = null;
     buzz("remove"); $("stripN").textContent = C.list(store).length;
+    done("Deleted. It won't come back.");
   };
+  // A clear confirmation that something is gone for good (2.5.0): the message in full strength with a check, held long enough to read.
+  function done(msg) {
+    clearTimeout(toastT);
+    $("toastMsg").textContent = "\u2713 " + msg; $("toastUndo").hidden = true; $("toastDel").hidden = true;
+    $("toast").classList.add("on", "done");
+    toastT = setTimeout(function () { $("toast").classList.remove("on"); setTimeout(function () { $("toast").classList.remove("done"); $("toastUndo").hidden = false; }, 250); }, 2600);
+  }
   $("toastUndo").onclick = function () {
     if (!undoPoint) return;
     clockOff();
@@ -675,6 +683,7 @@ textarea::placeholder { color: var(--plum-faint); }
     delete store[id]; ui.cur = null; ui.ms = 0; ui.worked = false; save(); saveUi(); disarm();
     buzz("remove");
     setMode("meet"); renderMeet(true);
+    done("Deleted.");
   };
 
   // ---------- Library ----------
