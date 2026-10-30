@@ -183,6 +183,14 @@ textarea::placeholder { color: var(--plum-faint); }
 .srow.setr .nm small { font-size: 14px; color: var(--plum-muted); line-height: 1.35; }
 .srow .v.add { color: var(--pist); font-weight: 600; }
 .srow .v.armed { color: var(--plum-ink); font-weight: 700; }
+/* Apple Intelligence test (2.6.0) */
+#aiThemes .ex { margin: 0 var(--pad) 8px; padding: 0 0 8px 14px; font-size: 14px; line-height: 1.45; color: var(--plum-muted); border-left: 2px solid rgba(241,233,216,.12); }
+#aiThemes .ex p { margin: 6px 0; }
+#aiNote .note { margin: 14px var(--pad) 6px; font-size: 18px; line-height: 1.5; }
+#aiNote .facts { margin: 6px var(--pad) 0; padding: 0 0 0 18px; font-size: 14px; line-height: 1.5; color: var(--plum-muted); }
+#aiNote table { margin: 10px var(--pad) 0; width: calc(100% - 2 * var(--pad)); border-collapse: collapse; font-size: 13px; color: var(--plum-muted); font-variant-numeric: tabular-nums; }
+#aiNote th, #aiNote td { text-align: right; padding: 4px 0 4px 8px; border-bottom: 1px solid rgba(241,233,216,.08); }
+#aiNote th:first-child, #aiNote td:first-child { text-align: left; padding-left: 0; }
 .srow.clr { min-height: 44px; font-size: 15px; color: var(--plum-muted); padding-left: calc(var(--pad) + 14px); }
 .srow.clr.armed { color: var(--plum-ink); font-weight: 700; }
 .snote { margin: 10px var(--pad) 0; font-size: 14px; line-height: 1.45; color: var(--plum-muted); }
@@ -322,6 +330,11 @@ textarea::placeholder { color: var(--plum-faint); }
     <a class="srow" id="setPrivacy" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy</span><span class="chev" aria-hidden="true">&#8250;</span></a>
     <a class="srow" id="setSupport" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support</span><span class="chev" aria-hidden="true">&#8250;</span></a>
     <a class="srow" id="setFeedback" href="mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback"><span>Send feedback</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+    <div id="aiSec" hidden>
+      <p class="sh">Apple Intelligence (TestFlight test)</p>
+      <button class="srow" type="button" id="setAI"><span>Themes and your week</span><span class="chev" aria-hidden="true">&#8250;</span></button>
+      <p class="snote" id="aiState"></p>
+    </div>
     <p class="snote" id="setVersion"></p>
   </div>
 </section>
@@ -332,6 +345,20 @@ textarea::placeholder { color: var(--plum-faint); }
     <p class="snote" id="setsIntro">Lines to think about. Add a set and two of its lines join you each day.</p>
     <div id="setList"></div>
     <p class="snote" id="setsMsg" role="status" aria-live="polite"></p>
+  </div>
+</section>
+<section class="page" id="ai" aria-label="Themes and your week" aria-hidden="true">
+  <button class="pback" type="button" id="aiBack">&#8249; Settings</button>
+  <h1>Themes and your week</h1>
+  <div class="body">
+    <p class="snote">A test, seen only in TestFlight. Apple Intelligence runs on this iPhone, and nothing leaves it. Scales does all the counting; the model only names themes, sorts each thought and puts the counted facts into words.</p>
+    <p class="sh">Themes</p>
+    <button class="srow" type="button" id="aiRun"><span id="aiRunLabel">Find themes and sort my thoughts</span><span class="v" id="aiRunV"></span></button>
+    <p class="snote" id="aiProgress" role="status" aria-live="polite"></p>
+    <div id="aiThemes"></div>
+    <p class="sh">Your week</p>
+    <button class="srow" type="button" id="aiWeek"><span>Write my week</span><span class="v" id="aiWeekV"></span></button>
+    <div id="aiNote"></div>
   </div>
 </section>
 <section class="page" id="help" aria-label="How Scales works" aria-hidden="true">
@@ -350,8 +377,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.4.0"></script>
-<script src="sets.js?v=2.4.0"></script>
+<script src="core.js?v=2.6.0"></script>
+<script src="sets.js?v=2.6.0"></script>
 <script>
 (function () {
   "use strict";
@@ -984,9 +1011,95 @@ textarea::placeholder { color: var(--plum-faint); }
   setMode("meet");
   renderMeet(true);
 
+  // ---------- Apple Intelligence test (2.6.0; TestFlight copies only) ----------
+  // The shell runs Apple's on-device model one request at a time. Scales picks what to ask and counts everything itself.
+  var KEY_AI = "scales.next.ai.v1", aiOk = false, aiSeq = 0, aiWait = {}, aiBusy = false, aiStop = false;
+  var TESTFLIGHT = NATIVE && !!(window.scalesNative && window.scalesNative.testflight);
+  window.scalesAI = function (status) {
+    aiOk = status === "available";
+    $("aiSec").hidden = !TESTFLIGHT;
+    $("aiState").textContent = aiOk ? "" : "Apple Intelligence isn't available here (" + status + "). It needs an iPhone 15 Pro or later with Apple Intelligence turned on.";
+    $("setAI").hidden = !aiOk;
+  };
+  window.scalesAIResult = function (id, text, err) { var f = aiWait[id]; if (!f) return; delete aiWait[id]; f(err ? { err: err } : { text: text }); };
+  function aiAsk(instructions, prompt) {
+    return new Promise(function (res) {
+      var id = "a" + (++aiSeq); aiWait[id] = res;
+      setTimeout(function () { if (aiWait[id]) { delete aiWait[id]; res({ err: "timeout" }); } }, 60000);
+      post({ type: "ai", id: id, instructions: instructions, prompt: prompt });
+    });
+  }
+  function aiData() { return lsGet(KEY_AI, { themes: [], tags: {}, at: null }); }
+  function renderAI() {
+    var d = aiData(), box = $("aiThemes"); box.innerHTML = "";
+    $("aiRunLabel").textContent = aiBusy ? "Stop" : d.themes.length ? "Find themes again" : "Find themes and sort my thoughts";
+    $("aiRunV").textContent = d.at && !aiBusy ? new Date(d.at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+    if (!d.themes.length) return;
+    var groups = {}; d.themes.concat(["Unsorted"]).forEach(function (t) { groups[t] = []; });
+    C.list(store).forEach(function (t) { var th = d.tags[t.id]; if (th && groups[th]) groups[th].push(t); });
+    Object.keys(groups).forEach(function (name) {
+      var items = groups[name]; if (!items.length && name === "Unsorted") return;
+      var b = document.createElement("button"); b.type = "button"; b.className = "srow th";
+      var a = document.createElement("span"); a.textContent = name; var v = document.createElement("span"); v.className = "v"; v.textContent = items.length;
+      b.appendChild(a); b.appendChild(v);
+      var ex = document.createElement("div"); ex.className = "ex"; ex.hidden = true;
+      items.slice(0, 8).forEach(function (t) { var q = document.createElement("p"); q.textContent = t.text.length > 140 ? t.text.slice(0, 140) + "\u2026" : t.text; ex.appendChild(q); });
+      if (items.length > 8) { var more = document.createElement("p"); more.textContent = "and " + (items.length - 8) + " more"; ex.appendChild(more); }
+      b.onclick = function () { ex.hidden = !ex.hidden; };
+      box.appendChild(b); box.appendChild(ex);
+    });
+  }
+  async function aiRun() {
+    if (aiBusy) { aiStop = true; return; }
+    aiBusy = true; aiStop = false; renderAI();
+    var msg = function (t) { $("aiProgress").textContent = t; };
+    msg("Naming themes\u2026");
+    var r = await aiAsk("You group a person's private notes into themes. Reply with 6 to 8 short theme names, one or two words each, one per line. Nothing else.",
+      "Here are some of the notes:\n" + C.themeSample(store));
+    var themes = r.err ? [] : C.parseThemes(r.text);
+    if (themes.length < 3) { msg("The model didn't return usable themes" + (r.err ? " (" + r.err + ")" : "") + ". Try again."); aiBusy = false; renderAI(); return; }
+    var all = C.list(store), tags = {}, done = 0, missed = 0;
+    for (var i = 0; i < all.length && !aiStop; i++) {
+      msg("Sorting " + (i + 1) + " of " + all.length + "\u2026");
+      var t = all[i];
+      var a = await aiAsk("You sort one private note into exactly one theme from a list. Reply with the theme name only, copied exactly from the list.",
+        "Themes:\n" + themes.map(function (x) { return "- " + x; }).join("\n") + "\n\nNote: " + t.text.replace(/\s+/g, " ").slice(0, 400));
+      var m = a.err ? null : C.matchTheme(a.text, themes);
+      tags[t.id] = m || "Unsorted"; if (!m) missed++; done++;
+    }
+    lsSet(KEY_AI, { themes: themes, tags: tags, at: now().toISOString() });
+    msg((aiStop ? "Stopped after " : "Sorted ") + done + " thoughts into " + themes.length + " themes" + (missed ? "; " + missed + " didn't fit one" : "") + ". Tap a theme to see its thoughts.");
+    aiBusy = false; renderAI();
+  }
+  async function aiWeek() {
+    var d = aiData();
+    if (!d.themes.length) { $("aiNote").innerHTML = '<p class="snote">Find themes first.</p>'; return; }
+    var log = lsGet(KEY_LOG, []), days = 7, rows = C.themeWeek(store, log, d.tags, now(), 7);
+    if (rows.reduce(function (n, r) { return n + r.visits; }, 0) < 5) { days = 30; rows = C.themeWeek(store, log, d.tags, now(), 30); }
+    var facts = C.weekFacts(rows, days);
+    if (!facts.length) { $("aiNote").innerHTML = '<p class="snote">Not enough visits yet to say anything about your ' + (days === 7 ? "week" : "month") + ".</p>"; return; }
+    $("aiWeekV").textContent = "Writing\u2026";
+    var r = await aiAsk("You write a short private note to someone about how they spent time with their own thoughts. Use only the facts given, with their exact numbers. Write two or three plain, warm sentences addressed to you. No advice, no questions, no dashes.",
+      "Facts:\n" + facts.map(function (f) { return "- " + f; }).join("\n"));
+    $("aiWeekV").textContent = "";
+    var box = $("aiNote"); box.innerHTML = "";
+    var n = document.createElement("p"); n.className = "note"; n.textContent = r.err ? "The model couldn't write it (" + r.err + ")." : r.text.trim(); box.appendChild(n);
+    var cap = document.createElement("p"); cap.className = "snote"; cap.textContent = "Written from these facts, counted by Scales:"; box.appendChild(cap);
+    var ul = document.createElement("ul"); ul.className = "facts"; facts.forEach(function (f) { var li = document.createElement("li"); li.textContent = f; ul.appendChild(li); }); box.appendChild(ul);
+    var tb = document.createElement("table");
+    tb.innerHTML = "<tr><th>Theme</th><th>Visits</th><th>Avg s</th><th>Skipped</th><th>Put away</th></tr>";
+    rows.forEach(function (x) { var tr = document.createElement("tr"); [x.theme, x.visits, x.avgSec, x.skipped, x.putAway].forEach(function (v) { var td = document.createElement("td"); td.textContent = v; tr.appendChild(td); }); tb.appendChild(tr); });
+    box.appendChild(tb);
+  }
+  $("setAI").onclick = function () { renderAI(); openPage("ai", "ai"); };
+  $("aiBack").onclick = function () { closePage("ai", "settings"); };
+  $("aiRun").onclick = function () { aiRun(); };
+  $("aiWeek").onclick = function () { aiWeek(); };
+
   if (NATIVE) {
     // Tell the iPhone app the page is up, clear the reminders Scales 1 scheduled, and save today's copy.
     post({ type: "ready" }); post({ type: "unschedule" }); post({ type: "badge", count: 0 });
+    if (TESTFLIGHT) post({ type: "aiStatus" });
     setTimeout(dailySave, 1500);
     document.addEventListener("visibilitychange", function () { if (document.hidden) dailySave(); });
   }

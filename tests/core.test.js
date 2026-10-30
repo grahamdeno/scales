@@ -160,9 +160,19 @@ test("the trial address forwards home, keeping ?native=1, and its worker retires
   assert.ok(!fs.existsSync(path.join(root, "next", "core.js")));
 });
 
-test("the iPhone app paints pistachio while Scales loads, so nothing flashes grey", () => {
+test("the iPhone app paints pistachio (plum in Dark) while Scales loads, so nothing flashes", () => {
   const swift = read("ios/App/WebViewController.swift");
-  assert.match(swift, /web\.backgroundColor = UIColor\(red: 0xB9 \/ 255, green: 0xC9 \/ 255, blue: 0xA3 \/ 255, alpha: 1\)/);
+  assert.match(swift, /web\.backgroundColor = UIColor \{ traits in/);
+  assert.match(swift, /\? UIColor\(red: 0x3B \/ 255, green: 0x22 \/ 255, blue: 0x40 \/ 255, alpha: 1\)/);
+  assert.match(swift, /: UIColor\(red: 0xB9 \/ 255, green: 0xC9 \/ 255, blue: 0xA3 \/ 255, alpha: 1\)/);
+});
+test("the fixed icons keep their own colors in Dark (2.6.0)", () => {
+  for (const n of ["Pistachio", "Plum", "Bone"]) {
+    const j = JSON.parse(read("ios/App/AppIcon-" + n + ".icon/icon.json"));
+    const bg = j["fill-specializations"], dark = bg.find((s) => s.appearance === "dark"), plain = bg.find((s) => !s.appearance);
+    assert.ok(dark && dark.value.solid === plain.value.solid, n + " background");
+    j.groups.forEach((g) => g.layers.forEach((l) => { const s = l["fill-specializations"]; assert.equal(s.find((x) => x.appearance === "dark").value.solid, s.find((x) => !x.appearance).value.solid, n + " " + g.name); }));
+  }
 });
 
 test("the manifest points at icons that exist", () => {
@@ -487,4 +497,43 @@ test("clearPutAway deletes a set's put-away lines but keeps marked, noted or cha
   assert.equal(r.deleted, 2);
   assert.ok(!store["s-fr-order"] && !store["s-fr-justice"] && store["s-fr-silence"] && store["s-fr-industry"] && store["s-fr-temperance"]);
   assert.deepEqual(r.gone.sort(), ["s-fr-justice", "s-fr-order", "x"]);
+});
+
+// ---- 2.6.0: Apple Intelligence test (the counting is ours; the model only writes words) ----
+test("parseThemes cleans the model's list", () => {
+  assert.deepEqual(N.parseThemes("1. Family\n- work \n* Faith and doubt\n\nfamily\nA very long theme name that goes on and on\nHealth."), ["Family", "Work", "Faith and doubt", "Health"]);
+  assert.deepEqual(N.parseThemes("Family, Work, Money"), ["Family", "Work", "Money"]);
+  assert.equal(N.parseThemes("a\nb\nc\nd\ne\nf\ng\nh\ni\nj").length, 8);
+});
+test("matchTheme takes an exact name, else the longest one mentioned, else none", () => {
+  const th = ["Work", "Family", "Work life"];
+  assert.equal(N.matchTheme("Family", th), "Family");
+  assert.equal(N.matchTheme("  \"family.\" ", th), "Family");
+  assert.equal(N.matchTheme("This is about Work life balance", th), "Work life");
+  assert.equal(N.matchTheme("Something else", th), null);
+});
+test("themeSample: at most 50, spread across time, each cut short", () => {
+  const now = at(2026, 10, 29), store = {};
+  for (let i = 0; i < 120; i++) { const t = N.make("Thought " + i + " " + "x".repeat(200), new Date(now.getTime() - (120 - i) * 3600000)); store[t.id] = t; }
+  const s = N.themeSample(store).split("\n");
+  assert.equal(s.length, 50);
+  assert.ok(s[0].startsWith("1. Thought 0 ") && s[49].includes("Thought 117"));
+  assert.ok(s.every((l) => l.length < 160));
+});
+test("themeWeek and weekFacts count from the log, leave out reviews and undone visits, and only state what is true", () => {
+  const now = at(2026, 10, 29), store = {}, tags = {};
+  const a = N.make("a", now), b = N.make("b", now), c = N.make("c", now);
+  store[a.id] = a; store[b.id] = b; store[c.id] = c; tags[a.id] = "Family"; tags[b.id] = "Work"; tags[c.id] = "Work";
+  c.away = now.toISOString();
+  const e = (id, kind, ms, x) => Object.assign({ at: new Date(now.getTime() - 3600000).toISOString(), id, kind, ms }, x || {});
+  const log = [e(a.id, "thought", 40000), e(a.id, "thought", 50000), e(b.id, "skipped", 3000), e(b.id, "skipped", 5000), e(c.id, "skipped", 4000),
+    e(a.id, "review", 90000), e(b.id, "thought", 60000, { undone: true }), { at: "2026-01-01T00:00:00Z", id: a.id, kind: "thought", ms: 1 }];
+  const rows = N.themeWeek(store, log, tags, now, 7);
+  const fam = rows.find((r) => r.theme === "Family"), work = rows.find((r) => r.theme === "Work");
+  assert.deepEqual([fam.visits, fam.avgSec, fam.thought, fam.thoughts], [2, 45, 2, 1]);
+  assert.deepEqual([work.visits, work.skipped, work.putAway, work.thoughts], [3, 3, 1, 2]);
+  const f = N.weekFacts(rows, 7).join(" ");
+  assert.ok(/met thoughts 5 times/.test(f) && /Work thoughts most often: 3 times/.test(f) && /longest with Family thoughts: about 45 seconds/.test(f));
+  assert.ok(/moved past Work thoughts quickest: 3 of 3/.test(f) && /put away 1 Work thought\./.test(f));
+  assert.deepEqual(N.weekFacts([], 7), []);
 });

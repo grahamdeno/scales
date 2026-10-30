@@ -2,6 +2,9 @@ import UIKit
 import WebKit
 import UserNotifications
 import StoreKit
+#if canImport(FoundationModels)
+import FoundationModels
+#endif
 
 /// Shows Scales and answers what it asks of the phone: reminders, the badge, haptics, downloads, and
 /// Scales Plus through StoreKit (1.72.0).
@@ -23,7 +26,9 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         content.add(WeakHandler(self), name: "scales")
         // 1.83.2: the build number, shown in About, so a TestFlight copy says which build it is.
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
-        content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios', build: '\(build)' };",
+        // 2.6.0: a TestFlight copy says so, so tests meant only for TestFlight can show there and nowhere else.
+        let testflight = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+        content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios', build: '\(build)', testflight: \(testflight) };",
                                            injectionTime: .atDocumentStart, forMainFrameOnly: true))
         config.userContentController = content
 
@@ -43,8 +48,12 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         web.scrollView.showsVerticalScrollIndicator = false
         web.scrollView.showsHorizontalScrollIndicator = false
         web.isOpaque = false
-        // Pistachio (2.0.0), the ground Scales opens on, so nothing flashes while it loads.
-        web.backgroundColor = UIColor(red: 0xB9 / 255, green: 0xC9 / 255, blue: 0xA3 / 255, alpha: 1)
+        // The ground Scales opens on, so nothing flashes while it loads: pistachio, or plum in Dark (2.6.0).
+        web.backgroundColor = UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(red: 0x3B / 255, green: 0x22 / 255, blue: 0x40 / 255, alpha: 1)
+                : UIColor(red: 0xB9 / 255, green: 0xC9 / 255, blue: 0xA3 / 255, alpha: 1)
+        }
         web.scrollView.backgroundColor = web.backgroundColor
         if #available(iOS 16.4, *) { web.isInspectable = true }
         view = web
@@ -110,6 +119,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             }
         case "save":
             save(json: body["json"] as? String ?? "", day: body["day"] as? String ?? "")
+        case "aiStatus":
+            sendAIStatus()
+        case "ai":
+            generate(id: body["id"] as? String ?? "", instructions: body["instructions"] as? String ?? "", prompt: body["prompt"] as? String ?? "")
         default:
             break
         }
@@ -118,6 +131,48 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     /// Whether VoiceOver is on (1.81.0): the quiet fade never dims the screen for someone who isn't looking at it.
     private func sendA11y() {
         run("window.scalesA11y && window.scalesA11y({ voiceOver: \(UIAccessibility.isVoiceOverRunning) })")
+    }
+
+    // MARK: Apple Intelligence (2.6.0, a TestFlight test)
+    // The page asks for one short piece of writing at a time and does all the counting itself. Apple's on-device
+    // model writes it; nothing leaves the phone. On a phone without Apple Intelligence the page is told so.
+
+    private func sendAIStatus() {
+        var status = "unsupported"
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) {
+            switch SystemLanguageModel.default.availability {
+            case .available: status = "available"
+            case .unavailable(let reason): status = "unavailable: \(reason)"
+            @unknown default: status = "unavailable"
+            }
+        }
+        #endif
+        runJSON("scalesAI", [status])
+    }
+
+    private func generate(id: String, instructions: String, prompt: String) {
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) {
+            Task { @MainActor in
+                do {
+                    let session = LanguageModelSession(instructions: instructions)
+                    let answer = try await session.respond(to: prompt)
+                    self.runJSON("scalesAIResult", [id, answer.content, ""])
+                } catch {
+                    self.runJSON("scalesAIResult", [id, "", "\(error)"])
+                }
+            }
+            return
+        }
+        #endif
+        runJSON("scalesAIResult", [id, "", "unsupported"])
+    }
+
+    /// Calls window.<name> with string arguments, passed safely as JSON, if the page has it.
+    private func runJSON(_ name: String, _ args: [String]) {
+        guard let data = try? JSONSerialization.data(withJSONObject: args), let json = String(data: data, encoding: .utf8) else { return }
+        run("window.\(name) && window.\(name).apply(null, \(json))")
     }
 
     /// The fixed icons, by the name the page uses. Automatic is the main icon and has no entry.
