@@ -41,6 +41,9 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   one skip.
 - A Scales day starts at 4 AM.
 
+## Wide screens (2.7.0)
+On anything wider than 520 px (the iPhone Duo's inner screen, an iPad-sized window, a desktop browser) Scales stays one centered phone-width column. The ground color fills the whole screen. When the Duo runs Scales beside another app, the column simply shrinks to the half-width. No new iPhone build is needed.
+
 ## Your data
 
 - Everything stays on the phone (`localStorage`): `scales.next.thoughts.v1`, `scales.next.ui.v1`,

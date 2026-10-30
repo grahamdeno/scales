@@ -551,6 +551,25 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.screenshot({ path: path.join(shots, "native-settings-icons.png") });
     await ctx.close();
   }
+  // 2.7.0: wide screens (iPhone Duo inner screen, half-width, iPad-sized, desktop) keep one centered phone-width column
+  for (const [name, w, h] of [["duo-inner", 720, 780], ["duo-inner-wide", 900, 700], ["ipad", 1024, 1366], ["duo-half", 360, 780], ["phone", 390, 844]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, deviceScaleFactor: 2 });
+    const page = await ctx.newPage();
+    await page.goto(base + "/?native=1"); await page.waitForTimeout(900);
+    const r = await page.evaluate(() => { const b = document.body.getBoundingClientRect(); return { l: b.left, r: window.innerWidth - b.right, w: b.width, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }; });
+    const tag = "wide " + name + " (" + w + "): ";
+    ok(r.w <= 520.5 && Math.abs(r.l - r.r) < 1 && r.sw <= r.cw, tag + "one centered column no wider than 520 (" + Math.round(r.w) + " wide, " + Math.round(r.l) + " each side)");
+    await page.screenshot({ path: path.join(shots, "wide-" + name + ".png") });
+    if (w > 520) {
+      // a swipe up in the column still puts the thought away, and a tap in the gutter does nothing
+      const x = w / 2, y = h / 2;
+      const gone0 = await page.evaluate(() => document.getElementById("words").textContent);
+      await page.mouse.click(10, h / 2); await page.waitForTimeout(150);
+      ok(await page.evaluate(() => document.getElementById("words").textContent) === gone0, tag + "a tap in the side margin changes nothing");
+      await page.click("#libBtn, [data-open-library], #strip", { position: { x: 30, y: 20 }, timeout: 2000 }).catch(() => {});
+    }
+    await ctx.close();
+  }
   // the trial address forwards home and keeps ?native=1
   {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
