@@ -246,13 +246,13 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Back up/.test(await page.textContent("#settings")) && /Restore from a backup/.test(await page.textContent("#settings")), tag + "Settings has Back up and Restore");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.6\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/Scales 2\.6\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.7\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/Scales 2\.7\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     await page.screenshot({ path: path.join(shots, w + "-8-settings.png") });
     const dl = page.waitForEvent("download", { timeout: 3000 });
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
-    ok(bk.app === "scales" && bk.version === "2.6.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.7.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -362,9 +362,11 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#toastDel"); await page.waitForTimeout(300);
     const afterDrop = await store();
     const logIds = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.log.v1") || "[]").map((e) => e.id));
-    ok(!afterDrop[dropId] && !logIds.includes(dropId) && /Deleted/.test(await page.textContent("#toast")), tag + "Delete removes it and its visits");
+    ok(!afterDrop[dropId] && !logIds.includes(dropId), tag + "Delete removes it and its visits");
+    ok(/Deleted\. It won't come back\./.test(await page.textContent("#toast")) && await page.locator("#toast.on.done").count() === 1 && !(await page.locator("#toastUndo").isVisible()), tag + "and says so clearly, with no Undo");
+    await page.screenshot({ path: path.join(shots, w + "-toast-deleted.png") });
     ok(/4\s*$/.test(await page.textContent("#strip")), tag + "and the count drops to 4");
-    await page.waitForTimeout(1700);
+    await page.waitForTimeout(3000);
     // A new thought typed with a quotation mark opens the Who said it line
     await page.click("#newBtn"); await page.waitForTimeout(500);
     ok(!(await page.locator("#startFive").isVisible()), tag + "Start with five is gone once there are thoughts");
@@ -482,6 +484,83 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(!errs.length, "TestFlight: no page errors (" + errs.join(" | ") + ")");
     await ctx.close();
   }
+  // 2.7.0: Import, by pasting or from a file
+  for (const w of [390, 375]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: 844 }, hasTouch: true });
+    const page = await ctx.newPage();
+    const errs = []; page.on("pageerror", (e) => errs.push(String(e)));
+    const tag = "[" + w + " import] ";
+    await page.addInitScript((o) => { if (!sessionStorage.getItem("i")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("i", "1"); } }, old);
+    await page.goto(base + "/"); await page.waitForSelector("#words:not(:empty)");
+    const n0 = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem("scales.next.thoughts.v1"))).length);
+    await page.click("#strip"); await page.waitForTimeout(700); await page.click("#libGear"); await page.waitForTimeout(500);
+    await page.click("#setImport"); await page.waitForTimeout(500);
+    ok(await page.locator("#imp.open").count() === 1, tag + "Import opens from Settings");
+    await page.fill("#impText", "\u201CKnow thyself.\u201D\n\u2014 Socrates\n\nI should call my dad more.\n\nSimplify, simplify. ~ Thoreau\n\nActive thought number 1");
+    await page.waitForTimeout(500);
+    ok(/4 thoughts found/.test(await page.textContent("#impMsg")) && (await page.locator("#impList .ir").count()) === 4, tag + "pasted text is split at blank lines into a preview");
+    ok(/Socrates/.test(await page.locator("#impList .ir").first().textContent()) && (await page.locator('#impSplit [data-split="paragraphs"][aria-pressed="true"]').count()) === 1, tag + "who said it is found, and Each blank line is chosen");
+    await page.screenshot({ path: path.join(shots, w + "-import.png") });
+    await page.locator("#impList .ir").nth(1).click(); await page.waitForTimeout(100);
+    ok((await page.textContent("#impAdd")).trim() === "Add 3", tag + "tapping a line leaves it out");
+    await page.click("#impAdd"); await page.waitForTimeout(300);
+    const st = await page.evaluate(() => Object.values(JSON.parse(localStorage.getItem("scales.next.thoughts.v1"))));
+    ok(st.length === n0 + 2 && st.find((t) => t.text === "Know thyself." && t.by === "Socrates" && t.from === "import") && !st.find((t) => /call my dad/.test(t.text)), tag + "Add brings in the kept lines, with who said it");
+    ok(/2 thoughts added/.test(await page.textContent("#impMsg")) && /1 you already had was left out/.test(await page.textContent("#impMsg")), tag + "and says what happened, including a line already here");
+    // a CSV export from another app
+    const csv = path.join(require("os").tmpdir(), "quotes.csv");
+    fs.writeFileSync(csv, 'Highlight,Book Title,Book Author\n"Waste no time, be useful.",Autobiography,Benjamin Franklin\n');
+    await page.setInputFiles("#impFile", csv); await page.waitForTimeout(500);
+    ok(/1 thought found/.test(await page.textContent("#impMsg")) && /Benjamin Franklin, Autobiography/.test(await page.textContent("#impList")) && await page.locator("#impSplit").isHidden(), tag + "a CSV export is read by its columns");
+    const ov = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    ok(ov <= 0, tag + "no sideways scroll (" + ov + ")");
+    ok(!errs.length, tag + "no page errors (" + errs.join(" | ") + ")");
+    await ctx.close();
+  }
+  // 2.5.0: Dark. The reading ground turns plum with bone words; the plum screens go deeper; pistachio stays the accent
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: "dark", deviceScaleFactor: 2, hasTouch: true });
+    const page = await ctx.newPage();
+    await page.addInitScript((o) => { if (!sessionStorage.getItem("d")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("d", "1"); } }, old);
+    await page.goto(base + "/"); await page.waitForSelector("#words:not(:empty)"); await page.waitForTimeout(600);
+    const meet = await page.evaluate(() => ({ bg: getComputedStyle(document.body).backgroundColor, ink: getComputedStyle(document.getElementById("words")).color, theme: document.getElementById("themeColor").content }));
+    ok(meet.bg === "rgb(59, 34, 64)" && meet.ink === "rgb(241, 233, 216)", "dark: Meet is plum with bone words (" + JSON.stringify(meet) + ")");
+    const strip = await page.evaluate(() => getComputedStyle(document.getElementById("strip")).backgroundColor);
+    ok(strip !== meet.bg, "dark: the strip is a deeper plum than the ground (" + strip + ")");
+    await page.screenshot({ path: path.join(shots, "dark-1-meet.png") });
+    // Line breaks typed into a thought show on the main screen
+    await page.click("#newBtn"); await page.waitForTimeout(400);
+    await page.fill("#writeText", "1.\tSpeak the truth.\n\n\n\n2.\tBe reliable."); await page.dispatchEvent("#writeText", "input");
+    await page.click("#writeKeep"); await page.waitForTimeout(1900);
+    const lbId = await page.evaluate(() => { const o = JSON.parse(localStorage.getItem("scales.next.thoughts.v1")); return Object.keys(o).find((k) => /Be reliable/.test(o[k].text)); });
+    await page.click("#strip"); await page.waitForTimeout(700); await page.click('#libList [data-open="' + lbId + '"]'); await page.waitForTimeout(800);
+    const lb = await page.evaluate(() => ({ ws: getComputedStyle(document.getElementById("words")).whiteSpace, t: document.getElementById("words").textContent, h: document.getElementById("words").getBoundingClientRect().height }));
+    ok(lb.ws === "pre-line" && lb.t === "1.\tSpeak the truth.\n\n2.\tBe reliable." && lb.h > 60, "line breaks show as typed, with extra empty lines kept to one (" + JSON.stringify(lb) + ")");
+    await page.screenshot({ path: path.join(shots, "linebreaks.png") });
+    await page.keyboard.press("ArrowDown"); await page.waitForTimeout(700);
+    const tb = await page.evaluate(() => getComputedStyle(document.getElementById("toast")).backgroundColor);
+    ok(tb === "rgb(185, 201, 163)", "dark: the Put away message is pistachio so it shows on plum (" + tb + ")");
+    await page.screenshot({ path: path.join(shots, "dark-2-toast.png") });
+    await page.click("#toastUndo"); await page.waitForTimeout(500);
+    await page.mouse.click(195, 400); await page.waitForTimeout(700);
+    const ed = await page.evaluate(() => ({ bg: getComputedStyle(document.body).backgroundColor, theme: document.getElementById("themeColor").content }));
+    ok(ed.bg !== meet.bg && /23132A/i.test(ed.theme), "dark: Edit is the deeper plum, and the browser bar follows it (" + JSON.stringify(ed) + ")");
+    await page.screenshot({ path: path.join(shots, "dark-3-edit.png") });
+    await page.click("#editCancel"); await page.waitForTimeout(500);
+    await page.click("#strip"); await page.waitForTimeout(700);
+    await page.screenshot({ path: path.join(shots, "dark-4-library.png") });
+    await page.click("#libGear"); await page.waitForTimeout(600);
+    await page.screenshot({ path: path.join(shots, "dark-5-settings.png") });
+    await ctx.close();
+  }
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: "light" });
+    const page = await ctx.newPage();
+    await page.addInitScript((o) => { if (!sessionStorage.getItem("l")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("l", "1"); } }, old);
+    await page.goto(base + "/"); await page.waitForSelector("#words:not(:empty)");
+    ok((await page.evaluate(() => getComputedStyle(document.body).backgroundColor)) === "rgb(185, 201, 163)", "light: Meet is still pistachio");
+    await ctx.close();
+  }
   // the iPhone app's bridge: ready, quiet reminders, daily save with the old data, and the put away buzz
   {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -516,6 +595,25 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click('[data-icon="auto"]'); await page.waitForTimeout(100);
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "icon").pop())).name === "", "native: Automatic asks for the main icon");
     await page.screenshot({ path: path.join(shots, "native-settings-icons.png") });
+    await ctx.close();
+  }
+  // 2.7.0: wide screens (iPhone Duo inner screen, half-width, iPad-sized, desktop) keep one centered phone-width column
+  for (const [name, w, h] of [["duo-inner", 720, 780], ["duo-inner-wide", 900, 700], ["ipad", 1024, 1366], ["duo-half", 360, 780], ["phone", 390, 844]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, deviceScaleFactor: 2 });
+    const page = await ctx.newPage();
+    await page.goto(base + "/?native=1"); await page.waitForTimeout(900);
+    const r = await page.evaluate(() => { const b = document.body.getBoundingClientRect(); return { l: b.left, r: window.innerWidth - b.right, w: b.width, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }; });
+    const tag = "wide " + name + " (" + w + "): ";
+    ok(r.w <= 520.5 && Math.abs(r.l - r.r) < 1 && r.sw <= r.cw, tag + "one centered column no wider than 520 (" + Math.round(r.w) + " wide, " + Math.round(r.l) + " each side)");
+    await page.screenshot({ path: path.join(shots, "wide-" + name + ".png") });
+    if (w > 520) {
+      // a swipe up in the column still puts the thought away, and a tap in the gutter does nothing
+      const x = w / 2, y = h / 2;
+      const gone0 = await page.evaluate(() => document.getElementById("words").textContent);
+      await page.mouse.click(10, h / 2); await page.waitForTimeout(150);
+      ok(await page.evaluate(() => document.getElementById("words").textContent) === gone0, tag + "a tap in the side margin changes nothing");
+      await page.click("#libBtn, [data-open-library], #strip", { position: { x: 30, y: 20 }, timeout: 2000 }).catch(() => {});
+    }
     await ctx.close();
   }
   // the trial address forwards home and keeps ?native=1

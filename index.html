@@ -19,20 +19,34 @@
 :root {
   --pist: #B9C9A3; --pist-ink: #2A1E2E; --pist-muted: #3E4830;
   --plum: #3B2240; --plum-ink: #F1E9D8; --plum-muted: #BBA7BE; --plum-faint: #8E7A92;
+  /* The reading ground (Meet). Pistachio in Light; in Dark (2.5.0) it turns plum with bone words, like the Plum icon,
+     and the plum screens go a step deeper so moving between them still changes ground. Pistachio stays the accent. */
+  --ground: var(--pist); --ground-ink: var(--pist-ink); --ground-muted: var(--pist-muted); --ground-line: rgba(42,30,46,.14);
+  --toast-bg: var(--pist-ink); --toast-ink: var(--pist);
   --pad: 28px;
   --top: max(env(safe-area-inset-top), 20px);
   --bot: env(safe-area-inset-bottom);
   --strip: calc(76px + var(--bot));
   --ease-back: cubic-bezier(.34,1.56,.64,1);
 }
+@media (prefers-color-scheme: dark) {
+  :root { --ground: #3B2240; --ground-ink: #F1E9D8; --ground-muted: #BBA7BE; --ground-line: rgba(241,233,216,.14);
+    --plum: #23132A; --plum-muted: #B09CB4; --plum-faint: #85718A;
+    --toast-bg: var(--pist); --toast-ink: #2A1E2E; color-scheme: dark; }
+}
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
 body {
   font-family: "Geist", -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased;
-  background: var(--pist); color: var(--pist-ink); transition: background-color .45s ease, color .45s ease;
+  background: var(--ground); color: var(--ground-ink); transition: background-color .45s ease, color .45s ease;
   position: fixed; inset: 0; touch-action: none; user-select: none; -webkit-user-select: none;
 }
 body.plum { background: var(--plum); color: var(--plum-ink); }
+/* Wide screens (2.7.0): the iPhone Duo's inner screen, iPad-sized windows, a desktop browser. Scales stays one phone-width
+   column, centered, so lines stay short and thumbs reach everything. The ground color still fills the whole screen,
+   because a body's background spreads to the page behind it. */
+body { width: min(100%, var(--col)); margin-inline: auto; }
+:root { --col: 520px; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 a { color: inherit; text-decoration: none; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -50,12 +64,13 @@ a { color: inherit; text-decoration: none; }
 /* The stage starts below the corner, so a near miss on + New never opens Edit. */
 #stage { position: absolute; left: 0; right: 0; top: calc(var(--top) + 72px); bottom: var(--strip); touch-action: none; }
 #carry { transform-origin: center bottom; position: absolute; left: var(--pad); right: var(--pad); top: 0; bottom: 24px; display: flex; flex-direction: column; justify-content: center; will-change: transform; }
-#words { margin: 0; font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600; transition: font-weight 1.2s ease; overflow-wrap: anywhere; }
+/* Line breaks you typed show as typed (2.5.0); runs of spaces and tabs read as one space. */
+#words { white-space: pre-line; margin: 0; font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600; transition: font-weight 1.2s ease; overflow-wrap: anywhere; }
 #words.long { font-size: 24px; line-height: 1.25; }
 #words.vlong { font-size: 19px; line-height: 1.35; }
 /* Who said it (2.3.0): under the thought, quiet, like the note. */
-#by { margin: 12px 0 0; font-size: 15px; font-weight: 500; color: var(--pist-muted); overflow-wrap: anywhere; }
-#note { margin: 18px 0 0; font-size: 16px; line-height: 1.45; color: var(--pist-muted); white-space: pre-wrap; }
+#by { margin: 12px 0 0; font-size: 15px; font-weight: 500; color: var(--ground-muted); overflow-wrap: anywhere; }
+#note { margin: 18px 0 0; font-size: 16px; line-height: 1.45; color: var(--ground-muted); white-space: pre-wrap; }
 .hint { position: absolute; left: 0; right: 0; margin: 0; text-align: center; font-size: 15px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .12s; }
 #hintUp { top: calc(var(--top) + 76px); }
 #hintDown { bottom: calc(var(--strip) + 68px); }
@@ -64,11 +79,11 @@ a { color: inherit; text-decoration: none; }
    so it is never mistaken for a thought to swipe. */
 #empty { position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--top) + 150px); bottom: var(--strip); display: flex; flex-direction: column; justify-content: flex-start; gap: 6px; }
 #empty h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
-#empty p { margin: 0; font-size: 16px; color: var(--pist-muted); }
-#emptyActs { display: flex; flex-direction: column; margin-top: 28px; border-bottom: 1px solid rgba(42,30,46,.14); }
+#empty p { margin: 0; font-size: 16px; color: var(--ground-muted); }
+#emptyActs { display: flex; flex-direction: column; margin-top: 28px; border-bottom: 1px solid var(--ground-line); }
 #emptyActs button { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 52px; padding: 0; text-align: left;
-  color: var(--pist-ink); font-weight: 500; font-size: 17px; border-top: 1px solid rgba(42,30,46,.14); }
-#emptyActs button::after { content: "\203A"; font-size: 22px; color: var(--pist-muted); }
+  color: var(--ground-ink); font-weight: 500; font-size: 17px; border-top: 1px solid var(--ground-line); }
+#emptyActs button::after { content: "\203A"; font-size: 22px; color: var(--ground-muted); }
 #emptyActs button[hidden] { display: none; }
 @keyframes nudge { 0%,100% { transform: translateY(0) } 30% { transform: translateY(-14px) } 62% { transform: translateY(6px) } }
 @keyframes arrive { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: none } }
@@ -83,13 +98,15 @@ a { color: inherit; text-decoration: none; }
 body.plum #strip { opacity: 0; pointer-events: none; }
 
 /* Undo: a small pill at the right, above the strip. Visible, but clear of the thought and of the thumb's swipe path. */
-#toast { position: absolute; right: 16px; bottom: calc(var(--strip) + 14px); background: var(--pist-ink); color: var(--pist);
+#toast { position: absolute; right: 16px; bottom: calc(var(--strip) + 14px); background: var(--toast-bg); color: var(--toast-ink);
   border-radius: 999px; padding: 4px 4px 4px 16px; display: flex; align-items: center; gap: 2px; font-size: 14px; z-index: 5;
   opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; pointer-events: none; }
 #toast.on { opacity: 1; transform: none; pointer-events: auto; }
 #toast span { opacity: .75; }
 #toast button { padding: 10px 14px; font-weight: 700; }
 #toast #toastDel { padding-left: 4px; }
+#toast.done { padding: 12px 18px; }
+#toast.done span { opacity: 1; font-weight: 600; }
 .plus { font-weight: 400; margin-right: 3px; }
 
 /* ---- Write and Edit (plum) ---- */
@@ -183,6 +200,19 @@ textarea::placeholder { color: var(--plum-faint); }
 .srow.setr .nm small { font-size: 14px; color: var(--plum-muted); line-height: 1.35; }
 .srow .v.add { color: var(--pist); font-weight: 600; }
 .srow .v.armed { color: var(--plum-ink); font-weight: 700; }
+/* Import (2.7.0) */
+.imptext { display: block; margin: 14px var(--pad) 0; width: calc(100% - 2 * var(--pad)); min-height: 150px; font-size: 16px; line-height: 1.45;
+  background: rgba(241,233,216,.06); border-radius: 12px; padding: 12px 14px; }
+.improw { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px var(--pad) 0; flex-wrap: wrap; }
+.improw .seg { display: flex; gap: 6px; }
+.improw .seg[hidden] { display: none; }
+#impList { margin-top: 6px; }
+#impList .ir { display: block; width: 100%; text-align: left; padding: 12px var(--pad); border-bottom: 1px solid rgba(241,233,216,.12); }
+#impList .ir .t { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 16px; line-height: 1.35; white-space: pre-line; }
+#impList .ir .b { display: block; margin-top: 4px; font-size: 13px; color: var(--plum-muted); }
+#impList .ir.off .t, #impList .ir.off .b { text-decoration: line-through; opacity: .45; }
+#impList .more { margin: 10px var(--pad); font-size: 14px; color: var(--plum-muted); }
+.impfoot { display: flex; justify-content: flex-end; padding: 0 var(--pad); }
 /* Apple Intelligence test (2.6.0) */
 #aiThemes .ex { margin: 0 var(--pad) 8px; padding: 0 0 8px 14px; font-size: 14px; line-height: 1.45; color: var(--plum-muted); border-left: 2px solid rgba(241,233,216,.12); }
 #aiThemes .ex p { margin: 6px 0; }
@@ -323,6 +353,7 @@ textarea::placeholder { color: var(--plum-faint); }
     <button class="srow" type="button" id="setBackup"><span>Back up</span><span class="v">Save a file</span></button>
     <button class="srow" type="button" id="setRestore"><span>Restore from a backup</span><span class="v">Choose a file</span></button>
     <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+    <button class="srow" type="button" id="setImport"><span>Import thoughts</span><span class="v">Paste or a file</span></button>
     <p class="snote" id="restoreMsg" role="status" aria-live="polite"></p>
     <p class="snote" id="setSaved"></p>
     <p class="sh"></p>
@@ -361,6 +392,23 @@ textarea::placeholder { color: var(--plum-faint); }
     <div id="aiNote"></div>
   </div>
 </section>
+<section class="page" id="imp" aria-label="Import thoughts" aria-hidden="true">
+  <button class="pback" type="button" id="impBack">&#8249; Settings</button>
+  <h1>Import thoughts</h1>
+  <div class="body">
+    <p class="snote">Paste a note or a list of quotes, or choose a file (text, a CSV export, or a Kindle "My Clippings.txt"). A name after a dash, or under a quote, becomes who said it.</p>
+    <label class="sr" for="impText">Text to import</label>
+    <textarea class="imptext" id="impText" rows="6" placeholder="Paste here"></textarea>
+    <div class="improw">
+      <button type="button" class="quiet" id="impFileBtn">Choose a file</button>
+      <div class="seg" id="impSplit" aria-label="Split"><button type="button" data-split="lines">Each line</button><button type="button" data-split="paragraphs">Each blank line</button></div>
+    </div>
+    <input type="file" id="impFile" accept=".txt,.csv,.md,text/plain,text/csv,text/markdown" hidden>
+    <p class="snote" id="impMsg" role="status" aria-live="polite"></p>
+    <div id="impList"></div>
+    <div class="impfoot"><button class="act" type="button" id="impAdd" disabled>Add</button></div>
+  </div>
+</section>
 <section class="page" id="help" aria-label="How Scales works" aria-hidden="true">
   <button class="pback" type="button" id="helpBack">&#8249; Settings</button>
   <h1>How Scales works</h1>
@@ -377,8 +425,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.6.0"></script>
-<script src="sets.js?v=2.6.0"></script>
+<script src="core.js?v=2.7.0"></script>
+<script src="sets.js?v=2.7.0"></script>
 <script>
 (function () {
   "use strict";
@@ -457,6 +505,14 @@ textarea::placeholder { color: var(--plum-faint); }
   function growAll() { Array.prototype.forEach.call(document.querySelectorAll(".sheetform textarea"), grow); }
   document.addEventListener("input", function (e) { if (e.target.matches && e.target.matches(".sheetform textarea")) grow(e.target); });
   window.addEventListener("resize", function () { if (mode === "write" || mode === "edit") growAll(); });
+  // The browser bar follows the screen's ground, Light or Dark.
+  var darkMq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  function themeColor() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue(document.body.classList.contains("plum") ? "--plum" : "--ground").trim();
+    if (v.indexOf("var(") === 0) v = getComputedStyle(document.documentElement).getPropertyValue("--pist").trim();
+    $("themeColor").setAttribute("content", v || "#B9C9A3");
+  }
+  if (darkMq && darkMq.addEventListener) darkMq.addEventListener("change", themeColor);
   function setMode(m) {
     if (mode === "meet" && m !== "meet") clockOff();
     mode = m;
@@ -465,13 +521,16 @@ textarea::placeholder { color: var(--plum-faint); }
     $("vEdit").hidden = m !== "edit";
     $("vMeet").style.visibility = (m === "write" || m === "edit") ? "hidden" : "visible";
     document.body.classList.toggle("plum", m === "write" || m === "edit");
-    $("themeColor").setAttribute("content", document.body.classList.contains("plum") ? "#3B2240" : "#B9C9A3");
+    themeColor();
     if (m === "meet") clockOn();
     if (m === "write" || m === "edit") growAll();
   }
 
   // ---------- Meet ----------
-  function sizeClass(text) { var n = text.length; return n > 220 ? "vlong" : n > 90 ? "long" : ""; }
+  // Each line break takes about a line's room, so it counts toward the size like 30 letters.
+  function sizeClass(text) { var n = text.length + 30 * (text.match(/\n/g) || []).length; return n > 220 ? "vlong" : n > 90 ? "long" : ""; }
+  // More than one empty line in a row shows as one.
+  function shown(text) { return String(text).replace(/[ \t]*\n[ \t]*/g, "\n").replace(/\n{3,}/g, "\n\n"); }
   function renderMeet(arrive) {
     var t = store[ui.cur];
     if (!t || (t.away && ui.review !== ui.cur)) { ui.cur = null; ui.ms = 0; ui.worked = false; ui.review = null; var n = C.pickNext(store, now()); if (n) ui.cur = n.id; saveUi(); t = store[ui.cur]; }
@@ -490,7 +549,7 @@ textarea::placeholder { color: var(--plum-faint); }
     }
     $("empty").hidden = true; $("carry").hidden = false; $("srActs").hidden = false;
     var w = $("words");
-    w.textContent = t.text; w.className = sizeClass(t.text);
+    w.textContent = shown(t.text); w.className = sizeClass(t.text);
     w.style.transition = "none"; w.style.fontWeight = C.weight(t); void w.offsetWidth; w.style.transition = "";
     $("by").hidden = !t.by; $("by").textContent = t.by || "";
     $("note").hidden = !t.note; $("note").textContent = t.note || "";
@@ -576,7 +635,7 @@ textarea::placeholder { color: var(--plum-faint); }
   var toastT = 0;
   var dropId = null;
   function toast(msg, canDrop) {
-    dropId = canDrop || null; $("toastDel").hidden = !dropId; $("toastUndo").hidden = false;
+    dropId = canDrop || null; $("toastDel").hidden = !dropId; $("toastUndo").hidden = false; $("toast").classList.remove("done");
     $("toastMsg").textContent = msg; $("toast").classList.add("on");
     clearTimeout(toastT); toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; }, 5000);
   }
@@ -586,11 +645,17 @@ textarea::placeholder { color: var(--plum-faint); }
     delete store[id]; save();
     var g = lsGet(KEY_GONE, []); if (g.indexOf(id) < 0) { g.push(id); lsSet(KEY_GONE, g); }
     lsSet(KEY_LOG, lsGet(KEY_LOG, []).filter(function (e) { return e.id !== id; }));
-    undoPoint = null; dropId = null; clearTimeout(toastT);
-    $("toastMsg").textContent = "Deleted"; $("toastUndo").hidden = true; $("toastDel").hidden = true;
-    toastT = setTimeout(function () { $("toast").classList.remove("on"); $("toastUndo").hidden = false; }, 1500);
+    undoPoint = null; dropId = null;
     buzz("remove"); $("stripN").textContent = C.list(store).length;
+    done("Deleted. It won't come back.");
   };
+  // A clear confirmation that something is gone for good (2.5.0): the message in full strength with a check, held long enough to read.
+  function done(msg) {
+    clearTimeout(toastT);
+    $("toastMsg").textContent = "\u2713 " + msg; $("toastUndo").hidden = true; $("toastDel").hidden = true;
+    $("toast").classList.add("on", "done");
+    toastT = setTimeout(function () { $("toast").classList.remove("on"); setTimeout(function () { $("toast").classList.remove("done"); $("toastUndo").hidden = false; }, 250); }, 2600);
+  }
   $("toastUndo").onclick = function () {
     if (!undoPoint) return;
     clockOff();
@@ -685,6 +750,7 @@ textarea::placeholder { color: var(--plum-faint); }
     delete store[id]; ui.cur = null; ui.ms = 0; ui.worked = false; save(); saveUi(); disarm();
     buzz("remove");
     setMode("meet"); renderMeet(true);
+    done("Deleted.");
   };
 
   // ---------- Library ----------
@@ -1091,6 +1157,56 @@ textarea::placeholder { color: var(--plum-faint); }
     rows.forEach(function (x) { var tr = document.createElement("tr"); [x.theme, x.visits, x.avgSec, x.skipped, x.putAway].forEach(function (v) { var td = document.createElement("td"); td.textContent = v; tr.appendChild(td); }); tb.appendChild(tr); });
     box.appendChild(tb);
   }
+  // ---------- Import (2.7.0) ----------
+  var impMode = "auto", impItems = [], impOff = {};
+  function impParse() {
+    var txt = $("impText").value;
+    impItems = C.parseImport(txt, impMode); impOff = {};
+    var plain = !/==========/.test(txt) && !/^[^\n]*\b(highlight|quote|quotes|text|content|note)\b[^\n]*,|,[^\n]*\b(highlight|quote|quotes|text)\b/i.test(txt.split("\n")[0] || "");
+    $("impSplit").hidden = !plain || !txt.trim();
+    var auto = impMode === "auto" ? (/\n\s*\n/.test(txt) ? "paragraphs" : "lines") : impMode;
+    Array.prototype.forEach.call($("impSplit").children, function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-split") === auto)); });
+    impRender();
+  }
+  function impRender() {
+    var box = $("impList"); box.innerHTML = "";
+    var keep = impItems.filter(function (x, i) { return !impOff[i]; }).length;
+    $("impAdd").disabled = !keep; $("impAdd").textContent = keep ? "Add " + keep : "Add";
+    if (!impItems.length) { $("impMsg").textContent = $("impText").value.trim() ? "Nothing to add here." : ""; $("impMsg").className = "snote"; return; }
+    $("impMsg").textContent = impItems.length + (impItems.length === 1 ? " thought" : " thoughts") + " found. Tap one to leave it out."; $("impMsg").className = "snote";
+    impItems.slice(0, 100).forEach(function (x, i) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "ir" + (impOff[i] ? " off" : "");
+      var t = document.createElement("span"); t.className = "t"; t.textContent = x.text; b.appendChild(t);
+      if (x.by) { var y = document.createElement("span"); y.className = "b"; y.textContent = x.by; b.appendChild(y); }
+      b.onclick = function () { impOff[i] = !impOff[i]; impRender(); };
+      box.appendChild(b);
+    });
+    if (impItems.length > 100) { var m = document.createElement("p"); m.className = "more"; m.textContent = "and " + (impItems.length - 100) + " more"; box.appendChild(m); }
+  }
+  var impT = 0;
+  $("impText").addEventListener("input", function () { clearTimeout(impT); impT = setTimeout(impParse, 250); });
+  $("impSplit").addEventListener("click", function (e) { var b = e.target.closest("[data-split]"); if (!b) return; impMode = b.getAttribute("data-split"); haptic("tick"); impParse(); });
+  $("impFileBtn").onclick = function () { $("impFile").value = ""; $("impFile").click(); };
+  $("impFile").addEventListener("change", function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { $("impMsg").textContent = "That file is too big to import."; return; }
+    var rd = new FileReader();
+    rd.onerror = function () { $("impMsg").textContent = "That file couldn't be read."; };
+    rd.onload = function () { $("impText").value = String(rd.result); impMode = "auto"; impParse(); };
+    rd.readAsText(f);
+  });
+  $("impAdd").onclick = function () {
+    var items = impItems.filter(function (x, i) { return !impOff[i]; }); if (!items.length) return;
+    var r = C.importThoughts(store, items, now());
+    if (!lsSet(KEY, store)) { store = lsGet(KEY, store); $("impMsg").textContent = "There isn't room on this phone for that many."; return; }
+    buzz("keep"); needsRender = true; $("stripN").textContent = C.list(store).length; renderLib();
+    $("impText").value = ""; impItems = []; impOff = {}; $("impList").innerHTML = ""; $("impSplit").hidden = true;
+    $("impAdd").disabled = true; $("impAdd").textContent = "Add";
+    $("impMsg").textContent = r.added + (r.added === 1 ? " thought" : " thoughts") + " added." + (r.added > C.IMPORT_PER_DAY ? " Five arrive each day, starting today." : "") + (r.skipped ? " " + r.skipped + " you already had " + (r.skipped === 1 ? "was" : "were") + " left out." : "");
+    $("impMsg").className = "snote ok";
+  };
+  $("setImport").onclick = function () { $("impMsg").textContent = ""; $("impMsg").className = "snote"; $("impSplit").hidden = true; openPage("imp", "imp"); };
+  $("impBack").onclick = function () { $("impText").blur(); closePage("imp", "settings"); };
   $("setAI").onclick = function () { renderAI(); openPage("ai", "ai"); };
   $("aiBack").onclick = function () { closePage("ai", "settings"); };
   $("aiRun").onclick = function () { aiRun(); };

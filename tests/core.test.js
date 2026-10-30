@@ -537,3 +537,39 @@ test("themeWeek and weekFacts count from the log, leave out reviews and undone v
   assert.ok(/moved past Work thoughts quickest: 3 of 3/.test(f) && /put away 1 Work thought\./.test(f));
   assert.deepEqual(N.weekFacts([], 7), []);
 });
+
+// ---- 2.7.0: Import ----
+test("parseImport: lines, dashes and names under quotes become who said it", () => {
+  const r = N.parseImport('Be kind.\nWork hard. — Ben Franklin\n"Stay hungry" - Steve Jobs\n“Know thyself.”\n– Socrates\n1. My own thought - with a hyphen\n- a bullet.');
+  assert.deepEqual(r, [
+    { text: "Be kind.", by: "" }, { text: "Work hard.", by: "Ben Franklin" }, { text: "Stay hungry", by: "Steve Jobs" },
+    { text: "Know thyself.", by: "Socrates" }, { text: "My own thought - with a hyphen", by: "" }, { text: "a bullet.", by: "" }]);
+});
+test("parseImport: blank lines split into paragraphs, with a name on the last line", () => {
+  const r = N.parseImport("“The obstacle is the way.”\n— Marcus Aurelius\n\nI should call my dad more.\nIt matters.\n\nSimplify, simplify. ~ Thoreau");
+  assert.deepEqual(r, [{ text: "The obstacle is the way.", by: "Marcus Aurelius" }, { text: "I should call my dad more.\nIt matters.", by: "" }, { text: "Simplify, simplify.", by: "Thoreau" }]);
+  assert.equal(N.parseImport("a\n\nb", "lines").length, 2);
+  assert.equal(N.parseImport("a\nb", "paragraphs").length, 1);
+});
+test("parseImport: a CSV with a quote column, and a Kindle clippings file", () => {
+  assert.deepEqual(N.parseImport('Highlight,Title,Author\n"Hello, ""world""",Book One,Jane Doe\nSecond,B2,\n'),
+    [{ text: 'Hello, "world"', by: "Jane Doe, Book One" }, { text: "Second", by: "B2" }]);
+  const k = "﻿Meditations (Marcus Aurelius)\r\n- Your Highlight on page 3 | Added on Monday\r\n\r\nWaste no time.\r\n==========\r\nWalden (Henry David Thoreau)\r\n- Your Note on page 9\r\n\r\nSimplify.\r\n==========\r\n";
+  assert.deepEqual(N.parseImport(k), [{ text: "Waste no time.", by: "Marcus Aurelius, Meditations" }, { text: "Simplify.", by: "Henry David Thoreau, Walden" }]);
+});
+test("parseImport drops empty and repeated lines", () => {
+  assert.deepEqual(N.parseImport("One\n\n\nOne\none \n  \nTwo", "lines").map((x) => x.text), ["One", "Two"]);
+});
+test("importThoughts: five a day from today, skips ones already here", () => {
+  const now = at(2026, 10, 30), store = {};
+  const mine = N.make("Already here", now); store[mine.id] = mine;
+  const items = [{ text: "already HERE", by: "" }].concat(Array.from({ length: 12 }, (_, i) => ({ text: "Q" + i, by: i ? "" : "Seneca" })));
+  const r = N.importThoughts(store, items, now);
+  assert.deepEqual(r, { added: 12, skipped: 1 });
+  const ts = Object.values(store).filter((t) => t.from === "import");
+  const day = N.dayKey(now);
+  assert.equal(ts.filter((t) => t.due === day).length, 5);
+  assert.equal(ts.filter((t) => t.due === N.addDays(day, 2)).length, 2);
+  assert.equal(ts.find((t) => t.text === "Q0").by, "Seneca");
+  assert.equal(new Set(ts.map((t) => t.id)).size, 12);
+});
