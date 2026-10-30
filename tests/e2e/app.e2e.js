@@ -246,13 +246,13 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Back up/.test(await page.textContent("#settings")) && /Restore from a backup/.test(await page.textContent("#settings")), tag + "Settings has Back up and Restore");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.4\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/Scales 2\.4\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.6\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/Scales 2\.6\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     await page.screenshot({ path: path.join(shots, w + "-8-settings.png") });
     const dl = page.waitForEvent("download", { timeout: 3000 });
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
-    ok(bk.app === "scales" && bk.version === "2.4.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.6.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -435,6 +435,53 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(!errs.length, tag + "no page errors (" + errs.join(" | ") + ")");
     await ctx.close();
   }
+  // 2.6.0: the Apple Intelligence test, only in TestFlight copies; the model here is a stand-in that answers like one
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    const errs = []; page.on("pageerror", (e) => errs.push(String(e)));
+    await page.addInitScript((o) => {
+      window.scalesNative = { version: 1, platform: "ios", build: "37", testflight: true };
+      window.__asked = [];
+      window.webkit = { messageHandlers: { scales: { postMessage: (m) => {
+        if (m.type === "aiStatus") setTimeout(() => window.scalesAI("available"), 10);
+        if (m.type === "ai") {
+          window.__asked.push(m);
+          let a;
+          if (/6 to 8/.test(m.instructions)) a = "1. Family\n2. Work\n3. Faith\n4. Health";
+          else if (/one theme/.test(m.instructions)) a = /number [1-4]/.test(m.prompt) ? "Family" : /number [5-7]/.test(m.prompt) ? "Work." : "no idea";
+          else a = "This week you met your thoughts often, and you stayed longest with family.";
+          setTimeout(() => window.scalesAIResult(m.id, a, ""), 5);
+        }
+      } } } };
+      if (!sessionStorage.getItem("s")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("s", "1"); }
+    }, old);
+    await page.goto(base + "/?native=1"); await page.waitForTimeout(1500);
+    // a little history so the week has something to say
+    await page.evaluate(() => {
+      const o = JSON.parse(localStorage.getItem("scales.next.thoughts.v1")), ids = Object.keys(o), log = [];
+      ids.forEach((id, i) => { for (let k = 0; k < 2; k++) log.push({ at: new Date(Date.now() - 3600000 * (k + 1)).toISOString(), id, kind: i % 2 ? "skipped" : "thought", ms: i % 2 ? 4000 : 45000 }); });
+      localStorage.setItem("scales.next.log.v1", JSON.stringify(log));
+    });
+    await page.click("#strip"); await page.waitForTimeout(700); await page.click("#libGear"); await page.waitForTimeout(500);
+    ok(await page.locator("#aiSec").isVisible() && await page.locator("#setAI").isVisible(), "TestFlight: Settings shows the Apple Intelligence test");
+    await page.click("#setAI"); await page.waitForTimeout(500);
+    await page.click("#aiRun"); await page.waitForTimeout(2500);
+    const d = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.ai.v1")));
+    ok(d && d.themes.join(",") === "Family,Work,Faith,Health" && Object.keys(d.tags).length === 10, "TestFlight: themes are named and every thought is sorted (" + (d && d.themes) + ")");
+    ok(Object.values(d.tags).includes("Unsorted") && Object.values(d.tags).includes("Work"), "TestFlight: an answer that names no theme is Unsorted; 'Work.' still counts as Work");
+    ok(/Sorted 10 thoughts into 4 themes/.test(await page.textContent("#aiProgress")) && (await page.locator("#aiThemes .th").count()) >= 3, "TestFlight: the themes are listed with their counts");
+    await page.click("#aiThemes .th"); await page.waitForTimeout(200);
+    ok(await page.locator("#aiThemes .ex:not([hidden])").count() === 1, "TestFlight: tapping a theme shows its thoughts");
+    await page.click("#aiWeek"); await page.waitForTimeout(800);
+    const note = await page.textContent("#aiNote");
+    ok(/stayed longest with family/.test(note) && /counted by Scales/.test(note) && (await page.locator("#aiNote table tr").count()) >= 3, "TestFlight: the week is written from facts Scales counted, shown under it");
+    const wk = (await page.evaluate(() => window.__asked)).pop();
+    ok(/Facts:/.test(wk.prompt) && /met thoughts 20 times/.test(wk.prompt), "TestFlight: the model is given counted facts (" + wk.prompt.split("\n")[1] + ")");
+    await page.screenshot({ path: path.join(shots, "ai-test.png"), fullPage: false });
+    ok(!errs.length, "TestFlight: no page errors (" + errs.join(" | ") + ")");
+    await ctx.close();
+  }
   // the iPhone app's bridge: ready, quiet reminders, daily save with the old data, and the put away buzz
   {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -459,6 +506,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     // App icon: shown only in the iPhone app; a choice is sent to the shell, and the shell's answer marks it
     await page.waitForTimeout(5300); await page.click("#strip"); await page.waitForTimeout(600); await page.click("#libGear"); await page.waitForTimeout(500);
     ok(await page.locator("#iconSec").isVisible(), "native: Settings shows App icon");
+    ok(!(await page.locator("#aiSec").isVisible()), "native: an App Store copy never shows the Apple Intelligence test");
     await page.evaluate(() => { window.__posts.length = 0; window.scalesIcon("auto"); });
     await page.click('[data-icon="plum"]'); await page.waitForTimeout(100);
     const ic = await page.evaluate(() => window.__posts.filter((m) => m.type === "icon"));

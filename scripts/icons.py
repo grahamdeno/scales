@@ -60,7 +60,8 @@ for old in ("Light", "Black", "Paper", "Glass"):
     for p in ("ios/App/AppIcon-%s.icon" % old, "ios/App/Assets.xcassets/AppIcon-%s.appiconset" % old):
         if os.path.exists(p): shutil.rmtree(p)
 write_ios("AppIcon", "Pistachio", "Plum")
-for n in DESIGNS: write_ios("AppIcon-" + n, n)
+# A fixed icon keeps its own colors in Dark too (2.6.0); without a dark look iOS darkened it itself.
+for n in DESIGNS: write_ios("AppIcon-" + n, n, n)
 
 # Web app and website: the Pistachio icon.
 render("Pistachio", 180).save("icons/apple-touch-icon.png")

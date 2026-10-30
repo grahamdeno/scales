@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.4.0";
+  var VERSION = "2.6.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -194,6 +194,69 @@
     return n;
   }
 
+  // ---- Apple Intelligence test (2.6.0) ----
+  // The on-device model only writes words: theme names, one theme per thought, and a few sentences from facts
+  // this code has already counted. Every number comes from here, never from the model.
+  var AI_SAMPLE = 50, AI_CHARS = 140;
+  // A spread of thoughts to name themes from: newest and oldest alike, each cut short, so the prompt stays small.
+  function themeSample(store) {
+    var all = list(store).filter(function (t) { return t.text && t.text.trim(); }).sort(function (a, b) { return a.created < b.created ? -1 : 1; });
+    var step = Math.max(1, all.length / AI_SAMPLE), out = [];
+    for (var i = 0; i < all.length && out.length < AI_SAMPLE; i += step) out.push(all[Math.floor(i)]);
+    return out.map(function (t, i) { var s = t.text.replace(/\s+/g, " ").trim(); return (i + 1) + ". " + (s.length > AI_CHARS ? s.slice(0, AI_CHARS) + "..." : s); }).join("\n");
+  }
+  // The model's list of themes, cleaned: one per line, no numbers or bullets, short, no repeats; 4 to 8 of them.
+  function parseThemes(text) {
+    var seen = {}, out = [];
+    String(text || "").split(/\n|,/).forEach(function (l) {
+      var s = l.replace(/^[\s*\-\u2022\d.):]+/, "").replace(/["*_]/g, "").replace(/[.:]+$/, "").trim();
+      if (!s || s.length > 28 || s.split(/\s+/).length > 3) return;
+      s = s.charAt(0).toUpperCase() + s.slice(1);
+      var k = s.toLowerCase(); if (seen[k]) return; seen[k] = true; out.push(s);
+    });
+    return out.slice(0, 8);
+  }
+  // Which theme the model picked for one thought: an exact name if it gave one, else a name it mentioned, else none.
+  function matchTheme(answer, themes) {
+    var a = String(answer || "").toLowerCase().replace(/["*_.]/g, "").trim();
+    for (var i = 0; i < themes.length; i++) if (a === themes[i].toLowerCase()) return themes[i];
+    var best = null;
+    themes.forEach(function (t) { if (a.indexOf(t.toLowerCase()) !== -1 && (!best || t.length > best.length)) best = t; });
+    return best;
+  }
+  // The week (or a longer window), counted per theme from the visit log. Reviews and undone visits are left out.
+  function themeWeek(store, log, tags, now, days) {
+    var since = new Date(now.getTime() - days * 86400000).toISOString(), by = {};
+    function row(th) { return by[th] || (by[th] = { theme: th, visits: 0, skipped: 0, thought: 0, ms: 0, thoughts: {}, putAway: 0 }); }
+    (log || []).forEach(function (e) {
+      if (!e || e.at < since || e.kind === "review" || e.undone || !own(store, e.id)) return;
+      var r = row(tags[e.id] || "Unsorted");
+      r.visits++; r.ms += e.ms || 0; r.thoughts[e.id] = true;
+      if (e.kind === "skipped") r.skipped++;
+      if (e.kind === "thought" || e.kind === "worked") r.thought++;
+    });
+    list(store).forEach(function (t) { if (t.away && t.away >= since) row(tags[t.id] || "Unsorted").putAway++; });
+    return Object.keys(by).map(function (k) {
+      var r = by[k]; r.thoughts = Object.keys(r.thoughts).length; r.avgSec = r.visits ? Math.round(r.ms / r.visits / 1000) : 0; delete r.ms; return r;
+    }).sort(function (a, b) { return b.visits - a.visits; });
+  }
+  // Plain facts from those counts, already true, for the model to put into a few sentences.
+  function weekFacts(rows, days) {
+    var f = [], seen = rows.filter(function (r) { return r.visits && r.theme !== "Unsorted"; });
+    if (!seen.length) return f;
+    var total = rows.reduce(function (n, r) { return n + r.visits; }, 0);
+    f.push("In the last " + days + " days you met thoughts " + total + " times.");
+    var most = seen.slice().sort(function (a, b) { return b.visits - a.visits; })[0];
+    f.push("You met " + most.theme + " thoughts most often: " + most.visits + " times.");
+    var stay = seen.filter(function (r) { return r.visits >= 2; }).sort(function (a, b) { return b.avgSec - a.avgSec; })[0];
+    if (stay) f.push("You stayed longest with " + stay.theme + " thoughts: about " + stay.avgSec + " seconds each time.");
+    var skip = seen.filter(function (r) { return r.skipped >= 2; }).sort(function (a, b) { return b.skipped / b.visits - a.skipped / a.visits; })[0];
+    if (skip && (!stay || skip.theme !== stay.theme)) f.push("You moved past " + skip.theme + " thoughts quickest: " + skip.skipped + " of " + skip.visits + " times in under 20 seconds.");
+    var away = seen.filter(function (r) { return r.putAway; }).sort(function (a, b) { return b.putAway - a.putAway; })[0];
+    if (away) f.push("You put away " + away.putAway + " " + away.theme + (away.putAway === 1 ? " thought." : " thoughts."));
+    return f;
+  }
+
   // The visit log (2.0.1): every visit with its raw time, kept so the skip and thought lines can be judged from real
   // use and every past visit re-read under different lines. The newest 5000 are kept; it travels in the daily backup.
   var LOG_MAX = 5000;
@@ -304,7 +367,7 @@
 
   var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
-    make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, soonest: soonest,
+    make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);
