@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.8.0";
+  var VERSION = "2.9.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -97,6 +97,59 @@
   function pickNext(store, now, notId) {
     var d = dueToday(store, now).filter(function (t) { return t.id !== notId; });
     return d.length ? d[0] : null;
+  }
+
+  // ---- Today's pile (2.9.0) ----
+  // A day is up to DAY_SIZE cards. First what is due, with never-met thoughts (imports, sets, Scales 1, new ones you wrote)
+  // spread evenly through it instead of bunched at the end. If that runs out before DAY_SIZE, the pile tops up with the
+  // thoughts coming back soonest, as reviews: a look that never moves a schedule. At DAY_SIZE the day stops; Keep going
+  // carries on (anything still due first, as a real visit, then reviews) until everything has been seen once today.
+  // Every visit is logged with its pile and its place in the session, so the size can be judged from use (12 November).
+  var DAY_SIZE = 30, SESSION_GAP_MS = 5 * 60000;
+  function isNew(t) { return !t.seen && !(t.visits && t.visits.length) && !t.skips; }
+  function todayLog(log, now) {
+    var today = dayKey(now);
+    return (log || []).filter(function (e) { return !e.undone && e.at && dayKey(new Date(e.at)) === today; });
+  }
+  function nextCard(store, log, now, notId, more) {
+    var tl = todayLog(log, now), seen = {};
+    tl.forEach(function (e) { seen[e.id] = true; });
+    if (notId) seen[notId] = true;
+    if (tl.length >= DAY_SIZE && !more) return { card: null, why: "limit", shown: tl.length };
+    var due = dueToday(store, now).filter(function (t) { return t.id !== notId; });
+    var fresh = due.filter(isNew);
+    var old = due.filter(function (t) { return !isNew(t); });
+    if (fresh.length || old.length) {
+      var real = tl.filter(function (e) { return e.pile === "due" || e.pile === "new"; });
+      var newShown = real.filter(function (e) { return e.pile === "new"; }).length;
+      var last = tl[tl.length - 1], useNew;
+      if (!old.length) useNew = true;
+      else if (!fresh.length) useNew = false;
+      else if (last && last.pile === "new") useNew = false;
+      else {
+        // Evenly spaced: with N new in a day of T real cards, the k-th new one sits at about k*(T+1)/(N+1).
+        var N = newShown + fresh.length, T = real.length + fresh.length + old.length, at = real.length + 1;
+        useNew = newShown < Math.floor(at * (N + 1) / (T + 1));
+      }
+      return { card: useNew ? fresh[0] : old[0], pile: useNew ? "new" : "due", review: false, shown: tl.length };
+    }
+    var pool = inRotation(store).filter(function (t) { return !seen[t.id]; }).sort(function (a, b) {
+      return a.due < b.due ? -1 : a.due > b.due ? 1 : (b.skips || 0) - (a.skips || 0) || (a.created < b.created ? -1 : 1);
+    });
+    if (!pool.length) return { card: null, why: "done", shown: tl.length };
+    return { card: pool[0], pile: more ? "more" : "extra", review: true, shown: tl.length };
+  }
+  // Which card of the session this is: a gap of more than 5 minutes since the last visit ended starts a new session.
+  function sessionPos(log, nowMs, ms) {
+    var last = (log || [])[(log || []).length - 1];
+    if (!last || !last.at) return 1;
+    var gap = (nowMs - (ms || 0)) - Date.parse(last.at);
+    return gap <= SESSION_GAP_MS ? (last.n || 1) + 1 : 1;
+  }
+  // Never-met thoughts that are not due yet: the line still waiting to arrive.
+  function waiting(store, now) {
+    var today = dayKey(now);
+    return inRotation(store).filter(function (t) { return isNew(t) && t.due > today; }).length;
   }
 
   // The one that would come back soonest, for "Meet one early" once today is done. Ties go to the more avoided one.
@@ -356,6 +409,13 @@
   function logVisit(log, e) {
     log.push({ at: e.at, id: e.id, ms: Math.round(e.ms), worked: !!e.worked, idle: !!e.idle, kind: e.kind, how: e.how,
       len: e.len || 0, lines: [SKIP_MAX_MS / 1000, THOUGHT_MIN_MS / 1000] });
+    // 2.9.0: which pile it came from, its place in the session, the day size in force, and how the time reads even
+    // for a review (so reviews can be compared with real visits without ever moving a schedule).
+    var x = log[log.length - 1];
+    if (e.pile) x.pile = e.pile;
+    if (e.n) x.n = e.n;
+    if (e.size) x.size = e.size;
+    if (e.cls) x.cls = e.cls;
     if (log.length > LOG_MAX) log.splice(0, log.length - LOG_MAX);
     return log;
   }
@@ -460,7 +520,7 @@
 
   var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
-    make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, soonest: soonest,
+    make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);

@@ -63,6 +63,11 @@ read, never written or deleted.
 - A reminder may come back later; for now Scales is something you open on your own.
 - Library on plum, the first-time nudge, and the 5-a-day import pace were open questions; the owner has not raised them.
 - Times review, on or after 12 November: read `visits` in the daily backup and recommend the skip and thought lines
+- Day size review (same day, 2.9.0 onward): visits carry `pile` (due, new, extra, more, review, picked), `n` (place in the
+  session; a gap over 5 minutes starts a new one), `size` (30) and `cls` (how the time reads, even for reviews). Measure
+  from the first visit with `size`: cards per session; time on card by position (does attention fall after card 20?);
+  real versus top-up versus Keep going attention, together and apart; thoughts written per day (`created`) and the line
+  still waiting (`waiting()`), to judge whether 5 new a day is right. Recommend the day size and the drip from that.
   (see `docs/2.1-plan.md`, step 10). Leave out visits with `kind: "review"` (opened from Bookmarked) and `undone: true`.
 - 2.2.0 is on `release-2.2`, not shipped: Bookmark, New filter, scrolling filters, Done and Keep as words, growing fields,
   new icons with a picker, website copy. See `docs/2.1-plan.md`.
