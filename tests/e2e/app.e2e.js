@@ -246,13 +246,13 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Back up/.test(await page.textContent("#settings")) && /Restore from a backup/.test(await page.textContent("#settings")), tag + "Settings has Back up and Restore");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.4\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/Scales 2\.4\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.5\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/Scales 2\.5\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     await page.screenshot({ path: path.join(shots, w + "-8-settings.png") });
     const dl = page.waitForEvent("download", { timeout: 3000 });
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
-    ok(bk.app === "scales" && bk.version === "2.4.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.5.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -433,6 +433,41 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok((await page.locator("#help .demo").count()) === 3 && (await page.locator("#help strong").count()) >= 6 && (await page.locator("#help .demo.play").count()) >= 1, tag + "How Scales works shows three moves and plays them");
     await page.screenshot({ path: path.join(shots, w + "-help.png") });
     ok(!errs.length, tag + "no page errors (" + errs.join(" | ") + ")");
+    await ctx.close();
+  }
+  // 2.5.0: Dark. The reading ground turns plum with bone words; the plum screens go deeper; pistachio stays the accent
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: "dark", deviceScaleFactor: 2, hasTouch: true });
+    const page = await ctx.newPage();
+    await page.addInitScript((o) => { if (!sessionStorage.getItem("d")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("d", "1"); } }, old);
+    await page.goto(base + "/"); await page.waitForSelector("#words:not(:empty)"); await page.waitForTimeout(600);
+    const meet = await page.evaluate(() => ({ bg: getComputedStyle(document.body).backgroundColor, ink: getComputedStyle(document.getElementById("words")).color, theme: document.getElementById("themeColor").content }));
+    ok(meet.bg === "rgb(59, 34, 64)" && meet.ink === "rgb(241, 233, 216)", "dark: Meet is plum with bone words (" + JSON.stringify(meet) + ")");
+    const strip = await page.evaluate(() => getComputedStyle(document.getElementById("strip")).backgroundColor);
+    ok(strip !== meet.bg, "dark: the strip is a deeper plum than the ground (" + strip + ")");
+    await page.screenshot({ path: path.join(shots, "dark-1-meet.png") });
+    await page.keyboard.press("ArrowDown"); await page.waitForTimeout(700);
+    const tb = await page.evaluate(() => getComputedStyle(document.getElementById("toast")).backgroundColor);
+    ok(tb === "rgb(185, 201, 163)", "dark: the Put away message is pistachio so it shows on plum (" + tb + ")");
+    await page.screenshot({ path: path.join(shots, "dark-2-toast.png") });
+    await page.click("#toastUndo"); await page.waitForTimeout(500);
+    await page.mouse.click(195, 400); await page.waitForTimeout(700);
+    const ed = await page.evaluate(() => ({ bg: getComputedStyle(document.body).backgroundColor, theme: document.getElementById("themeColor").content }));
+    ok(ed.bg !== meet.bg && /23132A/i.test(ed.theme), "dark: Edit is the deeper plum, and the browser bar follows it (" + JSON.stringify(ed) + ")");
+    await page.screenshot({ path: path.join(shots, "dark-3-edit.png") });
+    await page.click("#editCancel"); await page.waitForTimeout(500);
+    await page.click("#strip"); await page.waitForTimeout(700);
+    await page.screenshot({ path: path.join(shots, "dark-4-library.png") });
+    await page.click("#libGear"); await page.waitForTimeout(600);
+    await page.screenshot({ path: path.join(shots, "dark-5-settings.png") });
+    await ctx.close();
+  }
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: "light" });
+    const page = await ctx.newPage();
+    await page.addInitScript((o) => { if (!sessionStorage.getItem("l")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("l", "1"); } }, old);
+    await page.goto(base + "/"); await page.waitForSelector("#words:not(:empty)");
+    ok((await page.evaluate(() => getComputedStyle(document.body).backgroundColor)) === "rgb(185, 201, 163)", "light: Meet is still pistachio");
     await ctx.close();
   }
   // the iPhone app's bridge: ready, quiet reminders, daily save with the old data, and the put away buzz

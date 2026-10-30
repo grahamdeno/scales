@@ -19,17 +19,26 @@
 :root {
   --pist: #B9C9A3; --pist-ink: #2A1E2E; --pist-muted: #3E4830;
   --plum: #3B2240; --plum-ink: #F1E9D8; --plum-muted: #BBA7BE; --plum-faint: #8E7A92;
+  /* The reading ground (Meet). Pistachio in Light; in Dark (2.5.0) it turns plum with bone words, like the Plum icon,
+     and the plum screens go a step deeper so moving between them still changes ground. Pistachio stays the accent. */
+  --ground: var(--pist); --ground-ink: var(--pist-ink); --ground-muted: var(--pist-muted); --ground-line: rgba(42,30,46,.14);
+  --toast-bg: var(--pist-ink); --toast-ink: var(--pist);
   --pad: 28px;
   --top: max(env(safe-area-inset-top), 20px);
   --bot: env(safe-area-inset-bottom);
   --strip: calc(76px + var(--bot));
   --ease-back: cubic-bezier(.34,1.56,.64,1);
 }
+@media (prefers-color-scheme: dark) {
+  :root { --ground: #3B2240; --ground-ink: #F1E9D8; --ground-muted: #BBA7BE; --ground-line: rgba(241,233,216,.14);
+    --plum: #23132A; --plum-muted: #B09CB4; --plum-faint: #85718A;
+    --toast-bg: var(--pist); --toast-ink: #2A1E2E; color-scheme: dark; }
+}
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
 body {
   font-family: "Geist", -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased;
-  background: var(--pist); color: var(--pist-ink); transition: background-color .45s ease, color .45s ease;
+  background: var(--ground); color: var(--ground-ink); transition: background-color .45s ease, color .45s ease;
   position: fixed; inset: 0; touch-action: none; user-select: none; -webkit-user-select: none;
 }
 body.plum { background: var(--plum); color: var(--plum-ink); }
@@ -54,8 +63,8 @@ a { color: inherit; text-decoration: none; }
 #words.long { font-size: 24px; line-height: 1.25; }
 #words.vlong { font-size: 19px; line-height: 1.35; }
 /* Who said it (2.3.0): under the thought, quiet, like the note. */
-#by { margin: 12px 0 0; font-size: 15px; font-weight: 500; color: var(--pist-muted); overflow-wrap: anywhere; }
-#note { margin: 18px 0 0; font-size: 16px; line-height: 1.45; color: var(--pist-muted); white-space: pre-wrap; }
+#by { margin: 12px 0 0; font-size: 15px; font-weight: 500; color: var(--ground-muted); overflow-wrap: anywhere; }
+#note { margin: 18px 0 0; font-size: 16px; line-height: 1.45; color: var(--ground-muted); white-space: pre-wrap; }
 .hint { position: absolute; left: 0; right: 0; margin: 0; text-align: center; font-size: 15px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .12s; }
 #hintUp { top: calc(var(--top) + 76px); }
 #hintDown { bottom: calc(var(--strip) + 68px); }
@@ -64,11 +73,11 @@ a { color: inherit; text-decoration: none; }
    so it is never mistaken for a thought to swipe. */
 #empty { position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--top) + 150px); bottom: var(--strip); display: flex; flex-direction: column; justify-content: flex-start; gap: 6px; }
 #empty h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
-#empty p { margin: 0; font-size: 16px; color: var(--pist-muted); }
-#emptyActs { display: flex; flex-direction: column; margin-top: 28px; border-bottom: 1px solid rgba(42,30,46,.14); }
+#empty p { margin: 0; font-size: 16px; color: var(--ground-muted); }
+#emptyActs { display: flex; flex-direction: column; margin-top: 28px; border-bottom: 1px solid var(--ground-line); }
 #emptyActs button { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 52px; padding: 0; text-align: left;
-  color: var(--pist-ink); font-weight: 500; font-size: 17px; border-top: 1px solid rgba(42,30,46,.14); }
-#emptyActs button::after { content: "\203A"; font-size: 22px; color: var(--pist-muted); }
+  color: var(--ground-ink); font-weight: 500; font-size: 17px; border-top: 1px solid var(--ground-line); }
+#emptyActs button::after { content: "\203A"; font-size: 22px; color: var(--ground-muted); }
 #emptyActs button[hidden] { display: none; }
 @keyframes nudge { 0%,100% { transform: translateY(0) } 30% { transform: translateY(-14px) } 62% { transform: translateY(6px) } }
 @keyframes arrive { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: none } }
@@ -83,7 +92,7 @@ a { color: inherit; text-decoration: none; }
 body.plum #strip { opacity: 0; pointer-events: none; }
 
 /* Undo: a small pill at the right, above the strip. Visible, but clear of the thought and of the thumb's swipe path. */
-#toast { position: absolute; right: 16px; bottom: calc(var(--strip) + 14px); background: var(--pist-ink); color: var(--pist);
+#toast { position: absolute; right: 16px; bottom: calc(var(--strip) + 14px); background: var(--toast-bg); color: var(--toast-ink);
   border-radius: 999px; padding: 4px 4px 4px 16px; display: flex; align-items: center; gap: 2px; font-size: 14px; z-index: 5;
   opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; pointer-events: none; }
 #toast.on { opacity: 1; transform: none; pointer-events: auto; }
@@ -350,8 +359,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.4.0"></script>
-<script src="sets.js?v=2.4.0"></script>
+<script src="core.js?v=2.5.0"></script>
+<script src="sets.js?v=2.5.0"></script>
 <script>
 (function () {
   "use strict";
@@ -430,6 +439,14 @@ textarea::placeholder { color: var(--plum-faint); }
   function growAll() { Array.prototype.forEach.call(document.querySelectorAll(".sheetform textarea"), grow); }
   document.addEventListener("input", function (e) { if (e.target.matches && e.target.matches(".sheetform textarea")) grow(e.target); });
   window.addEventListener("resize", function () { if (mode === "write" || mode === "edit") growAll(); });
+  // The browser bar follows the screen's ground, Light or Dark.
+  var darkMq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  function themeColor() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue(document.body.classList.contains("plum") ? "--plum" : "--ground").trim();
+    if (v.indexOf("var(") === 0) v = getComputedStyle(document.documentElement).getPropertyValue("--pist").trim();
+    $("themeColor").setAttribute("content", v || "#B9C9A3");
+  }
+  if (darkMq && darkMq.addEventListener) darkMq.addEventListener("change", themeColor);
   function setMode(m) {
     if (mode === "meet" && m !== "meet") clockOff();
     mode = m;
@@ -438,7 +455,7 @@ textarea::placeholder { color: var(--plum-faint); }
     $("vEdit").hidden = m !== "edit";
     $("vMeet").style.visibility = (m === "write" || m === "edit") ? "hidden" : "visible";
     document.body.classList.toggle("plum", m === "write" || m === "edit");
-    $("themeColor").setAttribute("content", document.body.classList.contains("plum") ? "#3B2240" : "#B9C9A3");
+    themeColor();
     if (m === "meet") clockOn();
     if (m === "write" || m === "edit") growAll();
   }

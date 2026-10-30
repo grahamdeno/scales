@@ -27,6 +27,9 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   not yet shown and puts away the ones met, leaving any you bookmarked, noted or changed. Quotes are in modern English;
   each line's public-domain original is kept in `content/sets.json` and checked by `scripts/verify-sets.js`.
   After "That's all for today": Meet one early (as a review), Write one, and Bookmarked.
+- **Dark (2.5.0):** follows the phone. The reading ground turns plum with bone words, like the Plum icon; Write, Edit,
+  the library and Settings go a deeper plum so moving between them still changes ground; pistachio stays the accent,
+  and the Put away message turns pistachio so it shows on plum. Colors are tokens (`--ground*`) at the top of index.html.
 - **Settings (2.1.0):** Your data (Back up, Restore from a backup), Help (How Scales works), About (Privacy, Support,
   Send feedback, the version). Privacy is linked here because the App Store requires it inside the app.
 - **Reading a visit:** 20 s or less is skipped; 30 s or more is thought about; between is seen; an edit or a note is
