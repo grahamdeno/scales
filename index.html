@@ -452,8 +452,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.9.0"></script>
-<script src="sets.js?v=2.9.0"></script>
+<script src="core.js?v=2.10.0"></script>
+<script src="sets.js?v=2.10.0"></script>
 <script>
 (function () {
   "use strict";
@@ -470,7 +470,7 @@ textarea::placeholder { color: var(--plum-faint); }
   var KEY = "scales.next.thoughts.v1", KEY_UI = "scales.next.ui.v1", KEY_GONE = "scales.next.gone.v1", KEY_LOG = "scales.next.log.v1", OLD = "scales.thoughts.v1";
 
   function lsGet(k, d) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
-  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { if (typeof track === "function" && EV) track("storage_fail", { k: k }); return false; } }
   function post(msg) { if (!NATIVE) return; try { window.webkit.messageHandlers.scales.postMessage(msg); } catch (_) {} }
   function haptic(style) { post({ type: "haptic", style: style }); }
   // Longer moments, built from the iPhone app's own styles, so no new app build is needed.
@@ -493,6 +493,57 @@ textarea::placeholder { color: var(--plum-faint); }
   var ui = Object.assign({ cur: null, ms: 0, worked: false, nudged: false, view: "all", saved: null, review: null }, lsGet(KEY_UI, {}));
   function save() { lsSet(KEY, store); }
   function saveUi() { lsSet(KEY_UI, ui); }
+
+  // ---------- Telemetry (2.10.0) ----------
+  // What is used, when and how often, kept only on this phone and carried in the backup (see docs/evaluation-plan.md).
+  // No thought text is ever written here: only ids, lengths, counts, screens, taps and timings.
+  var KEY_EV = "scales.next.events.v1", EV = lsGet(KEY_EV, []), evT = null, sess = null, hiddenAt = 0, SESSION_GAP = 5 * 60000;
+  if (!Array.isArray(EV)) EV = [];
+  function flushEv() {
+    clearTimeout(evT); evT = null;
+    // Raw, not lsSet, so a full phone can't loop back into telemetry. If there's no room, the oldest quarter goes.
+    try { localStorage.setItem(KEY_EV, JSON.stringify(EV)); } catch (e) {
+      EV.splice(0, Math.ceil(EV.length / 4)); try { localStorage.setItem(KEY_EV, JSON.stringify(EV)); } catch (e2) {}
+    }
+  }
+  function track(name, props) {
+    var e = { t: new Date().toISOString(), e: name };
+    if (sess) e.s = sess.id;
+    if (props) Object.keys(props).forEach(function (k) { var v = props[k]; if (v !== undefined && v !== null && v !== "") e[k] = v; });
+    C.track(EV, e);
+    if (!evT) evT = setTimeout(flushEv, 1500);
+  }
+  function snapDaily() {
+    var d = C.dayKey(new Date());
+    if (ui.snapDay === d) return;
+    ui.snapDay = d; saveUi(); track("snapshot", C.snapshot(store, new Date()));
+  }
+  function startSession(src) {
+    sess = { id: new Date().toISOString(), cards: 0, start: Date.now(), closing: null };
+    track("session", { src: src, hour: new Date().getHours(), dow: new Date().getDay() });
+    snapDaily();
+  }
+  function endSession(why) {
+    if (!sess) return;
+    track("session_end", { ms: Date.now() - sess.start, cards: sess.cards, why: why }); flushEv();
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) { hiddenAt = Date.now(); endSession("hidden"); return; }
+    if (!hiddenAt) return;
+    var away = Date.now() - hiddenAt; hiddenAt = 0;
+    if (away > SESSION_GAP) startSession("return"); else track("resume", { away: away });
+  });
+  window.addEventListener("pagehide", function () { endSession("close"); });
+  window.addEventListener("error", function (e) { track("error", { msg: String(e.message || "").slice(0, 160), at: String(e.filename || "").split("/").pop() + ":" + (e.lineno || 0) }); });
+  window.addEventListener("unhandledrejection", function (e) { track("error", { msg: String((e.reason && e.reason.message) || e.reason || "").slice(0, 160), at: "promise" }); });
+  // Every tap on a button or link, named by its id (or what it chooses), never by any text a thought holds.
+  document.addEventListener("click", function (e) {
+    var b = e.target && e.target.closest && e.target.closest("button, a, [role=radio]"); if (!b) return;
+    var d = b.dataset || {}, name = b.id || (d.view && "view:" + d.view) || (d.look && "look:" + d.look) || (d.icon && "icon:" + d.icon) ||
+      (d.split && "split:" + d.split) || (d.set && "set:" + d.set) || (b.className && "." + String(b.className).split(" ")[0]) || b.tagName.toLowerCase();
+    track("tap", { id: String(name).slice(0, 40) });
+  }, true);
+  startSession("launch");
 
   // ---------- the visit clock ----------
   // Time counts only while the app is open and this thought is on screen. A long stretch with no touch at all
@@ -523,7 +574,8 @@ textarea::placeholder { color: var(--plum-faint); }
     var wasIdle = idle(), cls = C.classify(ui.ms, ui.worked, wasIdle), kind = review ? "review" : C.recordVisit(t, ui.ms, ui.worked, wasIdle, now());
     var lg = lsGet(KEY_LOG, []), pile = ui.pile || (review ? "review" : "due"); ui.pile = null;
     lsSet(KEY_LOG, C.logVisit(lg, { at: now().toISOString(), id: t.id, ms: ui.ms, worked: ui.worked, idle: wasIdle, kind: kind, how: how || "other", len: t.text.length,
-      pile: pile, n: C.sessionPos(lg, now().getTime(), ui.ms), size: C.DAY_SIZE, cls: cls }));
+      pile: pile, n: C.sessionPos(lg, now().getTime(), ui.ms), size: C.DAY_SIZE, cls: cls, s: sess && sess.id }));
+    if (sess) sess.cards++;
     ui.cur = null; ui.ms = 0; ui.worked = false; saveUi(); save();
     return kind;
   }
@@ -543,6 +595,7 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   if (darkMq && darkMq.addEventListener) darkMq.addEventListener("change", themeColor);
   function setMode(m) {
+    if (m !== mode) track("screen", { to: m });
     if (mode === "meet" && m !== "meet") clockOff();
     mode = m;
     $("vMeet").hidden = false;
@@ -579,6 +632,7 @@ textarea::placeholder { color: var(--plum-faint); }
       $("carry").hidden = true; $("srActs").hidden = true; $("empty").hidden = false;
       var nd = C.nextDue(store), probe = C.nextCard(store, lsGet(KEY_LOG, []), now(), null, true);
       var atLimit = ui.why === "limit" && !more();
+      if (sess && sess.closing !== (ui.why || "none")) { sess.closing = ui.why || "none"; track("closing", { why: ui.why || "none", shown: C.todayLog(lsGet(KEY_LOG, []), now()).length }); }
       $("emptyHead").textContent = atLimit ? "That's " + C.DAY_SIZE + " for today." : "That's all for today.";
       $("emptySub").textContent = atLimit ? "Keep going as long as you like." : nd ? nextBackText(C.whenLabel(nd, now())) : "Everything is put away.";
       var bm = C.bookmarked(store).length;
@@ -636,6 +690,7 @@ textarea::placeholder { color: var(--plum-faint); }
     if (!d.moved && Date.now() - d.t < 350) { openEdit(); return; }
     if (d.dy <= -UP) return goNext();
     if (d.dy >= DOWN) return goAway();
+    if (d.moved) track("swipe_back", { dy: Math.round(d.dy) });
     $("carry").style.transition = "transform .4s var(--ease-back)";
     $("carry").style.transform = "";
     $("hintUp").style.opacity = 0; $("hintDown").style.opacity = 0;
@@ -681,6 +736,7 @@ textarea::placeholder { color: var(--plum-faint); }
   // Delete: the set line is gone for good, with its visits, so it never counts toward anything.
   $("toastDel").onclick = function () {
     var id = dropId; if (!id || !store[id]) return;
+    track("delete", { id: id, where: "toast", from: store[id].from || (store[id].set ? "set" : "own") });
     delete store[id]; save();
     var g = lsGet(KEY_GONE, []); if (g.indexOf(id) < 0) { g.push(id); lsSet(KEY_GONE, g); }
     lsSet(KEY_LOG, lsGet(KEY_LOG, []).filter(function (e) { return e.id !== id; }));
@@ -697,6 +753,7 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   $("toastUndo").onclick = function () {
     if (!undoPoint) return;
+    track("undo", { id: undoPoint.id });
     clockOff();
     store[undoPoint.id] = undoPoint.t; ui.cur = undoPoint.id; ui.ms = undoPoint.ms; ui.worked = false; ui.review = undoPoint.review; ui.pile = undoPoint.pile; undoPoint = null;
     // The undone visit stays in the log, marked, so it can be left out when the times are judged.
@@ -747,6 +804,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("writeKeep").onclick = function () {
     var text = $("writeText").value.trim(); if (!text) return;
     var t = C.make(text, now(), $("writeBy").hidden ? "" : $("writeBy").value); store[t.id] = t; save();
+    track("write", { id: t.id, len: text.length, lines: text.split("\n").length, by: t.by ? 1 : 0, quoted: C.looksQuoted(text) ? 1 : 0 });
     $("writeText").blur();
     buzz("keep");
     $("writeForm").hidden = true; $("writeKeep").parentNode.hidden = true; $("writeKept").hidden = false; $("writeCancel").hidden = true;
@@ -769,6 +827,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("editDone").onclick = function () {
     var t = store[ui.cur]; if (!t) return setMode("meet");
     var text = $("editText").value.trim(), note = $("editNote").value.trim();
+    track("edit", { id: t.id, text: text && text !== t.text ? 1 : 0, note: note !== (t.note || "") ? 1 : 0, by: $("editBy").value.trim().slice(0, 200) !== (t.by || "") ? 1 : 0, mark: editMarked !== !!t.bookmarked ? 1 : 0 });
     if (text && (text !== t.text || note !== (t.note || ""))) { t.text = text; t.note = note; ui.worked = true; save(); saveUi(); haptic("medium"); }
     // Who said it is a label, like the bookmark: changing it never counts as work on the thought.
     var by = $("editBy").value.trim().slice(0, 200);
@@ -783,6 +842,7 @@ textarea::placeholder { color: var(--plum-faint); }
   document.addEventListener("pointerdown", function (e) { if (delArmed && !e.target.closest("#editDelete")) disarm(); }, true);
   $("editDelete").onclick = function () {
     if (!delArmed) { delArmed = true; this.textContent = "Tap again to delete"; this.classList.add("armed"); haptic("tick"); return; }
+    if (store[ui.cur]) track("delete", { id: ui.cur, where: "edit", from: store[ui.cur].from || (store[ui.cur].set ? "set" : "own") });
     var id = ui.cur;
     // A thought that came from Scales 1 is remembered as deleted, so the catch-up never brings it back.
     if (store[id] && store[id].from) { var g = lsGet(KEY_GONE, []); g.push(id); lsSet(KEY_GONE, g); }
@@ -957,15 +1017,15 @@ textarea::placeholder { color: var(--plum-faint); }
   function backupData() {
     var raw = {};
     ["scales.thoughts.v1", "scales.prefs.v1", "scales.activity.v1", "scales.quotes.v1"].forEach(function (k) { var v = lsGet(k, null); if (v != null) raw[k] = v; });
-    return { app: "scales", version: C.VERSION, exported_at: now().toISOString(), thoughts: store, gone: lsGet(KEY_GONE, []), visits: lsGet(KEY_LOG, []), scales1: raw };
+    return { app: "scales", version: C.VERSION, exported_at: now().toISOString(), thoughts: store, gone: lsGet(KEY_GONE, []), visits: lsGet(KEY_LOG, []), events: EV, scales1: raw };
   }
   // In the iPhone app: saved without asking to iCloud Drive, Scales (or Files), each day and whenever you leave.
   function dailySave() { if (NATIVE) post({ type: "save", json: JSON.stringify(backupData()), day: C.dayKey(now()) }); }
-  window.scalesSaved = function (r) { ui.saved = { ok: !!(r && r.ok), where: r && r.where, at: now().toISOString() }; saveUi(); };
+  window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { what: "save" }); ui.saved = { ok: !!(r && r.ok), where: r && r.where, at: now().toISOString() }; saveUi(); };
   // ---------- Settings and Help ----------
   var needsRender = false;
-  function openPage(id, m) { var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; }
-  function closePage(id, m) { var p = $(id); p.classList.remove("open"); p.setAttribute("aria-hidden", "true"); mode = m; }
+  function openPage(id, m) { var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; track("screen", { to: id }); }
+  function closePage(id, m) { var p = $(id); p.classList.remove("open"); p.setAttribute("aria-hidden", "true"); mode = m; track("screen", { to: m }); }
   function openSettings() {
     $("restoreMsg").textContent = ""; $("restoreMsg").className = "snote";
     $("setSaved").textContent = savedLine();
@@ -981,7 +1041,7 @@ textarea::placeholder { color: var(--plum-faint); }
   var icons = document.querySelectorAll("#iconSec [data-icon]");
   function markIcon(name) { Array.prototype.forEach.call(icons, function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-icon") === name)); }); $("setIconV").textContent = ICON_NAMES[name] || "Automatic"; }
   window.scalesIcon = function (name) { markIcon(name === "pistachio" || name === "plum" || name === "bone" ? name : "auto"); };
-  window.scalesIconError = function () { $("iconMsg").textContent = "That icon couldn't be set. Try again."; };
+  window.scalesIconError = function () { track("native_fail", { what: "icon" }); $("iconMsg").textContent = "That icon couldn't be set. Try again."; };
   if (NATIVE) $("setIcon").hidden = false;
   $("setIcon").onclick = function () { openPage("iconPage", "icon"); };
   $("iconBack").onclick = function () { closePage("iconPage", "settings"); };
@@ -1100,6 +1160,8 @@ textarea::placeholder { color: var(--plum-faint); }
       }
       lsSet(KEY_GONE, r.gone);
       if (r.visits.length) { var lg = lsGet(KEY_LOG, []); C.mergeLog(lg, r.visits); lsSet(KEY_LOG, lg); }
+      if (r.events && r.events.length) { C.mergeEvents(EV, r.events); flushEv(); }
+      track("restore", { added: r.added, kind: r.kind });
       $("stripN").textContent = C.list(store).length; needsRender = true; renderLib();
       restoreMsg(r.added ? "Added " + r.added + (r.added === 1 ? " thought." : " thoughts.") : "Nothing new in that backup.", true);
       if (r.added) dailySave();
@@ -1137,6 +1199,10 @@ textarea::placeholder { color: var(--plum-faint); }
 
   setMode("meet");
   renderMeet(true);
+  track("boot", { v: C.VERSION, build: (window.scalesNative && window.scalesNative.build) || "", native: NATIVE ? 1 : 0, tf: window.scalesNative && window.scalesNative.testflight ? 1 : 0,
+    ms: Math.round(window.performance && performance.now ? performance.now() : 0), w: window.innerWidth, h: window.innerHeight,
+    dark: window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? 1 : 0, look: ui.look || "auto", tz: new Date().getTimezoneOffset(),
+    thoughts: C.list(store).length });
 
   // ---------- Apple Intelligence test (2.6.0; TestFlight copies only) ----------
   // The shell runs Apple's on-device model one request at a time. Scales picks what to ask and counts everything itself.
@@ -1259,6 +1325,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("impAdd").onclick = function () {
     var items = impItems.filter(function (x, i) { return !impOff[i]; }); if (!items.length) return;
     var r = C.importThoughts(store, items, now());
+    track("import", { added: r.added, skipped: r.skipped, mode: impMode, by: items.filter(function (x) { return x.by; }).length });
     if (!lsSet(KEY, store)) { store = lsGet(KEY, store); $("impMsg").textContent = "There isn't room on this phone for that many."; return; }
     buzz("keep"); needsRender = true; $("stripN").textContent = C.list(store).length; renderLib();
     $("impText").value = ""; impItems = []; impOff = {}; $("impList").innerHTML = ""; $("impSplit").hidden = true;

@@ -63,6 +63,8 @@ read, never written or deleted.
 - A reminder may come back later; for now Scales is something you open on your own.
 - Library on plum, the first-time nudge, and the 5-a-day import pace were open questions; the owner has not raised them.
 - Times review, on or after 12 November: read `visits` in the daily backup and recommend the skip and thought lines
+- 12 November evaluation: follow docs/evaluation-plan.md and run scripts/evaluate.js on the backup. The notes below are
+  folded into it.
 - Day size review (same day, 2.9.0 onward): visits carry `pile` (due, new, extra, more, review, picked), `n` (place in the
   session; a gap over 5 minutes starts a new one), `size` (30) and `cls` (how the time reads, even for reviews). Measure
   from the first visit with `size`: cards per session; time on card by position (does attention fall after card 20?);

@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.9.0";
+  var VERSION = "2.10.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -416,6 +416,7 @@
     if (e.n) x.n = e.n;
     if (e.size) x.size = e.size;
     if (e.cls) x.cls = e.cls;
+    if (e.s) x.s = e.s;
     if (log.length > LOG_MAX) log.splice(0, log.length - LOG_MAX);
     return log;
   }
@@ -461,7 +462,7 @@
       item: typeof t.item === "string" && t.item ? t.item.slice(0, 60) : undefined };
   }
   function restoreFrom(store, data, now, gone) {
-    var res = { ok: false, kind: null, added: 0, ids: [], gone: (gone || []).slice(), visits: [] };
+    var res = { ok: false, kind: null, added: 0, ids: [], gone: (gone || []).slice(), visits: [], events: [] };
     if (!data || typeof data !== "object" || Array.isArray(data) || !data.thoughts || typeof data.thoughts !== "object" || Array.isArray(data.thoughts)) return res;
     var today = dayKey(now), nowIso = now.toISOString(), incoming = Object.create(null);
     var fileGone = Array.isArray(data.gone) ? data.gone.filter(function (x) { return typeof x === "string"; }) : [];
@@ -495,9 +496,41 @@
     fileGone.forEach(function (id) { if (!own(store, id)) goneSet[id] = true; });
     res.gone = Object.keys(goneSet);
     res.ok = true;
+    if (v2 && Array.isArray(data.events)) res.events = data.events.filter(function (e) { return e && typeof e === "object" && typeof e.t === "string" && typeof e.e === "string"; });
     if (v2 && Array.isArray(data.visits)) res.visits = data.visits.filter(function (e) { return e && typeof e === "object" && typeof e.at === "string" && typeof e.id === "string" && typeof e.ms === "number"; });
     return res;
   }
+  // ---- Telemetry (2.10.0) ----
+  // An event log kept only on this phone, alongside the visit log, and carried in backups so it can be studied.
+  // Nothing leaves the phone on its own. No thought text goes in: only ids, lengths, counts, screens and taps.
+  var EVENTS_MAX = 8000;
+  function track(events, e) {
+    events.push(e);
+    if (events.length > EVENTS_MAX) events.splice(0, events.length - EVENTS_MAX);
+    return events;
+  }
+  function mergeEvents(events, incoming) {
+    var key = function (e) { return e.t + "|" + e.e + "|" + (e.id || "") + "|" + (e.s || ""); };
+    var seen = {}; events.forEach(function (e) { seen[key(e)] = true; });
+    var add = (incoming || []).filter(function (e) { return e && typeof e === "object" && typeof e.t === "string" && typeof e.e === "string" && !seen[key(e)]; });
+    var all = events.concat(add).sort(function (a, b) { return a.t < b.t ? -1 : a.t > b.t ? 1 : 0; });
+    if (all.length > EVENTS_MAX) all = all.slice(all.length - EVENTS_MAX);
+    events.length = 0; all.forEach(function (e) { events.push(e); });
+    return add.length;
+  }
+  // The shape of the collection once a day: how big, where thoughts came from, what state they are in.
+  function snapshot(store, now) {
+    var today = dayKey(now), all = list(store), src = {}, len = 0;
+    all.forEach(function (t) { var k = t.from || (t.set ? "set" : "own"); src[k] = (src[k] || 0) + 1; len += t.text.length; });
+    return {
+      total: all.length, rotation: inRotation(store).length, away: putAway(store).length, bookmarked: bookmarked(store).length,
+      due: dueToday(store, now).length, waiting: waiting(store, now), src: src,
+      withBy: all.filter(function (t) { return t.by; }).length, withNote: all.filter(function (t) { return t.note; }).length,
+      avgLen: all.length ? Math.round(len / all.length) : 0,
+      added7: all.filter(function (t) { return t.created && dayKey(new Date(t.created)) > addDays(today, -7); }).length
+    };
+  }
+
   // Adds visit-log entries a log does not have (matched by time and thought), oldest first, newest LOG_MAX kept.
   function mergeLog(log, incoming) {
     var seen = {}; log.forEach(function (e) { seen[e.at + "|" + e.id] = true; });
@@ -520,7 +553,7 @@
 
   var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
-    make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, soonest: soonest,
+    make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);
