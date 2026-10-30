@@ -573,3 +573,84 @@ test("importThoughts: five a day from today, skips ones already here", () => {
   assert.equal(ts.find((t) => t.text === "Q0").by, "Seneca");
   assert.equal(new Set(ts.map((t) => t.id)).size, 12);
 });
+
+// ---- 2.9.0: today's pile ----
+function pileStore(due, fresh, later) {
+  const now = new Date("2026-11-02T09:00:00"), st = {};
+  for (let i = 0; i < due; i++) st["d" + i] = { id: "d" + i, text: "due " + i, created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, seen: "2026-10-20T00:00:00.000Z", visits: [{ at: "x", kind: "seen", ms: 9 }] };
+  for (let i = 0; i < fresh; i++) st["n" + i] = { id: "n" + i, text: "new " + i, created: "2026-10-30T00:00:00.000Z", due: "2026-11-02", away: null, skips: 0, seen: null, visits: [] };
+  for (let i = 0; i < later; i++) st["l" + i] = { id: "l" + i, text: "later " + i, created: "2026-10-01T00:00:00.000Z", due: "2026-11-0" + (3 + (i % 6)), away: null, skips: 0, seen: "2026-10-20T00:00:00.000Z", visits: [{ at: "x", kind: "seen", ms: 9 }] };
+  return { now, st };
+}
+// Walk a day: each card shown is logged and, unless a review, moved off today (as a visit would).
+function walk(st, now, steps, more) {
+  const log = [], order = [];
+  for (let i = 0; i < steps; i++) {
+    const r = N.nextCard(st, log, now, null, more);
+    if (!r.card) { order.push(r.why); break; }
+    order.push(r.pile + ":" + r.card.id);
+    log.push({ at: now.toISOString(), id: r.card.id, pile: r.pile });
+    if (!r.review) { st[r.card.id].due = "2026-11-05"; st[r.card.id].seen = now.toISOString(); st[r.card.id].visits = [{ at: "x" }]; }
+  }
+  return order;
+}
+
+test("the pile spreads new thoughts through the due ones, never two in a row (2.9.0)", () => {
+  const { now, st } = pileStore(25, 5, 0);
+  const o = walk(st, now, 30).filter((x) => /^(new|due)/.test(x));
+  assert.equal(o.length, 30);
+  const at = o.map((x, i) => (x.startsWith("new") ? i : -1)).filter((i) => i >= 0);
+  assert.equal(at.length, 5);
+  assert.ok(at[0] >= 3 && at[0] <= 7, "first new near the sixth card: " + at);
+  assert.ok(at[4] <= 29 && at[4] >= 22, "last new near the end, not bunched: " + at);
+  for (let i = 1; i < at.length; i++) assert.ok(at[i] - at[i - 1] >= 3, "spread out: " + at);
+});
+
+test("a light day tops up to 30 with reviews, then stops (2.9.0)", () => {
+  const { now, st } = pileStore(4, 2, 40);
+  const o = walk(st, now, 40);
+  assert.equal(o.slice(0, 6).filter((x) => /^(due|new)/.test(x)).length, 6, "real cards first: " + o.slice(0, 6));
+  assert.ok(o.slice(6, 30).every((x) => x.startsWith("extra:")), "then reviews");
+  assert.equal(o[30], "limit");
+  assert.equal(st.l0.due, "2026-11-03", "a review never moves a schedule");
+});
+
+test("Keep going: real cards first, then reviews, until everything is seen once today (2.9.0)", () => {
+  const { now, st } = pileStore(35, 0, 3);
+  const log = [];
+  for (let i = 0; i < 30; i++) { const r = N.nextCard(st, log, now); log.push({ at: now.toISOString(), id: r.card.id, pile: r.pile }); st[r.card.id].due = "2026-11-05"; }
+  assert.equal(N.nextCard(st, log, now).why, "limit");
+  const order = [];
+  for (let i = 0; i < 20; i++) {
+    const r = N.nextCard(st, log, now, null, true);
+    if (!r.card) { order.push(r.why); break; }
+    order.push(r.pile); log.push({ at: now.toISOString(), id: r.card.id, pile: r.pile });
+    if (!r.review) st[r.card.id].due = "2026-11-05";
+  }
+  assert.deepEqual(order, ["due", "due", "due", "due", "due", "more", "more", "more", "done"]);
+});
+
+test("undone visits don't count toward the day (2.9.0)", () => {
+  const { now, st } = pileStore(0, 0, 40);
+  const log = Array.from({ length: 30 }, (_, i) => ({ at: now.toISOString(), id: "l" + i, pile: "extra", undone: i === 0 }));
+  assert.ok(N.nextCard(st, log, now).card, "29 counted, so one more fits");
+});
+
+test("session position: a gap over 5 minutes starts a new session (2.9.0)", () => {
+  const t0 = Date.parse("2026-11-02T09:00:00Z");
+  const log = [{ at: new Date(t0).toISOString(), n: 7 }];
+  assert.equal(N.sessionPos(log, t0 + 40000, 30000), 8);
+  assert.equal(N.sessionPos(log, t0 + 6 * 60000 + 30000, 30000), 1);
+  assert.equal(N.sessionPos([], t0, 0), 1);
+});
+
+test("waiting counts never-met thoughts not yet arrived (2.9.0)", () => {
+  const { now, st } = pileStore(1, 2, 0);
+  st.w = { id: "w", text: "w", created: "x", due: "2026-11-09", away: null, seen: null, visits: [] };
+  assert.equal(N.waiting(st, now), 1);
+});
+
+test("the log keeps pile, position, size and class (2.9.0)", () => {
+  const lg = N.logVisit([], { at: "2026-11-02T09:00:00Z", id: "a", ms: 4000, kind: "review", how: "next", pile: "extra", n: 3, size: 30, cls: "skipped" });
+  assert.equal(lg[0].pile, "extra"); assert.equal(lg[0].n, 3); assert.equal(lg[0].size, 30); assert.equal(lg[0].cls, "skipped");
+});

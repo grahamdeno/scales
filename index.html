@@ -284,8 +284,8 @@ textarea::placeholder { color: var(--plum-faint); }
       <p id="note" hidden></p>
     </div>
   </div>
-  <div id="empty" hidden><h1>That's all for today.</h1><p id="emptySub"></p>
-    <div id="emptyActs"><button type="button" id="earlyBtn">Meet one early</button><button type="button" id="earlyWrite">Write one</button><button type="button" id="earlyMarked" hidden>Bookmarked</button></div></div>
+  <div id="empty" hidden><h1 id="emptyHead">That's all for today.</h1><p id="emptySub"></p>
+    <div id="emptyActs"><button type="button" id="earlyBtn">Keep going</button><button type="button" id="earlyWrite">Write one</button><button type="button" id="earlyMarked" hidden>Bookmarked</button></div></div>
   <p class="hint" id="hintDown" aria-hidden="true">Put away</p>
   <div class="sr" id="srActs">
     <button type="button" id="srNext">Next thought</button>
@@ -452,8 +452,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.8.0"></script>
-<script src="sets.js?v=2.8.0"></script>
+<script src="core.js?v=2.9.0"></script>
+<script src="sets.js?v=2.9.0"></script>
 <script>
 (function () {
   "use strict";
@@ -520,8 +520,10 @@ textarea::placeholder { color: var(--plum-faint); }
     clockOff();
     // A thought opened from Bookmarked is a review: logged as one, and it changes nothing about when the thought comes back.
     var review = ui.review === ui.cur; ui.review = null;
-    var wasIdle = idle(), kind = review ? "review" : C.recordVisit(t, ui.ms, ui.worked, wasIdle, now());
-    lsSet(KEY_LOG, C.logVisit(lsGet(KEY_LOG, []), { at: now().toISOString(), id: t.id, ms: ui.ms, worked: ui.worked, idle: wasIdle, kind: kind, how: how || "other", len: t.text.length }));
+    var wasIdle = idle(), cls = C.classify(ui.ms, ui.worked, wasIdle), kind = review ? "review" : C.recordVisit(t, ui.ms, ui.worked, wasIdle, now());
+    var lg = lsGet(KEY_LOG, []), pile = ui.pile || (review ? "review" : "due"); ui.pile = null;
+    lsSet(KEY_LOG, C.logVisit(lg, { at: now().toISOString(), id: t.id, ms: ui.ms, worked: ui.worked, idle: wasIdle, kind: kind, how: how || "other", len: t.text.length,
+      pile: pile, n: C.sessionPos(lg, now().getTime(), ui.ms), size: C.DAY_SIZE, cls: cls }));
     ui.cur = null; ui.ms = 0; ui.worked = false; saveUi(); save();
     return kind;
   }
@@ -558,19 +560,29 @@ textarea::placeholder { color: var(--plum-faint); }
   function sizeClass(text) { var n = text.length + 30 * (text.match(/\n/g) || []).length; return n > 220 ? "vlong" : n > 90 ? "long" : ""; }
   // More than one empty line in a row shows as one.
   function shown(text) { return String(text).replace(/[ \t]*\n[ \t]*/g, "\n").replace(/\n{3,}/g, "\n\n"); }
+  // Today's pile (2.9.0): the next card, which pile it is from, and whether it is a review.
+  function more() { return ui.more === C.dayKey(now()); }
+  function pick(notId) {
+    var r = C.nextCard(store, lsGet(KEY_LOG, []), now(), notId, more());
+    ui.cur = r.card ? r.card.id : null; ui.ms = 0; ui.worked = false;
+    ui.review = r.card && r.review ? r.card.id : null; ui.pile = r.card ? r.pile : null; ui.why = r.why || null;
+    saveUi(); return r;
+  }
   function renderMeet(arrive) {
     var t = store[ui.cur];
-    if (!t || (t.away && ui.review !== ui.cur)) { ui.cur = null; ui.ms = 0; ui.worked = false; ui.review = null; var n = C.pickNext(store, now()); if (n) ui.cur = n.id; saveUi(); t = store[ui.cur]; }
+    if (!t || (t.away && ui.review !== ui.cur)) { pick(); t = store[ui.cur]; }
     $("stripN").textContent = C.list(store).length;
     if (!C.list(store).length) { openWrite(true); return; }
     $("carry").style.transition = "none"; $("carry").style.transform = ""; $("carry").style.opacity = "";
     $("hintUp").style.opacity = 0; $("hintDown").style.opacity = 0;
     if (!t) {
       $("carry").hidden = true; $("srActs").hidden = true; $("empty").hidden = false;
-      var nd = C.nextDue(store);
-      $("emptySub").textContent = nd ? nextBackText(C.whenLabel(nd, now())) : "Everything is put away.";
+      var nd = C.nextDue(store), probe = C.nextCard(store, lsGet(KEY_LOG, []), now(), null, true);
+      var atLimit = ui.why === "limit" && !more();
+      $("emptyHead").textContent = atLimit ? "That's " + C.DAY_SIZE + " for today." : "That's all for today.";
+      $("emptySub").textContent = atLimit ? "Keep going as long as you like." : nd ? nextBackText(C.whenLabel(nd, now())) : "Everything is put away.";
       var bm = C.bookmarked(store).length;
-      $("earlyBtn").hidden = !C.soonest(store);
+      $("earlyBtn").hidden = !probe.card;
       $("earlyMarked").hidden = !bm; $("earlyMarked").textContent = "Bookmarked \u00b7 " + bm;
       return;
     }
@@ -640,12 +652,12 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   // Both moves can be undone for 5 s: the thought comes back as it was, and the visit is not counted.
   var undoPoint = null;
-  function snapshot() { clockOff(); return { id: ui.cur, t: JSON.parse(JSON.stringify(store[ui.cur])), ms: ui.ms, review: ui.review || null }; }
+  function snapshot() { clockOff(); return { id: ui.cur, t: JSON.parse(JSON.stringify(store[ui.cur])), ms: ui.ms, review: ui.review || null, pile: ui.pile || null }; }
   function goNext() {
     if (!store[ui.cur]) return;
     var snap = snapshot(), id = ui.cur; endVisit("next");
     undoPoint = snap;
-    fly(-1, function () { var n = C.pickNext(store, now(), id); ui.cur = n ? n.id : null; saveUi(); renderMeet(true); toast("Moved on"); });
+    fly(-1, function () { pick(id); renderMeet(true); toast("Moved on"); });
   }
   function goAway() {
     if (!store[ui.cur]) return;
@@ -655,7 +667,7 @@ textarea::placeholder { color: var(--plum-faint); }
     if (!store[id].away) store[id].away = now().toISOString(); save();
     buzz("putAway");
     undoPoint = snap;
-    fly(1, function () { var n = C.pickNext(store, now(), id); ui.cur = n ? n.id : null; saveUi(); renderMeet(true); toast("Put away", trial ? id : null); });
+    fly(1, function () { pick(id); renderMeet(true); toast("Put away", trial ? id : null); });
   }
   $("srNext").onclick = goNext; $("srAway").onclick = goAway; $("srEdit").onclick = function () { openEdit(); };
 
@@ -686,7 +698,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("toastUndo").onclick = function () {
     if (!undoPoint) return;
     clockOff();
-    store[undoPoint.id] = undoPoint.t; ui.cur = undoPoint.id; ui.ms = undoPoint.ms; ui.worked = false; ui.review = undoPoint.review; undoPoint = null;
+    store[undoPoint.id] = undoPoint.t; ui.cur = undoPoint.id; ui.ms = undoPoint.ms; ui.worked = false; ui.review = undoPoint.review; ui.pile = undoPoint.pile; undoPoint = null;
     // The undone visit stays in the log, marked, so it can be left out when the times are judged.
     var lg = lsGet(KEY_LOG, []); if (lg.length) { lg[lg.length - 1].undone = true; lsSet(KEY_LOG, lg); }
     save(); saveUi(); $("toast").classList.remove("on"); buzz("undo"); renderMeet(true);
@@ -720,8 +732,8 @@ textarea::placeholder { color: var(--plum-faint); }
   $("newBtn").onclick = function () { openWrite(false); };
   // After "That's all for today": three quiet ways to carry on. None of them changes when anything comes back.
   $("earlyBtn").onclick = function () {
-    var n = C.soonest(store); if (!n) return;
-    ui.cur = n.id; ui.ms = 0; ui.worked = false; ui.review = n.id; saveUi(); haptic("tick"); renderMeet(true);
+    // Keep going (2.9.0): past today's size, the pile carries on until everything has been seen once today.
+    ui.more = C.dayKey(now()); pick(); if (!ui.cur) { renderMeet(false); return; } haptic("tick"); renderMeet(true);
   };
   $("earlyWrite").onclick = function () { openWrite(false); };
   $("earlyMarked").onclick = function () { ui.view = "marked"; saveUi(); openLib(); };
@@ -933,7 +945,7 @@ textarea::placeholder { color: var(--plum-faint); }
       // Opening a thought from the list puts it on screen now. The thought you were on counts as visited.
       var id = o.getAttribute("data-open");
       if (ui.cur && ui.cur !== id) endVisit("list");
-      ui.cur = id; ui.ms = 0; ui.worked = false; ui.review = o.hasAttribute("data-review") ? id : null; saveUi();
+      ui.cur = id; ui.ms = 0; ui.worked = false; ui.review = o.hasAttribute("data-review") ? id : null; ui.pile = ui.review ? "review" : "picked"; saveUi();
       closeLib(); renderMeet(true);
     } else if (b) {
       var t = store[b.getAttribute("data-back")]; if (!t) return;
@@ -1121,7 +1133,7 @@ textarea::placeholder { color: var(--plum-faint); }
   });
 
   // A new day while the app stays open: pick up what came due.
-  setInterval(function () { if (mode === "meet" && !ui.cur && C.pickNext(store, now())) renderMeet(true); }, 60000);
+  setInterval(function () { if (mode === "meet" && !ui.cur && C.nextCard(store, lsGet(KEY_LOG, []), now(), null, more()).card) renderMeet(true); }, 60000);
 
   setMode("meet");
   renderMeet(true);

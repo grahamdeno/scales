@@ -26,7 +26,12 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   into `sets.js` by `scripts/build-sets.js`). Add brings a set in two lines a day; Remove (two taps) deletes the lines
   not yet shown and puts away the ones met, leaving any you bookmarked, noted or changed. Quotes are in modern English;
   each line's public-domain original is kept in `content/sets.json` and checked by `scripts/verify-sets.js`.
-  After "That's all for today": Meet one early (as a review), Write one, and Bookmarked.
+  After "That's all for today": Keep going, Write one, and Bookmarked.
+- **Today's pile (2.9.0):** a day is up to 30 cards. What is due comes first, with never-met thoughts (still arriving
+  five a day) spread evenly through it, never two in a row. A light day tops up to 30 with the thoughts coming back
+  soonest, as reviews that never move a schedule. At 30 the day stops; Keep going carries on (anything still due as a
+  real visit, then reviews) until everything has been seen once today. Each visit logs its pile, its place in the
+  session, the day size and how its time reads, so the size can be judged from use.
 - **Import (2.7.0):** Settings, Import thoughts. Paste a note or list, or choose a text file, a CSV export (a quote
   column, plus author and title if present) or a Kindle "My Clippings.txt". Plain text splits at each line, or at each
   blank line when it has them (switchable). A name after a dash, or alone under a quote, becomes who said it. A preview
