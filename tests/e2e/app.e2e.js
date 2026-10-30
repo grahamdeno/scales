@@ -246,13 +246,13 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Back up/.test(await page.textContent("#settings")) && /Restore from a backup/.test(await page.textContent("#settings")), tag + "Settings has Back up and Restore");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.6\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/Scales 2\.6\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.7\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/Scales 2\.7\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     await page.screenshot({ path: path.join(shots, w + "-8-settings.png") });
     const dl = page.waitForEvent("download", { timeout: 3000 });
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
-    ok(bk.app === "scales" && bk.version === "2.6.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.7.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -480,6 +480,39 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Facts:/.test(wk.prompt) && /met thoughts 20 times/.test(wk.prompt), "TestFlight: the model is given counted facts (" + wk.prompt.split("\n")[1] + ")");
     await page.screenshot({ path: path.join(shots, "ai-test.png"), fullPage: false });
     ok(!errs.length, "TestFlight: no page errors (" + errs.join(" | ") + ")");
+    await ctx.close();
+  }
+  // 2.7.0: Import, by pasting or from a file
+  for (const w of [390, 375]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: 844 }, hasTouch: true });
+    const page = await ctx.newPage();
+    const errs = []; page.on("pageerror", (e) => errs.push(String(e)));
+    const tag = "[" + w + " import] ";
+    await page.addInitScript((o) => { if (!sessionStorage.getItem("i")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("i", "1"); } }, old);
+    await page.goto(base + "/"); await page.waitForSelector("#words:not(:empty)");
+    const n0 = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem("scales.next.thoughts.v1"))).length);
+    await page.click("#strip"); await page.waitForTimeout(700); await page.click("#libGear"); await page.waitForTimeout(500);
+    await page.click("#setImport"); await page.waitForTimeout(500);
+    ok(await page.locator("#imp.open").count() === 1, tag + "Import opens from Settings");
+    await page.fill("#impText", "\u201CKnow thyself.\u201D\n\u2014 Socrates\n\nI should call my dad more.\n\nSimplify, simplify. ~ Thoreau\n\nActive thought number 1");
+    await page.waitForTimeout(500);
+    ok(/4 thoughts found/.test(await page.textContent("#impMsg")) && (await page.locator("#impList .ir").count()) === 4, tag + "pasted text is split at blank lines into a preview");
+    ok(/Socrates/.test(await page.locator("#impList .ir").first().textContent()) && (await page.locator('#impSplit [data-split="paragraphs"][aria-pressed="true"]').count()) === 1, tag + "who said it is found, and Each blank line is chosen");
+    await page.screenshot({ path: path.join(shots, w + "-import.png") });
+    await page.locator("#impList .ir").nth(1).click(); await page.waitForTimeout(100);
+    ok((await page.textContent("#impAdd")).trim() === "Add 3", tag + "tapping a line leaves it out");
+    await page.click("#impAdd"); await page.waitForTimeout(300);
+    const st = await page.evaluate(() => Object.values(JSON.parse(localStorage.getItem("scales.next.thoughts.v1"))));
+    ok(st.length === n0 + 2 && st.find((t) => t.text === "Know thyself." && t.by === "Socrates" && t.from === "import") && !st.find((t) => /call my dad/.test(t.text)), tag + "Add brings in the kept lines, with who said it");
+    ok(/2 thoughts added/.test(await page.textContent("#impMsg")) && /1 you already had was left out/.test(await page.textContent("#impMsg")), tag + "and says what happened, including a line already here");
+    // a CSV export from another app
+    const csv = path.join(require("os").tmpdir(), "quotes.csv");
+    fs.writeFileSync(csv, 'Highlight,Book Title,Book Author\n"Waste no time, be useful.",Autobiography,Benjamin Franklin\n');
+    await page.setInputFiles("#impFile", csv); await page.waitForTimeout(500);
+    ok(/1 thought found/.test(await page.textContent("#impMsg")) && /Benjamin Franklin, Autobiography/.test(await page.textContent("#impList")) && await page.locator("#impSplit").isHidden(), tag + "a CSV export is read by its columns");
+    const ov = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    ok(ov <= 0, tag + "no sideways scroll (" + ov + ")");
+    ok(!errs.length, tag + "no page errors (" + errs.join(" | ") + ")");
     await ctx.close();
   }
   // the iPhone app's bridge: ready, quiet reminders, daily save with the old data, and the put away buzz

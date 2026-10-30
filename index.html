@@ -183,6 +183,19 @@ textarea::placeholder { color: var(--plum-faint); }
 .srow.setr .nm small { font-size: 14px; color: var(--plum-muted); line-height: 1.35; }
 .srow .v.add { color: var(--pist); font-weight: 600; }
 .srow .v.armed { color: var(--plum-ink); font-weight: 700; }
+/* Import (2.7.0) */
+.imptext { display: block; margin: 14px var(--pad) 0; width: calc(100% - 2 * var(--pad)); min-height: 150px; font-size: 16px; line-height: 1.45;
+  background: rgba(241,233,216,.06); border-radius: 12px; padding: 12px 14px; }
+.improw { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px var(--pad) 0; flex-wrap: wrap; }
+.improw .seg { display: flex; gap: 6px; }
+.improw .seg[hidden] { display: none; }
+#impList { margin-top: 6px; }
+#impList .ir { display: block; width: 100%; text-align: left; padding: 12px var(--pad); border-bottom: 1px solid rgba(241,233,216,.12); }
+#impList .ir .t { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 16px; line-height: 1.35; white-space: pre-line; }
+#impList .ir .b { display: block; margin-top: 4px; font-size: 13px; color: var(--plum-muted); }
+#impList .ir.off .t, #impList .ir.off .b { text-decoration: line-through; opacity: .45; }
+#impList .more { margin: 10px var(--pad); font-size: 14px; color: var(--plum-muted); }
+.impfoot { display: flex; justify-content: flex-end; padding: 0 var(--pad); }
 /* Apple Intelligence test (2.6.0) */
 #aiThemes .ex { margin: 0 var(--pad) 8px; padding: 0 0 8px 14px; font-size: 14px; line-height: 1.45; color: var(--plum-muted); border-left: 2px solid rgba(241,233,216,.12); }
 #aiThemes .ex p { margin: 6px 0; }
@@ -323,6 +336,7 @@ textarea::placeholder { color: var(--plum-faint); }
     <button class="srow" type="button" id="setBackup"><span>Back up</span><span class="v">Save a file</span></button>
     <button class="srow" type="button" id="setRestore"><span>Restore from a backup</span><span class="v">Choose a file</span></button>
     <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+    <button class="srow" type="button" id="setImport"><span>Import thoughts</span><span class="v">Paste or a file</span></button>
     <p class="snote" id="restoreMsg" role="status" aria-live="polite"></p>
     <p class="snote" id="setSaved"></p>
     <p class="sh"></p>
@@ -361,6 +375,23 @@ textarea::placeholder { color: var(--plum-faint); }
     <div id="aiNote"></div>
   </div>
 </section>
+<section class="page" id="imp" aria-label="Import thoughts" aria-hidden="true">
+  <button class="pback" type="button" id="impBack">&#8249; Settings</button>
+  <h1>Import thoughts</h1>
+  <div class="body">
+    <p class="snote">Paste a note or a list of quotes, or choose a file (text, a CSV export, or a Kindle "My Clippings.txt"). A name after a dash, or under a quote, becomes who said it.</p>
+    <label class="sr" for="impText">Text to import</label>
+    <textarea class="imptext" id="impText" rows="6" placeholder="Paste here"></textarea>
+    <div class="improw">
+      <button type="button" class="quiet" id="impFileBtn">Choose a file</button>
+      <div class="seg" id="impSplit" aria-label="Split"><button type="button" data-split="lines">Each line</button><button type="button" data-split="paragraphs">Each blank line</button></div>
+    </div>
+    <input type="file" id="impFile" accept=".txt,.csv,.md,text/plain,text/csv,text/markdown" hidden>
+    <p class="snote" id="impMsg" role="status" aria-live="polite"></p>
+    <div id="impList"></div>
+    <div class="impfoot"><button class="act" type="button" id="impAdd" disabled>Add</button></div>
+  </div>
+</section>
 <section class="page" id="help" aria-label="How Scales works" aria-hidden="true">
   <button class="pback" type="button" id="helpBack">&#8249; Settings</button>
   <h1>How Scales works</h1>
@@ -377,8 +408,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.6.0"></script>
-<script src="sets.js?v=2.6.0"></script>
+<script src="core.js?v=2.7.0"></script>
+<script src="sets.js?v=2.7.0"></script>
 <script>
 (function () {
   "use strict";
@@ -1091,6 +1122,56 @@ textarea::placeholder { color: var(--plum-faint); }
     rows.forEach(function (x) { var tr = document.createElement("tr"); [x.theme, x.visits, x.avgSec, x.skipped, x.putAway].forEach(function (v) { var td = document.createElement("td"); td.textContent = v; tr.appendChild(td); }); tb.appendChild(tr); });
     box.appendChild(tb);
   }
+  // ---------- Import (2.7.0) ----------
+  var impMode = "auto", impItems = [], impOff = {};
+  function impParse() {
+    var txt = $("impText").value;
+    impItems = C.parseImport(txt, impMode); impOff = {};
+    var plain = !/==========/.test(txt) && !/^[^\n]*\b(highlight|quote|quotes|text|content|note)\b[^\n]*,|,[^\n]*\b(highlight|quote|quotes|text)\b/i.test(txt.split("\n")[0] || "");
+    $("impSplit").hidden = !plain || !txt.trim();
+    var auto = impMode === "auto" ? (/\n\s*\n/.test(txt) ? "paragraphs" : "lines") : impMode;
+    Array.prototype.forEach.call($("impSplit").children, function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-split") === auto)); });
+    impRender();
+  }
+  function impRender() {
+    var box = $("impList"); box.innerHTML = "";
+    var keep = impItems.filter(function (x, i) { return !impOff[i]; }).length;
+    $("impAdd").disabled = !keep; $("impAdd").textContent = keep ? "Add " + keep : "Add";
+    if (!impItems.length) { $("impMsg").textContent = $("impText").value.trim() ? "Nothing to add here." : ""; $("impMsg").className = "snote"; return; }
+    $("impMsg").textContent = impItems.length + (impItems.length === 1 ? " thought" : " thoughts") + " found. Tap one to leave it out."; $("impMsg").className = "snote";
+    impItems.slice(0, 100).forEach(function (x, i) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "ir" + (impOff[i] ? " off" : "");
+      var t = document.createElement("span"); t.className = "t"; t.textContent = x.text; b.appendChild(t);
+      if (x.by) { var y = document.createElement("span"); y.className = "b"; y.textContent = x.by; b.appendChild(y); }
+      b.onclick = function () { impOff[i] = !impOff[i]; impRender(); };
+      box.appendChild(b);
+    });
+    if (impItems.length > 100) { var m = document.createElement("p"); m.className = "more"; m.textContent = "and " + (impItems.length - 100) + " more"; box.appendChild(m); }
+  }
+  var impT = 0;
+  $("impText").addEventListener("input", function () { clearTimeout(impT); impT = setTimeout(impParse, 250); });
+  $("impSplit").addEventListener("click", function (e) { var b = e.target.closest("[data-split]"); if (!b) return; impMode = b.getAttribute("data-split"); haptic("tick"); impParse(); });
+  $("impFileBtn").onclick = function () { $("impFile").value = ""; $("impFile").click(); };
+  $("impFile").addEventListener("change", function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { $("impMsg").textContent = "That file is too big to import."; return; }
+    var rd = new FileReader();
+    rd.onerror = function () { $("impMsg").textContent = "That file couldn't be read."; };
+    rd.onload = function () { $("impText").value = String(rd.result); impMode = "auto"; impParse(); };
+    rd.readAsText(f);
+  });
+  $("impAdd").onclick = function () {
+    var items = impItems.filter(function (x, i) { return !impOff[i]; }); if (!items.length) return;
+    var r = C.importThoughts(store, items, now());
+    if (!lsSet(KEY, store)) { store = lsGet(KEY, store); $("impMsg").textContent = "There isn't room on this phone for that many."; return; }
+    buzz("keep"); needsRender = true; $("stripN").textContent = C.list(store).length; renderLib();
+    $("impText").value = ""; impItems = []; impOff = {}; $("impList").innerHTML = ""; $("impSplit").hidden = true;
+    $("impAdd").disabled = true; $("impAdd").textContent = "Add";
+    $("impMsg").textContent = r.added + (r.added === 1 ? " thought" : " thoughts") + " added." + (r.added > C.IMPORT_PER_DAY ? " Five arrive each day, starting today." : "") + (r.skipped ? " " + r.skipped + " you already had " + (r.skipped === 1 ? "was" : "were") + " left out." : "");
+    $("impMsg").className = "snote ok";
+  };
+  $("setImport").onclick = function () { $("impMsg").textContent = ""; $("impMsg").className = "snote"; $("impSplit").hidden = true; openPage("imp", "imp"); };
+  $("impBack").onclick = function () { $("impText").blur(); closePage("imp", "settings"); };
   $("setAI").onclick = function () { renderAI(); openPage("ai", "ai"); };
   $("aiBack").onclick = function () { closePage("ai", "settings"); };
   $("aiRun").onclick = function () { aiRun(); };

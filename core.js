@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.6.0";
+  var VERSION = "2.7.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -194,6 +194,99 @@
     return n;
   }
 
+  // ---- Import (2.7.0) ----
+  // Pasted text or a file from another app becomes thoughts. Plain text splits at each line, or at each blank line
+  // when the text has them. A name after a dash, or under a quote, becomes who said it. A CSV with a quote column
+  // (Readwise, Goodreads and the like) and a Kindle "My Clippings.txt" are read by their columns and markers.
+  var IMPORT_PER_DAY = 5, IMPORT_MAX = 3000;
+  var QUOTES = /^["\u201C\u201E\u00AB'\u2018]+|["\u201D\u00BB'\u2019]+$/g;
+  function looksLikeName(s) {
+    s = s.trim();
+    if (!s || s.length > 60 || /[.!?]$/.test(s) && !/\.$/.test(s.replace(/\b[A-Z]\.$/, ""))) return false;
+    var w = s.replace(/,.*$/, "").split(/\s+/);
+    return w.length <= 5 && /^[A-Z\u00C0-\u024F]/.test(w[0]) && !/[.!?]$/.test(s);
+  }
+  // One piece of text: split off a trailing attribution, if there is one, and the quotation marks around the quote.
+  function splitBy(raw) {
+    var s = String(raw).replace(/\r/g, "").trim(), by = "";
+    var m = s.match(/^([\s\S]*?\S)\s*(?:\n\s*)?[\u2014\u2013~]\s*([^\n\u2014\u2013]+)$/) || s.match(/^([\s\S]*?["\u201D\u2019])\s+-\s+([^\n]+)$/) || s.match(/^([\s\S]*?[.!?"\u201D])\s+-\s+([^\n-]+)$/);
+    if (m && looksLikeName(m[2])) { s = m[1].trim(); by = m[2].trim(); }
+    else {
+      var lines = s.split("\n"), last = lines[lines.length - 1].trim();
+      var q = lines.slice(0, -1).join("\n").trim();
+      if (lines.length > 1 && looksLikeName(last.replace(/^[-\u2014\u2013~]\s*/, "")) && /["\u201D\u2019]$/.test(q)) { s = q; by = last.replace(/^[-\u2014\u2013~]\s*/, ""); }
+    }
+    if (by) s = s.replace(QUOTES, "").trim();
+    return { text: s.slice(0, 1500), by: by.slice(0, 200) };
+  }
+  function parseCSV(text) {
+    var rows = [], row = [], f = "", q = false;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i];
+      if (q) { if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += ch; }
+      else if (ch === '"') q = true;
+      else if (ch === ",") { row.push(f); f = ""; }
+      else if (ch === "\n") { row.push(f); rows.push(row); row = []; f = ""; }
+      else if (ch !== "\r") f += ch;
+    }
+    if (f || row.length) { row.push(f); rows.push(row); }
+    return rows;
+  }
+  function fromCSV(text) {
+    var rows = parseCSV(text); if (rows.length < 2) return null;
+    var head = rows[0].map(function (h) { return h.trim().toLowerCase(); });
+    var ti = head.findIndex(function (h) { return /^(highlight|quote|quotes|text|content|note)$/.test(h); });
+    if (ti < 0) return null;
+    var ai = head.findIndex(function (h) { return /^(book author|author|by|source author)$/.test(h); });
+    var bi = head.findIndex(function (h) { return /^(book title|title|book|source)$/.test(h); });
+    return rows.slice(1).map(function (r) {
+      var by = ai >= 0 ? (r[ai] || "").trim() : "", bk = bi >= 0 ? (r[bi] || "").trim() : "";
+      return { text: (r[ti] || "").trim().slice(0, 1500), by: (by && bk ? by + ", " + bk : by || bk).slice(0, 200) };
+    });
+  }
+  function fromClippings(text) {
+    if (!/==========/.test(text)) return null;
+    return text.split(/\r?\n?==========\r?\n?/).map(function (blk) {
+      var l = blk.replace(/\r/g, "").split("\n").filter(function (x) { return x.trim(); });
+      if (l.length < 3 || !/^- /.test(l[1])) return null;
+      var t = l[0].replace(/^\uFEFF/, "").trim(), m = t.match(/^(.*)\(([^()]*)\)\s*$/);
+      return { text: l.slice(2).join("\n").trim().slice(0, 1500), by: (m ? m[2].trim() + ", " + m[1].trim() : t).slice(0, 200) };
+    }).filter(Boolean);
+  }
+  // mode: "auto" (blank lines if there are any, else each line), "lines" or "paragraphs".
+  function parseImport(text, mode) {
+    text = String(text || "").replace(/^\uFEFF/, "");
+    var out = fromClippings(text) || (/^[^\n]*,/.test(text) && fromCSV(text));
+    if (!out) {
+      var paras = mode === "paragraphs" || (mode !== "lines" && /\n\s*\n/.test(text));
+      out = [];
+      text.replace(/\r/g, "").split(paras ? /\n\s*\n/ : /\n/).forEach(function (raw) {
+        // A line that is only "- Name" under a quote says who said the line above it.
+        var nm = raw.match(/^\s*[-\u2014\u2013~]\s*(.+)$/), prev = out[out.length - 1];
+        if (nm && prev && !prev.by && /["\u201D\u2019]$/.test(prev.text) && looksLikeName(nm[1])) { prev.by = nm[1].trim().slice(0, 200); prev.text = prev.text.replace(QUOTES, "").trim(); return; }
+        out.push(splitBy(raw.replace(/^\s*(?:[-*\u2022]|\d+[.)])\s+/, "")));
+      });
+    }
+    var seen = {};
+    return out.filter(function (x) {
+      if (!x || !x.text || !x.text.trim()) return false;
+      var k = x.text.toLowerCase().replace(/\s+/g, " ").trim(); if (seen[k]) return false; seen[k] = true; return true;
+    }).slice(0, IMPORT_MAX);
+  }
+  // Adds them as thoughts, five a day from today, leaving out any already here word for word. Returns { added, skipped }.
+  function importThoughts(store, items, now) {
+    var today = dayKey(now), have = {}, added = 0, skipped = 0;
+    list(store).forEach(function (t) { have[t.text.toLowerCase().replace(/\s+/g, " ").trim()] = true; });
+    items.forEach(function (x, i) {
+      var k = x.text.toLowerCase().replace(/\s+/g, " ").trim();
+      if (have[k]) { skipped++; return; }
+      have[k] = true;
+      var t = make(x.text, now, x.by); t.id = uid() + i; t.from = "import"; t.due = addDays(today, Math.floor(added / IMPORT_PER_DAY));
+      store[t.id] = t; added++;
+    });
+    return { added: added, skipped: skipped };
+  }
+
   // ---- Apple Intelligence test (2.6.0) ----
   // The on-device model only writes words: theme names, one theme per thought, and a few sentences from facts
   // this code has already counted. Every number comes from here, never from the model.
@@ -367,7 +460,7 @@
 
   var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
-    make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, soonest: soonest,
+    make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);

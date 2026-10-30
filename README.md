@@ -27,6 +27,10 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   not yet shown and puts away the ones met, leaving any you bookmarked, noted or changed. Quotes are in modern English;
   each line's public-domain original is kept in `content/sets.json` and checked by `scripts/verify-sets.js`.
   After "That's all for today": Meet one early (as a review), Write one, and Bookmarked.
+- **Import (2.7.0):** Settings, Import thoughts. Paste a note or list, or choose a text file, a CSV export (a quote
+  column, plus author and title if present) or a Kindle "My Clippings.txt". Plain text splits at each line, or at each
+  blank line when it has them (switchable). A name after a dash, or alone under a quote, becomes who said it. A preview
+  lets you leave lines out; lines you already have are skipped; the rest arrive five a day.
 - **Settings (2.1.0):** Your data (Back up, Restore from a backup), Help (How Scales works), About (Privacy, Support,
   Send feedback, the version). Privacy is linked here because the App Store requires it inside the app.
 - **Reading a visit:** 20 s or less is skipped; 30 s or more is thought about; between is seen; an edit or a note is
