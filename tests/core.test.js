@@ -654,3 +654,28 @@ test("the log keeps pile, position, size and class (2.9.0)", () => {
   const lg = N.logVisit([], { at: "2026-11-02T09:00:00Z", id: "a", ms: 4000, kind: "review", how: "next", pile: "extra", n: 3, size: 30, cls: "skipped" });
   assert.equal(lg[0].pile, "extra"); assert.equal(lg[0].n, 3); assert.equal(lg[0].size, 30); assert.equal(lg[0].cls, "skipped");
 });
+
+// ---- 2.10.0: telemetry ----
+test("the event log keeps the newest EVENTS_MAX (2.10.0)", () => {
+  const ev = [];
+  for (let i = 0; i < N.EVENTS_MAX + 5; i++) N.track(ev, { t: String(i), e: "tap" });
+  assert.equal(ev.length, N.EVENTS_MAX); assert.equal(ev[0].t, "5");
+});
+test("merging events adds only the ones not already there, in time order (2.10.0)", () => {
+  const ev = [{ t: "2026-11-01T00:00:00Z", e: "tap", id: "a" }];
+  const n = N.mergeEvents(ev, [{ t: "2026-11-01T00:00:00Z", e: "tap", id: "a" }, { t: "2026-10-31T00:00:00Z", e: "boot" }, { bad: 1 }]);
+  assert.equal(n, 1); assert.equal(ev[0].e, "boot"); assert.equal(ev.length, 2);
+});
+test("the daily snapshot counts the collection without any thought text (2.10.0)", () => {
+  const now = new Date("2026-11-02T09:00:00");
+  const st = { a: { id: "a", text: "secret words", created: "2026-11-01T00:00:00.000Z", due: "2026-11-02", away: null, from: "import", by: "X", seen: null, visits: [] },
+    b: { id: "b", text: "more", created: "2026-01-01T00:00:00.000Z", due: "2026-11-09", away: "2026-10-01", note: "n", seen: "x", visits: [{}] } };
+  const s = N.snapshot(st, now);
+  assert.equal(s.total, 2); assert.equal(s.away, 1); assert.equal(s.due, 1); assert.equal(s.src.import, 1); assert.equal(s.src.own, 1);
+  assert.equal(s.withBy, 1); assert.equal(s.withNote, 1); assert.equal(s.added7, 1);
+  assert.ok(!JSON.stringify(s).includes("secret"));
+});
+test("a backup's events come back on restore (2.10.0)", () => {
+  const r = N.restoreFrom({}, { app: "scales", version: "2.10.0", thoughts: {}, events: [{ t: "2026-11-01T00:00:00Z", e: "boot" }, { nope: 1 }] }, new Date(), []);
+  assert.ok(r.ok); assert.equal(r.events.length, 1);
+});

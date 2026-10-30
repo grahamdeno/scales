@@ -27,6 +27,9 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   not yet shown and puts away the ones met, leaving any you bookmarked, noted or changed. Quotes are in modern English;
   each line's public-domain original is kept in `content/sets.json` and checked by `scripts/verify-sets.js`.
   After "That's all for today": Keep going, Write one, and Bookmarked.
+- **Telemetry (2.10.0):** an event log on the phone only (sessions, screens, taps, writes, edits, errors, load time and a
+  daily snapshot of the collection), carried in the backup. No thought text is ever in it. `scripts/evaluate.js` reads a
+  backup and prints the evaluation in `docs/evaluation-plan.md`.
 - **Today's pile (2.9.0):** a day is up to 30 cards. What is due comes first, with never-met thoughts (still arriving
   five a day) spread evenly through it, never two in a row. A light day tops up to 30 with the thoughts coming back
   soonest, as reviews that never move a schedule. At 30 the day stops; Keep going carries on (anything still due as a
