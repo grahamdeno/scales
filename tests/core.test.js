@@ -679,3 +679,21 @@ test("a backup's events come back on restore (2.10.0)", () => {
   const r = N.restoreFrom({}, { app: "scales", version: "2.10.0", thoughts: {}, events: [{ t: "2026-11-01T00:00:00Z", e: "boot" }, { nope: 1 }] }, new Date(), []);
   assert.ok(r.ok); assert.equal(r.events.length, 1);
 });
+
+// ---- 2.11.0: a "- Name" line names the line above, with or without quotation marks ----
+test("import, each line: a dash-name line under an unquoted line becomes who said it (2.11.0)", () => {
+  const r = N.parseImport("The obstacle is the way.\nWaste no more time arguing what a good man should be. Be one.\n- Marcus Aurelius\nWell done is better than well said.", "lines");
+  assert.strictEqual(r.length, 3);
+  assert.strictEqual(r[1].text, "Waste no more time arguing what a good man should be. Be one.");
+  assert.strictEqual(r[1].by, "Marcus Aurelius");
+  assert.strictEqual(r[0].by, ""); assert.strictEqual(r[2].by, "");
+});
+test("import, each line: a bulleted list of short thoughts stays a list (2.11.0)", () => {
+  const r = N.parseImport("- Rest is part of the work.\n- Be kind\n- Say less", "lines");
+  assert.deepStrictEqual(r.map((x) => x.text), ["Rest is part of the work.", "Be kind", "Say less"]);
+  assert.ok(r.every((x) => !x.by));
+});
+test("import, each line: a quoted line with a dash-name under it still works (2.11.0)", () => {
+  const r = N.parseImport("“Well done is better than well said.”\n- Benjamin Franklin", "lines");
+  assert.strictEqual(r.length, 1); assert.strictEqual(r[0].text, "Well done is better than well said."); assert.strictEqual(r[0].by, "Benjamin Franklin");
+});
