@@ -313,10 +313,14 @@
     if (!out) {
       var paras = mode === "paragraphs" || (mode !== "lines" && /\n\s*\n/.test(text));
       out = [];
+      var prevRaw = "";
       text.replace(/\r/g, "").split(paras ? /\n\s*\n/ : /\n/).forEach(function (raw) {
-        // A line that is only "- Name" under a quote says who said the line above it.
+        // A line that is only "- Name" under a quote says who said the line above it. With or without quotation marks,
+        // as long as the line above was not itself a bullet (in a bulleted list, "- Be kind" is a thought, not a name).
         var nm = raw.match(/^\s*[-\u2014\u2013~]\s*(.+)$/), prev = out[out.length - 1];
-        if (nm && prev && !prev.by && /["\u201D\u2019]$/.test(prev.text) && looksLikeName(nm[1])) { prev.by = nm[1].trim().slice(0, 200); prev.text = prev.text.replace(QUOTES, "").trim(); return; }
+        var aboveIsBullet = /^\s*(?:[-*\u2022\u2014\u2013~]|\d+[.)])\s+/.test(prevRaw);
+        if (raw.trim()) prevRaw = raw;
+        if (nm && prev && !prev.by && looksLikeName(nm[1]) && (/["\u201D\u2019]$/.test(prev.text) || !aboveIsBullet)) { prev.by = nm[1].trim().slice(0, 200); prev.text = prev.text.replace(QUOTES, "").trim(); return; }
         out.push(splitBy(raw.replace(/^\s*(?:[-*\u2022]|\d+[.)])\s+/, "")));
       });
     }
