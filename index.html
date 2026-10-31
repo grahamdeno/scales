@@ -232,6 +232,15 @@ textarea::placeholder { color: var(--plum-faint); }
 .srow.clr.armed { color: var(--plum-ink); font-weight: 700; }
 .snote { margin: 10px var(--pad) 0; font-size: 14px; line-height: 1.45; color: var(--plum-muted); }
 .snote.ok { color: var(--pist); }
+/* Settings (2.11.0): each group is a card one step lighter than the page, with its label above. */
+.grp { margin: 0 16px; background: rgba(241,233,216,.08); border-radius: 16px; overflow: hidden; }
+#settings .sh { margin: 28px calc(16px + 18px) 8px; font-size: 13px; font-weight: 500; letter-spacing: .02em; color: var(--plum-muted); }
+#settings .snote { margin-left: calc(16px + 18px); margin-right: calc(16px + 18px); }
+.grp > .srow, .grp > div > .srow { padding: 0 18px; }
+.grp > .srow:last-child, .grp > :last-child { border-bottom: 0; }
+.grp .lookrow { display: flex; align-items: center; min-height: 52px; padding: 0 18px; font-size: 17px; }
+.grp .lookseg { margin: 0; padding: 0 18px 14px; }
+.grp #lookSec:not([hidden]) + .srow { border-top: 1px solid rgba(241,233,216,.12); }
 /* Settings, Look (2.8.0): Appearance is three choices in a row, like the library filters. */
 .lookseg { display: flex; gap: 8px; margin: 8px var(--pad) 0; }
 .lookseg button[aria-checked="true"] { color: var(--plum); background: var(--plum-ink); font-weight: 600; }
@@ -349,34 +358,45 @@ textarea::placeholder { color: var(--plum-faint); }
   <h1>Settings</h1>
   <div class="body">
     <p class="sh">Add thoughts</p>
-    <button class="srow" type="button" id="setSets"><span>Sets</span><span class="chev" aria-hidden="true">&#8250;</span></button>
-    <button class="srow" type="button" id="setImport"><span>Import thoughts</span><span class="chev" aria-hidden="true">&#8250;</span></button>
-    <p class="sh">Look</p>
-    <div id="lookSec" hidden>
-      <div class="seg lookseg" id="lookSeg" role="radiogroup" aria-label="Appearance">
-        <button type="button" role="radio" data-look="auto" aria-checked="true">Automatic</button>
-        <button type="button" role="radio" data-look="light" aria-checked="false">Light</button>
-        <button type="button" role="radio" data-look="dark" aria-checked="false">Dark</button>
-      </div>
-      <p class="snote" id="lookMsg">Automatic follows your iPhone.</p>
+    <div class="grp">
+      <button class="srow" type="button" id="setSets"><span>Sets</span><span class="v"><span id="setSetsV"></span><span class="chev" aria-hidden="true">&#8250;</span></span></button>
+      <button class="srow" type="button" id="setImport"><span>Import thoughts</span><span class="chev" aria-hidden="true">&#8250;</span></button>
     </div>
-    <button class="srow" type="button" id="setIcon" hidden><span>App icon</span><span class="v"><span id="setIconV">Automatic</span> <span class="chev" aria-hidden="true">&#8250;</span></span></button>
+    <p class="sh">Look</p>
+    <div class="grp">
+      <div id="lookSec" hidden>
+        <div class="lookrow"><span>Appearance</span></div>
+        <div class="seg lookseg" id="lookSeg" role="radiogroup" aria-label="Appearance">
+          <button type="button" role="radio" data-look="auto" aria-checked="true">Automatic</button>
+          <button type="button" role="radio" data-look="light" aria-checked="false">Light</button>
+          <button type="button" role="radio" data-look="dark" aria-checked="false">Dark</button>
+        </div>
+      </div>
+      <button class="srow" type="button" id="setIcon" hidden><span>App icon</span><span class="v"><span id="setIconV">Automatic</span> <span class="chev" aria-hidden="true">&#8250;</span></span></button>
+    </div>
+    <p class="snote" id="lookMsg">Automatic follows your iPhone.</p>
     <p class="sh">Your data</p>
-    <button class="srow" type="button" id="setBackup"><span>Back up</span><span class="v">Save a file</span></button>
-    <button class="srow" type="button" id="setRestore"><span>Restore from a backup</span><span class="v">Choose a file</span></button>
+    <div class="grp">
+      <button class="srow" type="button" id="setBackup"><span>Back up</span><span class="v">Save a file</span></button>
+      <button class="srow" type="button" id="setRestore"><span>Restore from a backup</span><span class="v">Choose a file</span></button>
+    </div>
     <input type="file" id="restoreFile" accept="application/json,.json" hidden>
     <p class="snote" id="restoreMsg" role="status" aria-live="polite"></p>
     <p class="snote" id="setSaved"></p>
     <p class="sh">Help</p>
-    <button class="srow" type="button" id="setHelp"><span>How Scales works</span><span class="chev" aria-hidden="true">&#8250;</span></button>
-    <a class="srow" id="setFeedback" href="mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback"><span>Send feedback</span><span class="chev" aria-hidden="true">&#8250;</span></a>
-    <a class="srow" id="setSupport" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+    <div class="grp">
+      <button class="srow" type="button" id="setHelp"><span>How Scales works</span><span class="chev" aria-hidden="true">&#8250;</span></button>
+      <a class="srow" id="setFeedback" href="mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback"><span>Send feedback</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+      <a class="srow" id="setSupport" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+    </div>
     <p class="sh">About</p>
-    <a class="srow" id="setPrivacy" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy</span><span class="chev" aria-hidden="true">&#8250;</span></a>
-    <div class="srow" id="setVersionRow" role="text"><span>Version</span><span class="v" id="setVersion"></span></div>
+    <div class="grp">
+      <a class="srow" id="setPrivacy" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+      <div class="srow" id="setVersionRow" role="text"><span>Version</span><span class="v" id="setVersion"></span></div>
+    </div>
     <div id="aiSec" hidden>
       <p class="sh">Apple Intelligence (TestFlight test)</p>
-      <button class="srow" type="button" id="setAI"><span>Themes and your week</span><span class="chev" aria-hidden="true">&#8250;</span></button>
+      <div class="grp"><button class="srow" type="button" id="setAI"><span>Themes and your week</span><span class="chev" aria-hidden="true">&#8250;</span></button></div>
       <p class="snote" id="aiState"></p>
     </div>
   </div>
@@ -452,8 +472,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.10.0"></script>
-<script src="sets.js?v=2.10.0"></script>
+<script src="core.js?v=2.11.0"></script>
+<script src="sets.js?v=2.11.0"></script>
 <script>
 (function () {
   "use strict";
@@ -1026,7 +1046,13 @@ textarea::placeholder { color: var(--plum-faint); }
   var needsRender = false;
   function openPage(id, m) { var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; track("screen", { to: id }); }
   function closePage(id, m) { var p = $(id); p.classList.remove("open"); p.setAttribute("aria-hidden", "true"); mode = m; track("screen", { to: m }); }
+  function setsValue() {
+    var S = window.ScalesSets; if (!S) return "";
+    var n = S.sets.filter(function (s) { return s.items.some(function (it) { return Object.prototype.hasOwnProperty.call(store, "s-" + it.id); }); }).length;
+    return n ? n + " added" : "";
+  }
   function openSettings() {
+    $("setSetsV").textContent = setsValue();
     $("restoreMsg").textContent = ""; $("restoreMsg").className = "snote";
     $("setSaved").textContent = savedLine();
     $("setVersion").textContent = C.VERSION + (window.scalesNative && window.scalesNative.build ? " (" + window.scalesNative.build + ")" : "");
@@ -1129,7 +1155,7 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   document.addEventListener("pointerdown", function (e) { if (setArmed && !e.target.closest("#setList")) { setArmed = null; renderSets(); } }, true);
   $("setSets").onclick = function () { setArmed = null; $("setsMsg").textContent = ""; $("setsMsg").className = "snote"; renderSets(); openPage("sets", "sets"); };
-  $("setsBack").onclick = function () { setArmed = null; closePage("sets", "settings"); };
+  $("setsBack").onclick = function () { setArmed = null; $("setSetsV").textContent = setsValue(); closePage("sets", "settings"); };
   $("setBack").onclick = function () { closePage("settings", "library"); };
   // Each demo plays once, one after another, when the page opens; a tap on one plays it again.
   function playDemo(d, delay) {
