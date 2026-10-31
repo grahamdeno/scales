@@ -6,7 +6,7 @@ For a new working session. Read this, then README.md.
 
 Scales 2 (from 2.0.0, October 2026): "One thought at a time." One of the person's own thoughts on a pistachio ground.
 Swipe up to move on, pull down to put it away, tap to edit; both moves undo for 5 s. No verdict buttons: the app reads
-each visit by time (20 s or less skipped, 30 s or more thought about) and edits, and schedules the return. Nothing leaves
+each visit by time (20 s or less skipped, 30 s or more thought about; the 12 November evaluation may move these) and edits, and schedules the return. Nothing leaves
 unless the person puts it away. Plum is for when their hand is on it: Write, Edit, the library.
 
 Scales 1 (Skip, Reflect, Lived, the Ledger, voices, AI with Scales Plus) ended at 1.88.0. Its code and release notes are
@@ -23,7 +23,7 @@ read, never written or deleted.
   signature), `save` (daily backup file), `unschedule` and `badge` (sent on open to clear Scales 1's reminders).
   StoreKit, icon and reminder code stays in the shell, unused (the owner's choice).
 - `server/app-proxy.js` serves `/app/` from GitHub Pages. `server/ai.mjs` is the dormant Plus AI server.
-- `site/`: the scales.tangomike.app website. It still describes Scales 1 and needs a rewrite.
+- `site/`: the scales.tangomike.app website (Cloudflare Pages, deployed by `.github/workflows/site.yml`; strict CSP, no inline code).
 - Tests: `node --test` (`tests/core.test.js`, `tests/platform.test.js`) and `node tests/e2e/app.e2e.js` (Playwright).
 - Plans: `docs/next-plan.md`, `docs/swap-plan.md`.
 
@@ -39,12 +39,25 @@ read, never written or deleted.
 - Choosing a model: Opus for feel, data safety and judgment calls; Sonnet for well-specified building, tests and
   shipping; Haiku for mechanical edits.
 
+## Where things stand (31 October 2026)
+
+- Web app: 2.11.2 live. Settings is grouped cards (also Sets and Import), the daily pile is 30 with Keep going,
+  Appearance (Automatic, Light, Dark; the control shows only in builds from 38), telemetry on the phone only, and a small
+  footer in Settings ("Your thoughts stay on your phone." with the Pistachio icon).
+- Website (`site/`): redesigned and live (real screenshots in Light and Dark, Sets, Support and Privacy updated). Check it
+  by `https://scales.tangomike.app`. Stylesheet is `?v=2.2.0`; the Website workflow checks it.
+- App Store: version 1.0 is a draft with build 38 attached, seven captioned 6.9-inch screenshots uploaded (made by
+  `scripts/shots.js` and `scripts/appstore.js`, files in `appstore/screenshots/`), release set to manual, status Prepare
+  for Submission. Graham chose to wait until after 12 November to press Submit for Review. Only he presses it.
+- Left: EU trader status (his decision), then Submit for Review.
+- 12 November, 8:40 am ET: a scheduled task starts a fresh session that asks for "Scales backup.json" and runs
+  `docs/evaluation-plan.md`. Rule changes from the evaluation are web-only and reach every build, including build 38.
+
 ## Before the App Store submission
 
 - Done (29 October): Plus was never approved, so it was never on sale; `ScalesPlusPreview: false` in `ios/project.yml`;
   `PLUS_PREVIEW=off` in Cloudflare. The App Store name is "Scales: One Thought at a Time" ("Scales" is taken by another
   account); version 1.0, iPhone only. Listing text, URLs, App Privacy (Data Not Collected) and 4+ are set.
-- Left: choose the subtitle, EU trader status, attach the final build and `store/` screenshots, Submit for Review.
 
 ## Design rules
 
@@ -58,18 +71,11 @@ read, never written or deleted.
 
 ## Open items
 
-- The website (`site/`) still shows Scales 1.
 - A bespoke put-away haptic would need an iPhone build (today it is thud plus letgo, sent from the page).
 - A reminder may come back later; for now Scales is something you open on your own.
-- Library on plum, the first-time nudge, and the 5-a-day import pace were open questions; the owner has not raised them.
-- Times review, on or after 12 November: read `visits` in the daily backup and recommend the skip and thought lines
-- 12 November evaluation: follow docs/evaluation-plan.md and run scripts/evaluate.js on the backup. The notes below are
-  folded into it.
-- Day size review (same day, 2.9.0 onward): visits carry `pile` (due, new, extra, more, review, picked), `n` (place in the
-  session; a gap over 5 minutes starts a new one), `size` (30) and `cls` (how the time reads, even for reviews). Measure
-  from the first visit with `size`: cards per session; time on card by position (does attention fall after card 20?);
-  real versus top-up versus Keep going attention, together and apart; thoughts written per day (`created`) and the line
-  still waiting (`waiting()`), to judge whether 5 new a day is right. Recommend the day size and the drip from that.
-  (see `docs/2.1-plan.md`, step 10). Leave out visits with `kind: "review"` (opened from Bookmarked) and `undone: true`.
-- 2.2.0 is on `release-2.2`, not shipped: Bookmark, New filter, scrolling filters, Done and Keep as words, growing fields,
-  new icons with a picker, website copy. See `docs/2.1-plan.md`.
+- 12 November evaluation: follow `docs/evaluation-plan.md` and run `scripts/evaluate.js` on the backup (timing lines,
+  day size, drip, top-up and Keep going attention, feature use, outcomes, health). Leave out visits with
+  `kind: "review"` and `undone: true`.
+- Possible later additions (not built): a one-tap weekly check-in, how the app was opened (needs a build), Apple
+  Intelligence use, Share Sheet import (needs a build), Kafka translations after 1 January 2027.
+- Import fix shipped in 2.11.0: a line that is only "- Name" names the line above it, quoted or not.
