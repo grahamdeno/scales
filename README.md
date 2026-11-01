@@ -13,7 +13,14 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
 - **Write and Edit (plum):** "What's on your mind?", Keep. A new thought comes back tomorrow. Edit holds the thought
   and a note; Delete takes two taps, and a tap anywhere else takes the first one back.
 - **The library (plum):** the strip at the bottom, "Your thoughts". Pull it up or tap it; pull the sheet down or tap
-  outside to shut it. Search, filter (All, In rotation, Put away), Bring back. The gear opens Settings.
+  outside to shut it. Search, filter (All, In rotation, Put away), Bring back. The gear opens Settings. From 2.13.0
+  each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
+  the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
+  screen in 2.13.0).
+- **Edit history (2.13.0):** one quiet line under the thought: "Added 41 days ago · skipped 6 of the last 8 times"
+  (the last 10 real visits).
+- **Backups (2.13.0):** Settings has one Backups row ("Automatic" in the iPhone app) opening a page with how saving
+  works, the last save, Back up now and Restore. The iPhone app saves a copy every time you leave it and keeps 14.
 - **Bookmark (2.2.0):** the bookmark at the top right of Edit marks a thought as one to come back to. It never changes
   when the thought returns. The library filters scroll: All, In rotation, Put away, New (the last 14 days), Bookmarked
   (with its count). A thought opened from Bookmarked is a review: nothing about its schedule changes and it is logged as

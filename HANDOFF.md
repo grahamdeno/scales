@@ -41,7 +41,7 @@ read, never written or deleted.
 
 ## Where things stand (31 October 2026)
 
-- Web app: 2.12.0 (pile rework: skip back in 5 days, 5 avoided a day, longest unseen first, day-seeded shuffle, top-up and Keep going are real visits). Before it, 2.11.2. Settings is grouped cards (also Sets and Import), the daily pile is 30 with Keep going,
+- Web app: 2.13.0 (calm library: one-line rows, age, grouped by added; Edit history line; Backups page; footer on one line; + New only in the library; Help updated). Before it, 2.12.0 (pile rework: skip back in 5 days, 5 avoided a day, longest unseen first, day-seeded shuffle, top-up and Keep going are real visits). Before it, 2.11.2. Settings is grouped cards (also Sets and Import), the daily pile is 30 with Keep going,
   Appearance (Automatic, Light, Dark; the control shows only in builds from 38), telemetry on the phone only, and a small
   footer in Settings ("Your thoughts stay on your phone." with the Pistachio icon).
 - Website (`site/`): redesigned and live (real screenshots in Light and Dark, Sets, Support and Privacy updated). Check it
