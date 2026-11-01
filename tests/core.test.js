@@ -766,3 +766,28 @@ test("176 thoughts, mostly skipped: two weeks see all of them and no day repeats
   assert.equal(ever.size, 176);
   for (let d = 1; d < days.length; d++) assert.equal(days[d].filter((id) => days[d - 1].includes(id)).length, 0, "day " + d + " repeats yesterday");
 });
+
+// ---- 2.13.0: the library and the thought's history ----
+test("ageLabel: Today, days, weeks, months, years (2.13.0)", () => {
+  const n = new Date("2026-11-01T12:00:00"), ago = (d) => new Date(n.getTime() - d * 86400000).toISOString();
+  assert.deepEqual([0, 1, 13, 14, 59, 60, 364, 365].map((d) => N.ageLabel(ago(d), n)), ["Today", "1d", "13d", "2w", "8w", "2mo", "12mo", "1y"]);
+  assert.equal(N.ageLabel("not a date", n), "Today");
+});
+
+test("groupByAdded: This week, This month, Earlier, newest first, empty groups left out (2.13.0)", () => {
+  const n = new Date("2026-11-01T12:00:00"), ago = (d) => new Date(n.getTime() - d * 86400000).toISOString();
+  const g = N.groupByAdded([{ id: "a", created: ago(40) }, { id: "b", created: ago(2) }, { id: "c", created: ago(1) }, { id: "d", created: ago(90) }], n);
+  assert.deepEqual(g.map((x) => x.name), ["This week", "Earlier"]);
+  assert.deepEqual(g[0].items.map((t) => t.id), ["c", "b"]);
+  assert.deepEqual(g[1].items.map((t) => t.id), ["a", "d"]);
+});
+
+test("historyLine: age and how it has gone over the last 10 real visits (2.13.0)", () => {
+  const n = new Date("2026-11-01T12:00:00"), ago = (d) => new Date(n.getTime() - d * 86400000).toISOString();
+  const v = (k) => ({ kind: k });
+  assert.equal(N.historyLine({ created: ago(0), visits: [] }, n), "Added today · not met yet");
+  assert.equal(N.historyLine({ created: ago(1), visits: [v("seen")] }, n), "Added yesterday · met once, never skipped");
+  assert.equal(N.historyLine({ created: ago(5), visits: [v("skipped")] }, n), "Added 5 days ago · skipped the last time");
+  const many = Array.from({ length: 14 }, (_, i) => v(i < 6 ? "thought" : "skipped")).concat([v("review"), {}]);
+  assert.equal(N.historyLine({ created: ago(41), visits: many }, n), "Added 41 days ago · skipped 8 of the last 10 times", "reviews and blanks don't count; only the last 10");
+});

@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.12.0";
+  var VERSION = "2.13.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -595,7 +595,47 @@
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
 
-  var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
+  // ---- The library and the thought's history (2.13.0) ----
+  // Whole days since it was added, by Scales days (a day starts at 4 AM). Unknown or future: 0.
+  function ageDays(created, now) {
+    var ms = Date.parse(created); if (!isFinite(ms)) return 0;
+    var a = dayKey(new Date(ms)).split("-"), b = dayKey(now).split("-");
+    var d = Math.round((Date.UTC(+b[0], +b[1] - 1, +b[2]) - Date.UTC(+a[0], +a[1] - 1, +a[2])) / 86400000);
+    return Math.max(0, d);
+  }
+  // Short age for a list row: Today, 3d, 5w, 4mo, 2y.
+  function ageLabel(created, now) {
+    var d = ageDays(created, now);
+    if (d < 1) return "Today";
+    if (d < 14) return d + "d";
+    if (d < 60) return Math.floor(d / 7) + "w";
+    if (d < 365) return Math.floor(d / 30) + "mo";
+    return Math.floor(d / 365) + "y";
+  }
+  // Which group a thought sits in, by when it was added: the order people remember their own notes in.
+  var ADDED_GROUPS = ["This week", "This month", "Earlier"];
+  function addedGroup(created, now) { var d = ageDays(created, now); return d < 7 ? ADDED_GROUPS[0] : d < 30 ? ADDED_GROUPS[1] : ADDED_GROUPS[2]; }
+  // Newest first, split into the groups above; empty groups left out. Returns [{ name, items }].
+  function groupByAdded(thoughts, now) {
+    var by = {};
+    thoughts.slice().sort(function (a, b) { return a.created < b.created ? 1 : a.created > b.created ? -1 : 0; })
+      .forEach(function (t) { var g = addedGroup(t.created, now); (by[g] = by[g] || []).push(t); });
+    return ADDED_GROUPS.filter(function (g) { return by[g]; }).map(function (g) { return { name: g, items: by[g] }; });
+  }
+  // One quiet line for Edit: how old it is and how it has gone lately.
+  // "Added 41 days ago · skipped 6 of the last 8 times". Lately is the last 10 real visits.
+  function historyLine(t, now) {
+    var d = ageDays(t.created, now);
+    var added = d < 1 ? "Added today" : d === 1 ? "Added yesterday" : "Added " + d + " days ago";
+    var real = (t.visits || []).filter(function (v) { return v && (v.kind === "skipped" || v.kind === "seen" || v.kind === "thought" || v.kind === "worked"); }).slice(-10);
+    if (!real.length) return added + " \u00b7 not met yet";
+    var sk = real.filter(function (v) { return v.kind === "skipped"; }).length;
+    var times = real.length === 1 ? "time" : "times";
+    if (!sk) return added + " \u00b7 " + (real.length === 1 ? "met once" : "met " + real.length + " times") + ", never skipped";
+    return added + " \u00b7 skipped " + (real.length === 1 ? "the last time" : sk + " of the last " + real.length + " " + times);
+  }
+
+  var api = { VERSION: VERSION, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
     make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
