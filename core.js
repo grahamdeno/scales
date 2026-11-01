@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.13.0";
+  var VERSION = "2.14.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -635,7 +635,21 @@
     return added + " \u00b7 skipped " + (real.length === 1 ? "the last time" : sk + " of the last " + real.length + " " + times);
   }
 
-  var api = { VERSION: VERSION, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
+  // One quiet line on the reading screen (2.14.0), shown only when it says something; otherwise "".
+  // Avoided: 3 or more skips in the last 5 real visits. Untouched: here 60 days or more and never sat with
+  // (no visit of 30 s or more, no edit). Avoided wins when both hold.
+  var NUDGE_SKIPS = 3, NUDGE_LOOK = 5, NUDGE_DAYS = 60;
+  function nudgeLine(t, now) {
+    var real = (t.visits || []).filter(function (v) { return v && (v.kind === "skipped" || v.kind === "seen" || v.kind === "thought" || v.kind === "worked"); });
+    var last = real.slice(-NUDGE_LOOK), sk = last.filter(function (v) { return v.kind === "skipped"; }).length;
+    if (sk >= NUDGE_SKIPS) return "Skipped " + sk + " of the last " + last.length + " times";
+    var sat = (t.thinks || 0) > 0 || (t.works || 0) > 0 || real.some(function (v) { return v.kind === "thought" || v.kind === "worked"; });
+    var d = ageDays(t.created, now);
+    if (!sat && d >= NUDGE_DAYS) return "Here " + d + " days, never sat with";
+    return "";
+  }
+
+  var api = { VERSION: VERSION, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
     make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };

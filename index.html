@@ -77,6 +77,8 @@ a { color: inherit; text-decoration: none; }
 /* Who said it (2.3.0): under the thought, quiet, like the note. */
 #by { margin: 12px 0 0; font-size: 15px; font-weight: 500; color: var(--ground-muted); overflow-wrap: anywhere; }
 #note { margin: 18px 0 0; font-size: 16px; line-height: 1.45; color: var(--ground-muted); white-space: pre-wrap; }
+/* 2.14.0: shown only when the thought is being avoided or has sat untouched; small and faded so it never competes. */
+#nudge { margin: 18px 0 0; font-size: 13px; line-height: 1.4; color: var(--ground-muted); opacity: .8; }
 .hint { position: absolute; left: 0; right: 0; margin: 0; text-align: center; font-size: 15px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .12s; }
 #hintUp { top: calc(var(--top) + 76px); }
 #hintDown { bottom: calc(var(--strip) + 68px); }
@@ -315,6 +317,7 @@ textarea::placeholder { color: var(--plum-faint); }
       <p id="words"></p>
       <p id="by" hidden></p>
       <p id="note" hidden></p>
+      <p id="nudge" hidden></p>
     </div>
   </div>
   <div id="empty" hidden><h1 id="emptyHead">That's all for today.</h1><p id="emptySub"></p>
@@ -510,8 +513,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.13.0"></script>
-<script src="sets.js?v=2.13.0"></script>
+<script src="core.js?v=2.14.0"></script>
+<script src="sets.js?v=2.14.0"></script>
 <script>
 (function () {
   "use strict";
@@ -706,6 +709,7 @@ textarea::placeholder { color: var(--plum-faint); }
     w.style.transition = "none"; w.style.fontWeight = C.weight(t); void w.offsetWidth; w.style.transition = "";
     $("by").hidden = !t.by; $("by").textContent = t.by || "";
     $("note").hidden = !t.note; $("note").textContent = t.note || "";
+    var nudge = C.nudgeLine(t, now()); $("nudge").hidden = !nudge; $("nudge").textContent = nudge;
     $("carry").classList.remove("arrive"); if (arrive) { void $("carry").offsetWidth; $("carry").classList.add("arrive"); }
     clockOn();
     if (!ui.nudged) setTimeout(function () {

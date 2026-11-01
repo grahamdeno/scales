@@ -17,6 +17,9 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **The quiet line (2.14.0):** on the reading screen, one small faded line under the thought, only when it says
+  something: "Skipped 4 of the last 5 times" (3 or more skips in the last 5 visits), or "Here 90 days, never sat with"
+  (60 days or more with no visit of 30 s or more and no edit). Otherwise nothing.
 - **Edit history (2.13.0):** one quiet line under the thought: "Added 41 days ago · skipped 6 of the last 8 times"
   (the last 10 real visits).
 - **Backups (2.13.0):** Settings has one Backups row ("Automatic" in the iPhone app) opening a page with how saving
