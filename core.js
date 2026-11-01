@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.11.2";
+  var VERSION = "2.12.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -33,10 +33,13 @@
     return "seen";
   }
 
-  // When it comes back. Skipping brings it back sooner; thinking about it or working on it pushes it further out
-  // each time, so a thought you have clearly absorbed fades in how often it shows. It never leaves on its own.
+  // When it comes back. A skip brings it back in 5 days (2.12.0; was 1, which let yesterday's skips fill every day);
+  // thinking about it or working on it pushes it further out each time, so a thought you have clearly absorbed fades
+  // in how often it shows. It never leaves on its own. Being due only makes a thought eligible: the day's pile decides
+  // the order (see nextCard).
+  var SKIP_GAP = 5;
   function nextGap(t, kind) {
-    if (kind === "skipped") return 1;
+    if (kind === "skipped") return SKIP_GAP;
     if (kind === "seen") return 2;
     if (kind === "thought") return Math.min(2 + 2 * (t.thinks || 0), 21);
     if (kind === "worked") return Math.min(4 + 3 * (t.works || 0), 30);
@@ -99,45 +102,82 @@
     return d.length ? d[0] : null;
   }
 
-  // ---- Today's pile (2.9.0) ----
-  // A day is up to DAY_SIZE cards. First what is due, with never-met thoughts (imports, sets, Scales 1, new ones you wrote)
-  // spread evenly through it instead of bunched at the end. If that runs out before DAY_SIZE, the pile tops up with the
-  // thoughts coming back soonest, as reviews: a look that never moves a schedule. At DAY_SIZE the day stops; Keep going
-  // carries on (anything still due first, as a real visit, then reviews) until everything has been seen once today.
+  // ---- Today's pile (2.12.0; first built 2.9.0) ----
+  // Up to DAY_SIZE cards a day, chosen so the whole collection comes round instead of the same cards every day:
+  // - "avoid": up to AVOID_PER_DAY of the most-skipped thoughts that are due, kept on purpose so avoidance still pulls
+  //   a thought back, but can never crowd out the rest;
+  // - "new": never-met thoughts (imports, sets, Scales 1, new ones you wrote), still arriving a few a day;
+  // - "due": everything else that is due, the one you have gone longest without seeing first.
+  // Avoided and new cards are spread evenly through the day, never two of a kind in a row. Ties are broken by a shuffle
+  // seeded with the day, so the order holds all day and changes from one day to the next.
+  // If what is due runs out first, the day tops up with the longest unseen of the rest ("extra"). At DAY_SIZE the day
+  // stops; Keep going carries on the same way ("more") until everything has been seen once today.
+  // Every card here is a real visit and moves its schedule (2.12.0; top-up and Keep going used to be reviews that moved
+  // nothing, so the same cards waited at the front the next day). Only a thought opened from the library is a review.
   // Every visit is logged with its pile and its place in the session, so the size can be judged from use (12 November).
-  var DAY_SIZE = 30, SESSION_GAP_MS = 5 * 60000;
+  var DAY_SIZE = 30, AVOID_PER_DAY = 5, SESSION_GAP_MS = 5 * 60000;
   function isNew(t) { return !t.seen && !(t.visits && t.visits.length) && !t.skips; }
   function todayLog(log, now) {
     var today = dayKey(now);
     return (log || []).filter(function (e) { return !e.undone && e.at && dayKey(new Date(e.at)) === today; });
   }
+  // A number from the thought's id and the day (FNV-1a): the same all day, different the next.
+  function shuffleKey(id, day) {
+    var h = 2166136261, s = day + "|" + String(id);
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    // Final mix (MurmurHash3 fmix32) so a one-letter change in the day reorders everything, not just the low bits.
+    h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
+    return h >>> 0;
+  }
+  // The day it was last seen, or "" (longest ago) if never or unreadable. By day, not by the minute, so thoughts met
+  // in one sitting don't come back in the order they were met.
+  function seenDay(t) { var ms = t.seen ? Date.parse(t.seen) : NaN; return isFinite(ms) ? dayKey(new Date(ms)) : ""; }
+  function byUnseen(day) {
+    return function (a, b) {
+      var x = seenDay(a), y = seenDay(b);
+      return x < y ? -1 : x > y ? 1 : shuffleKey(a.id, day) - shuffleKey(b.id, day);
+    };
+  }
+  function byAvoided(day) {
+    var u = byUnseen(day);
+    return function (a, b) { return (b.skips || 0) - (a.skips || 0) || u(a, b); };
+  }
+  // Arriving order for never-met thoughts: by the day they were due, then as they were added (a set keeps its order).
+  function byArrival(a, b) { return a.due < b.due ? -1 : a.due > b.due ? 1 : a.created < b.created ? -1 : a.created > b.created ? 1 : 0; }
   function nextCard(store, log, now, notId, more) {
-    var tl = todayLog(log, now), seen = {};
+    var tl = todayLog(log, now), seen = {}, today = dayKey(now);
     tl.forEach(function (e) { seen[e.id] = true; });
     if (notId) seen[notId] = true;
     if (tl.length >= DAY_SIZE && !more) return { card: null, why: "limit", shown: tl.length };
-    var due = dueToday(store, now).filter(function (t) { return t.id !== notId; });
-    var fresh = due.filter(isNew);
+    var due = inRotation(store).filter(function (t) { return t.due <= today && !seen[t.id]; });
+    var fresh = due.filter(isNew).sort(byArrival);
     var old = due.filter(function (t) { return !isNew(t); });
     if (fresh.length || old.length) {
-      var real = tl.filter(function (e) { return e.pile === "due" || e.pile === "new"; });
+      var real = tl.filter(function (e) { return e.pile === "due" || e.pile === "new" || e.pile === "avoid"; });
       var newShown = real.filter(function (e) { return e.pile === "new"; }).length;
-      var last = tl[tl.length - 1], useNew;
-      if (!old.length) useNew = true;
-      else if (!fresh.length) useNew = false;
-      else if (last && last.pile === "new") useNew = false;
-      else {
-        // Evenly spaced: with N new in a day of T real cards, the k-th new one sits at about k*(T+1)/(N+1).
-        var N = newShown + fresh.length, T = real.length + fresh.length + old.length, at = real.length + 1;
-        useNew = newShown < Math.floor(at * (N + 1) / (T + 1));
-      }
-      return { card: useNew ? fresh[0] : old[0], pile: useNew ? "new" : "due", review: false, shown: tl.length };
+      var avShown = real.filter(function (e) { return e.pile === "avoid"; }).length;
+      var avoid = old.filter(function (t) { return (t.skips || 0) > 0; }).sort(byAvoided(today)).slice(0, Math.max(0, AVOID_PER_DAY - avShown));
+      var inAvoid = {}; avoid.forEach(function (t) { inAvoid[t.id] = true; });
+      var rest = old.filter(function (t) { return !inAvoid[t.id]; }).sort(byUnseen(today));
+      var last = tl[tl.length - 1], lastPile = last && last.pile;
+      // Spread evenly over what is left of today: with N of a kind in a day of T real cards, the k-th sits at about k*(T+1)/(N+1).
+      var left = fresh.length + avoid.length + rest.length;
+      var room = more ? left : Math.min(left, DAY_SIZE - tl.length);
+      var T = real.length + room, at = real.length + 1;
+      function owed(shown, waiting) { var N = shown + Math.min(waiting, room); return Math.floor(at * (N + 1) / (T + 1)) - shown; }
+      var oweNew = fresh.length && lastPile !== "new" ? owed(newShown, fresh.length) : 0;
+      var oweAv = avoid.length && lastPile !== "avoid" ? owed(avShown, avoid.length) : 0;
+      var pile;
+      if (oweNew > 0 || oweAv > 0) pile = oweAv > oweNew ? "avoid" : "new";
+      else if (rest.length) pile = "due";
+      else if (fresh.length && (lastPile !== "new" || !avoid.length)) pile = "new";
+      else pile = avoid.length ? "avoid" : "new";
+      var card = pile === "new" ? fresh[0] : pile === "avoid" ? avoid[0] : rest[0];
+      return { card: card, pile: pile, review: false, shown: tl.length };
     }
-    var pool = inRotation(store).filter(function (t) { return !seen[t.id]; }).sort(function (a, b) {
-      return a.due < b.due ? -1 : a.due > b.due ? 1 : (b.skips || 0) - (a.skips || 0) || (a.created < b.created ? -1 : 1);
-    });
+    var pool = inRotation(store).filter(function (t) { return !seen[t.id]; }).sort(byUnseen(today));
     if (!pool.length) return { card: null, why: "done", shown: tl.length };
-    return { card: pool[0], pile: more ? "more" : "extra", review: true, shown: tl.length };
+    return { card: pool[0], pile: more ? "more" : "extra", review: false, shown: tl.length };
   }
   // Which card of the session this is: a gap of more than 5 minutes since the last visit ended starts a new session.
   function sessionPos(log, nowMs, ms) {
@@ -555,7 +595,7 @@
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
 
-  var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS,
+  var api = { VERSION: VERSION, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
     make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };

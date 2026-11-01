@@ -29,13 +29,14 @@ console.log("Visits " + visits.length + (vd.length ? " (" + vd[0].slice(0, 10) +
   ", events " + events.length + (ed.length ? " (" + ed[0].slice(0, 10) + " to " + ed[ed.length - 1].slice(0, 10) + ")" : "") + ", thoughts " + thoughts.length);
 
 // 1. Timing lines: real visits only (reviews never moved a schedule, so they never set the rule, but are shown beside).
+// Before 2.12.0 top-up and Keep going were reviews; from 2.12.0 only library opens are.
 h("1. Time on a card (20 s skip line, 30 s thought line)");
 const real = visits.filter((v) => v.kind !== "review" && !v.idle && !v.worked);
 const rev = visits.filter((v) => v.kind === "review" && !v.idle && !v.worked);
 const ms = real.map((v) => v.ms);
 row("", "count", "p10", "p25", "median", "p75", "p90");
 row("real visits", ms.length, ...[0.1, 0.25, 0.5, 0.75, 0.9].map((p) => sec(pct(ms, p)) + "s"));
-row("reviews (top-up, Keep going)", rev.length, ...[0.1, 0.25, 0.5, 0.75, 0.9].map((p) => sec(pct(rev.map((v) => v.ms), p)) + "s"));
+row("reviews (library; top-up and Keep going before 2.12.0)", rev.length, ...[0.1, 0.25, 0.5, 0.75, 0.9].map((p) => sec(pct(rev.map((v) => v.ms), p)) + "s"));
 const buckets = [5, 10, 15, 20, 25, 30, 45, 60, 120, Infinity];
 console.log("  Spread of real visits:");
 let lo = 0; buckets.forEach((b) => { const n = ms.filter((x) => x >= lo * 1000 && x < b * 1000).length; console.log("    " + (lo + "-" + (b === Infinity ? "" : b) + "s").padEnd(10) + String(n).padStart(5) + "  " + "#".repeat(Math.round(60 * n / Math.max(1, ms.length)))); lo = b; });
@@ -64,7 +65,7 @@ else {
     const th = g.filter((v) => (v.cls || v.kind) === "thought" || (v.cls || v.kind) === "worked").length;
     row("    cards " + a + "-" + (b > 1e8 ? "" : b), g.length, sec(median(g.map((v) => v.ms))) + "s", Math.round(100 * th / Math.max(1, g.length)) + "% thought");
   });
-  console.log("  By pile (due, new, extra = top-up, more = Keep going, review, picked):");
+  console.log("  By pile (due, new, avoid = most skipped, extra = top-up, more = Keep going, review, picked):");
   Object.entries(count(sized, (v) => v.pile || "?")).forEach(([p, n]) => {
     const g = sized.filter((v) => (v.pile || "?") === p && !v.idle);
     const th = g.filter((v) => ["thought", "worked"].includes(v.cls || v.kind)).length;
@@ -119,6 +120,21 @@ const toAway = away.filter((t) => t.created).map((t) => (Date.parse(t.away) - Da
 row("put away", away.length, "median days to put away " + Math.round(median(toAway)));
 row("thought about (thinks)", "0: " + thoughts.filter((t) => !t.thinks).length, "1-2: " + thoughts.filter((t) => t.thinks >= 1 && t.thinks <= 2).length, "3+: " + thoughts.filter((t) => t.thinks >= 3).length);
 row("worked on (works)", thoughts.filter((t) => t.works).length, "skipped 3+ times " + thoughts.filter((t) => (t.skips || 0) >= 3).length, "with a note " + thoughts.filter((t) => t.note).length);
+
+// 5b. Coverage (2.12.0): does the whole rotation come round, and do days stop repeating?
+h("5b. Coverage: how much of the rotation comes round");
+const inRot = thoughts.filter((t) => !t.away).length;
+const deck = visits.filter((v) => v.pile && v.pile !== "review" && v.pile !== "picked");
+const byDay = {}; deck.forEach((v) => { (byDay[dayOf(v.at)] = byDay[dayOf(v.at)] || new Set()).add(v.id); });
+const dayList = Object.keys(byDay).sort();
+const lastN = (n) => { const ids = new Set(); dayList.slice(-n).forEach((d) => byDay[d].forEach((id) => ids.add(id))); return ids.size; };
+row("in rotation now", inRot, "seen last 7 days " + lastN(7), "last 14 days " + lastN(14));
+const rep = dayList.slice(1).map((d, i) => [...byDay[d]].filter((id) => byDay[dayList[i]].has(id)).length);
+if (rep.length) row("shown again the next day", "median " + median(rep), "max " + Math.max(...rep), "days " + rep.length);
+const lastSeen = {}, gaps = [];
+deck.slice().sort((x, y) => (x.at < y.at ? -1 : 1)).forEach((v) => { const d = Date.parse(dayOf(v.at)); if (lastSeen[v.id] != null && d > lastSeen[v.id]) gaps.push((d - lastSeen[v.id]) / 86400000); lastSeen[v.id] = d; });
+if (gaps.length) row("days between showings", "median " + median(gaps), "p90 " + pct(gaps, 0.9), "max " + Math.max(...gaps));
+console.log("  Compare before and after 2.12.0 with --since 2026-11-02.");
 
 // 6. Health.
 h("6. Health: errors, storage, load time, versions");

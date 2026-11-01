@@ -489,8 +489,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.11.2"></script>
-<script src="sets.js?v=2.11.2"></script>
+<script src="core.js?v=2.12.0"></script>
+<script src="sets.js?v=2.12.0"></script>
 <script>
 (function () {
   "use strict";
@@ -650,7 +650,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function sizeClass(text) { var n = text.length + 30 * (text.match(/\n/g) || []).length; return n > 220 ? "vlong" : n > 90 ? "long" : ""; }
   // More than one empty line in a row shows as one.
   function shown(text) { return String(text).replace(/[ \t]*\n[ \t]*/g, "\n").replace(/\n{3,}/g, "\n\n"); }
-  // Today's pile (2.9.0): the next card, which pile it is from, and whether it is a review.
+  // Today's pile (2.12.0): the next card and which pile it is from (due, new, avoid, extra, more). Never a review now.
   function more() { return ui.more === C.dayKey(now()); }
   function pick(notId) {
     var r = C.nextCard(store, lsGet(KEY_LOG, []), now(), notId, more());
@@ -824,9 +824,10 @@ textarea::placeholder { color: var(--plum-faint); }
     ui.cur = null; saveUi(); setMode("meet"); renderMeet(true);
   };
   $("newBtn").onclick = function () { openWrite(false); };
-  // After "That's all for today": three quiet ways to carry on. None of them changes when anything comes back.
+  // After "That's all for today": three quiet ways to carry on.
   $("earlyBtn").onclick = function () {
     // Keep going (2.9.0): past today's size, the pile carries on until everything has been seen once today.
+    // From 2.12.0 these are real visits, so going further today means different thoughts tomorrow.
     ui.more = C.dayKey(now()); pick(); if (!ui.cur) { renderMeet(false); return; } haptic("tick"); renderMeet(true);
   };
   $("earlyWrite").onclick = function () { openWrite(false); };

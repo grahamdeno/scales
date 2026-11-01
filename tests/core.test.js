@@ -27,8 +27,8 @@ test("classify: editing or noting wins; a long idle gap is only seen", () => {
   assert.equal(N.classify(2000, false, true), "seen");
 });
 
-test("nextGap: skipped 1, seen 2, thought 2+2n capped at 21, worked 4+3n capped at 30", () => {
-  assert.equal(N.nextGap({}, "skipped"), 1);
+test("nextGap: skipped 5, seen 2, thought 2+2n capped at 21, worked 4+3n capped at 30", () => {
+  assert.equal(N.nextGap({}, "skipped"), 5, "2.12.0: a skip comes back in 5 days");
   assert.equal(N.nextGap({}, "seen"), 2);
   assert.equal(N.nextGap({ thinks: 0 }, "thought"), 2);
   assert.equal(N.nextGap({ thinks: 3 }, "thought"), 8);
@@ -43,7 +43,7 @@ test("recordVisit: counts, due date, and engaging works off one skip", () => {
   const t = N.make("Rest is part of the work.", now);
   assert.equal(N.recordVisit(t, 3000, false, false, now), "skipped");
   assert.equal(t.skips, 1);
-  assert.equal(t.due, "2026-10-30");
+  assert.equal(t.due, "2026-11-03");
   assert.equal(N.recordVisit(t, 31000, false, false, now), "thought");
   assert.equal(t.thinks, 1);
   assert.equal(t.skips, 0, "thinking about it works off the skip");
@@ -606,16 +606,18 @@ test("the pile spreads new thoughts through the due ones, never two in a row (2.
   for (let i = 1; i < at.length; i++) assert.ok(at[i] - at[i - 1] >= 3, "spread out: " + at);
 });
 
-test("a light day tops up to 30 with reviews, then stops (2.9.0)", () => {
+test("a light day tops up to 30 with the longest unseen, as real visits, then stops (2.12.0)", () => {
   const { now, st } = pileStore(4, 2, 40);
+  st.l7.seen = "2026-09-01T00:00:00.000Z";
   const o = walk(st, now, 40);
   assert.equal(o.slice(0, 6).filter((x) => /^(due|new)/.test(x)).length, 6, "real cards first: " + o.slice(0, 6));
-  assert.ok(o.slice(6, 30).every((x) => x.startsWith("extra:")), "then reviews");
+  assert.ok(o.slice(6, 30).every((x) => x.startsWith("extra:")), "then the top-up");
+  assert.equal(o[6], "extra:l7", "the top-up starts with the one unseen longest");
   assert.equal(o[30], "limit");
-  assert.equal(st.l0.due, "2026-11-03", "a review never moves a schedule");
+  assert.equal(st.l7.due, "2026-11-05", "a top-up card is a real visit and moves its schedule");
 });
 
-test("Keep going: real cards first, then reviews, until everything is seen once today (2.9.0)", () => {
+test("Keep going: due cards first, then the rest as real visits, until everything is seen once today (2.12.0)", () => {
   const { now, st } = pileStore(35, 0, 3);
   const log = [];
   for (let i = 0; i < 30; i++) { const r = N.nextCard(st, log, now); log.push({ at: now.toISOString(), id: r.card.id, pile: r.pile }); st[r.card.id].due = "2026-11-05"; }
@@ -624,8 +626,9 @@ test("Keep going: real cards first, then reviews, until everything is seen once 
   for (let i = 0; i < 20; i++) {
     const r = N.nextCard(st, log, now, null, true);
     if (!r.card) { order.push(r.why); break; }
+    assert.equal(r.review, false, "Keep going is never a review");
     order.push(r.pile); log.push({ at: now.toISOString(), id: r.card.id, pile: r.pile });
-    if (!r.review) st[r.card.id].due = "2026-11-05";
+    st[r.card.id].due = "2026-11-05";
   }
   assert.deepEqual(order, ["due", "due", "due", "due", "due", "more", "more", "more", "done"]);
 });
@@ -696,4 +699,70 @@ test("import, each line: a bulleted list of short thoughts stays a list (2.11.0)
 test("import, each line: a quoted line with a dash-name under it still works (2.11.0)", () => {
   const r = N.parseImport("“Well done is better than well said.”\n- Benjamin Franklin", "lines");
   assert.strictEqual(r.length, 1); assert.strictEqual(r[0].text, "Well done is better than well said."); assert.strictEqual(r[0].by, "Benjamin Franklin");
+});
+
+// ---- 2.12.0: the pile comes round the whole collection ----
+test("the pile goes longest-unseen first, not most skipped first (2.12.0)", () => {
+  const { now, st } = pileStore(40, 0, 0);
+  st.d39.seen = "2026-08-01T00:00:00.000Z"; st.d38.seen = "2026-09-01T00:00:00.000Z";
+  const o = walk(st, now, 2);
+  assert.deepEqual(o, ["due:d39", "due:d38"]);
+});
+
+test("at most 5 avoided cards a day, spread out, most skipped first (2.12.0)", () => {
+  const { now, st } = pileStore(40, 0, 0);
+  for (let i = 0; i < 12; i++) st["d" + i].skips = 1 + (i % 4);
+  const o = walk(st, now, 30);
+  const av = o.map((x, i) => (x.startsWith("avoid") ? i : -1)).filter((i) => i >= 0);
+  assert.equal(av.length, 5, "five avoided: " + o);
+  assert.equal(N.AVOID_PER_DAY, 5);
+  for (let i = 1; i < av.length; i++) assert.ok(av[i] - av[i - 1] >= 3, "spread out: " + av);
+  assert.equal(st[o[av[0]].split(":")[1]].skips, 4, "the first avoided is one of the most skipped");
+  // the other skipped ones are not shut out: they wait their turn among the rest by how long since they were seen
+  assert.ok(o.filter((x) => x.startsWith("due")).length === 25);
+});
+
+test("avoided and new share the day without crowding it (2.12.0)", () => {
+  const { now, st } = pileStore(40, 5, 0);
+  for (let i = 0; i < 10; i++) st["d" + i].skips = 2;
+  const o = walk(st, now, 30);
+  assert.equal(o.filter((x) => x.startsWith("new")).length, 5, "all five new land in today's 30: " + o);
+  assert.equal(o.filter((x) => x.startsWith("avoid")).length, 5);
+  assert.equal(o.filter((x) => x.startsWith("due")).length, 20);
+  for (let i = 1; i < o.length; i++) assert.ok(!(o[i].startsWith("new") && o[i - 1].startsWith("new")) && !(o[i].startsWith("avoid") && o[i - 1].startsWith("avoid")), "never two of a kind in a row: " + o);
+});
+
+test("new thoughts land inside today's 30 even when far more is due (2.12.0)", () => {
+  const { now, st } = pileStore(170, 5, 0);
+  const o = walk(st, now, 30);
+  assert.equal(o.filter((x) => x.startsWith("new")).length, 5, o.join(" "));
+});
+
+test("ties are shuffled by day: steady within a day, different the next (2.12.0)", () => {
+  const { now, st } = pileStore(40, 0, 0);
+  const a = walk(JSON.parse(JSON.stringify(st)), now, 10), b = walk(JSON.parse(JSON.stringify(st)), now, 10);
+  assert.deepEqual(a, b, "same day, same order");
+  const later = new Date(now.getTime() + 86400000);
+  const c = walk(JSON.parse(JSON.stringify(st)), later, 10);
+  assert.notDeepEqual(a, c, "a different day, a different order");
+  assert.notDeepEqual(a.slice(0, 5), ["due:d0", "due:d1", "due:d2", "due:d3", "due:d4"], "not in the order they were added");
+});
+
+test("176 thoughts, mostly skipped: two weeks see all of them and no day repeats the last (2.12.0)", () => {
+  const start = new Date("2026-11-02T12:00:00"), st = {};
+  for (let i = 0; i < 176; i++) st["t" + i] = { id: "t" + i, text: "x" + i, created: new Date(start.getTime() - (176 - i) * 60000).toISOString(), due: N.dayKey(start), away: null, skips: i % 7 ? 0 : 3, thinks: 0, works: 0, seen: "2026-10-25T10:00:00.000Z", visits: [{}] };
+  const log = [], ever = new Set(), days = [];
+  let k = 0;
+  for (let d = 0; d < 14; d++) {
+    const now = new Date(start.getTime() + d * 86400000), ids = [];
+    for (let i = 0; i < 30; i++) {
+      const r = N.nextCard(st, log, now);
+      if (!r.card) break;
+      N.recordVisit(st[r.card.id], (k++ % 10) ? 8000 : 40000, false, false, now);
+      log.push({ at: now.toISOString(), id: r.card.id, pile: r.pile }); ids.push(r.card.id); ever.add(r.card.id);
+    }
+    days.push(ids);
+  }
+  assert.equal(ever.size, 176);
+  for (let d = 1; d < days.length; d++) assert.equal(days[d].filter((id) => days[d - 1].includes(id)).length, 0, "day " + d + " repeats yesterday");
 });

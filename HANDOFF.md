@@ -6,7 +6,7 @@ For a new working session. Read this, then README.md.
 
 Scales 2 (from 2.0.0, October 2026): "One thought at a time." One of the person's own thoughts on a pistachio ground.
 Swipe up to move on, pull down to put it away, tap to edit; both moves undo for 5 s. No verdict buttons: the app reads
-each visit by time (20 s or less skipped, 30 s or more thought about; the 12 November evaluation may move these) and edits, and schedules the return. Nothing leaves
+each visit by time (20 s or less skipped, 30 s or more thought about; the 12 November evaluation may move these) and edits, and schedules the return. A skip comes back in 5 days. The day's pile (2.12.0) takes up to 5 most-skipped, spreads new ones through, and fills the rest longest-unseen first, so the whole collection comes round in about a week. Nothing leaves
 unless the person puts it away. Plum is for when their hand is on it: Write, Edit, the library.
 
 Scales 1 (Skip, Reflect, Lived, the Ledger, voices, AI with Scales Plus) ended at 1.88.0. Its code and release notes are
@@ -41,7 +41,7 @@ read, never written or deleted.
 
 ## Where things stand (31 October 2026)
 
-- Web app: 2.11.2 live. Settings is grouped cards (also Sets and Import), the daily pile is 30 with Keep going,
+- Web app: 2.12.0 (pile rework: skip back in 5 days, 5 avoided a day, longest unseen first, day-seeded shuffle, top-up and Keep going are real visits). Before it, 2.11.2. Settings is grouped cards (also Sets and Import), the daily pile is 30 with Keep going,
   Appearance (Automatic, Light, Dark; the control shows only in builds from 38), telemetry on the phone only, and a small
   footer in Settings ("Your thoughts stay on your phone." with the Pistachio icon).
 - Website (`site/`): redesigned and live (real screenshots in Light and Dark, Sets, Support and Privacy updated). Check it

@@ -36,7 +36,8 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.goto(base + "/");
     await page.waitForSelector("#words:not(:empty)");
     const first = (await page.textContent("#words")).trim();
-    ok(first === "Active thought number 3", tag + "most skipped thought comes first (" + first + ")");
+    // 2.12.0: the most skipped no longer always leads; avoided thoughts are spread through the day (unit tests cover where).
+    ok(/^Active thought number \d+$/.test(first), tag + "an imported thought still in rotation comes first (" + first + ")");
     await page.screenshot({ path: path.join(shots, w + "-1-meet.png") });
     ok(/10\s*$/.test(await page.textContent("#strip")), tag + "strip shows the count of all 10 imported thoughts");
 
@@ -211,12 +212,12 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
       await page.click("#strip"); await page.waitForTimeout(700);
     } else { await page.click("#strip"); await page.waitForTimeout(700); }
     await page.click('#seg [data-view="all"]'); await page.waitForTimeout(200);
-    // 2.9.0: a light day tops up with reviews; at 30 the day stops, and Keep going carries on without moving a schedule
+    // 2.12.0: a light day tops up with the longest unseen as real visits; at 30 the day stops, and Keep going carries on the same way
     const saved = await page.evaluate(() => localStorage.getItem("scales.next.thoughts.v1"));
     const savedLog = await page.evaluate(() => localStorage.getItem("scales.next.log.v1"));
     const soonId = await page.evaluate(() => {
       const o = JSON.parse(localStorage.getItem("scales.next.thoughts.v1")); const ids = Object.keys(o).filter((i) => !o[i].away);
-      ids.forEach((i, n) => { o[i].due = "2099-01-" + String(10 + n).padStart(2, "0"); o[i].skips = 0; o[i].seen = o[i].seen || "2026-01-01T00:00:00.000Z"; });
+      ids.forEach((i, n) => { o[i].due = "2099-01-" + String(10 + n).padStart(2, "0"); o[i].skips = 0; o[i].seen = n === 0 ? "2025-01-01T00:00:00.000Z" : "2026-01-01T00:00:00.000Z"; o[i].visits = (o[i].visits && o[i].visits.length) ? o[i].visits : [{ at: "2026-01-01T00:00:00.000Z", kind: "seen", ms: 9 }]; });
       localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(o));
       localStorage.setItem("scales.next.log.v1", "[]");
       const u = JSON.parse(localStorage.getItem("scales.next.ui.v1")); u.cur = null; u.review = null; u.more = null; localStorage.setItem("scales.next.ui.v1", JSON.stringify(u));
@@ -224,11 +225,11 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     });
     await page.reload(); await page.waitForTimeout(900);
     const extra0 = await readT(soonId);
-    ok((await page.textContent("#words")).trim() === extra0.text && (await readUi()).review === soonId && (await readUi()).pile === "extra", tag + "nothing due: the day tops up with the one coming back soonest, as a review");
+    ok((await page.textContent("#words")).trim() === extra0.text && !(await readUi()).review && (await readUi()).pile === "extra", tag + "nothing due: the day tops up with the one unseen longest, not as a review");
     await page.waitForTimeout(1200); await page.keyboard.press("ArrowUp"); await page.waitForTimeout(700);
     const extra1 = await readT(soonId), lgx = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.log.v1")));
-    ok(extra1.due === extra0.due && extra1.skips === extra0.skips && (extra1.visits || []).length === (extra0.visits || []).length, tag + "a top-up card leaves its schedule as it was");
-    ok(lgx.length === 1 && lgx[0].pile === "extra" && lgx[0].kind === "review" && lgx[0].n === 1 && lgx[0].size === 30 && typeof lgx[0].cls === "string", tag + "the visit is logged with its pile, place, day size and how the time reads (" + JSON.stringify(lgx[0]) + ")");
+    ok(extra1.due !== extra0.due && (extra1.visits || []).length === (extra0.visits || []).length + 1, tag + "a top-up card is a real visit: its schedule moves");
+    ok(lgx.length === 1 && lgx[0].pile === "extra" && lgx[0].kind !== "review" && lgx[0].n === 1 && lgx[0].size === 30 && typeof lgx[0].cls === "string", tag + "the visit is logged with its pile, place, day size and how the time reads (" + JSON.stringify(lgx[0]) + ")");
     ok(!(await page.locator("#empty").isVisible()) && (await readUi()).pile === "extra", tag + "the next top-up follows straight on, no closing screen");
     // thirty seen today: the day stops
     await page.evaluate(() => {
@@ -240,12 +241,12 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.reload(); await page.waitForTimeout(900);
     ok(await page.locator("#empty").isVisible() && /That's 30 for today/.test(await page.textContent("#empty")), tag + "after 30 the closing screen says so");
     ok(await page.locator("#earlyBtn").isVisible() && /Keep going/.test(await page.textContent("#earlyBtn")) && await page.locator("#earlyWrite").isVisible() && await page.locator("#earlyMarked").isVisible() && /Bookmarked · \d/.test(await page.textContent("#earlyMarked")), tag + "Keep going, Write one and Bookmarked are offered");
-    const early0 = await readT(soonId);
     await page.click("#earlyBtn"); await page.waitForTimeout(700);
-    ok((await page.textContent("#words")).trim() === early0.text && (await readUi()).review === soonId && (await readUi()).pile === "more", tag + "Keep going brings the one coming back soonest, as a review");
+    const kgId = (await readUi()).cur, kg0 = await readT(kgId);
+    ok((await page.textContent("#words")).trim() === kg0.text && !(await readUi()).review && (await readUi()).pile === "more", tag + "Keep going brings a thought straight on, not as a review");
     await page.waitForTimeout(400); await page.keyboard.press("ArrowUp"); await page.waitForTimeout(700);
-    const early1 = await readT(soonId);
-    ok(early1.due === early0.due && early1.skips === early0.skips && early1.thinks === early0.thinks && (early1.visits || []).length === (early0.visits || []).length, tag + "keep-going cards leave due, skips, thinks and visits as they were");
+    const kg1 = await readT(kgId);
+    ok((kg1.visits || []).length === (kg0.visits || []).length + 1 && kg1.due !== kg0.due, tag + "a Keep going card is a real visit: its schedule moves");
     ok(!(await page.locator("#empty").isVisible()) && (await readUi()).pile === "more", tag + "Keep going carries on card after card");
     await page.evaluate(() => { const u = JSON.parse(localStorage.getItem("scales.next.ui.v1")); u.cur = null; u.review = null; u.more = null; localStorage.setItem("scales.next.ui.v1", JSON.stringify(u)); Storage.prototype.setItem = function () {}; });
     await page.reload(); await page.waitForTimeout(900);
@@ -265,8 +266,8 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Back up/.test(await page.textContent("#settings")) && /Restore from a backup/.test(await page.textContent("#settings")), tag + "Settings has Back up and Restore");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.11\.2/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/^2\.11\.2/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.12\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/^2\.12\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     ok(await page.locator("#settings .made").count() === 1 && (await page.textContent("#settings .made")).trim() === "Your thoughts stay on your phone." && /pistachio\.png$/.test(await page.getAttribute("#settings .made img", "src")), tag + "Settings ends with the one-color icon and one line");
     ok(await page.evaluate(() => { const i = document.querySelector("#settings .made img"); return i.getBoundingClientRect().width <= 28 && i.getBoundingClientRect().width < 60; }), tag + "the footer icon is smaller than the icon choices");
     await page.screenshot({ path: path.join(shots, w + "-8-settings.png") });
@@ -274,7 +275,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
     ok(Array.isArray(bk.events) && bk.events.length > 0, tag + "Back up carries the event log");
-    ok(bk.app === "scales" && bk.version === "2.11.2" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.12.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -658,7 +659,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop() || {})).value === "", tag + "the iPhone app hears Automatic at start");
     await page.evaluate(() => document.getElementById("libGear").click()); await page.waitForTimeout(500);
     ok(await page.locator("#lookSec").isVisible() && await page.getAttribute('[data-look="auto"]', "aria-checked") === "true", tag + "Settings offers Appearance with Automatic on");
-    ok(/^2\.11\.2 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
+    ok(/^2\.12\.0 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
     const other = scheme === "dark" ? "light" : "dark";
     await page.click('[data-look="' + other + '"]'); await page.waitForTimeout(300);
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop())).value === other, tag + "choosing " + other + " tells the iPhone app");
@@ -689,7 +690,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const kinds = new Set(ev.map((e) => e.e));
     ok(["session", "boot", "snapshot", "tap", "screen", "session_end"].every((k) => kinds.has(k)), "telemetry: session, boot, snapshot, taps, screens and session end are logged (" + [...kinds].join(",") + ")");
     const boot = ev.find((e) => e.e === "boot"), snap = ev.find((e) => e.e === "snapshot");
-    ok(boot && boot.v === "2.11.2" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
+    ok(boot && boot.v === "2.12.0" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
     ok(ev.some((e) => e.e === "tap" && e.id === "libGear") && ev.some((e) => e.e === "screen" && e.to === "help"), "telemetry: a tap is named by its button, and the screen it opened is logged");
     const sid = ev.find((e) => e.e === "session").s;
     ok(ev.filter((e) => e.e !== "session").every((e) => e.s === sid), "telemetry: every event carries its session");
