@@ -30,11 +30,15 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
 - **Telemetry (2.10.0):** an event log on the phone only (sessions, screens, taps, writes, edits, errors, load time and a
   daily snapshot of the collection), carried in the backup. No thought text is ever in it. `scripts/evaluate.js` reads a
   backup and prints the evaluation in `docs/evaluation-plan.md`.
-- **Today's pile (2.9.0):** a day is up to 30 cards. What is due comes first, with never-met thoughts (still arriving
-  five a day) spread evenly through it, never two in a row. A light day tops up to 30 with the thoughts coming back
-  soonest, as reviews that never move a schedule. At 30 the day stops; Keep going carries on (anything still due as a
-  real visit, then reviews) until everything has been seen once today. Each visit logs its pile, its place in the
-  session, the day size and how its time reads, so the size can be judged from use.
+- **Today's pile (2.9.0, reworked 2.12.0):** a day is up to 30 cards, chosen so the whole collection comes round
+  instead of the same cards every day. Of what is due: up to 5 of the most skipped (pile `avoid`), never-met thoughts
+  still arriving five a day (`new`), and the rest (`due`) with the one unseen longest first. Avoided and new cards are
+  spread evenly through the day, never two of a kind in a row. Ties are shuffled with a seed from the day, so the order
+  holds all day and changes the next. A light day tops up to 30 with the longest unseen (`extra`). At 30 the day stops;
+  Keep going carries on the same way (`more`) until everything has been seen once today. Every card in the pile is a
+  real visit and moves its schedule; only a thought opened from the library is a review. With 176 thoughts the whole
+  collection comes round in about a week, and no card repeats from one day to the next. Each visit logs its pile, its
+  place in the session, the day size and how its time reads, so the size can be judged from use.
 - **Import (2.7.0):** Settings, Import thoughts. Paste a note or list, or choose a text file, a CSV export (a quote
   column, plus author and title if present) or a Kindle "My Clippings.txt". Plain text splits at each line, or at each
   blank line when it has them (switchable). A name after a dash, or alone under a quote, becomes who said it. A preview
@@ -51,9 +55,9 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
 - **Reading a visit:** 20 s or less is skipped; 30 s or more is thought about; between is seen; an edit or a note is
   worked on. Time counts only while the app is open and the thought is on screen; over 5 minutes with no touch counts
   as seen.
-- **Coming back:** skipped 1 day; seen 2 days; thought about 2 + 2 per time (21 at most); worked on 4 + 3 per time
-  (30 at most), counting this visit. Skipped thoughts are set heavier (600 to 800) and come first. Engaging works off
-  one skip.
+- **Coming back:** skipped 5 days (2.12.0; was 1); seen 2 days; thought about 2 + 2 per time (21 at most); worked on
+  4 + 3 per time (30 at most), counting this visit. Being due makes a thought eligible; the pile decides the order.
+  Skipped thoughts are set heavier (600 to 800) and up to 5 a day are kept on purpose. Engaging works off one skip.
 - A Scales day starts at 4 AM.
 
 ## Wide screens (2.7.0)

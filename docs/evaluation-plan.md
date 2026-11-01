@@ -24,10 +24,10 @@ Store privacy label stays "Data Not Collected".
 | Field | Meaning | Since |
 |---|---|---|
 | `at`, `id`, `ms` | when, which thought, time on the card | 2.0 |
-| `kind` | skipped, seen, thought, worked, or review (a look that moved no schedule) | 2.0 |
+| `kind` | skipped, seen, thought, worked, or review (a look that moved no schedule; from 2.12.0 only library opens) | 2.0 |
 | `how` | next, away, edit, other | 2.0 |
 | `len` | length of the thought | 2.0 |
-| `pile` | due, new, extra (top-up), more (Keep going), review, picked (from the library) | 2.9.0 |
+| `pile` | due, new, avoid (most skipped, up to 5 a day, 2.12.0), extra (top-up), more (Keep going), review, picked (from the library) | 2.9.0 |
 | `n` | place in the session (a gap over 5 minutes starts a new session) | 2.9.0 |
 | `size` | day size in force (30) | 2.9.0 |
 | `cls` | how the time reads, even for a review | 2.9.0 |
@@ -71,9 +71,16 @@ Measure: thoughts written per day (own, imported, sets) and the line waiting to 
 Decide: if the waiting line grows week over week, raise the drip. If it's empty most days, 5 is fine.
 
 **4. Top-up and Keep going attention.**
-Measure: time and share read as thought for due, new, extra and more, side by side.
-Decide: if extra and more look like due cards, they are real attention and could count as visits (option A). If they
-are much shorter, they stay reviews.
+Measure: time and share read as thought for due, new, avoid, extra and more, side by side.
+Decided early (2.12.0, 1 November): extra and more count as real visits, because as reviews they left the same cards at
+the front of the next day. Before 2.12.0 they were logged as `review`; from 2.12.0 they carry a real `kind`. Check now
+whether avoid cards hold attention like due cards, and whether 5 a day is the right number.
+
+**4b. Coverage (2.12.0).**
+Measure: distinct thoughts seen per 7 and 14 days against the number in rotation; how many of today's cards were also
+shown yesterday; longest gap between showings.
+Decide: the whole rotation should come round in about a week with no day repeating the last. If not, look at the skip
+gap (5 days) and the avoid share (5 a day).
 
 **5. Use: what earns its place.**
 Measure: screens and taps by count; sessions by hour and weekday; how cards are left; swipes that spring back; undo
