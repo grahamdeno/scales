@@ -791,3 +791,18 @@ test("historyLine: age and how it has gone over the last 10 real visits (2.13.0)
   const many = Array.from({ length: 14 }, (_, i) => v(i < 6 ? "thought" : "skipped")).concat([v("review"), {}]);
   assert.equal(N.historyLine({ created: ago(41), visits: many }, n), "Added 41 days ago · skipped 8 of the last 10 times", "reviews and blanks don't count; only the last 10");
 });
+
+// ---- 2.14.0: the quiet line on the reading screen ----
+test("nudgeLine: only when avoided or long untouched, otherwise nothing (2.14.0)", () => {
+  const n = new Date("2026-11-01T12:00:00"), ago = (d) => new Date(n.getTime() - d * 86400000).toISOString(), v = (k) => ({ kind: k });
+  assert.equal(N.nudgeLine({ created: ago(5), visits: [v("skipped"), v("skipped"), v("thought"), v("skipped"), v("skipped")] }, n), "Skipped 4 of the last 5 times");
+  assert.equal(N.nudgeLine({ created: ago(5), visits: [v("skipped"), v("skipped"), v("skipped")] }, n), "Skipped 3 of the last 3 times");
+  assert.equal(N.nudgeLine({ created: ago(5), visits: [v("skipped"), v("skipped"), v("thought")] }, n), "", "two skips is not enough");
+  assert.equal(N.nudgeLine({ created: ago(5), visits: [v("skipped"), v("skipped"), v("skipped"), v("thought"), v("thought"), v("seen"), v("seen")] }, n), "", "old skips age out of the last 5");
+  assert.equal(N.nudgeLine({ created: ago(90), visits: [v("seen"), v("skipped")] }, n), "Here 90 days, never sat with");
+  assert.equal(N.nudgeLine({ created: ago(90), visits: [v("thought")], thinks: 1 }, n), "", "sat with it once: no line");
+  assert.equal(N.nudgeLine({ created: ago(90), visits: [], works: 1 }, n), "", "worked on it: no line");
+  assert.equal(N.nudgeLine({ created: ago(59), visits: [] }, n), "", "under 60 days: no line");
+  assert.equal(N.nudgeLine({ created: ago(90), visits: [v("skipped"), v("skipped"), v("skipped")] }, n), "Skipped 3 of the last 3 times", "avoided wins over untouched");
+  assert.equal(N.nudgeLine({ created: ago(1), visits: [v("review"), {}, {}] }, n), "", "reviews and blanks don't count");
+});
