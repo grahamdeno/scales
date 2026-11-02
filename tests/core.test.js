@@ -846,3 +846,13 @@ test("justSeen: the last five shown, newest first, each once, undone left out (2
   const log = [{ id: "a", at: m(90) }, { id: "b", at: m(50) }, { id: "c", at: m(40) }, { id: "zz", at: m(35) }, { id: "d", at: m(30) }, { id: "b", at: m(20) }, { id: "e", at: m(10), undone: true }, { id: "f", at: m(5) }, { id: "g", at: m(0.5) }];
   assert.deepEqual(N.justSeen(store, log, n, 5).map((x) => x.t.id + ":" + x.meta), ["g:now", "f:5m", "b:20m", "d:30m", "c:40m"]);
 });
+
+test("insights voices: 'After' is dropped from a name, and a voice needs a fifth of its visits (2.18.0)", () => {
+  const n = new Date("2026-11-20T12:00:00"), st = { a: { id: "a", text: "A", by: "After Carl Jung" }, b: { id: "b", text: "B", by: "Benjamin Franklin" } };
+  const lg = (id, k, i) => ({ id, kind: k, at: new Date(n.getTime() - i * 3600000).toISOString() });
+  const log = [0, 1, 2, 3, 4].map((i) => lg("a", i < 2 ? "thought" : "seen", i)).concat([0, 1, 2, 3, 4].map((i) => lg("b", "skipped", i + 5)));
+  assert.deepEqual(N.insights(st, log, n).voices, ["You stay with Carl Jung most: 40% of visits.", "You move fastest past Benjamin Franklin."]);
+  const low = [0, 1, 2, 3, 4].map((i) => lg("a", i < 1 ? "thought" : "seen", i)).concat([0, 1, 2, 3, 4, 5].map((i) => lg("b", "skipped", i + 5)));
+  low.push(lg("a", "seen", 20));
+  assert.deepEqual(N.insights(st, low, n).voices, [], "under a fifth: not shown");
+});

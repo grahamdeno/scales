@@ -289,6 +289,7 @@ textarea::placeholder { color: var(--plum-faint); }
 .ins .q { margin: 0; font-size: 17px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .ins .was { margin: 0 0 6px; font-size: 15px; line-height: 1.35; color: var(--plum-muted); text-decoration: line-through; text-decoration-color: rgba(187,167,190,.5); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .ins .m { margin: 5px 0 0; font-size: 13px; line-height: 1.4; color: var(--plum-muted); }
+.ins .m.wait { margin: 0; font-size: 14px; }
 .ins .why { margin: 6px 0 0; font-size: 15px; line-height: 1.4; color: var(--pist); }
 .ins.say .q { font-size: 17px; display: block; }
 .bars { display: flex; align-items: flex-end; gap: 8px; height: 46px; margin: 14px 0 6px; }
@@ -601,8 +602,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.17.0"></script>
-<script src="sets.js?v=2.17.0"></script>
+<script src="core.js?v=2.18.0"></script>
+<script src="sets.js?v=2.18.0"></script>
 <script>
 (function () {
   "use strict";
@@ -1227,17 +1228,24 @@ textarea::placeholder { color: var(--plum-faint); }
   function renderInsights() {
     var d = C.insights(store, lsGet(KEY_LOG, []), now()), h = '<p class="lead">Counted on this phone from what you did. Nothing is sent anywhere.</p>';
     var item = function (t, line, extra) { return '<div class="ins">' + (extra || "") + '<p class="q">' + esc(firstLine(t.text)) + '</p>' + (line ? '<p class="m">' + esc(line) + "</p>" : "") + "</div>"; };
-    if (!d.any) { $("insBody").innerHTML = h + '<p class="lead" style="margin-top:22px">Insights fill in as you go. Come back in a week or two.</p>'; return; }
-    if (d.turning.length) h += '<p class="sh">Turning points</p>' + d.turning.map(function (x) { return item(x.t, x.line); }).join("");
-    if (d.lived.length) h += '<p class="sh">What you\'ve lived \u00b7 ' + d.livedCount + " this month</p>" + d.lived.map(function (x) {
-      return '<div class="ins"><p class="q">' + esc(firstLine(x.t.text)) + "</p>" + (x.why ? '<p class="why">\u201c' + esc(x.why) + '\u201d</p>' : "") + '<p class="m">' + esc(x.line) + "</p></div>"; }).join("");
-    if (d.rewrites.length) h += '<p class="sh">Rewrites</p>' + d.rewrites.map(function (x) {
-      return '<div class="ins"><p class="was">' + esc(firstLine(x.was)) + '</p><p class="q">' + esc(firstLine(x.t.text)) + "</p>" + (x.times > 1 ? '<p class="m">Reworded ' + x.times + " times.</p>" : "") + "</div>"; }).join("");
-    if (d.avoiding.length) h += '<p class="sh">Still avoiding</p>' + d.avoiding.map(function (x) { return item(x.t, x.line); }).join("");
-    if (d.when) h += '<p class="sh">When you think</p><div class="ins say"><p class="q">' + esc(d.when.line) + '</p><div class="bars" aria-hidden="true">' +
+    // 2.18.0: every part is always there. One that has nothing true to say yet says what it is waiting for.
+    var wait = function (msg) { return '<div class="ins"><p class="m wait">' + esc(msg) + "</p></div>"; };
+    h += '<p class="sh">Turning points</p>' + (d.turning.length ? d.turning.map(function (x) { return item(x.t, x.line); }).join("") :
+      wait("A thought you used to skip and now sit with. Appears once you have a few weeks of history."));
+    h += '<p class="sh">What you\'ve lived' + (d.livedCount ? " \u00b7 " + d.livedCount + " in the last 30 days" : "") + "</p>" + (d.lived.length ? d.lived.map(function (x) {
+      return '<div class="ins"><p class="q">' + esc(firstLine(x.t.text)) + "</p>" + (x.why ? '<p class="why">\u201c' + esc(x.why) + '\u201d</p>' : "") + '<p class="m">' + esc(x.line) + "</p></div>"; }).join("") :
+      wait("Thoughts you put away show here, with your reasons if you give one."));
+    h += '<p class="sh">Rewrites</p>' + (d.rewrites.length ? d.rewrites.map(function (x) {
+      return '<div class="ins"><p class="was">' + esc(firstLine(x.was)) + '</p><p class="q">' + esc(firstLine(x.t.text)) + "</p>" + (x.times > 1 ? '<p class="m">Reworded ' + x.times + " times.</p>" : "") + "</div>"; }).join("") :
+      wait("When you reword a thought, its old words show here above the new."));
+    h += '<p class="sh">Still avoiding</p>' + (d.avoiding.length ? d.avoiding.map(function (x) { return item(x.t, x.line); }).join("") :
+      wait("Nothing you keep skipping right now."));
+    h += '<p class="sh">When you think</p>' + (d.when ? '<div class="ins say"><p class="q">' + esc(d.when.line) + '</p><div class="bars" aria-hidden="true">' +
       d.when.counts.map(function (c, i) { var mx = Math.max.apply(null, d.when.counts) || 1; return '<i class="' + (i === d.when.top ? "top" : "") + '" style="height:' + Math.max(6, Math.round(100 * c / mx)) + '%"></i>'; }).join("") +
-      '</div><div class="barl" aria-hidden="true">' + ["Early", "Morning", "Afternoon", "Evening", "Night"].map(function (l) { return "<span>" + l + "</span>"; }).join("") + "</div></div>";
-    if (d.voices.length) h += '<p class="sh">Whose words hold you</p>' + d.voices.map(function (l) { return '<div class="ins say"><p class="q">' + esc(l) + "</p></div>"; }).join("");
+      '</div><div class="barl" aria-hidden="true">' + ["Early", "Morning", "Afternoon", "Evening", "Night"].map(function (l) { return "<span>" + l + "</span>"; }).join("") + "</div></div>" :
+      wait("The time of day you stay longest. Appears after 8 visits of 30 seconds or more (" + Math.min(d.sits, 7) + " so far)."));
+    h += '<p class="sh">Whose words hold you</p>' + (d.voices.length ? d.voices.map(function (l) { return '<div class="ins say"><p class="q">' + esc(l) + "</p></div>"; }).join("") :
+      wait("Which voices you stay with longest. Appears once you've spent time with a few of them."));
     $("insBody").innerHTML = h;
   }
   $("setIns").onclick = function () { renderInsights(); $("insBody").scrollTop = 0; openPage("insPage", "insights"); };

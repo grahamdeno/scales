@@ -10,12 +10,13 @@ const PLUM = { bg: "#3B2240", head: "#F1E9D8", sub: "#BBA7BE" };
 const PIST = { bg: "#B9C9A3", head: "#2A1E2E", sub: "#3E4830" };
 const slides = [
   ["01-one-thought", "meet-light", PLUM, "One thought at a time.", "Write down what's on your mind. Scales hands it back later."],
-  ["02-sets", "sets", PIST, "Start with lines worth keeping.", "Five sets, from the Stoics to Franklin, in plain English."],
-  ["03-two-moves", "pull", PLUM, "Two moves. That's all.", "Swipe up to move on. Pull down to put it away."],
-  ["04-write", "write", PIST, "One sentence is enough.", "Tap New and write what's on your mind."],
-  ["05-bolder", "meet-own", PLUM, "Glance past, and it comes back bolder.", "Linger, and it rests longer."],
-  ["06-your-thoughts", "library", PIST, "Nothing disappears on its own.", "See every thought, and when it comes back."],
-  ["07-yours", "meet-dark", PIST, "Yours, on your phone.", "No account. Nothing leaves your phone. Light or Dark."]
+  ["02-argue", "argue", PIST, "Hear the other side.", "One tap shows the case against a thought, and what it assumes."],
+  ["03-tensions", "tension", PLUM, "See where your thoughts disagree.", "Pairs of your own thoughts that pull against each other."],
+  ["04-insights", "insights", PIST, "See what's changing.", "Counted on your phone from what you actually did."],
+  ["05-two-moves", "pull", PLUM, "Two moves. That's all.", "Swipe up to move on. Pull down to put it away."],
+  ["06-sets", "sets", PIST, "Start with lines worth keeping.", "Five sets, from the Stoics to Franklin, in plain English."],
+  ["07-your-thoughts", "library", PLUM, "Nothing disappears on its own.", "Find any thought, by where you stand with it."],
+  ["08-yours", "meet-dark", PIST, "Yours, on your phone.", "No account. Nothing leaves your phone. Light or Dark."]
 ];
 
 const font = "data:font/woff2;base64," + fs.readFileSync(path.join(root, "site", "fonts", "geist-latin.woff2")).toString("base64");
