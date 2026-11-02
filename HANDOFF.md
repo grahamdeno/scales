@@ -32,7 +32,13 @@ read, never written or deleted.
 - Work on a branch, open an issue, PR, merge. The owner wants Claude to open and merge PRs itself.
 - `scripts/ship.sh BRANCH ISSUE "title"` with the commit message in `$SCRATCH/msg.txt` commits staged work, opens and
   merges the PR and waits for CI. With work already committed, open and merge through `gh api` (REST only).
-- Web changes go live when GitHub Pages deploys (about a minute). The iPhone app picks them up when reopened.
+- Release pin (2 November 2026): GitHub Pages serves the `release` branch, not main. scales.tangomike.app/app/ is a
+  Cloudflare function that forwards to grahamdeno.github.io/scales/, so the app (web and iPhone) shows only what is on
+  `release`. Merging to main changes nothing for users. To release web changes: run the unit and browser tests on main,
+  then `git push origin main:release` (fast-forward only), and check VERSION at /app/. Freeze `release` while a build
+  is in App Review. `release` was set at e35927c (2.25.0).
+- The marketing site (`site/`: home, Support, Privacy) is not pinned: it deploys to Cloudflare from main through the
+  Website workflow on changes to `site/**` or `server/**`.
 - Anything under `ios/**` on main builds and uploads to TestFlight automatically (workflow `iPhone app`).
 - Secrets live only in GitHub and Cloudflare. Claude cannot set them; the owner's Grok assistant does, from exact
   prompts Claude writes. Never paste tokens.
@@ -49,7 +55,9 @@ read, never written or deleted.
 - App Store: version 1.0 is a draft with build 38 attached, seven captioned 6.9-inch screenshots uploaded (made by
   `scripts/shots.js` and `scripts/appstore.js`, files in `appstore/screenshots/`), release set to manual, status Prepare
   for Submission. Graham chose to wait until after 12 November to press Submit for Review. Only he presses it.
-- Left: EU trader status (his decision), then Submit for Review.
+- Build 39 (offline screen, privacy manifest, no StoreKit or reminders, Inspector in Debug only) merged 2 November;
+  its TestFlight upload waits on a Mac runner. Then: test in airplane mode, attach 39 to 1.0 in place of 38, and
+  Graham presses Submit for Review. EU is off, so trader status is not needed for 1.0.
 - 12 November, 8:40 am ET: a scheduled task starts a fresh session that asks for "Scales backup.json" and runs
   `docs/evaluation-plan.md`. Rule changes from the evaluation are web-only and reach every build, including build 38.
 
@@ -68,6 +76,31 @@ read, never written or deleted.
 - Haptics confirm or reward; key moments (put away, keep) get longer patterns.
 - Test at 375, 390 and 430 wide before saying it works.
 - Owner's style: plain words, no em-dashes, no military metaphors; do checks yourself rather than handing them back.
+
+## Cleanup log
+
+Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold them into the 30-day plan.
+
+- Cloudflare `PLUS_PREVIEW` variable (Production and Preview) does nothing now that /api/ai is gone. Remove it (Grok).
+  The `ANTHROPIC_API_KEY` secret was removed 2 November; confirm the next Website deploy is the live one.
+- `server/ai.mjs` and its tests (verifyPlus, verifyPreview, the AI server) are no longer deployed. Delete them, or keep
+  them only if a server-side feature is planned. Update the header comment in `.github/workflows/site.yml`, which still
+  describes the AI server.
+- App Store Connect: the Plus Yearly subscription is unattached and Ready to Submit. Delete it, or leave it, when the
+  $9.99 lifetime Supporter unlock (non-consumable, NV-4) is built. Never attach it to 1.0.
+- iPhone shell: `clearReminders` and `setBadge` (the "unschedule" and "badge" messages) exist only to clear old
+  Scales 1 reminders. Remove them in a later build. The NWPathMonitor offline screen stays until the web app is bundled.
+- iOS workflow: `runs-on: macos-26` waits for GitHub's arm64 Mac runners; on 2 November two runs were cancelled
+  unbuilt ("not acquired ... capacity constraints"). Consider a fallback runner label, or retry on cancel.
+- Unit tests were red on main for about 20 minutes on 2 November: build 39 merged without `node --test`, and the
+  stale Plus test stopped one Website deploy. Add branch protection that requires the `test` workflow before merge.
+- RE-1 is now partly covered by the release pin. Still add: Pages promotion only from a main commit whose tests passed.
+- Remote branches: dozens of merged feature branches remain on GitHub. Prune the merged ones.
+- `docs/ARCHITECTURE.md` (RE-3) predates Scales 2 and the release pin. Update it.
+- EU is off (148 countries). To sell there later: set DSA trader status in App Store Connect, then turn the EU back on.
+- Cloudflare Web Analytics is off. Decide after launch whether the marketing site gets it; if yes, update Privacy.
+- 12 November evaluation: visits before 2.25.0 never recorded idle, so treat any visit over 5 minutes as seen only.
+- Support page promises "a person answers, usually within two days." Keep it only if that holds.
 
 ## Open items
 
