@@ -1,13 +1,14 @@
-# Publishes scales.tangomike.app (the Cloudflare Pages project tangomike-scales) whenever the site or the app
-# pass-through changes on main. The project is a Direct Upload, so every deploy is the whole site: the pages in
-# site/ and the pass-through that serves the app at /app/ (server/app-proxy.js as functions/app/[[path]].js).
+# Publishes scales.tangomike.app (the Cloudflare Pages project tangomike-scales). The project is a Direct Upload, so
+# every deploy is the whole site: the pages in site/ (from main) and the browser copy of the app at /app/ (from the
+# release branch, the files in scripts/web-files.txt). It runs when the site changes on main, or when release moves.
+# 2.26.0: the app is served here directly; the old pass-through to GitHub Pages (server/app-proxy.js) is gone.
 # The Scales Plus AI server (server/ai.mjs) is no longer deployed (2.25.0): nothing in the app calls it.
 # If any of those files, or the Cloudflare secrets, is missing, it stops before uploading, so a partial site can never replace the live one.
 name: Website
 on:
   push:
-    branches: [main]
-    paths: ["site/**", "server/**", ".github/workflows/site.yml"]
+    branches: [main, release]
+    paths: ["site/**", "server/**", ".github/workflows/site.yml", "scripts/web-files.txt", "scripts/bundle-web.sh", "index.html", "core.js", "sets.js", "sw.js", "fonts/**", "icons/**"]
   workflow_dispatch:
 concurrency:
   group: site
@@ -20,6 +21,13 @@ jobs:
       PAGES_BRANCH: ${{ vars.PAGES_BRANCH || 'main' }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: main
+      # The app as released: what browsers get at /app/. Main never reaches users until release moves.
+      - uses: actions/checkout@v7
+        with:
+          ref: release
+          path: rel
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -29,15 +37,15 @@ jobs:
         id: build
         run: |
           missing=""
-          for f in site/index.html site/support.html site/privacy.html site/site.css site/_headers site/404.html server/app-proxy.js; do
+          for f in site/index.html site/support.html site/privacy.html site/site.css site/_headers site/404.html rel/index.html rel/core.js rel/sets.js; do
             [ -f "$f" ] || missing="$missing $f"
           done
           if [ -n "$missing" ]; then echo "::warning::Not publishing: missing$missing"; echo "ok=false" >> "$GITHUB_OUTPUT"; exit 0; fi
-          # Wrangler takes the static files from out/ and the Functions from ./functions next to where it runs.
-          rm -rf out functions && mkdir -p out functions/app
+          rm -rf out functions && mkdir -p out
           cp -R site/. out/
-          cp server/app-proxy.js "functions/app/[[path]].js"
-          find out functions -type f | sort | sed 's/^/  /'
+          scripts/bundle-web.sh out/app rel
+          grep -o 'VERSION = "[0-9.]*"' out/app/core.js | sed 's/^/::notice::App at \/app\/: /'
+          find out -type f | sort | sed 's/^/  /'
           echo "ok=true" >> "$GITHUB_OUTPUT"
       - name: Publish to Cloudflare Pages
         if: steps.build.outputs.ok == 'true' && env.HAS_TOKEN == 'true'
@@ -60,6 +68,9 @@ jobs:
           check /privacy "Privacy."
           check "/site.css?v=2.3.0" "--pist"
           check /app/ "Scales"
+          check /app/core.js "VERSION"
+          # The app runs inline code, so /app/ must not carry the site's strict CSP.
+          if curl -fsSI https://scales.tangomike.app/app/ | grep -qi '^content-security-policy'; then echo "::error::/app/ has a CSP header; the app's scripts would be blocked"; fail=1; else echo "::notice::/app/ has no CSP"; fi
           code=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "content-type: application/json" -d '{}' https://scales.tangomike.app/api/ai)
           [ "$code" != "402" ] && [ "$code" != "503" ] && echo "::notice::/api/ai is off ($code)" || { echo "::error::/api/ai still answers $code; the AI server should be gone"; fail=1; }
           exit $fail

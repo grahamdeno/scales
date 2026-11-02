@@ -1,7 +1,7 @@
 import SwiftUI
 import UserNotifications
 
-/// Scales for iPhone. The app is the Scales web app (from scales.tangomike.app/app) in a native shell that adds what a
+/// Scales for iPhone. The app is the Scales web app (bundled inside from build 40) in a native shell that adds what a
 /// web app can't do well on iPhone: haptics, the daily backup file, the app icon, and Apple Intelligence.
 @main
 struct ScalesApp: App {

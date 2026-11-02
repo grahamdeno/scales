@@ -7,3 +7,5 @@
 e2e-shots/
 !content/sets.json
 !appstore/listing.json
+# The bundled web app is copied in at build time (scripts/bundle-web.sh).
+ios/web/

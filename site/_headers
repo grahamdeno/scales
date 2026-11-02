@@ -11,3 +11,9 @@
   Access-Control-Allow-Origin: *
 /site.css
   Cache-Control: public, max-age=0, must-revalidate
+/app/
+  ! Content-Security-Policy
+  Cache-Control: no-cache
+/app/*
+  ! Content-Security-Policy
+  Cache-Control: no-cache

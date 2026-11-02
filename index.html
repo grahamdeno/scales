@@ -690,8 +690,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.25.0"></script>
-<script src="sets.js?v=2.25.0"></script>
+<script src="core.js?v=2.26.0"></script>
+<script src="sets.js?v=2.26.0"></script>
 <script>
 (function () {
   "use strict";
@@ -737,6 +737,8 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   // 2.25.0: a write the phone refuses (storage full) is said out loud, once a session, with the way to keep the thoughts safe.
   var warned = false;
+  // 2.26.0: in the iPhone app, if the app's own copy couldn't be put back whole, say so and point to the backups.
+  if (window.scalesStoreError) setTimeout(function () { if (typeof done === "function") done("Some of your thoughts couldn't be loaded. Settings, Backups, Restore from a backup brings them back.", 10000); }, 1500);
   function saveWarn() {
     if (warned) return; warned = true;
     if (typeof done === "function") done("Couldn't save to this phone. Settings, Backups, Back up now keeps your thoughts.", 8000);
@@ -1668,7 +1670,14 @@ textarea::placeholder { color: var(--plum-faint); }
   var TESTFLIGHT = NATIVE && !!(window.scalesNative && window.scalesNative.testflight);
   window.scalesAI = function (status) {
     aiOk = status === "available";
-    $("aiState").textContent = aiOk ? "" : "Apple Intelligence isn't on for this iPhone. With it (iPhone 15 Pro or later), Scales can argue with a thought and find tensions between them.";
+    // 2.26.0: the message says why, so a phone that only needs a setting or an update is told so.
+    var st = String(status || ""), why = "With Apple Intelligence (iPhone 15 Pro or later, iOS 26), Scales can argue with a thought and find tensions between them.";
+    $("aiState").textContent = aiOk ? "" :
+      st === "unsupported" ? "Argue with it and Tensions need iOS 26 with Apple Intelligence, on an iPhone 15 Pro or later." :
+      /NotEnabled/i.test(st) ? "Turn on Apple Intelligence in the iPhone's Settings, and Scales can argue with a thought and find tensions between them." :
+      /NotReady/i.test(st) ? "Apple Intelligence is still getting ready on this iPhone. Argue with it and Tensions will appear when it is." :
+      /NotEligible/i.test(st) ? "This iPhone can't run Apple Intelligence, so Argue with it and Tensions aren't here. Everything else works the same." :
+      "Apple Intelligence isn't on for this iPhone. " + why;
     $("aiState").hidden = aiOk || !NATIVE; $("setAI").hidden = !aiOk; $("aiUses").hidden = !aiOk;
     // 2.16.0: Argue with it and Tensions appear only where the model is there to do them.
     if (aiOk) { setTimeout(findTensions, 4000); if (mode === "edit") showArgBtn(); }

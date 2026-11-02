@@ -1,0 +1,11 @@
+# The Scales web app: every file the app needs, and nothing else. Used for the iPhone app's bundled copy
+# (scripts/bundle-web.sh) and for the browser copy at scales.tangomike.app/app/ (.github/workflows/site.yml).
+index.html
+core.js
+sets.js
+sw.js
+manifest.webmanifest
+favicon.ico
+fonts
+icons
+next

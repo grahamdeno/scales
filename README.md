@@ -17,6 +17,9 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.26.0 (build 40):** The iPhone app carries the web app inside it and opens with no connection; every save is also
+  kept in a file the app owns, so iOS clearing web storage can't lose a thought. Tensions never uses a thought that
+  protects someone. The Apple Intelligence message says why it's off. The browser app is served from Cloudflare.
 - **2.25.0:** Fixes from the 1.0 audit. A card left on screen for over 5 minutes now reads as seen (the swipe that ended the
   visit used to reset the idle clock first, so idle was never true; visits before 2.25.0 may count such a card as thought
   about). A save the phone refuses says so, once a session, and points to Backups; a full visit log keeps its newest half
@@ -170,6 +173,7 @@ crossing a swipe threshold is a light tick.
 ```sh
 node --test                      # logic and wiring; no dependencies
 node tests/e2e/app.e2e.js        # Playwright at 390, 375 and 430 wide, plus the iPhone bridge
+node tests/e2e/native-store.e2e.js  # the iPhone app's store script, with the shell faked
 ```
 
 CI runs both on every push and pull request.

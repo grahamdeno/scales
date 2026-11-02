@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.25.0";
+  var VERSION = "2.26.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -765,7 +765,8 @@
   // Today's batches: the rotation shuffled with a seed from the day, so different thoughts meet each day and a pair
   // that spans two batches today can be found tomorrow.
   function tensionBatches(thoughts, day) {
-    var pool = thoughts.filter(function (t) { return !t.away && t.text && t.text.trim(); })
+    // 2.26.0: a thought that protects someone (safety, recovery, worth) is never set against another one either.
+    var pool = thoughts.filter(function (t) { return !t.away && t.text && t.text.trim() && !protectedThought(t.text); })
       .sort(function (a, b) { return shuffleKey(a.id, "ten" + day) - shuffleKey(b.id, "ten" + day); });
     var out = [];
     for (var i = 0; i < pool.length && out.length < TEN_BATCHES; i += TEN_BATCH) out.push(pool.slice(i, i + TEN_BATCH));
