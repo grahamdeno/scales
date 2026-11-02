@@ -55,6 +55,8 @@ function seed(now) {
   const log = [];
   [[ids.epictetus, "thought"], [ids.rest, "thought"], [ids.dread, "thought"], [ids.silence, "thought"], [ids.franklin, "skipped"], [ids.hard, "skipped"], [ids.busy, "seen"], [ids.power, "thought"]]
     .forEach(([id, kind], i) => { for (let k = 0; k < 3; k++) log.push({ at: at(1 + i + k * 7, kind === "thought" ? (k === 2 ? 20 : 6) : 13), id, kind, ms: kind === "thought" ? 44000 : 6000, pile: "due" }); });
+  // a few ordinary passes, so no voice reads as 100%
+  [ids.epictetus, ids.epictetus, ids.rest, ids.silence, ids.dread].forEach((id, i) => log.push({ at: at(2 + i * 3, 13), id, kind: "seen", ms: 24000, pile: "due" }));
   log.sort((a, b) => (a.at < b.at ? -1 : 1));
   const ten = { pairs: [{ a: ids.first2, b: ids.rest, at: at(0, 7) }, { a: ids.hard, b: ids.silence, at: at(1, 7) }], gone: [], ran: C.dayKey(now), viewed: null };
   return { st, ids, log, ten };
