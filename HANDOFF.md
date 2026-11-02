@@ -22,7 +22,8 @@ read, never written or deleted.
   `window.webkit.messageHandlers.scales.postMessage`: `ready`, `haptic` (tick, medium, success, thud, letgo,
   signature), `save` (daily backup file), `unschedule` and `badge` (sent on open to clear Scales 1's reminders).
   StoreKit, icon and reminder code stays in the shell, unused (the owner's choice).
-- `server/app-proxy.js` serves `/app/` from GitHub Pages. `server/ai.mjs` is the dormant Plus AI server.
+- The browser app at `/app/` is copied from the `release` branch into the Cloudflare site by the Website workflow
+  (`scripts/bundle-web.sh`, file list in `scripts/web-files.txt`). `server/ai.mjs` is the dormant Plus AI server.
 - `site/`: the scales.tangomike.app website (Cloudflare Pages, deployed by `.github/workflows/site.yml`; strict CSP, no inline code).
 - Tests: `node --test` (`tests/core.test.js`, `tests/platform.test.js`) and `node tests/e2e/app.e2e.js` (Playwright).
 - Plans: `docs/next-plan.md`, `docs/swap-plan.md`.
@@ -32,14 +33,18 @@ read, never written or deleted.
 - Work on a branch, open an issue, PR, merge. The owner wants Claude to open and merge PRs itself.
 - `scripts/ship.sh BRANCH ISSUE "title"` with the commit message in `$SCRATCH/msg.txt` commits staged work, opens and
   merges the PR and waits for CI. With work already committed, open and merge through `gh api` (REST only).
-- Release pin (2 November 2026): GitHub Pages serves the `release` branch, not main. scales.tangomike.app/app/ is a
-  Cloudflare function that forwards to grahamdeno.github.io/scales/, so the app (web and iPhone) shows only what is on
-  `release`. Merging to main changes nothing for users. To release web changes: run the unit and browser tests on main,
-  then `git push origin main:release` (fast-forward only), and check VERSION at /app/. Freeze `release` while a build
-  is in App Review. `release` was set at e35927c (2.25.0).
-- The marketing site (`site/`: home, Support, Privacy) is not pinned: it deploys to Cloudflare from main through the
-  Website workflow on changes to `site/**` or `server/**`.
-- Anything under `ios/**` on main builds and uploads to TestFlight automatically (workflow `iPhone app`).
+- iPhone app (build 40 on): the web app is bundled inside the binary at build time from main
+  (`scripts/bundle-web.sh ios/web`), served at scales-app://local/ by `WebScheme.swift`. It makes no network requests.
+  Web changes reach the iPhone only through a new build: run the `iPhone app` workflow on main (Run workflow), which
+  bundles, signs and uploads to TestFlight. Pushes to `ios/**` or the bundle scripts on main do the same automatically.
+- Everything the page saves is mirrored to Application Support/Scales/store.json (`NativeStore.swift`,
+  `NativeStore.js`). On start the newer of file and localStorage wins (a revision counter). The first launch of build
+  40 copied what the web version saved under https://scales.tangomike.app (old localStorage, left in place).
+- Browser app: scales.tangomike.app/app/ serves the `release` branch (Website workflow, Cloudflare). Merging to main
+  changes nothing for browser users. To release: run the unit and browser tests on main, then
+  `git push origin main:release` (fast-forward only); the Website workflow deploys it; check VERSION at /app/core.js.
+  GitHub Pages is no longer used by the site (it still builds `release`; can be turned off).
+- The marketing site (`site/`: home, Support, Privacy) deploys to Cloudflare from main with the same workflow.
 - Secrets live only in GitHub and Cloudflare. Claude cannot set them; the owner's Grok assistant does, from exact
   prompts Claude writes. Never paste tokens.
 - Choosing a model: Opus for feel, data safety and judgment calls; Sonnet for well-specified building, tests and
@@ -55,11 +60,11 @@ read, never written or deleted.
 - App Store: version 1.0 is a draft with build 38 attached, seven captioned 6.9-inch screenshots uploaded (made by
   `scripts/shots.js` and `scripts/appstore.js`, files in `appstore/screenshots/`), release set to manual, status Prepare
   for Submission. Graham chose to wait until after 12 November to press Submit for Review. Only he presses it.
-- Build 39 (offline screen, privacy manifest, no StoreKit or reminders, Inspector in Debug only) merged 2 November;
-  its TestFlight upload waits on a Mac runner. Then: test in airplane mode, attach 39 to 1.0 in place of 38, and
+- Build 39 (privacy manifest, no StoreKit or reminders, Inspector in Debug only) merged 2 November. Build 40
+  (2.26.0 bundled, native store, migration) is the one for 1.0: test it, attach it to 1.0 in place of 38, and
   Graham presses Submit for Review. EU is off, so trader status is not needed for 1.0.
 - 12 November, 8:40 am ET: a scheduled task starts a fresh session that asks for "Scales backup.json" and runs
-  `docs/evaluation-plan.md`. Rule changes from the evaluation are web-only and reach every build, including build 38.
+  `docs/evaluation-plan.md`. From build 40, rule changes from the evaluation need a new build to reach the iPhone.
 
 ## Before the App Store submission
 
@@ -94,7 +99,9 @@ Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold t
   unbuilt ("not acquired ... capacity constraints"). Consider a fallback runner label, or retry on cancel.
 - Unit tests were red on main for about 20 minutes on 2 November: build 39 merged without `node --test`, and the
   stale Plus test stopped one Website deploy. Add branch protection that requires the `test` workflow before merge.
-- RE-1 is now partly covered by the release pin. Still add: Pages promotion only from a main commit whose tests passed.
+- RE-1: add a check that `release` only moves to a main commit whose tests passed.
+- GitHub Pages is unused since 2.26.0; turn it off in repo settings (Grok), and remove `next/` if no old links need it.
+- Backup guard (review finding): the daily save can overwrite the latest backup with a near-empty store; add a check.
 - Remote branches: dozens of merged feature branches remain on GitHub. Prune the merged ones.
 - `docs/ARCHITECTURE.md` (RE-3) predates Scales 2 and the release pin. Update it.
 - EU is off (148 countries). To sell there later: set DSA trader status in App Store Connect, then turn the EU back on.
