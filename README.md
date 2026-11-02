@@ -17,6 +17,13 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.25.0:** Fixes from the 1.0 audit. A card left on screen for over 5 minutes now reads as seen (the swipe that ended the
+  visit used to reset the idle clock first, so idle was never true; visits before 2.25.0 may count such a card as thought
+  about). A save the phone refuses says so, once a session, and points to Backups; a full visit log keeps its newest half
+  and tries again. Quiet text no longer fades below 4.5:1 (the quiet line, the history line, the Who said it hint,
+  empty library groups, a zero in Insights). Help says a put-away thought waits under Put away; the Sets message says
+  "bookmarked"; Insights' "Coming" tags use the findings' own names. The website no longer says beta. The Plus AI server
+  (`server/ai.mjs`) is no longer deployed; its code and tests stay.
 - **2.24.1:** After Jung reworded further from the translations (darkness, inside, accept, light, fate, roots, irritate,
   shadow), and two sources corrected: "someone in me" is Civilization in Transition (CW 10); "children learn" is The
   Psychology of the Child Archetype (CW 9i, par. 293). Lines already on a phone keep their old words.

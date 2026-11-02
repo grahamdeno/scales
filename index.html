@@ -88,7 +88,7 @@ a { color: inherit; text-decoration: none; }
 #by { margin: 12px 0 0; font-size: 15px; font-weight: 500; color: var(--ground-muted); overflow-wrap: anywhere; }
 #note { margin: 18px 0 0; font-size: 16px; line-height: 1.45; color: var(--ground-muted); white-space: pre-wrap; }
 /* 2.14.0: shown only when the thought is being avoided or has sat untouched; small and faded so it never competes. */
-#nudge { margin: 18px 0 0; font-size: 13px; line-height: 1.4; color: var(--ground-muted); opacity: .8; }
+#nudge { margin: 18px 0 0; font-size: 13px; line-height: 1.4; color: var(--ground-muted); }
 .hint { position: absolute; left: 0; right: 0; margin: 0; text-align: center; font-size: 15px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .12s; }
 #hintUp { top: calc(var(--top) + 76px); }
 #hintDown { bottom: calc(var(--strip) + 68px); }
@@ -194,7 +194,6 @@ textarea::placeholder { color: var(--plum-faint); }
 .lgrp .gc { font-size: 15px; color: var(--plum-muted); font-variant-numeric: tabular-nums; }
 .lgrp .gv { display: inline-block; font-size: 18px; color: var(--plum-muted); transition: transform .2s; width: 12px; text-align: center; }
 .lgrp[aria-expanded="true"] .gv { transform: rotate(90deg); }
-.lgrp.empty { opacity: .5; }
 .lgrp + .gbody .lrow.one { padding-left: 14px; }
 .gbody { border-bottom: 1px solid rgba(241,233,216,.12); }
 .gbody .lrow.one:last-child { border-bottom: 0; }
@@ -316,9 +315,9 @@ textarea::placeholder { color: var(--plum-faint); }
 #vEdit.settle { transition: transform .28s cubic-bezier(.2,.8,.2,1); }
 #vEdit.closing { transition: transform .24s cubic-bezier(.4,0,1,1); transform: translateY(100%) !important; }
 .byline { flex: none; font: inherit; font-size: 16px; font-weight: 500; color: var(--plum-muted); background: transparent; border: 0; padding: 12px 0 0; outline: none; width: 100%; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
-.byline::placeholder { color: rgba(187,167,190,.55); }
+.byline::placeholder { color: var(--plum-muted); }
 .byline:focus { color: var(--plum-ink); }
-#vEdit .hist { margin: 6px 0 0; color: rgba(187,167,190,.75); }
+#vEdit .hist { margin: 6px 0 0; color: var(--plum-muted); }
 .ewords { display: flex; gap: 28px; margin-top: 22px; flex: none; }
 .ewords[hidden] { display: none; }
 .ewords button { font-size: 16px; font-weight: 600; color: var(--pist); padding: 6px 0; }
@@ -334,7 +333,7 @@ textarea::placeholder { color: var(--plum-faint); }
 .fd .n { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: var(--pist); font-variant-numeric: tabular-nums; }
 .fd .n.word { font-size: 24px; letter-spacing: -0.01em; }
 .fd .n.word.long { font-size: 16px; letter-spacing: 0; }
-.fd .n.zero { color: var(--plum-muted); opacity: .55; }
+.fd .n.zero { color: var(--plum-muted); }
 .fd .tx { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .fd .s { font-size: 17px; line-height: 1.2; font-weight: 600; color: var(--plum-ink); }
 .fd .d { font-size: 13.5px; line-height: 1.35; color: var(--plum-muted); }
@@ -681,7 +680,7 @@ textarea::placeholder { color: var(--plum-faint); }
     <div class="demo" data-demo="up" aria-hidden="true"><div class="dcard"><i></i><i></i></div><b class="dfinger"></b></div>
     <p><strong>Swipe up</strong> to move on.</p>
     <div class="demo" data-demo="down" aria-hidden="true"><div class="dcard"><i></i><i></i></div><b class="dfinger"></b></div>
-    <p><strong>Pull down</strong> to put a thought away.<br>It waits in Your thoughts.</p>
+    <p><strong>Pull down</strong> to put a thought away.<br>It waits in Your thoughts, under Put away.</p>
     <div class="demo" data-demo="tap" aria-hidden="true"><div class="dcard"><i></i><i></i></div><b class="dfinger"></b></div>
     <p><strong>Tap</strong> to edit it or add a note.<br>Undo lasts five seconds after any move.</p>
     <p><strong>Write a new one:</strong> open Your thoughts at the bottom, then + New.</p>
@@ -691,8 +690,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.24.1"></script>
-<script src="sets.js?v=2.24.1"></script>
+<script src="core.js?v=2.25.0"></script>
+<script src="sets.js?v=2.25.0"></script>
 <script>
 (function () {
   "use strict";
@@ -736,7 +735,13 @@ textarea::placeholder { color: var(--plum-faint); }
     ui.learnedUp = lg0.some(function (e) { return e.how === "next"; });
     ui.learnedDown = lg0.some(function (e) { return e.how === "away"; });
   }
-  function save() { lsSet(KEY, store); }
+  // 2.25.0: a write the phone refuses (storage full) is said out loud, once a session, with the way to keep the thoughts safe.
+  var warned = false;
+  function saveWarn() {
+    if (warned) return; warned = true;
+    if (typeof done === "function") done("Couldn't save to this phone. Settings, Backups, Back up now keeps your thoughts.", 8000);
+  }
+  function save() { if (!lsSet(KEY, store)) saveWarn(); }
   function saveUi() { lsSet(KEY_UI, ui); }
 
   // ---------- Telemetry (2.10.0) ----------
@@ -797,7 +802,10 @@ textarea::placeholder { color: var(--plum-faint); }
   function clockOn() { if (since == null && ui.cur && !document.hidden && mode === "meet") since = Date.now(); scheduleSoften(); }
   function clockOff() { if (since != null) { ui.ms += Date.now() - since; since = null; saveUi(); } clearTimeout(softT); }
   function elapsed() { return ui.ms + (since != null ? Date.now() - since : 0); }
-  function idle() { return Date.now() - lastTouch > C.IDLE_MS; }
+  // 2.25.0: the touch that ends a visit (the swipe itself) used to reset lastTouch before idle() was read, so idle was never
+  // true. A gap over IDLE_MS is now noted at the touch that closes it, and cleared when the next card starts.
+  var idleGap = false;
+  function idle() { return idleGap || Date.now() - lastTouch > C.IDLE_MS; }
   // At 30 s the type eases one step lighter: the only sign that the time counted.
   function scheduleSoften() {
     clearTimeout(softT);
@@ -808,7 +816,10 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   document.addEventListener("visibilitychange", function () { if (document.hidden) clockOff(); else { lastTouch = Date.now(); clockOn(); } });
   window.addEventListener("pagehide", clockOff);
-  ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, function () { lastTouch = Date.now(); }, true); });
+  ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, function () {
+    if (Date.now() - lastTouch > C.IDLE_MS && mode === "meet" && ui.cur) idleGap = true;
+    lastTouch = Date.now();
+  }, true); });
 
   // Ends the current visit: classifies it and schedules the thought's return.
   function endVisit(how) {
@@ -816,10 +827,13 @@ textarea::placeholder { color: var(--plum-faint); }
     clockOff();
     // A thought opened from Bookmarked is a review: logged as one, and it changes nothing about when the thought comes back.
     var review = ui.review === ui.cur; ui.review = null;
-    var wasIdle = idle(), cls = C.classify(ui.ms, ui.worked, wasIdle), kind = review ? "review" : C.recordVisit(t, ui.ms, ui.worked, wasIdle, now());
+    var wasIdle = idle(); idleGap = false;
+    var cls = C.classify(ui.ms, ui.worked, wasIdle), kind = review ? "review" : C.recordVisit(t, ui.ms, ui.worked, wasIdle, now());
     var lg = lsGet(KEY_LOG, []), pile = ui.pile || (review ? "review" : "due"); ui.pile = null;
-    lsSet(KEY_LOG, C.logVisit(lg, { at: now().toISOString(), id: t.id, ms: ui.ms, worked: ui.worked, idle: wasIdle, kind: kind, how: how || "other", len: t.text.length,
-      pile: pile, n: C.sessionPos(lg, now().getTime(), ui.ms), size: C.DAY_SIZE, cls: cls, s: sess && sess.id }));
+    var entry = C.logVisit(lg, { at: now().toISOString(), id: t.id, ms: ui.ms, worked: ui.worked, idle: wasIdle, kind: kind, how: how || "other", len: t.text.length,
+      pile: pile, n: C.sessionPos(lg, now().getTime(), ui.ms), size: C.DAY_SIZE, cls: cls, s: sess && sess.id });
+    // Storage full: keep the newest half of the log and try once more; if that fails too, say so.
+    if (!lsSet(KEY_LOG, entry) && !lsSet(KEY_LOG, entry.slice(-2500))) saveWarn();
     if (sess) sess.cards++;
     ui.cur = null; ui.ms = 0; ui.worked = false; saveUi(); save();
     return kind;
@@ -874,7 +888,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function more() { return ui.more === C.dayKey(now()); }
   function pick(notId) {
     var r = C.nextCard(store, lsGet(KEY_LOG, []), now(), notId, more());
-    ui.cur = r.card ? r.card.id : null; ui.ms = 0; ui.worked = false;
+    ui.cur = r.card ? r.card.id : null; ui.ms = 0; ui.worked = false; idleGap = false;
     ui.review = r.card && r.review ? r.card.id : null; ui.pile = r.card ? r.pile : null; ui.why = r.why || null;
     saveUi(); return r;
   }
@@ -1018,11 +1032,11 @@ textarea::placeholder { color: var(--plum-faint); }
     done("Deleted. It won't come back.");
   };
   // A clear confirmation that something is gone for good (2.5.0): the message in full strength with a check, held long enough to read.
-  function done(msg) {
+  function done(msg, ms) {
     clearTimeout(toastT);
     $("toastMsg").textContent = "\u2713 " + msg; $("toastUndo").hidden = true; $("toastDel").hidden = true; $("toastWhy").hidden = true;
     $("toast").classList.add("on", "done");
-    toastT = setTimeout(function () { $("toast").classList.remove("on"); setTimeout(function () { $("toast").classList.remove("done"); $("toastUndo").hidden = false; }, 250); }, 2600);
+    toastT = setTimeout(function () { $("toast").classList.remove("on"); setTimeout(function () { $("toast").classList.remove("done"); $("toastUndo").hidden = false; }, 250); }, ms || 2600);
   }
   $("toastUndo").onclick = function () {
     // 2.22.0: undoing "Not a tension" puts the pair back.
@@ -1405,20 +1419,20 @@ textarea::placeholder { color: var(--plum-faint); }
     var word = function (w) { return w.length > 5 ? "word long" : "word"; };
     var day = function (iso) { return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
     if (d.turning.length) h += F("turn", d.turning.length, "Turned around", "skipped, now sat with", d.turning.map(function (x) { return row(x.t, "", '<span class="w2">' + esc(x.line) + "</span>"); }).join(""));
-    else soon.push("Turning points");
+    else soon.push("Turned around");
     if (d.livedCount) h += F("lived", d.livedCount, "Put away", d.livedWhy ? (d.livedWhy === d.livedCount ? "each with a reason" : d.livedWhy + " with a reason") : "in the last 30 days",
       d.lived.slice(0, 8).map(function (x) { return row(x.t, day(x.t.away), x.why ? '<span class="w">\u201c' + esc(x.why) + "\u201d</span>" : ""); }).join("") + (d.livedCount > 8 ? '<div class="ir more">and ' + (d.livedCount - 8) + " more</div>" : ""));
     else soon.push("Put away");
     if (d.rewrites.length) h += F("rew", d.rewrites.length, "Reworded", "your words changed",
       d.rewrites.map(function (x) { return '<div class="ir pair"><span class="was">' + esc(firstLine(x.was)) + '</span><span class="now">' + esc(firstLine(x.t.text)) + "</span></div>"; }).join(""));
-    else soon.push("Rewrites");
+    else soon.push("Reworded");
     h += F("avoid", d.avoiding.length, "Skipped often", "in the last three weeks", d.avoiding.length ? d.avoiding.map(function (x) { return row(x.t, "", '<span class="w2">' + esc(x.line) + "</span>"); }).join("") : "", d.avoiding.length ? "" : "zero");
     if (d.when) {
       var spread = /spread/.test(d.when.head), wd = spread ? "Spread" : ["Early", "Morning", "Afternoon", "Evening", "Night"][d.when.top];
       h += F("when", wd, spread ? "When you think" : "When you think best", spread ? "no one time stands out" : d.when.sub.replace("Most of your longer visits happen from ", "most long visits, ").replace(/\.$/, ""),
         '<div class="bars" aria-hidden="true">' + d.when.counts.map(function (c, i) { var mx = Math.max.apply(null, d.when.counts) || 1; return '<i class="' + (i === d.when.top ? "top" : "") + '" style="height:' + Math.max(6, Math.round(100 * c / mx)) + '%"></i>'; }).join("") +
         '</div><div class="barl" aria-hidden="true">' + ["Early", "Morning", "Afternoon", "Evening", "Night"].map(function (l) { return "<span>" + l + "</span>"; }).join("") + "</div>", word(wd));
-    } else soon.push("Time of day");
+    } else soon.push("When you think");
     if (d.voiceTop.length) {
       var top = d.voiceTop[0], who = top.who || "Your own thoughts";
       h += F("voice", top.pct + "%", who, top.who ? "holds you longest" : "hold you longest",
@@ -1566,7 +1580,7 @@ textarea::placeholder { color: var(--plum-faint); }
     save(); lsSet(KEY_GONE, x.gone); setArmed = null; buzz("remove"); needsRender = true;
     if (store[ui.cur] === undefined) { ui.cur = null; ui.ms = 0; ui.worked = false; ui.review = null; saveUi(); }
     $("stripN").textContent = C.list(store).length; renderLib();
-    setsMsg(s.name + " removed. " + (x.putAway ? x.putAway + " you had met " + (x.putAway === 1 ? "is" : "are") + " in Put away. " : "") + "Lines you marked or changed stay.", true);
+    setsMsg(s.name + " removed. " + (x.putAway ? x.putAway + " you had met " + (x.putAway === 1 ? "is" : "are") + " in Put away. " : "") + "Lines you bookmarked, noted or changed stay.", true);
     renderSets();
   }
   document.addEventListener("pointerdown", function (e) { if (setArmed && !e.target.closest("#setList")) { setArmed = null; renderSets(); } }, true);

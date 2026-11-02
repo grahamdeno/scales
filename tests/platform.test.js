@@ -14,7 +14,7 @@ test("the website is published whole: strict styles, and the app passed through 
   const proxy = fs.readFileSync(path.join(__dirname, "..", "server", "app-proxy.js"), "utf8");
   assert.match(proxy, /https:\/\/grahamdeno\.github\.io\/scales\//);
   const wf = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "site.yml"), "utf8");
-  assert.match(wf, /cp server\/ai\.mjs functions\/api\/ai\.js/); assert.match(wf, /"functions\/app\/\[\[path\]\]\.js"/, "Functions sit beside out/, where Wrangler looks for them");
+  assert.doesNotMatch(wf, /cp server\/ai\.mjs/, "the Plus AI server is no longer deployed (2.25.0)"); assert.match(wf, /"functions\/app\/\[\[path\]\]\.js"/, "Functions sit beside out/, where Wrangler looks for them");
 });
 
 test("the Scales 2 website: four pages, strict CSP, no inline code, no Scales 1 words, no em-dashes (2.2.0)", () => {
