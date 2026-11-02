@@ -17,6 +17,13 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **Apple Intelligence (2.16.0, iPhone app):** a regular feature wherever Apple's on-device model is on (iPhone 15 Pro
+  or later); nothing leaves the phone, and it uses the bridge already in the shell, so no new build. **Argue with it**:
+  a word in Edit; one tap shows "The case against" (two or three sentences) and "It assumes" (one line), kept with the
+  thought for those words and shown again without asking. Add to note puts the assumption in the note. **Tensions**:
+  once a day, three batches of 30 thoughts (shuffled by the day) go to the model, which names pairs that pull against
+  each other; Scales checks each pair, keeps the newest 12 and never repeats one. A row in Your thoughts (a dot for new
+  pairs) opens them; a pair fills the reading screen with "and yet" between; swipe up or tap to go back.
 - **Your thoughts by where you stand (2.15.0):** All opens on "Just seen" (the last five shown, newest first) and four
   groups, each one row with a short line and a count, opened with a tap: Avoiding (3 or more skips in the last 5
   visits; right side "4 of 5"), Sitting with (stayed 30 s or more, or edited, in the last 5; how long ago), Seen, not
