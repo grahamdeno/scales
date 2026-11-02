@@ -117,6 +117,12 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   await wait(1500);
   const has = await p2.evaluate(() => { try { return Object.keys(JSON.parse(localStorage.getItem("scales.next.thoughts.v1")) || {}).indexOf("a1") >= 0; } catch (e) { return false; } });
   ok(has && errs2.length === 0, "after iOS clears the web storage, the app starts with the thought from the file");
+  // 2.27.0: Back up now asks the app to save a file of its own, and says where it went.
+  await p2.evaluate(() => { window.__msgs.length = 0; document.getElementById("setBackup").click(); });
+  const bm = await p2.evaluate(() => window.__msgs.filter((m) => m.type === "backup")[0]);
+  ok(bm && /^\d{4}-\d{2}-\d{2} \d{2}\.\d{2}\.\d{2}$/.test(bm.stamp) && JSON.parse(bm.json).app === "scales", "Back up now sends the backup to the app with a date and time");
+  await p2.evaluate(() => window.scalesBackedUp({ ok: true, where: "icloud", name: "Scales backup 2026-11-02 15.40.12.json" }));
+  ok(/Saved .Scales backup 2026-11-02 15\.40\.12\.json. to iCloud Drive, Scales\./.test(await p2.textContent("#restoreMsg")), "and says where the file went");
   await ctx2.close();
 
   await browser.close(); server.close();

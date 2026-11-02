@@ -690,8 +690,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.26.0"></script>
-<script src="sets.js?v=2.26.0"></script>
+<script src="core.js?v=2.27.0"></script>
+<script src="sets.js?v=2.27.0"></script>
 <script>
 (function () {
   "use strict";
@@ -1631,13 +1631,25 @@ textarea::placeholder { color: var(--plum-faint); }
   function savedLine() {
     // 2.13.0: says plainly that the iPhone app needs nothing from you, and when it last saved.
     if (!NATIVE) return "In a browser, Scales doesn't save a copy on its own. Back up now saves a file.";
-    var s = ui.saved, auto = "Nothing to do here: Scales saves a copy each time you leave it and keeps the last 14.";
+    var s = ui.saved, auto = "Nothing to do here: Scales saves a copy each time you leave it and keeps the last 14. Back up now adds a copy of your own that is never replaced.";
     if (!s || !s.ok) return auto;
     var d = C.dayKey(new Date(s.at)), today = C.dayKey(now());
     var when = d === today ? "today" : C.addDays(d, 1) === today ? "yesterday" : "on " + new Date(s.at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     return auto + " Last saved " + when + " to " + (s.where === "icloud" ? "iCloud Drive" : "Files") + ", Scales.";
   }
+  // 2.27.0: in the iPhone app, Back up now saves its own file straight into iCloud Drive, Scales (or Files), named with
+  // the date and time, and the automatic copy never writes over it. In a browser it downloads a file as before.
+  window.scalesBackedUp = function (r) {
+    var where = r && r.where === "icloud" ? "iCloud Drive" : "Files";
+    restoreMsg(r && r.ok ? "Saved \u201c" + r.name + "\u201d to " + where + ", Scales." : "Couldn't save the file. Try again.", !!(r && r.ok));
+    if (r && r.ok) haptic("success");
+  };
   function backup() {
+    if (NATIVE) {
+      var d = now(), p = function (n) { return (n < 10 ? "0" : "") + n; };
+      post({ type: "backup", json: JSON.stringify(backupData(), null, 1), stamp: C.dayKey(d) + " " + p(d.getHours()) + "." + p(d.getMinutes()) + "." + p(d.getSeconds()) });
+      return;
+    }
     var data = JSON.stringify(backupData(), null, 1);
     var a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([data], { type: "application/json" }));
