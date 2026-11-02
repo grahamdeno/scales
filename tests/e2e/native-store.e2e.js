@@ -78,6 +78,19 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok((await page.evaluate(() => localStorage.getItem("scales.t"))) === "file", "iOS cleared localStorage: the file puts it back");
   });
 
+  // A restore that can't finish (storage full): stop sending, and make the next start restore from the file again.
+  {
+    const ctx = await browser.newContext();
+    await ctx.addInitScript({ content: `(function () { var o = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (k === "scales.bad") throw new Error("QuotaExceededError"); return o.call(this, k, v); }; })();` + shell({ rev: 9, data: { "scales.ok": "1", "scales.bad": "big" } }, { "scales.ok": "old" }) });
+    const page = await ctx.newPage();
+    await page.goto(base + "/blank.html");
+    await page.evaluate(() => { localStorage.setItem("scales.ok", "changed"); });
+    await wait(450);
+    const st = await page.evaluate(() => ({ err: window.scalesStoreError, rev: localStorage.getItem("scales.native.rev"), n: window.__msgs.length }));
+    ok(st.err === "restore" && st.rev === null && st.n === 0, "a restore that can't finish sends nothing and leaves no revision, so the file wins next time");
+    await ctx.close();
+  }
+
   // The real app on top of the script, with thoughts only in the "file".
   const th = { a1: { id: "a1", text: "Most things go better when I slow down.", created: "2026-10-01T00:00:00Z", due: "2026-10-01" } };
   await run(null, null, async () => {});

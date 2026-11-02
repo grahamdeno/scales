@@ -35,23 +35,48 @@ final class NativeStore {
         let newRev = body["rev"] as? Int ?? 0
         // An older batch (a page from before a reload) never undoes a newer one.
         guard newRev > rev else { return }
-        let set = body["set"] as? [String: String] ?? [:]
+        guard let set = body["set"] as? [String: String] else { return }
         let del = body["del"] as? [String] ?? []
-        if body["full"] as? Bool == true { data = set } else {
+        if body["full"] as? Bool == true {
+            // A full copy with nothing in it never replaces a file that has something.
+            if set.isEmpty && !data.isEmpty { return }
+            data = set
+        } else {
             for (k, v) in set { data[k] = v }
             for k in del { data.removeValue(forKey: k) }
         }
         rev = newRev
         exists = true
-        scheduleWrite()
+        // In the background there may be no second chance: write now.
+        if UIApplication.shared.applicationState == .active { scheduleWrite() } else { pending?.cancel(); write(now: true) }
     }
 
-    /// Data moved over from the web version (the first launch of the bundled app).
-    func adopt(_ legacy: [String: String]) {
-        data = legacy
-        rev = max(rev, 0) + 1
-        exists = true
-        write(now: true)
+    /// The keys that hold thoughts, in Scales 2 and in Scales 1.
+    static let thoughtKeys = ["scales.next.thoughts.v1", "scales.thoughts.v1"]
+
+    /// Brings in what the web version saved, adding only what is missing: thoughts the file doesn't have, and keys
+    /// it doesn't have. Nothing already here is overwritten. Returns whether anything was added.
+    @discardableResult
+    func merge(_ legacy: [String: String]) -> Bool {
+        var added = false
+        for (k, v) in legacy where k.hasPrefix("scales") && k != "scales.native.rev" {
+            guard let mine = data[k] else { data[k] = v; added = true; continue }
+            guard Self.thoughtKeys.contains(k),
+                  let a = try? JSONSerialization.jsonObject(with: Data(mine.utf8)) as? [String: Any],
+                  let b = try? JSONSerialization.jsonObject(with: Data(v.utf8)) as? [String: Any] else { continue }
+            var out = a
+            for (id, t) in b where out[id] == nil { out[id] = t; added = true }
+            if out.count != a.count, let json = try? JSONSerialization.data(withJSONObject: out), let str = String(data: json, encoding: .utf8) {
+                data[k] = str
+            }
+        }
+        if added || !exists {
+            // Well above anything the page holds, so the merged file wins on the next start.
+            rev += added ? 1000 : 1
+            exists = true
+            write(now: true)
+        }
+        return added
     }
 
     /// The script that hands the file to the page before it starts.
@@ -84,10 +109,10 @@ final class NativeStore {
             try? json.write(to: target, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
         }
         if now {
-            var task = UIBackgroundTaskIdentifier.invalid
-            task = UIApplication.shared.beginBackgroundTask { UIApplication.shared.endBackgroundTask(task) }
+            let app = UIApplication.shared
+            let task = app.beginBackgroundTask(expirationHandler: nil)
             queue.sync(execute: work)
-            if task != .invalid { UIApplication.shared.endBackgroundTask(task) }
+            if task != .invalid { app.endBackgroundTask(task) }
         } else {
             queue.async(execute: work)
         }
@@ -95,7 +120,7 @@ final class NativeStore {
 }
 
 /// Reads what the web version of Scales saved on this phone (localStorage at https://scales.tangomike.app), once, so the
-/// first launch of the bundled app starts with everything. Nothing is fetched: a blank page is given that address so
+/// bundled app starts with everything. Nothing is fetched: a blank page is given that address so
 /// it can read its own storage. The old copy is left where it is.
 final class LegacyReader: NSObject, WKNavigationDelegate {
     private var web: WKWebView?

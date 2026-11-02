@@ -61,24 +61,32 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         applyLook(UserDefaults.standard.string(forKey: Self.lookKey) ?? "")
         NotificationCenter.default.addObserver(forName: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil, queue: .main) { [weak self] _ in self?.sendA11y() }
         NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in self?.store.flush() }
-        if store.exists { start() }
-        // Otherwise the first launch of the bundled app waits for viewDidAppear, so the reader is in a window.
+        if store.exists && !legacyCheck { start() }
+        // Otherwise the web version's data is brought over first, once the view is in a window (viewDidAppear).
     }
 
     private var legacy: LegacyReader?
-    private var withStore = true
+    private static let checksKey = "scales.legacyChecks"
+    /// The web version's data is looked for on the first launch and, until thoughts have been found there or it has
+    /// been read empty five times (a new install), on later launches too, adding only what is missing.
+    private var legacyCheck: Bool { UserDefaults.standard.integer(forKey: Self.checksKey) < 5 }
 
-    /// First launch of the bundled app: bring over what the web version saved on this phone, then start.
-    /// If that can't be read this time, Scales starts without the store script, so nothing it does can be mistaken
-    /// for newer than the old data; the next launch tries again and the old data wins.
     private func migrate() {
         guard legacy == nil, let host = view.window else { return }
         let reader = LegacyReader()
         legacy = reader
         reader.read(in: host) { [weak self] found in
             guard let self else { return }
-            if let found { self.store.adopt(found) } else { self.withStore = false }
             self.legacy = nil
+            guard let found else {
+                // Couldn't read it. With no file yet, Scales doesn't start empty: it says so and offers Try again.
+                if self.store.exists { self.start() } else { self.failed() }
+                return
+            }
+            self.store.merge(found)
+            let d = UserDefaults.standard
+            let hasOld = NativeStore.thoughtKeys.contains { (found[$0] ?? "").count > 2 }
+            d.set(hasOld ? 5 : d.integer(forKey: Self.checksKey) + 1, forKey: Self.checksKey)
             self.start()
         }
     }
@@ -92,7 +100,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         let testflight = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
         content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios', build: '\(build)', testflight: \(testflight), look: true, bundled: true };",
                                            injectionTime: .atDocumentStart, forMainFrameOnly: true))
-        if withStore, let url = Bundle.main.url(forResource: "NativeStore", withExtension: "js"), let js = try? String(contentsOf: url, encoding: .utf8) {
+        if let url = Bundle.main.url(forResource: "NativeStore", withExtension: "js"), let js = try? String(contentsOf: url, encoding: .utf8) {
             content.addUserScript(WKUserScript(source: store.seedScript() + "\n" + js, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         }
         ready = false
@@ -213,7 +221,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         view.window?.overrideUserInterfaceStyle = overrideUserInterfaceStyle
-        if !store.exists && web.url == nil { migrate() }
+        if web.url == nil && (!store.exists || legacyCheck) { migrate() }
     }
 
     private static let fixedIcons = ["pistachio": "AppIcon-Pistachio", "plum": "AppIcon-Plum", "bone": "AppIcon-Bone"]
@@ -294,7 +302,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         showOffline()
     }
 
-    private func retry() { start() }
+    private func retry() {
+        hideOffline()
+        if !store.exists { migrate() } else { start() }
+    }
 
     @objc private func tryAgain() { retry() }
 

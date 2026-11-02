@@ -34,7 +34,8 @@
     try { setItem.call(ls, REV, String(rev)); } catch (e) {}
     // If the file could not be put back whole, the page would start from a partial copy. Never let that
     // partial copy be written over the file: stop sending changes, and tell the page.
-    if (!ok) { live = false; window.scalesStoreError = "restore"; }
+    // The revision is cleared, so the next start restores from the file again rather than sending this copy.
+    if (!ok) { live = false; window.scalesStoreError = "restore"; try { removeItem.call(ls, REV); } catch (e) {} }
   } else {
     // localStorage is newer, or there is no file yet: the file gets everything.
     rev = Math.max(localRev, fileRev);
@@ -43,6 +44,7 @@
 
   var set = {}, del = {}, timer = null, dirty = false;
   function mark() {
+    if (!live) return;
     if (!dirty) { dirty = true; rev++; try { setItem.call(ls, REV, String(rev)); } catch (e) {} }
     if (!timer) timer = setTimeout(flush, 300);
   }

@@ -69,6 +69,8 @@ jobs:
           check "/site.css?v=2.3.0" "--pist"
           check /app/ "Scales"
           check /app/core.js "VERSION"
+          # The app runs inline code, so /app/ must not carry the site's strict CSP.
+          if curl -fsSI https://scales.tangomike.app/app/ | grep -qi '^content-security-policy'; then echo "::error::/app/ has a CSP header; the app's scripts would be blocked"; fail=1; else echo "::notice::/app/ has no CSP"; fi
           code=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "content-type: application/json" -d '{}' https://scales.tangomike.app/api/ai)
           [ "$code" != "402" ] && [ "$code" != "503" ] && echo "::notice::/api/ai is off ($code)" || { echo "::error::/api/ai still answers $code; the AI server should be gone"; fail=1; }
           exit $fail

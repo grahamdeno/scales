@@ -101,6 +101,8 @@ Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold t
   stale Plus test stopped one Website deploy. Add branch protection that requires the `test` workflow before merge.
 - RE-1: add a check that `release` only moves to a main commit whose tests passed.
 - GitHub Pages is unused since 2.26.0; turn it off in repo settings (Grok), and remove `next/` if no old links need it.
+- iPhone builds bundle the web app from main, not `release`. At each ship, merge, build, then move `release` to the
+  same commit so the browser and the iPhone run the same version.
 - Backup guard (review finding): the daily save can overwrite the latest backup with a near-empty store; add a check.
 - Remote branches: dozens of merged feature branches remain on GitHub. Prune the merged ones.
 - `docs/ARCHITECTURE.md` (RE-3) predates Scales 2 and the release pin. Update it.
