@@ -545,8 +545,8 @@ textarea::placeholder { color: var(--plum-faint); }
     <p class="sh">Look</p>
     <div class="grp">
       <div id="themeSec">
-        <div class="lookrow"><span>Theme</span></div>
-        <div class="seg lookseg" id="themeSeg" role="radiogroup" aria-label="Theme">
+        <div class="lookrow"><span>Colors</span></div>
+        <div class="seg lookseg" id="themeSeg" role="radiogroup" aria-label="Colors">
           <button type="button" role="radio" data-theme-pick="pistachio" aria-checked="true"><i class="tdot" style="background:#B9C9A3"></i>Pistachio</button>
           <button type="button" role="radio" data-theme-pick="stone" aria-checked="false"><i class="tdot" style="background:#C9C6BD"></i>Stone</button>
         </div>
@@ -1458,7 +1458,7 @@ textarea::placeholder { color: var(--plum-faint); }
     if (tell) post({ type: "look", value: v === "auto" ? "" : v });
   }
   if (!NATIVE || (window.scalesNative && window.scalesNative.look)) $("lookSec").hidden = false;
-  // 2.22.0 Theme: Pistachio (the default) or Stone. A web choice; the iPhone app's icon is chosen separately.
+  // 2.22.0 Colors (named Theme until 2.23.0, which clashed with Themes and your week): Pistachio (the default) or Stone. A web choice; the iPhone app's icon is chosen separately.
   function applyTheme() {
     if (ui.theme === "stone") document.documentElement.setAttribute("data-theme", "stone"); else document.documentElement.removeAttribute("data-theme");
     Array.prototype.forEach.call(document.querySelectorAll("#themeSeg [data-theme-pick]"), function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-theme-pick") === (ui.theme === "stone" ? "stone" : "pistachio"))); });

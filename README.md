@@ -21,7 +21,7 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   Afternoon, 67%) and a two- or three-word label, so the eye can run down the column. A zero is faded and doesn't open.
   What isn't ready yet is a row of small tags under "Coming as you use Scales".
 - **2.22.0:** a second theme, Stone (warm stone to read on, graphite for sheets, pistachio accent; Dark puts the thought
-  on graphite with sheets a step darker), chosen in Settings, Look, Theme; Pistachio stays the default. Settings order:
+  on graphite with sheets a step darker), chosen in Settings, Look, Colors (called Theme in 2.22.0); Pistachio stays the default. Settings order:
   Insights, Look, Add and back up (Sets, Import thoughts, Backups), Help and about. Tensions: "Not a tension" on the
   pair screen removes the pair for good (with Undo).
 - **2.21.0:** Edit is a sheet. It rises over the thought, which stays in view above it (dimmed), with a handle at the
