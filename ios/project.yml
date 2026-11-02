@@ -1,5 +1,5 @@
-# Scales for iPhone: the Scales web app in a native shell that adds reminders
-# scheduled on the phone and the Home Screen badge. Built in the cloud by
+# Scales for iPhone: the Scales web app in a native shell that adds haptics, the daily backup file, the app icon and
+# Apple Intelligence. Built in the cloud by
 # .github/workflows/ios.yml; no Mac needed.
 name: Scales
 options:
@@ -20,7 +20,12 @@ targets:
   Scales:
     type: application
     platform: iOS
-    sources: [App]
+    sources:
+      - path: App
+        excludes: ["PrivacyInfo.xcprivacy"]
+      # Build 39: the privacy manifest (UserDefaults only, no tracking, no collected data), always in the Resources phase.
+      - path: App/PrivacyInfo.xcprivacy
+        buildPhase: resources
     info:
       path: App/Info.plist
       properties:
@@ -46,8 +51,6 @@ targets:
             NSUbiquitousContainerSupportedFolderLevels: None
         UIViewControllerBasedStatusBarAppearance: false
         UIStatusBarStyle: UIStatusBarStyleDarkContent
-        # Off since 2.2.0: Scales 2 has no AI and Plus is not offered. (It let TestFlight copies try Scales Plus, 1.82.0.)
-        ScalesPlusPreview: false
         CFBundleURLTypes:
           - CFBundleURLName: com.grahamdeno.scales
             CFBundleURLSchemes: [scales]
