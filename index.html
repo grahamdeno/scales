@@ -172,6 +172,19 @@ textarea::placeholder { color: var(--plum-faint); }
 .lrow { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid rgba(241,233,216,.12); width: 100%; text-align: left; }
 .lrow .t { font-size: 17px; line-height: 1.3; }
 .lrow .m { font-size: 13px; color: var(--plum-muted); white-space: nowrap; }
+/* 2.15.0: the list by where you stand. Each group is one row (name, a short line, count); tap to open it. */
+.lgrp { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 15px 0; border-bottom: 1px solid rgba(241,233,216,.12); min-height: 64px; }
+.lgrp .gt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.lgrp .gn { font-size: 17px; font-weight: 600; }
+.lgrp .gd { font-size: 13px; color: var(--plum-muted); }
+.lgrp .gc { font-size: 15px; color: var(--plum-muted); font-variant-numeric: tabular-nums; }
+.lgrp .gv { display: inline-block; font-size: 18px; color: var(--plum-muted); transition: transform .2s; width: 12px; text-align: center; }
+.lgrp[aria-expanded="true"] .gv { transform: rotate(90deg); }
+.lgrp.empty { opacity: .5; }
+.lgrp + .gbody .lrow.one { padding-left: 14px; }
+.gbody { border-bottom: 1px solid rgba(241,233,216,.12); }
+.gbody .lrow.one:last-child { border-bottom: 0; }
+#libList h3.js { margin-top: 10px; }
 /* 2.13.0: one calm line per thought, cut with an ellipsis, so the list can be scanned. */
 .lrow.one { align-items: center; padding: 13px 0; }
 .lrow.one .t { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 400; }
@@ -513,8 +526,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.14.0"></script>
-<script src="sets.js?v=2.14.0"></script>
+<script src="core.js?v=2.15.0"></script>
+<script src="sets.js?v=2.15.0"></script>
 <script>
 (function () {
   "use strict";
@@ -1033,10 +1046,6 @@ textarea::placeholder { color: var(--plum-faint); }
     var awayRow = function (t) {
       return '<div class="lrow one away"><span class="t">' + esc(firstLine(t.text)) + '</span><span class="m">' + mark(t) + '<button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button></span></div>';
     };
-    // Groups by when it was added (This week, This month, Earlier), newest first.
-    var grouped = function (ts, row) {
-      return C.groupByAdded(ts, n).map(function (g, i) { return '<h3' + (i ? ' style="margin-top:24px"' : "") + ">" + g.name + " \u00b7 " + g.items.length + "</h3>" + g.items.map(row).join(""); }).join("");
-    };
     var none = function (msg) { return '<p class="lrow"><span class="m">' + msg + "</span></p>"; };
     if (view === "marked") {
       var bm = C.bookmarked(store).filter(match);
@@ -1054,12 +1063,26 @@ textarea::placeholder { color: var(--plum-faint); }
       h += '<button type="button" class="lrow arch" data-view="all"><span class="t">\u2039 All thoughts</span></button>';
       h += "<h3>Put away \u00b7 " + off.length + "</h3>";
       h += off.map(awayRow).join("") || none(q ? "Nothing matches." : "Pull a thought down to put it away.");
+    } else if (q) {
+      // A search is flat: every match, newest first, with the group it sits in on the right.
+      var hits = on.slice().sort(function (a, b) { return a.created < b.created ? 1 : -1; });
+      h += "<h3>Matches \u00b7 " + hits.length + "</h3>";
+      h += hits.map(function (t) { return '<button type="button" class="lrow one" data-open="' + esc(t.id) + '"><span class="t">' + esc(firstLine(t.text)) + '</span><span class="m">' + mark(t) + esc(C.standingName(C.standing(t))) + "</span></button>"; }).join("") || none("Nothing in rotation matches.");
+      // A search looks at everything, so a put-away thought can still be found.
+      if (off.length) { h += '<h3 style="margin-top:28px">Put away \u00b7 ' + off.length + "</h3>"; h += off.map(awayRow).join(""); }
     } else {
-      h += on.length ? grouped(on, function (t) { return rotRow(t, false); }) : none("Nothing here" + (q ? " matches." : " yet."));
-      if (q) {
-        // A search looks at everything, so a put-away thought can still be found.
-        if (off.length) { h += '<h3 style="margin-top:28px">Put away \u00b7 ' + off.length + "</h3>"; h += off.map(awayRow).join(""); }
-      } else if (C.putAway(store).length) {
+      // 2.15.0: where you stand. First the last few you saw, then one row per group, opened with a tap.
+      var row = function (x) { return '<button type="button" class="lrow one" data-open="' + esc(x.t.id) + '"' + (x.t.away ? ' data-review="1"' : "") + '><span class="t">' + esc(firstLine(x.t.text)) + '</span><span class="m">' + mark(x.t) + esc(x.meta) + "</span></button>"; };
+      var js = C.justSeen(store, lsGet(KEY_LOG, []), n, 5);
+      if (js.length) h += '<h3 class="js">Just seen</h3>' + js.map(row).join("");
+      var open = ui.open || {};
+      h += '<div style="margin-top:' + (js.length ? 26 : 8) + 'px">' + C.libraryGroups(on, n).map(function (g) {
+        var isOpen = !!(open[g.key] && g.items.length);
+        return '<button type="button" class="lgrp' + (g.items.length ? "" : " empty") + '" data-group="' + g.key + '" aria-expanded="' + isOpen + '"' + (g.items.length ? "" : " disabled") + '><span class="gt"><span class="gn">' + g.name + '</span><span class="gd">' + g.note + '</span></span><span class="gc">' + g.items.length + '</span><span class="gv" aria-hidden="true">\u203a</span></button>' +
+          (isOpen ? '<div class="gbody">' + g.items.map(row).join("") + "</div>" : "");
+      }).join("") + "</div>";
+      if (!on.length) h += none("Nothing here yet.");
+      if (C.putAway(store).length) {
         h += '<button type="button" class="lrow arch" data-view="away"><span class="t">Put away</span><span class="m">' + C.putAway(store).length + ' \u203a</span></button>';
       }
     }
@@ -1068,6 +1091,8 @@ textarea::placeholder { color: var(--plum-faint); }
   function renderLibCount() { var c = C.bookmarked(store).length; $("segMarked").textContent = c ? "Bookmarked · " + c : "Bookmarked"; }
   $("libList").addEventListener("click", function (e) {
     if (e.target.closest(".arch")) { pickView(e); $("libList").scrollTop = 0; return; }
+    var grp = e.target.closest("[data-group]");
+    if (grp) { var k = grp.getAttribute("data-group"); ui.open = Object.assign({}, ui.open); ui.open[k] = !ui.open[k]; saveUi(); haptic("tick"); track("tap", { id: "group:" + k }); renderLib(); return; }
     var o = e.target.closest("[data-open]"), b = e.target.closest("[data-back]");
     if (o) {
       // Opening a thought from the list puts it on screen now. The thought you were on counts as visited.

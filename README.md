@@ -17,6 +17,11 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **Your thoughts by where you stand (2.15.0):** All opens on "Just seen" (the last five shown, newest first) and four
+  groups, each one row with a short line and a count, opened with a tap: Avoiding (3 or more skips in the last 5
+  visits; right side "4 of 5"), Sitting with (stayed 30 s or more, or edited, in the last 5; how long ago), Seen, not
+  sat with (how long ago), Not met yet (when it arrives). Which groups are open is remembered. A search is one flat
+  list with each match's group on the right. Rows stay one line (2.13.0).
 - **The quiet line (2.14.0):** on the reading screen, one small faded line under the thought, only when it says
   something: "Skipped 4 of the last 5 times" (3 or more skips in the last 5 visits), or "Here 90 days, never sat with"
   (60 days or more with no visit of 30 s or more and no edit). Otherwise nothing.

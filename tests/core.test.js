@@ -806,3 +806,43 @@ test("nudgeLine: only when avoided or long untouched, otherwise nothing (2.14.0)
   assert.equal(N.nudgeLine({ created: ago(90), visits: [v("skipped"), v("skipped"), v("skipped")] }, n), "Skipped 3 of the last 3 times", "avoided wins over untouched");
   assert.equal(N.nudgeLine({ created: ago(1), visits: [v("review"), {}, {}] }, n), "", "reviews and blanks don't count");
 });
+
+// ---- 2.15.0: the library by where you stand ----
+test("standing: avoiding, sitting with, seen, not met (2.15.0)", () => {
+  const v = (k) => ({ kind: k, at: "2026-10-31T10:00:00.000Z" });
+  assert.equal(N.standing({ seen: null, visits: [], skips: 0 }), "new");
+  assert.equal(N.standing({ seen: "x", visits: [v("skipped"), v("skipped"), v("thought"), v("skipped")] }), "avoid");
+  assert.equal(N.standing({ seen: "x", visits: [v("seen"), v("thought"), v("seen")] }), "sit");
+  assert.equal(N.standing({ seen: "x", visits: [v("worked")] }), "sit");
+  assert.equal(N.standing({ seen: "x", visits: [v("seen"), v("skipped")] }), "seen");
+  assert.equal(N.standing({ seen: null, visits: [], skips: 2, thinks: 3, from: "scales-1" }), "sit", "carried in from Scales 1 with reflections");
+  assert.equal(N.standing({ seen: null, visits: [], skips: 2 }), "seen", "carried in skipped only");
+  assert.equal(N.standing({ seen: "x", visits: [v("thought"), v("seen"), v("seen"), v("seen"), v("seen"), v("seen")] }), "seen", "an old sitting ages out of the last 5");
+});
+
+test("libraryGroups: four groups in order, each sorted, with its fact on the right (2.15.0)", () => {
+  const n = new Date("2026-11-01T12:00:00"), h = (x) => new Date(n.getTime() - x * 3600000).toISOString();
+  const ts = [
+    { id: "a", created: h(80), seen: h(2), visits: [{ kind: "skipped", at: h(5) }, { kind: "skipped", at: h(4) }, { kind: "skipped", at: h(2) }] },
+    { id: "b", created: h(80), seen: h(2), visits: [{ kind: "skipped", at: h(9) }, { kind: "skipped", at: h(8) }, { kind: "skipped", at: h(7) }, { kind: "skipped", at: h(3) }, { kind: "seen", at: h(2) }] },
+    { id: "c", created: h(80), seen: h(30), visits: [{ kind: "thought", at: h(30) }] },
+    { id: "d", created: h(80), seen: h(1), visits: [{ kind: "worked", at: h(1) }] },
+    { id: "e", created: h(80), seen: h(6), visits: [{ kind: "seen", at: h(6) }] },
+    { id: "f", created: h(10), due: "2026-11-03", seen: null, visits: [], skips: 0 },
+    { id: "g", created: h(20), due: "2026-11-01", seen: null, visits: [], skips: 0 }
+  ];
+  const g = N.libraryGroups(ts, n);
+  assert.deepEqual(g.map((x) => x.key), ["avoid", "sit", "seen", "new"]);
+  assert.deepEqual(g[0].items.map((x) => x.t.id + ":" + x.meta), ["b:4 of 5", "a:3 of 3"], "most skipped first");
+  assert.deepEqual(g[1].items.map((x) => x.t.id + ":" + x.meta), ["d:1h", "c:1d"], "most recently sat with first");
+  assert.deepEqual(g[2].items.map((x) => x.t.id + ":" + x.meta), ["e:6h"]);
+  assert.deepEqual(g[3].items.map((x) => x.t.id + ":" + x.meta), ["g:Today", "f:Tue"], "next to arrive first");
+  assert.equal(N.libraryGroups([], n).every((x) => x.items.length === 0), true, "empty groups are kept");
+});
+
+test("justSeen: the last five shown, newest first, each once, undone left out (2.15.0)", () => {
+  const n = new Date("2026-11-01T12:00:00"), m = (x) => new Date(n.getTime() - x * 60000).toISOString();
+  const store = {}; "abcdefg".split("").forEach((k) => { store[k] = { id: k, text: k }; });
+  const log = [{ id: "a", at: m(90) }, { id: "b", at: m(50) }, { id: "c", at: m(40) }, { id: "zz", at: m(35) }, { id: "d", at: m(30) }, { id: "b", at: m(20) }, { id: "e", at: m(10), undone: true }, { id: "f", at: m(5) }, { id: "g", at: m(0.5) }];
+  assert.deepEqual(N.justSeen(store, log, n, 5).map((x) => x.t.id + ":" + x.meta), ["g:now", "f:5m", "b:20m", "d:30m", "c:40m"]);
+});
