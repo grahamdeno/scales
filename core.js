@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.14.0";
+  var VERSION = "2.15.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -649,7 +649,64 @@
     return "";
   }
 
-  var api = { VERSION: VERSION, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
+  // ---- The library by where you stand (2.15.0) ----
+  // The question someone has when they open the list is not "what did I add when" but "where am I with these?"
+  // Every thought in rotation sits in one group, read from its own visits:
+  //   avoid  - 3 or more skips in the last 5 visits (the same test as the quiet line)
+  //   sit    - stayed 30 s or more, or edited, in the last 5 visits (or carried in from Scales 1 that way)
+  //   new    - never met yet, still arriving
+  //   seen   - met, but not stayed with yet
+  function realVisits(t) { return (t.visits || []).filter(function (v) { return v && (v.kind === "skipped" || v.kind === "seen" || v.kind === "thought" || v.kind === "worked"); }); }
+  function standing(t) {
+    if (isNew(t)) return "new";
+    var real = realVisits(t), last = real.slice(-NUDGE_LOOK);
+    if (last.filter(function (v) { return v.kind === "skipped"; }).length >= NUDGE_SKIPS) return "avoid";
+    if (last.some(function (v) { return v.kind === "thought" || v.kind === "worked"; })) return "sit";
+    if (!real.length && ((t.thinks || 0) > 0 || (t.works || 0) > 0)) return "sit";
+    return "seen";
+  }
+  var STANDINGS = [
+    { key: "avoid", name: "Avoiding", short: "Avoiding", note: "You keep moving past these." },
+    { key: "sit", name: "Sitting with", short: "Sitting with", note: "You stayed with these lately." },
+    { key: "seen", name: "Seen, not sat with", short: "Seen", note: "Met, but you moved on." },
+    { key: "new", name: "Not met yet", short: "Not met", note: "Still arriving, a few a day." }
+  ];
+  function standingName(key) { for (var i = 0; i < STANDINGS.length; i++) if (STANDINGS[i].key === key) return STANDINGS[i].short; return ""; }
+  // "now", "12m", "3h", then the age labels (2d, 5w ...).
+  function sinceLabel(iso, now) {
+    var ms = now.getTime() - Date.parse(iso); if (!isFinite(ms)) return "";
+    if (ms < 60000) return "now";
+    if (ms < 3600000) return Math.floor(ms / 60000) + "m";
+    if (ms < 86400000) return Math.floor(ms / 3600000) + "h";
+    return ageLabel(iso, now);
+  }
+  function lastAt(t, kinds) { var r = realVisits(t).filter(function (v) { return kinds.indexOf(v.kind) >= 0 && v.at && isFinite(Date.parse(v.at)); }); return r.length ? r[r.length - 1].at : null; }
+  // The groups, each with its rows and the one fact on the right that fits the group. Empty groups are kept (count 0).
+  function libraryGroups(thoughts, now) {
+    var by = { avoid: [], sit: [], seen: [], new: [] };
+    thoughts.forEach(function (t) { by[standing(t)].push(t); });
+    var rows = {
+      avoid: by.avoid.map(function (t) { var last = realVisits(t).slice(-NUDGE_LOOK), sk = last.filter(function (v) { return v.kind === "skipped"; }).length; return { t: t, meta: sk + " of " + last.length, k: sk * 100 + last.length }; })
+        .sort(function (a, b) { return b.k - a.k; }),
+      sit: by.sit.map(function (t) { var at = lastAt(t, ["thought", "worked"]) || t.seen || ""; return { t: t, meta: at ? sinceLabel(at, now) : "", k: at }; })
+        .sort(function (a, b) { return a.k < b.k ? 1 : a.k > b.k ? -1 : 0; }),
+      seen: by.seen.map(function (t) { var at = t.seen || lastAt(t, ["seen", "skipped"]) || ""; return { t: t, meta: at ? sinceLabel(at, now) : "", k: at }; })
+        .sort(function (a, b) { return a.k < b.k ? 1 : a.k > b.k ? -1 : 0; }),
+      new: by.new.slice().sort(byArrival).map(function (t) { return { t: t, meta: whenLabel(t.due, now) }; })
+    };
+    return STANDINGS.map(function (g) { return { key: g.key, name: g.name, note: g.note, items: rows[g.key] }; });
+  }
+  // The last few thoughts shown, newest first, each once: "which one was that?" is the commonest reason to open the list.
+  function justSeen(store, log, now, n) {
+    var out = [], had = {};
+    for (var i = (log || []).length - 1; i >= 0 && out.length < (n || 5); i--) {
+      var e = log[i]; if (!e || e.undone || !e.id || had[e.id] || !own(store, e.id)) continue;
+      had[e.id] = true; out.push({ t: store[e.id], meta: sinceLabel(e.at, now) });
+    }
+    return out;
+  }
+
+  var api = { VERSION: VERSION, standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
     make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
