@@ -951,7 +951,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     if (!(await page.locator("#strip").isVisible())) { await page.click("#startFive").catch(() => {}); await page.waitForTimeout(800); }
     const g0 = await page.evaluate(() => getComputedStyle(document.getElementById("vMeet")).getPropertyValue("--ground").trim() || getComputedStyle(document.documentElement).getPropertyValue("--ground").trim());
     await page.click("#strip"); await page.waitForTimeout(700); await page.click("#libGear"); await page.waitForTimeout(500);
-    ok(await page.locator("#themeSeg").isVisible() && /Pistachio/.test(await page.textContent("#themeSeg")) && /Stone/.test(await page.textContent("#themeSeg")), "stone (" + scheme + "): Settings, Look offers Pistachio and Stone");
+    ok(await page.locator("#themeSeg").isVisible() && (await page.textContent("#themeSec .lookrow")).trim() === "Colors" && /Pistachio/.test(await page.textContent("#themeSeg")) && /Stone/.test(await page.textContent("#themeSeg")), "stone (" + scheme + "): Settings, Look offers Colors: Pistachio and Stone");
     await page.click('[data-theme-pick="stone"]'); await page.waitForTimeout(200);
     const want = scheme === "light" ? "#C9C6BD" : "#23262B";
     const g1 = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--ground").trim());
