@@ -1,4 +1,4 @@
-# Scales for iPhone: the Scales web app in a native shell that adds haptics, the daily backup file, the app icon and
+# Scales for iPhone: the Scales web app, bundled inside (build 40), in a native shell that adds haptics, the daily backup file, the app icon and
 # Apple Intelligence. Built in the cloud by
 # .github/workflows/ios.yml; no Mac needed.
 name: Scales
@@ -22,9 +22,16 @@ targets:
     platform: iOS
     sources:
       - path: App
-        excludes: ["PrivacyInfo.xcprivacy"]
+        excludes: ["PrivacyInfo.xcprivacy", "NativeStore.js"]
       # Build 39: the privacy manifest (UserDefaults only, no tracking, no collected data), always in the Resources phase.
       - path: App/PrivacyInfo.xcprivacy
+        buildPhase: resources
+      # Build 40: the script that keeps the page's saves in step with the app's own file (NativeStore.swift).
+      - path: App/NativeStore.js
+        buildPhase: resources
+      # Build 40: the web app itself, copied in by scripts/bundle-web.sh before the project is made, as one folder.
+      - path: web
+        type: folder
         buildPhase: resources
     info:
       path: App/Info.plist
@@ -51,9 +58,6 @@ targets:
             NSUbiquitousContainerSupportedFolderLevels: None
         UIViewControllerBasedStatusBarAppearance: false
         UIStatusBarStyle: UIStatusBarStyleDarkContent
-        CFBundleURLTypes:
-          - CFBundleURLName: com.grahamdeno.scales
-            CFBundleURLSchemes: [scales]
     entitlements:
       path: App/Scales.entitlements
       properties:

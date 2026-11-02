@@ -1,39 +1,34 @@
 import UIKit
 import WebKit
 import UserNotifications
-import Network
 #if canImport(FoundationModels)
 import FoundationModels
 #endif
 
 /// Shows Scales and answers what it asks of the phone: haptics, the daily backup file, the app icon, appearance,
 /// Apple Intelligence, and downloads. (Build 39 took out Scales Plus, StoreKit and reminders.)
+/// From build 40 the web app is inside the app (WebScheme.swift) and everything it saves is also kept in a file the
+/// app owns (NativeStore.swift). Nothing is loaded from the internet.
 final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, WKDownloadDelegate {
-    private let home = URL(string: "https://scales.tangomike.app/app/?native=1")!
+    private let home = WebScheme.home
+    private let scheme = WebScheme()
+    let store = NativeStore()
+    private var content: WKUserContentController!
     private var web: WKWebView!
     private var ready = false          // Scales has started and can take scripts
     private let haptics = Haptics()
     private var queued: [String] = []  // scripts waiting for that
-    // Build 39: when the page can't load (no connection, a failed load), a plain screen says so and offers Try again.
-    // It also tries again by itself when the connection comes back.
+    // If the page can't start (it should never happen now that it is inside the app), a plain screen says so and
+    // offers Try again.
     private var offline: UIView?
-    private var loadFailed = false
-    private let monitor = NWPathMonitor()
-
-    deinit { monitor.cancel() }
 
     override func loadView() {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default()
-        let content = WKUserContentController()
+        content = WKUserContentController()
         content.add(WeakHandler(self), name: "scales")
-        // 1.83.2: the build number, shown in About, so a TestFlight copy says which build it is.
-        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
-        // 2.6.0: a TestFlight copy says so, so tests meant only for TestFlight can show there and nowhere else.
-        let testflight = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
-        content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios', build: '\(build)', testflight: \(testflight), look: true };",
-                                           injectionTime: .atDocumentStart, forMainFrameOnly: true))
         config.userContentController = content
+        config.setURLSchemeHandler(scheme, forURLScheme: WebScheme.scheme)
 
         web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = self
@@ -64,13 +59,39 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         view = web
         // 2.8.0: the Appearance chosen in Settings (Automatic, Light or Dark) holds from the first frame.
         applyLook(UserDefaults.standard.string(forKey: Self.lookKey) ?? "")
-        web.load(URLRequest(url: home))
         NotificationCenter.default.addObserver(forName: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil, queue: .main) { [weak self] _ in self?.sendA11y() }
-        monitor.pathUpdateHandler = { [weak self] path in
-            guard path.status == .satisfied else { return }
-            DispatchQueue.main.async { if self?.loadFailed == true { self?.retry() } }
+        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in self?.store.flush() }
+        if store.exists {
+            start()
+        } else {
+            // First launch of the bundled app: bring over what the web version saved on this phone, then start.
+            let reader = LegacyReader()
+            legacy = reader
+            reader.read(in: web) { [weak self] found in
+                guard let self else { return }
+                if let found { self.store.adopt(found) }
+                self.legacy = nil
+                self.start()
+            }
         }
-        monitor.start(queue: DispatchQueue.global(qos: .utility))
+    }
+
+    private var legacy: LegacyReader?
+
+    /// The scripts that run before the page (rebuilt each time, so a reload gets the file as it is now), then the page.
+    private func start() {
+        content.removeAllUserScripts()
+        // 1.83.2: the build number, shown in About, so a TestFlight copy says which build it is.
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
+        // 2.6.0: a TestFlight copy says so, so tests meant only for TestFlight can show there and nowhere else.
+        let testflight = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+        content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios', build: '\(build)', testflight: \(testflight), look: true, bundled: true };",
+                                           injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        if let url = Bundle.main.url(forResource: "NativeStore", withExtension: "js"), let js = try? String(contentsOf: url, encoding: .utf8) {
+            content.addUserScript(WKUserScript(source: store.seedScript() + "\n" + js, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
+        ready = false
+        web.load(URLRequest(url: home))
     }
 
     /// Run a script in Scales now, or once it has started.
@@ -82,8 +103,12 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     // MARK: Messages from Scales
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard let body = message.body as? [String: Any], let type = body["type"] as? String else { return }
+        // Only Scales itself, in the main frame, can ask the phone for anything.
+        guard message.frameInfo.isMainFrame, message.frameInfo.securityOrigin.protocol == WebScheme.scheme,
+              let body = message.body as? [String: Any], let type = body["type"] as? String else { return }
         switch type {
+        case "store":
+            store.apply(body)
         case "ready":
             ready = true
             queued.forEach { web.evaluateJavaScript($0, completionHandler: nil) }
@@ -240,13 +265,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         }
     }
 
-    // MARK: When the page can't load (build 39)
-    // Scales loads its page from the web. When that fails (no connection, a server error), a plain screen says so and
-    // offers Try again, and the app tries again by itself when the connection comes back. Thoughts are on the phone,
-    // so nothing is lost; they just can't be shown until the page loads once.
+    // MARK: When the page can't start
+    // The page is inside the app, so this should never show. If it does, a plain screen says so and offers Try again.
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        loadFailed = false
         hideOffline()
     }
 
@@ -254,22 +276,19 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { loadError(error) }
 
     private func loadError(_ error: Error) {
-        // A load that was cancelled on purpose (a link handed to Safari, an error page already shown) is not a failure.
-        if (error as NSError).code == NSURLErrorCancelled { return }
+        // A load that was cancelled on purpose (a link handed to Safari) or turned into a download is not a failure.
+        let e = error as NSError
+        if e.code == NSURLErrorCancelled { return }
+        if e.domain == "WebKitErrorDomain" && e.code == 102 { return }
         failed()
     }
 
     private func failed() {
-        loadFailed = true
         ready = false
         showOffline()
     }
 
-    private func retry() {
-        loadFailed = false
-        ready = false
-        web.load(URLRequest(url: home))
-    }
+    private func retry() { start() }
 
     @objc private func tryAgain() { retry() }
 
@@ -284,14 +303,14 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         panel.layoutMargins = UIEdgeInsets(top: 0, left: 28, bottom: 0, right: 28)
 
         let title = UILabel()
-        title.text = "Scales can't open right now."
+        title.text = "Scales couldn't start."
         title.font = UIFontMetrics(forTextStyle: .title2).scaledFont(for: UIFont.systemFont(ofSize: 26, weight: .bold))
         title.adjustsFontForContentSizeCategory = true
         title.textColor = ink
         title.numberOfLines = 0
 
         let note = UILabel()
-        note.text = "Check your connection, then try again. Your thoughts are safe on this phone."
+        note.text = "Try again. Your thoughts are safe on this phone."
         note.font = UIFontMetrics(forTextStyle: .body).scaledFont(for: UIFont.systemFont(ofSize: 17))
         note.adjustsFontForContentSizeCategory = true
         note.textColor = ink
@@ -317,6 +336,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             stack.trailingAnchor.constraint(equalTo: panel.layoutMarginsGuide.trailingAnchor),
             stack.centerYAnchor.constraint(equalTo: panel.centerYAnchor)
         ])
+        panel.accessibilityViewIsModal = true
         view.addSubview(panel)
         offline = panel
         UIAccessibility.post(notification: .screenChanged, argument: title)
@@ -334,15 +354,16 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         if action.shouldPerformDownload { return .download }
         let scheme = url.scheme ?? ""
         if ["blob", "data", "about"].contains(scheme) { return .allow }
-        if action.targetFrame?.isMainFrame == false { return .allow }
-        if url.host == home.host && url.path.hasPrefix("/app") { return .allow }
+        if url.scheme == WebScheme.scheme { return .allow }
+        // Frames are allowed only from inside the app.
+        if action.targetFrame?.isMainFrame == false { return .cancel }
         // Everything else (Wikiquote, the privacy policy, mail) opens in its own app or Safari.
         await UIApplication.shared.open(url)
         return .cancel
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor response: WKNavigationResponse) async -> WKNavigationResponsePolicy {
-        // A server error (the host or the proxy is down) would otherwise show as a blank or broken page.
+        // A missing file would otherwise show as a blank page.
         if response.isForMainFrame, let http = response.response as? HTTPURLResponse, http.statusCode >= 400 {
             failed()
             return .cancel
@@ -378,8 +399,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
     /// If the page dies in the background, start it again.
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-        ready = false
-        webView.reload()
+        store.flush()
+        start()
     }
 }
 

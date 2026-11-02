@@ -11,10 +11,10 @@ const read = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
 test("the website is published whole: strict styles, and the app passed through (1.79.0)", () => {
   const h = fs.readFileSync(path.join(__dirname, "..", "site", "_headers"), "utf8");
   assert.match(h, /style-src 'self';/); assert.doesNotMatch(h, /unsafe-inline/, "no inline styles allowed");
-  const proxy = fs.readFileSync(path.join(__dirname, "..", "server", "app-proxy.js"), "utf8");
-  assert.match(proxy, /https:\/\/grahamdeno\.github\.io\/scales\//);
+  assert.ok(!fs.existsSync(path.join(__dirname, "..", "server", "app-proxy.js")), "2.26.0: no pass-through; the app is served from the site itself");
+  assert.match(h, /\/app\/\*\n  ! Content-Security-Policy\n  Cache-Control: no-cache/, "the app keeps its inline code, and is never served stale");
   const wf = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "site.yml"), "utf8");
-  assert.doesNotMatch(wf, /cp server\/ai\.mjs/, "the Plus AI server is no longer deployed (2.25.0)"); assert.match(wf, /"functions\/app\/\[\[path\]\]\.js"/, "Functions sit beside out/, where Wrangler looks for them");
+  assert.doesNotMatch(wf, /cp server\/ai\.mjs/, "the Plus AI server is no longer deployed (2.25.0)"); assert.match(wf, /ref: release/, "the browser app comes from the release branch"); assert.match(wf, /scripts\/bundle-web\.sh out\/app rel/);
 });
 
 test("the Scales 2 website: four pages, strict CSP, no inline code, no Scales 1 words, no em-dashes (2.2.0)", () => {

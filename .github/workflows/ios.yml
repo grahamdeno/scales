@@ -5,7 +5,7 @@ name: iPhone app
 on:
   push:
     branches: [main, ios]
-    paths: ["ios/**", ".github/workflows/ios.yml"]
+    paths: ["ios/**", ".github/workflows/ios.yml", "scripts/bundle-web.sh", "scripts/web-files.txt"]
   workflow_dispatch:
 concurrency:
   group: ios-${{ github.ref }}
@@ -25,6 +25,9 @@ jobs:
           X="$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)"
           sudo xcode-select -s "$X"
           xcodebuild -version | head -1 | sed 's/^/::notice::Using /'
+      # Build 40: the web app goes inside the app. What is on this commit is exactly what the build runs.
+      - name: Bundle the web app
+        run: scripts/bundle-web.sh ios/web
       - name: Make the Xcode project
         run: brew install xcodegen && cd ios && xcodegen generate
       - name: Compile (simulator, unsigned)
@@ -43,6 +46,11 @@ jobs:
             echo "::notice::App: $APP"
             # Build 39: the privacy manifest must be inside the built app, or the upload can be flagged (ITMS-91053).
             if [ -f "$APP/PrivacyInfo.xcprivacy" ]; then echo "::notice::PrivacyInfo.xcprivacy is in the app"; else echo "::error::PrivacyInfo.xcprivacy is missing from the built app"; code=1; fi
+            # Build 40: the bundled web app and the store script must be inside, or the app opens to nothing.
+            for f in web/index.html web/core.js web/sets.js web/fonts/geist-latin.woff2 NativeStore.js; do
+              [ -f "$APP/$f" ] || { echo "::error::$f is missing from the built app"; code=1; }
+            done
+            grep -o 'VERSION = "[0-9.]*"' "$APP/web/core.js" | sed 's/^/::notice::Bundled web app /'
             /usr/libexec/PlistBuddy -c 'Print :CFBundleIcons' "$APP/Info.plist" 2>&1 | tr -s ' \n' ' ' | sed 's/^/::notice::CFBundleIcons /'
             ls "$APP" | grep -i -E "icon|\.car" | tr '\n' ' ' | sed 's/^/::notice::Files /'; echo
             xcrun assetutil --info "$APP/Assets.car" 2>/dev/null | grep -E '"Name"' | sort -u | tr -s ' \n' ' ' | sed 's/^/::notice::Assets.car names /'; echo
@@ -103,6 +111,7 @@ jobs:
           echo "::notice::UIDeviceFamily in the built app: $fam"
           case "$fam" in *2*) echo "::error::the built app lists iPad (UIDeviceFamily: $fam); it must be iPhone only"; exit 1;; esac
           [ -f chk/Payload/*.app/PrivacyInfo.xcprivacy ] || { echo "::error::the signed app has no PrivacyInfo.xcprivacy; stopping before upload"; exit 1; }
+          [ -f chk/Payload/*.app/web/index.html ] && [ -f chk/Payload/*.app/NativeStore.js ] || { echo "::error::the signed app has no bundled web app; stopping before upload"; exit 1; }
           echo "::notice::PrivacyInfo.xcprivacy is in the signed app"
           rm -rf chk
           mkdir -p ~/.appstoreconnect/private_keys && cp "$RUNNER_TEMP/asc.p8" ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
