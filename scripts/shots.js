@@ -32,7 +32,32 @@ function seed(now) {
     first: own("I am not my first reaction.", { due: C.addDays(today, 4), seen: "2026-10-25T12:00:00.000Z", visits: [{}] }),
     polite: own("Ask one more question than feels polite.", { away: "2026-10-21T12:00:00.000Z", seen: "2026-10-21T12:00:00.000Z", visits: [{}] })
   };
-  return { st, ids };
+  // 2.18.0: a few weeks of history, so Your thoughts, Insights, Argue with it and Tensions have something true to show.
+  const D = 86400000, at = (d, h) => { const x = new Date(now.getTime() - d * D); x.setHours(h == null ? 7 : h, 10, 0, 0); return x.toISOString(); };
+  const v = (kind, d, h) => ({ at: at(d, h), kind, ms: kind === "skipped" ? 5000 : 42000 });
+  ids.silence = line("franklin", "Say only what may help");
+  ids.power = line("stoics", "Some things are within our power");
+  ids.first2 = own("Do the hardest thing first, every day.", { seen: at(2), visits: [v("seen", 9), v("seen", 2)] });
+  ids.present = own("Be present, need little.", { away: at(3, 21), awayWhy: "I notice when I'm reaching for more now.", thinks: 6, seen: at(3), visits: [v("thought", 3)] });
+  Object.assign(st[ids.dread], { skips: 1, thinks: 2, seen: at(1), visits: [v("skipped", 33), v("skipped", 29), v("skipped", 26), v("skipped", 22), v("thought", 6), v("thought", 1)] });
+  Object.assign(st[ids.rest], { was: [{ text: "Rest is not laziness.", at: at(5) }], thinks: 3, seen: at(1), visits: [v("thought", 8), v("thought", 1)] });
+  Object.assign(st[ids.hard], { skips: 4, seen: at(1), visits: [v("skipped", 19), v("skipped", 14), v("skipped", 9), v("skipped", 4), v("skipped", 1)] });
+  Object.assign(st[ids.polite], { awayWhy: "I do this in every meeting now.", thinks: 5, away: at(6, 20) });
+  Object.assign(st[ids.epictetus], { thinks: 2, seen: at(2), visits: [v("thought", 12), v("thought", 2)],
+    arg: { text: st[ids.epictetus].text, at: at(2),
+      against: "Some things do disturb people directly: loss, pain, injustice. Treating every reaction as a choice of view can turn into blaming yourself for being hurt, or waving away harm that deserves a response.",
+      assumes: "That you can choose your view of something as easily as you notice it." } });
+  Object.assign(st[ids.busy], { seen: at(4), visits: [v("seen", 4)] });
+  Object.assign(st[ids.franklin], { seen: at(3), visits: [v("skipped", 10), v("skipped", 3)] });
+  Object.assign(st[ids.silence], { seen: at(2), visits: [v("thought", 2)] });
+  Object.assign(st[ids.first], { seen: at(5), visits: [v("seen", 5)] });
+  // the visit log the Insights page reads: mostly early mornings
+  const log = [];
+  [[ids.epictetus, "thought"], [ids.rest, "thought"], [ids.dread, "thought"], [ids.silence, "thought"], [ids.franklin, "skipped"], [ids.hard, "skipped"], [ids.busy, "seen"], [ids.power, "thought"]]
+    .forEach(([id, kind], i) => { for (let k = 0; k < 3; k++) log.push({ at: at(1 + i + k * 7, kind === "thought" ? (k === 2 ? 20 : 6) : 13), id, kind, ms: kind === "thought" ? 44000 : 6000, pile: "due" }); });
+  log.sort((a, b) => (a.at < b.at ? -1 : 1));
+  const ten = { pairs: [{ a: ids.first2, b: ids.rest, at: at(0, 7) }, { a: ids.hard, b: ids.silence, at: at(1, 7) }], gone: [], ran: C.dayKey(now), viewed: null };
+  return { st, ids, log, ten };
 }
 
 // Status bar, Dynamic Island and home indicator, drawn over the page in its own ink.
@@ -59,20 +84,25 @@ if (!process.argv.includes("--frame")) (async () => {
   async function shot(name, scheme, cur, act) {
     const ctx = await browser.newContext({ viewport: { width: 440, height: 956 }, deviceScaleFactor: 3, colorScheme: scheme, hasTouch: true });
     const page = await ctx.newPage();
-    const { st, ids } = seed(now);
-    await page.addInitScript(([st, ui]) => {
+    const { st, ids, log, ten } = seed(now);
+    await page.addInitScript(([st, ui, log, ten]) => {
       if (!sessionStorage.getItem("seeded")) {
         localStorage.clear();
         localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(st));
         localStorage.setItem("scales.next.ui.v1", JSON.stringify(ui));
+        localStorage.setItem("scales.next.log.v1", JSON.stringify(log));
+        localStorage.setItem("scales.next.tensions.v1", JSON.stringify(ten));
         sessionStorage.setItem("seeded", "1");
       }
+      // The iPhone app's Apple Intelligence, stood in for: the argument and tensions come from the seed above.
+      window.scalesNative = { build: "38" };
+      window.webkit = { messageHandlers: { scales: { postMessage: (m) => { if (m.type === "aiStatus") setTimeout(() => window.scalesAI && window.scalesAI("available"), 10); } } } };
       document.addEventListener("DOMContentLoaded", () => {
         const s = document.createElement("style");
         s.textContent = ":root { --top: 62px !important; --bot: 34px !important; } .hint, #carry { transition: none !important; } * { caret-color: transparent; }";
         document.head.appendChild(s);
       });
-    }, [st, { cur: ids[cur], ms: 0, worked: false, nudged: true, view: "all", review: null, snapDay: C.dayKey(now) }]);
+    }, [st, { cur: ids[cur], ms: 0, worked: false, nudged: true, view: "all", review: null, snapDay: C.dayKey(now), open: {} }, log, ten]);
     await page.goto(base + "index.html"); await page.waitForTimeout(1200);
     if (act) await act(page, ids);
     const bg = await page.evaluate(() => {
@@ -104,10 +134,25 @@ if (!process.argv.includes("--frame")) (async () => {
     await page.click("#setSets"); await page.waitForTimeout(700);
   });
   await shot("write", "light", "epictetus", async (page) => {
-    await page.click("#newBtn"); await page.waitForTimeout(700);
+    await page.click("#strip"); await page.waitForTimeout(800); await page.click("#libNew"); await page.waitForTimeout(700);
     await page.fill("#writeText", "The meeting I keep dreading is mostly a conversation I haven't had yet.");
     await page.evaluate(() => { document.activeElement && document.activeElement.blur(); document.getElementById("writeText").dispatchEvent(new Event("input", { bubbles: true })); });
     await page.waitForTimeout(400);
+  });
+  // 2.18.0: the features that help you think
+  await shot("argue", "light", "epictetus", async (page) => {
+    await page.click("#words"); await page.waitForTimeout(700); await page.click("#argBtn"); await page.waitForTimeout(700);
+  });
+  await shot("tensions", "light", "epictetus", async (page) => {
+    await page.click("#strip"); await page.waitForTimeout(900); await page.click('#libList [data-group="tension"]'); await page.waitForTimeout(500);
+  });
+  await shot("tension", "light", "epictetus", async (page) => {
+    await page.click("#strip"); await page.waitForTimeout(900); await page.click('#libList [data-group="tension"]'); await page.waitForTimeout(400);
+    await page.click("#libList .tpair"); await page.waitForTimeout(900);
+  });
+  await shot("insights", "light", "epictetus", async (page) => {
+    await page.click("#strip"); await page.waitForTimeout(800); await page.click("#libGear"); await page.waitForTimeout(600);
+    await page.click("#setIns"); await page.waitForTimeout(800);
   });
   await browser.close(); server.close();
 })();

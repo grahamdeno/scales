@@ -102,5 +102,13 @@ details p { margin:0 0 20px; }
 .contact { background:var(--card); border-radius:18px; padding:24px; margin-top:48px; }
 .contact b { font-size:19px; }
 .contact p { margin:6px 0 14px; }
-@media (max-width:820px) { .lede-narrow { max-width:34em; margin:22px 0 0; }
+@media (max-width:820px) { .lede-narrow { max-width:34em; margin:22px 0 0; } }
 @media (max-width:400px) { .wrap { --gut:20px; } nav { gap:8px; } nav .btn.sm { padding:0 14px; font-size:14px; } }
+/* 2.3.0: Think it through. Three reasons, set as a row of plain columns; an intro line before and after. */
+.panel p.intro { margin:22px 0 0; max-width:36em; font-size:20px; }
+.why3 { display:grid; grid-template-columns:repeat(3, 1fr); gap:28px; margin:40px 0 18px; }
+.why3 div { border-top:1px solid var(--line); padding-top:18px; }
+.why3 b { display:block; font-size:22px; line-height:1.25; letter-spacing:-.01em; color:var(--bone); font-weight:700; }
+.why3 span { display:block; margin-top:10px; font-size:17px; line-height:1.5; color:var(--plum-muted); }
+.panel p.small.center { text-align:center; margin:44px auto 0; max-width:34em; }
+@media (max-width:820px) { .why3 { grid-template-columns:1fr; gap:6px; } .why3 div { padding:16px 0; } }

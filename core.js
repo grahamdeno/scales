@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.17.0";
+  var VERSION = "2.18.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -857,16 +857,19 @@
     } else out.when = null;
     // Whose words hold you: the share of visits that were longer, by who said it. Needs 5 visits for a voice to count.
     var by = {};
-    real.forEach(function (e) { var t = own(store, e.id) ? store[e.id] : null; if (!t) return; var k = cleanBy(t.by) || ""; var r = by[k] || (by[k] = { n: 0, s: 0 }); r.n++; if (sat(e)) r.s++; });
+    real.forEach(function (e) { var t = own(store, e.id) ? store[e.id] : null; if (!t) return; var k = (cleanBy(t.by) || "").split(",")[0].replace(/^after\s+/i, "").trim(); var r = by[k] || (by[k] = { n: 0, s: 0 }); r.n++; if (sat(e)) r.s++; });
     var voices = Object.keys(by).filter(function (k) { return by[k].n >= 5; }).map(function (k) { return { who: k, rate: by[k].s / by[k].n, n: by[k].n }; })
       .sort(function (a, b) { return b.rate - a.rate || b.n - a.n; });
-    var name = function (w) { return w ? w : "your own thoughts"; };
+    // "After Carl Jung" is a credit line, not a name: the person is Carl Jung. A voice has to hold a fifth of its
+    // visits to be called one you stay with (2.18.0).
+    var name = function (w) { return w ? w.split(",")[0].replace(/^after\s+/i, "").trim() : "your own thoughts"; };
     out.voices = [];
-    if (voices.length >= 2) {
+    if (voices.length >= 2 && voices[0].rate >= 0.2) {
       var hi = voices[0], lo = voices[voices.length - 1];
       out.voices.push("You stay with " + name(hi.who) + " most: " + Math.round(hi.rate * 100) + "% of visits.");
-      if (hi.rate - lo.rate >= 0.15) out.voices.push("You move fastest past " + name(lo.who) + ".");
+      if (hi.rate - lo.rate >= 0.15 && name(lo.who) !== name(hi.who)) out.voices.push("You move fastest past " + name(lo.who) + ".");
     }
+    out.sits = sits.length;
     out.any = !!(out.turning.length || out.lived.length || out.rewrites.length || out.avoiding.length || out.when || out.voices.length);
     return out;
   }

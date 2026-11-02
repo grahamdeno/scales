@@ -17,6 +17,11 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.18.0:** Insights always shows all six parts; one with nothing true to say yet says what it waits for. Voices
+  drop "After" and anything after a comma ("Epictetus, The Enchiridion" is Epictetus) and need a fifth of visits.
+  Website: a "Think it through" section (the three reasons, Argue with it, Tensions, Insights) with real screenshots
+  from `scripts/shots.js`; privacy and support updated for Apple Intelligence. App Store: eight new screenshots and
+  `appstore/listing.json`.
 - **Insights (2.17.0):** Settings, Insights. Counted on the phone from what you did; only parts with something true
   to say are shown. Turning points (skipped 3+ times, mostly, before the last two weeks, sat with since), What you've
   lived (put away in 30 days, with your reason), Rewrites (first words above the words now), Still avoiding (4+ skips
