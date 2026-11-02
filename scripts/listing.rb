@@ -38,6 +38,19 @@ get.("/v1/apps/#{app["id"]}/appStoreVersions?filter[platform]=IOS&limit=5")["dat
   end
 end
 puts JSON.pretty_generate(out)
+# The screenshots on each version: per display type, in order, with Apple's processing state (read only).
+get.("/v1/apps/#{app["id"]}/appStoreVersions?filter[platform]=IOS&limit=5")["data"].each do |v|
+  get.("/v1/appStoreVersions/#{v["id"]}/appStoreVersionLocalizations")["data"].each do |l|
+    get.("/v1/appStoreVersionLocalizations/#{l["id"]}/appScreenshotSets")["data"].each do |set|
+      shots = get.("/v1/appScreenshotSets/#{set["id"]}/appScreenshots?limit=20")["data"]
+      puts "SCREENSHOTS #{v.dig("attributes", "versionString")} #{l.dig("attributes", "locale")} #{set.dig("attributes", "screenshotDisplayType")}: #{shots.length}"
+      shots.each_with_index do |sh, i|
+        a = sh["attributes"]; st = a.dig("assetDeliveryState", "state"); errs = (a.dig("assetDeliveryState", "errors") || []).map { |e| e["code"] }.join(",")
+        puts "  #{i + 1}. #{a["fileName"]} #{a.dig("imageAsset", "width")}x#{a.dig("imageAsset", "height")} #{st}#{errs.empty? ? "" : " " + errs}"
+      end
+    end
+  end
+end
 if ENV["WRITE"] == "1"
   want = JSON.parse(File.read(File.join(__dir__, "..", "appstore", "listing.json")))
   vers = get.("/v1/apps/#{app["id"]}/appStoreVersions?filter[platform]=IOS&filter[appStoreState]=PREPARE_FOR_SUBMISSION&limit=5")["data"]
