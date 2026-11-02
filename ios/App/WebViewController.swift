@@ -153,6 +153,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             applyLook(look)
         case "save":
             save(json: body["json"] as? String ?? "", day: body["day"] as? String ?? "")
+        case "backup":
+            backupNow(json: body["json"] as? String ?? "", stamp: body["stamp"] as? String ?? "")
         case "aiStatus":
             sendAIStatus()
         case "ai":
@@ -240,16 +242,56 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     /// "Scales backup.json" plus a dated copy (the last 14 kept). It goes to iCloud Drive, Scales, when the app
     /// has an iCloud container (iCloud.com.grahamdeno.scales from 1.77.1, when the person is signed in to iCloud),
     /// otherwise to Files, On My iPhone, Scales (also in the phone's iCloud Backup).
+    /// Where backups go: iCloud Drive, Scales when iCloud is on, otherwise Files, On My iPhone, Scales. Call off the main thread.
+    private static func backupFolder() -> (URL, String)? {
+        let fm = FileManager.default
+        var place = "files"
+        var dir = fm.urls(for: .documentDirectory, in: .userDomainMask).first
+        if let cloud = fm.url(forUbiquityContainerIdentifier: nil) { dir = cloud.appendingPathComponent("Documents"); place = "icloud" }
+        guard let folder = dir else { return nil }
+        try? fm.createDirectory(at: folder, withIntermediateDirectories: true)
+        return (folder, place)
+    }
+
+    /// How many thoughts a backup file holds (nil if it can't be read).
+    private static func thoughtCount(_ data: Data) -> Int? {
+        guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        return (obj["thoughts"] as? [String: Any])?.count
+    }
+
+    /// Back up now (2.27.0): a file of the person's own, named with the date and time, never replaced or pruned.
+    private func backupNow(json: String, stamp: String) {
+        guard !json.isEmpty else { return }
+        let clean = String(stamp.filter { $0.isNumber || $0 == "-" || $0 == " " || $0 == "." }.prefix(19))
+        DispatchQueue.global(qos: .utility).async {
+            var ok = false, place = "files"
+            let name = "Scales backup \(clean.isEmpty ? "copy" : clean).json"
+            if let found = Self.backupFolder() {
+                let folder = found.0
+                place = found.1
+                ok = (try? Data(json.utf8).write(to: folder.appendingPathComponent(name), options: .atomic)) != nil
+            }
+            DispatchQueue.main.async {
+                guard let args = try? JSONSerialization.data(withJSONObject: ["ok": ok, "where": place, "name": name]),
+                      let s = String(data: args, encoding: .utf8) else { return }
+                self.run("window.scalesBackedUp && window.scalesBackedUp(\(s))")
+            }
+        }
+    }
+
     private func save(json: String, day: String) {
         guard !json.isEmpty else { return }
         DispatchQueue.global(qos: .utility).async {
+            guard let found = Self.backupFolder() else { return }
+            let (folder, place) = found
             let fm = FileManager.default
-            var place = "files"
-            var dir = fm.urls(for: .documentDirectory, in: .userDomainMask).first
-            if let cloud = fm.url(forUbiquityContainerIdentifier: nil) { dir = cloud.appendingPathComponent("Documents"); place = "icloud" }
-            guard let folder = dir else { return }
-            try? fm.createDirectory(at: folder, withIntermediateDirectories: true)
             let data = Data(json.utf8)
+            // A copy with no thoughts never replaces one that has some (if the page ever starts empty).
+            if Self.thoughtCount(data) == 0, let old = try? Data(contentsOf: folder.appendingPathComponent("Scales backup.json")),
+               (Self.thoughtCount(old) ?? 0) > 0 {
+                DispatchQueue.main.async { self.run("window.scalesSaved && window.scalesSaved({ ok: false, where: '\(place)' })") }
+                return
+            }
             let ok = (try? data.write(to: folder.appendingPathComponent("Scales backup.json"), options: .atomic)) != nil
             let stamp = String(day.filter { $0.isNumber || $0 == "-" }.prefix(10))
             if ok && !stamp.isEmpty {

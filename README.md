@@ -17,7 +17,9 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
-- **2.26.0 (build 40):** The iPhone app carries the web app inside it and opens with no connection; every save is also
+- **2.27.0:** Back up now, in the iPhone app, saves its own file into iCloud Drive, Scales, named with the date and
+  time, never replaced or pruned. An automatic copy with no thoughts never replaces one that has some.
+- **2.26.0 (build 44):** The iPhone app carries the web app inside it and opens with no connection; every save is also
   kept in a file the app owns, so iOS clearing web storage can't lose a thought. Tensions never uses a thought that
   protects someone. The Apple Intelligence message says why it's off. The browser app is served from Cloudflare.
 - **2.25.0:** Fixes from the 1.0 audit. A card left on screen for over 5 minutes now reads as seen (the swipe that ended the
