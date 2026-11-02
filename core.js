@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.15.0";
+  var VERSION = "2.16.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -503,7 +503,9 @@
       skips: Math.min(4, num(t.skips, 0)), thinks: num(t.thinks, 0), works: num(t.works, 0),
       seen: typeof t.seen === "string" ? t.seen : null, visits: visits, from: typeof t.from === "string" ? t.from : undefined,
       by: cleanBy(t.by), set: typeof t.set === "string" && t.set ? t.set.slice(0, 40) : undefined,
-      item: typeof t.item === "string" && t.item ? t.item.slice(0, 60) : undefined };
+      item: typeof t.item === "string" && t.item ? t.item.slice(0, 60) : undefined,
+      arg: t.arg && typeof t.arg === "object" && typeof t.arg.text === "string" && typeof t.arg.against === "string" && typeof t.arg.assumes === "string"
+        ? { text: t.arg.text.slice(0, 1500), against: t.arg.against.slice(0, 600), assumes: t.arg.assumes.slice(0, 300), at: typeof t.arg.at === "string" ? t.arg.at : nowIso } : undefined };
   }
   function restoreFrom(store, data, now, gone) {
     var res = { ok: false, kind: null, added: 0, ids: [], gone: (gone || []).slice(), visits: [], events: [] };
@@ -706,7 +708,101 @@
     return out;
   }
 
-  var api = { VERSION: VERSION, standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
+  // ---- Argue with it, and Tensions (2.16.0) ----
+  // Both run on Apple's on-device model through the iPhone app, one plain-text request at a time. Scales writes the
+  // request, reads the answer strictly, and throws away anything that doesn't fit the shape. Nothing leaves the phone.
+  // The model never judges a thought or writes in the person's voice: it argues the other side, names the assumption,
+  // or points at two of the person's own thoughts that disagree.
+  var ARG_INSTRUCTIONS = "You help a person test a thought they hold. Give the strongest honest case against it: where it is wrong, " +
+    "incomplete, or does harm if followed without judgment. Be direct and fair. Never praise the thought, never give advice, " +
+    "never ask questions, never soften with phrases like 'while this is true'. Then name the one belief the thought quietly " +
+    "depends on. Answer in exactly this form and nothing else:\nAGAINST: <two or three sentences, under 60 words>\nASSUMES: <one sentence, under 20 words>";
+  function argRequest(text, by) {
+    var who = cleanBy(by);
+    return { instructions: ARG_INSTRUCTIONS, prompt: "The thought: \"" + String(text).trim().slice(0, 600) + "\"" + (who ? " (" + who + ")" : "") };
+  }
+  function tidyLine(s) {
+    return String(s || "").replace(/\*\*/g, "").replace(/^[\s"'\u201c\u2018*:-]+|[\s"'\u201d\u2019*]+$/g, "").replace(/\s+/g, " ").trim();
+  }
+  // Reads "AGAINST: ... ASSUMES: ..." in any case, with or without line breaks or markdown. Null if either is missing.
+  function parseArg(raw) {
+    var s = String(raw || ""), a = s.search(/against\s*:/i), b = s.search(/assumes?\s*:/i);
+    if (a < 0 || b < 0 || b < a) return null;
+    var against = tidyLine(s.slice(a, b).replace(/^[^:]*:/, "")), assumes = tidyLine(s.slice(b).replace(/^[^:]*:/, ""));
+    if (against.length < 20 || assumes.length < 6) return null;
+    if (against.length > 480) against = against.slice(0, 480).replace(/\s+\S*$/, "") + "\u2026";
+    if (assumes.length > 220) assumes = assumes.slice(0, 220).replace(/\s+\S*$/, "") + "\u2026";
+    // A one-letter start is nicer capitalised: "that what you decided..." reads as a fragment.
+    assumes = assumes.charAt(0).toUpperCase() + assumes.slice(1);
+    return { against: against, assumes: assumes };
+  }
+  // The kept argument, only if it was made for the words as they are now.
+  function argFor(t) { return t && t.arg && t.arg.text === t.text && t.arg.against && t.arg.assumes ? t.arg : null; }
+  // The line "Add to note" puts in the note, and whether it is already there.
+  function argNoteLine(arg) { return "It assumes: " + arg.assumes.charAt(0).toLowerCase() + arg.assumes.slice(1); }
+  function withArgNote(note, arg) {
+    var line = argNoteLine(arg), n = String(note || "").trim();
+    if (n.indexOf(line) >= 0) return n;
+    return n ? n + "\n\n" + line : line;
+  }
+
+  var TEN_INSTRUCTIONS = "You read a numbered list of short thoughts one person keeps. Find pairs that truly pull against each other: " +
+    "following one fully would mean going against the other, or they give opposite advice about the same part of life. " +
+    "Do not pair thoughts that agree, that say the same thing in other words, or that are simply about different things. " +
+    "Give at most 3 pairs, strongest first. Answer one pair per line in exactly this form: <number> | <number> | <a few words on why>. " +
+    "If there are no real pairs, answer NONE.";
+  var TEN_BATCH = 30, TEN_BATCHES = 3, TEN_KEEP = 12;
+  // Today's batches: the rotation shuffled with a seed from the day, so different thoughts meet each day and a pair
+  // that spans two batches today can be found tomorrow.
+  function tensionBatches(thoughts, day) {
+    var pool = thoughts.filter(function (t) { return !t.away && t.text && t.text.trim(); })
+      .sort(function (a, b) { return shuffleKey(a.id, "ten" + day) - shuffleKey(b.id, "ten" + day); });
+    var out = [];
+    for (var i = 0; i < pool.length && out.length < TEN_BATCHES; i += TEN_BATCH) out.push(pool.slice(i, i + TEN_BATCH));
+    return out.filter(function (b) { return b.length >= 4; });
+  }
+  function tensionRequest(batch) {
+    return { instructions: TEN_INSTRUCTIONS, prompt: batch.map(function (t, i) {
+      var x = t.text.replace(/\s+/g, " ").trim(); return (i + 1) + ". " + (x.length > 180 ? x.slice(0, 180) + "\u2026" : x);
+    }).join("\n") };
+  }
+  // Reads "3 | 17 | why" lines (and forgiving forms like "3 and 17", "(3, 17)"). Each line gives at most one pair, both
+  // numbers on the list and different. At most 3. Returns [[idA, idB]].
+  function parseTensions(raw, batch) {
+    var out = [], seen = {};
+    String(raw || "").split(/\n+/).forEach(function (line) {
+      if (out.length >= 3) return;
+      var m = line.match(/(\d{1,3})\D{1,12}?(\d{1,3})/); if (!m) return;
+      var a = +m[1], b = +m[2];
+      if (a === b || a < 1 || b < 1 || a > batch.length || b > batch.length) return;
+      var k = Math.min(a, b) + "-" + Math.max(a, b); if (seen[k]) return; seen[k] = true;
+      out.push([batch[a - 1].id, batch[b - 1].id]);
+    });
+    return out;
+  }
+  function tensionKey(a, b) { return a < b ? a + "|" + b : b + "|" + a; }
+  // Adds new pairs to what is kept, newest first, never twice, at most TEN_KEEP. A pair the person has dismissed never
+  // comes back. Returns how many were new.
+  function mergeTensions(data, pairs, nowIso) {
+    data.pairs = data.pairs || []; data.gone = data.gone || [];
+    var have = {}, added = 0;
+    data.pairs.forEach(function (p) { have[tensionKey(p.a, p.b)] = true; });
+    data.gone.forEach(function (k) { have[k] = true; });
+    pairs.forEach(function (p) {
+      var k = tensionKey(p[0], p[1]); if (have[k]) return; have[k] = true;
+      data.pairs.unshift({ a: p[0], b: p[1], at: nowIso }); added++;
+    });
+    data.pairs = data.pairs.slice(0, TEN_KEEP);
+    return added;
+  }
+  // The pairs whose two thoughts are both still here and in rotation.
+  function liveTensions(data, store) {
+    return ((data && data.pairs) || []).filter(function (p) { return own(store, p.a) && own(store, p.b) && !store[p.a].away && !store[p.b].away; });
+  }
+
+  var api = { VERSION: VERSION, argRequest: argRequest, parseArg: parseArg, argFor: argFor, argNoteLine: argNoteLine, withArgNote: withArgNote,
+    tensionBatches: tensionBatches, tensionRequest: tensionRequest, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
+    standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
     make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
