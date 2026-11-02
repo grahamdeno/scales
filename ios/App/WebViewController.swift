@@ -61,22 +61,27 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         applyLook(UserDefaults.standard.string(forKey: Self.lookKey) ?? "")
         NotificationCenter.default.addObserver(forName: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil, queue: .main) { [weak self] _ in self?.sendA11y() }
         NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in self?.store.flush() }
-        if store.exists {
-            start()
-        } else {
-            // First launch of the bundled app: bring over what the web version saved on this phone, then start.
-            let reader = LegacyReader()
-            legacy = reader
-            reader.read(in: web) { [weak self] found in
-                guard let self else { return }
-                if let found { self.store.adopt(found) }
-                self.legacy = nil
-                self.start()
-            }
-        }
+        if store.exists { start() }
+        // Otherwise the first launch of the bundled app waits for viewDidAppear, so the reader is in a window.
     }
 
     private var legacy: LegacyReader?
+    private var withStore = true
+
+    /// First launch of the bundled app: bring over what the web version saved on this phone, then start.
+    /// If that can't be read this time, Scales starts without the store script, so nothing it does can be mistaken
+    /// for newer than the old data; the next launch tries again and the old data wins.
+    private func migrate() {
+        guard legacy == nil, let host = view.window else { return }
+        let reader = LegacyReader()
+        legacy = reader
+        reader.read(in: host) { [weak self] found in
+            guard let self else { return }
+            if let found { self.store.adopt(found) } else { self.withStore = false }
+            self.legacy = nil
+            self.start()
+        }
+    }
 
     /// The scripts that run before the page (rebuilt each time, so a reload gets the file as it is now), then the page.
     private func start() {
@@ -87,7 +92,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         let testflight = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
         content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios', build: '\(build)', testflight: \(testflight), look: true, bundled: true };",
                                            injectionTime: .atDocumentStart, forMainFrameOnly: true))
-        if let url = Bundle.main.url(forResource: "NativeStore", withExtension: "js"), let js = try? String(contentsOf: url, encoding: .utf8) {
+        if withStore, let url = Bundle.main.url(forResource: "NativeStore", withExtension: "js"), let js = try? String(contentsOf: url, encoding: .utf8) {
             content.addUserScript(WKUserScript(source: store.seedScript() + "\n" + js, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         }
         ready = false
@@ -208,6 +213,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         view.window?.overrideUserInterfaceStyle = overrideUserInterfaceStyle
+        if !store.exists && web.url == nil { migrate() }
     }
 
     private static let fixedIcons = ["pistachio": "AppIcon-Pistachio", "plum": "AppIcon-Plum", "bone": "AppIcon-Bone"]

@@ -111,7 +111,7 @@ final class LegacyReader: NSObject, WKNavigationDelegate {
         host.addSubview(w)
         web = w
         w.loadHTMLString("<!doctype html><title>Scales</title>", baseURL: URL(string: "https://scales.tangomike.app/app/")!)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 6) { [weak self] in self?.finish(nil) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in self?.finish(nil) }
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
