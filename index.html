@@ -280,6 +280,33 @@ textarea::placeholder { color: var(--plum-faint); }
 #backups #setSaved { margin: 6px var(--pad) 16px; }
 /* 2.13.0: Edit's one line of history, quiet under the thought. */
 .hist { margin: 4px 0 6px; font-size: 13px; line-height: 1.4; color: var(--plum-muted); }
+/* 2.17.0 Insights: plain text on plum, no cards. A quiet label, the thought, one line under it. */
+#insBody { padding-top: 4px; }
+#insBody .lead { margin: 6px var(--pad) 4px; font-size: 14px; line-height: 1.45; color: var(--plum-muted); }
+#insBody .sh { margin-top: 30px; }
+.ins { margin: 0 var(--pad); padding: 12px 0; border-bottom: 1px solid rgba(241,233,216,.12); }
+.ins:last-of-type { border-bottom: 0; }
+.ins .q { margin: 0; font-size: 17px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ins .was { margin: 0 0 6px; font-size: 15px; line-height: 1.35; color: var(--plum-muted); text-decoration: line-through; text-decoration-color: rgba(187,167,190,.5); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ins .m { margin: 5px 0 0; font-size: 13px; line-height: 1.4; color: var(--plum-muted); }
+.ins .why { margin: 6px 0 0; font-size: 15px; line-height: 1.4; color: var(--pist); }
+.ins.say .q { font-size: 17px; display: block; }
+.bars { display: flex; align-items: flex-end; gap: 8px; height: 46px; margin: 14px 0 6px; }
+.bars i { flex: 1; background: rgba(241,233,216,.16); border-radius: 3px 3px 0 0; min-height: 3px; }
+.bars i.top { background: var(--pist); }
+.barl { display: flex; gap: 8px; font-size: 11px; color: var(--plum-muted); }
+.barl span { flex: 1; text-align: center; }
+/* Say why */
+.whybody { display: flex; flex-direction: column; gap: 18px; padding: 8px var(--pad) 0 !important; }
+.whyt { margin: 0; font-size: 15px; line-height: 1.4; color: var(--plum-muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+#whyText { font-size: 22px; line-height: 1.3; font-weight: 500; min-height: 96px; }
+.whyfoot { display: flex; justify-content: space-between; align-items: center; }
+#toast #toastWhy { font-weight: 600; opacity: .85; padding-left: 2px; }
+.lrow.one.away .t[data-why] { cursor: pointer; }
+.lrow .whyl { display: block; font-size: 13px; color: var(--plum-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lrow.one.away.has-why { align-items: flex-start; }
+.lrow.one.away.has-why .t { white-space: normal; }
+.lrow.one.away.has-why .t .tt { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* 2.16.0 Argue with it: a word, then plain text under a thin rule. No box, no badge. */
 .argw { align-self: flex-start; margin: -8px 0 0; padding: 6px 0; font-size: 16px; font-weight: 600; color: var(--pist); }
 .argw:disabled { color: var(--plum-muted); font-weight: 500; }
@@ -372,7 +399,7 @@ textarea::placeholder { color: var(--plum-faint); }
     <i class="grab" aria-hidden="true"></i>
     <span class="row"><b>Your thoughts</b><span id="stripN">0</span></span>
   </button>
-  <div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastUndo">Undo</button><button type="button" id="toastDel" hidden>Delete</button></div>
+  <div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastUndo">Undo</button><button type="button" id="toastWhy" hidden>Say why</button><button type="button" id="toastDel" hidden>Delete</button></div>
 </section>
 
 <!-- Write: plum. One field. -->
@@ -436,6 +463,13 @@ textarea::placeholder { color: var(--plum-faint); }
       <button class="srow" type="button" id="setSets"><span>Sets</span><span class="v"><span id="setSetsV"></span><span class="chev" aria-hidden="true">&#8250;</span></span></button>
       <button class="srow" type="button" id="setImport"><span>Import thoughts</span><span class="chev" aria-hidden="true">&#8250;</span></button>
     </div>
+    <p class="sh">Insights</p>
+    <div class="grp">
+      <button class="srow" type="button" id="setIns"><span>Insights</span><span class="chev" aria-hidden="true">&#8250;</span></button>
+      <button class="srow" type="button" id="setAI" hidden><span>Themes and your week</span><span class="chev" aria-hidden="true">&#8250;</span></button>
+    </div>
+    <p class="snote" id="aiState" hidden></p>
+    <p class="snote" id="aiUses" hidden>Apple Intelligence on this iPhone writes Themes and your week, Argue with it in Edit, and Tensions in Your thoughts. Nothing leaves your phone.</p>
     <p class="sh">Look</p>
     <div class="grp">
       <div id="lookSec" hidden>
@@ -453,24 +487,31 @@ textarea::placeholder { color: var(--plum-faint); }
     <div class="grp">
       <button class="srow" type="button" id="setBackups"><span>Backups</span><span class="v"><span id="setBackupsV"></span> <span class="chev" aria-hidden="true">&#8250;</span></span></button>
     </div>
-    <p class="sh">Help</p>
+    <p class="sh">Help and about</p>
     <div class="grp">
       <button class="srow" type="button" id="setHelp"><span>How Scales works</span><span class="chev" aria-hidden="true">&#8250;</span></button>
       <a class="srow" id="setFeedback" href="mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback"><span>Send feedback</span><span class="chev" aria-hidden="true">&#8250;</span></a>
       <a class="srow" id="setSupport" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support</span><span class="chev" aria-hidden="true">&#8250;</span></a>
-    </div>
-    <p class="sh">About</p>
-    <div class="grp">
       <a class="srow" id="setPrivacy" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy</span><span class="chev" aria-hidden="true">&#8250;</span></a>
       <div class="srow" id="setVersionRow" role="text"><span>Version</span><span class="v" id="setVersion"></span></div>
     </div>
-    <div id="aiSec" hidden>
-      <p class="sh">Apple Intelligence</p>
-      <div class="grp"><button class="srow" type="button" id="setAI"><span>Themes and your week</span><span class="chev" aria-hidden="true">&#8250;</span></button></div>
-      <p class="snote" id="aiState"></p>
-      <p class="snote" id="aiUses">It also powers Argue with it, in Edit, and Tensions, in Your thoughts. It runs on this iPhone, and nothing leaves it.</p>
-    </div>
     <footer class="made"><img src="icons/pick/pistachio.png" alt="" width="24" height="24"><p>Your thoughts stay on your phone.</p></footer>
+  </div>
+</section>
+<!-- Insights (2.17.0): counted on the phone from what you did. Only the parts with something true to say are shown. -->
+<section class="page" id="insPage" aria-label="Insights" aria-hidden="true">
+  <button class="pback" type="button" id="insBack">&#8249; Settings</button>
+  <h1>Insights</h1>
+  <div class="body" id="insBody"></div>
+</section>
+<!-- Say why (2.17.0): one optional line about why a thought was put away. -->
+<section class="page" id="whyPage" aria-label="Why it was put away" aria-hidden="true">
+  <button class="pback" type="button" id="whyBack">Cancel</button>
+  <div class="body whybody">
+    <p class="whyt" id="whyThought"></p>
+    <label class="sr" for="whyText">Why you put it away</label>
+    <textarea id="whyText" rows="3" maxlength="300" placeholder="Why you're putting it away"></textarea>
+    <div class="whyfoot"><button class="quiet" type="button" id="whyClear" hidden>Remove</button><span></span><button class="act" type="button" id="whyKeep">Keep</button></div>
   </div>
 </section>
 <!-- Backups (2.13.0): automatic in the iPhone app, so it sits one step in. -->
@@ -560,8 +601,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.16.0"></script>
-<script src="sets.js?v=2.16.0"></script>
+<script src="core.js?v=2.17.0"></script>
+<script src="sets.js?v=2.17.0"></script>
 <script>
 (function () {
   "use strict";
@@ -832,14 +873,15 @@ textarea::placeholder { color: var(--plum-faint); }
     if (!store[id].away) store[id].away = now().toISOString(); save();
     buzz("putAway");
     undoPoint = snap;
-    fly(1, function () { pick(id); renderMeet(true); toast("Put away", trial ? id : null); });
+    fly(1, function () { pick(id); renderMeet(true); whyId = trial ? null : id; toast("Put away", trial ? id : null); whyId = null; });
   }
   $("srNext").onclick = goNext; $("srAway").onclick = goAway; $("srEdit").onclick = function () { openEdit(); };
 
   var toastT = 0;
-  var dropId = null;
+  var dropId = null, whyId = null, whyFor = null;
   function toast(msg, canDrop) {
     dropId = canDrop || null; $("toastDel").hidden = !dropId; $("toastUndo").hidden = false; $("toast").classList.remove("done");
+    $("toastWhy").hidden = !whyId; if (whyId) $("toastWhy").setAttribute("data-id", whyId);
     $("toastMsg").textContent = msg; $("toast").classList.add("on");
     clearTimeout(toastT); toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; }, 5000);
   }
@@ -857,7 +899,7 @@ textarea::placeholder { color: var(--plum-faint); }
   // A clear confirmation that something is gone for good (2.5.0): the message in full strength with a check, held long enough to read.
   function done(msg) {
     clearTimeout(toastT);
-    $("toastMsg").textContent = "\u2713 " + msg; $("toastUndo").hidden = true; $("toastDel").hidden = true;
+    $("toastMsg").textContent = "\u2713 " + msg; $("toastUndo").hidden = true; $("toastDel").hidden = true; $("toastWhy").hidden = true;
     $("toast").classList.add("on", "done");
     toastT = setTimeout(function () { $("toast").classList.remove("on"); setTimeout(function () { $("toast").classList.remove("done"); $("toastUndo").hidden = false; }, 250); }, 2600);
   }
@@ -940,7 +982,7 @@ textarea::placeholder { color: var(--plum-faint); }
     var t = store[ui.cur]; if (!t) return setMode("meet");
     var text = $("editText").value.trim(), note = $("editNote").value.trim();
     track("edit", { id: t.id, text: text && text !== t.text ? 1 : 0, note: note !== (t.note || "") ? 1 : 0, by: $("editBy").value.trim().slice(0, 200) !== (t.by || "") ? 1 : 0, mark: editMarked !== !!t.bookmarked ? 1 : 0 });
-    if (text && (text !== t.text || note !== (t.note || ""))) { t.text = text; t.note = note; ui.worked = true; save(); saveUi(); haptic("medium"); }
+    if (text && (text !== t.text || note !== (t.note || ""))) { C.reword(t, text, now()); t.note = note; ui.worked = true; save(); saveUi(); haptic("medium"); }
     // An argument made for words typed but not yet kept is kept now, if those are the words that were kept.
     if (argPending && argPending.text === t.text) { t.arg = argPending; save(); } argPending = null;
     // Who said it is a label, like the bookmark: changing it never counts as work on the thought.
@@ -1082,7 +1124,8 @@ textarea::placeholder { color: var(--plum-faint); }
       return '<button type="button" class="lrow one" data-open="' + esc(t.id) + '"' + (review ? ' data-review="1"' : "") + '><span class="t">' + esc(firstLine(t.text)) + '</span><span class="m">' + mark(t) + esc(C.ageLabel(t.created, n)) + "</span></button>";
     };
     var awayRow = function (t) {
-      return '<div class="lrow one away"><span class="t">' + esc(firstLine(t.text)) + '</span><span class="m">' + mark(t) + '<button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button></span></div>';
+      // 2.17.0: the reason, if one was given, under the words; tap the words to say or change why.
+      return '<div class="lrow one away' + (t.awayWhy ? " has-why" : "") + '"><span class="t" data-why="' + esc(t.id) + '"><span class="tt">' + esc(firstLine(t.text)) + "</span>" + (t.awayWhy ? '<span class="whyl">' + esc(t.awayWhy) + "</span>" : "") + '</span><span class="m">' + mark(t) + '<button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button></span></div>';
     };
     var none = function (msg) { return '<p class="lrow"><span class="m">' + msg + "</span></p>"; };
     if (view === "marked") {
@@ -1139,6 +1182,8 @@ textarea::placeholder { color: var(--plum-faint); }
   function renderLibCount() { var c = C.bookmarked(store).length; $("segMarked").textContent = c ? "Bookmarked · " + c : "Bookmarked"; }
   $("libList").addEventListener("click", function (e) {
     if (e.target.closest(".arch")) { pickView(e); $("libList").scrollTop = 0; return; }
+    var wy = e.target.closest("[data-why]");
+    if (wy && !e.target.closest("[data-back]")) { openWhy(wy.getAttribute("data-why"), "library"); return; }
     var tp = e.target.closest("[data-tension]");
     if (tp) { var ab = tp.getAttribute("data-tension").split("|"); showTension(ab[0], ab[1]); return; }
     var grp = e.target.closest("[data-group]");
@@ -1152,9 +1197,51 @@ textarea::placeholder { color: var(--plum-faint); }
       closeLib(); renderMeet(true);
     } else if (b) {
       var t = store[b.getAttribute("data-back")]; if (!t) return;
-      t.away = null; t.due = C.addDays(C.dayKey(now()), 1); save(); buzz("bringBack"); renderLib();
+      t.away = null; delete t.awayWhy; t.due = C.addDays(C.dayKey(now()), 1); save(); buzz("bringBack"); renderLib();
     }
   });
+
+  // ---------- Say why (2.17.0) ----------
+  // Optional, never asked for: one line about why a thought was put away, from the Put away message or the Put away list.
+  var whyBackTo = "meet";
+  function openWhy(id, from) {
+    var t = store[id]; if (!t) return;
+    whyFor = id; whyBackTo = from || mode;
+    clearTimeout(toastT); $("toast").classList.remove("on"); undoPoint = null;
+    $("whyThought").textContent = t.text; $("whyText").value = t.awayWhy || ""; $("whyClear").hidden = !t.awayWhy;
+    if (whyBackTo === "meet") clockOff();
+    openPage("whyPage", "why"); setTimeout(function () { $("whyText").focus(); }, 380);
+  }
+  function closeWhy() { $("whyText").blur(); closePage("whyPage", whyBackTo); if (whyBackTo === "library") renderLib(); else if (whyBackTo === "meet") clockOn(); whyFor = null; }
+  $("toastWhy").onclick = function () { var id = $("toastWhy").getAttribute("data-id"); if (id) openWhy(id, "meet"); };
+  $("whyBack").onclick = closeWhy;
+  $("whyKeep").onclick = function () {
+    var t = store[whyFor]; if (!t) return closeWhy();
+    var w = $("whyText").value.replace(/\s+/g, " ").trim().slice(0, 300);
+    if (w) t.awayWhy = w; else delete t.awayWhy;
+    save(); haptic("tick"); track("why", { id: t.id, len: w.length }); closeWhy();
+  };
+  $("whyClear").onclick = function () { var t = store[whyFor]; if (t) { delete t.awayWhy; save(); } closeWhy(); };
+
+  // ---------- Insights (2.17.0) ----------
+  function renderInsights() {
+    var d = C.insights(store, lsGet(KEY_LOG, []), now()), h = '<p class="lead">Counted on this phone from what you did. Nothing is sent anywhere.</p>';
+    var item = function (t, line, extra) { return '<div class="ins">' + (extra || "") + '<p class="q">' + esc(firstLine(t.text)) + '</p>' + (line ? '<p class="m">' + esc(line) + "</p>" : "") + "</div>"; };
+    if (!d.any) { $("insBody").innerHTML = h + '<p class="lead" style="margin-top:22px">Insights fill in as you go. Come back in a week or two.</p>'; return; }
+    if (d.turning.length) h += '<p class="sh">Turning points</p>' + d.turning.map(function (x) { return item(x.t, x.line); }).join("");
+    if (d.lived.length) h += '<p class="sh">What you\'ve lived \u00b7 ' + d.livedCount + " this month</p>" + d.lived.map(function (x) {
+      return '<div class="ins"><p class="q">' + esc(firstLine(x.t.text)) + "</p>" + (x.why ? '<p class="why">\u201c' + esc(x.why) + '\u201d</p>' : "") + '<p class="m">' + esc(x.line) + "</p></div>"; }).join("");
+    if (d.rewrites.length) h += '<p class="sh">Rewrites</p>' + d.rewrites.map(function (x) {
+      return '<div class="ins"><p class="was">' + esc(firstLine(x.was)) + '</p><p class="q">' + esc(firstLine(x.t.text)) + "</p>" + (x.times > 1 ? '<p class="m">Reworded ' + x.times + " times.</p>" : "") + "</div>"; }).join("");
+    if (d.avoiding.length) h += '<p class="sh">Still avoiding</p>' + d.avoiding.map(function (x) { return item(x.t, x.line); }).join("");
+    if (d.when) h += '<p class="sh">When you think</p><div class="ins say"><p class="q">' + esc(d.when.line) + '</p><div class="bars" aria-hidden="true">' +
+      d.when.counts.map(function (c, i) { var mx = Math.max.apply(null, d.when.counts) || 1; return '<i class="' + (i === d.when.top ? "top" : "") + '" style="height:' + Math.max(6, Math.round(100 * c / mx)) + '%"></i>'; }).join("") +
+      '</div><div class="barl" aria-hidden="true">' + ["Early", "Morning", "Afternoon", "Evening", "Night"].map(function (l) { return "<span>" + l + "</span>"; }).join("") + "</div></div>";
+    if (d.voices.length) h += '<p class="sh">Whose words hold you</p>' + d.voices.map(function (l) { return '<div class="ins say"><p class="q">' + esc(l) + "</p></div>"; }).join("");
+    $("insBody").innerHTML = h;
+  }
+  $("setIns").onclick = function () { renderInsights(); $("insBody").scrollTop = 0; openPage("insPage", "insights"); };
+  $("insBack").onclick = function () { closePage("insPage", "settings"); };
 
   // Everything, including Scales 1's data exactly as it is, so a backup never loses anything.
   function backupData() {
@@ -1366,9 +1453,8 @@ textarea::placeholder { color: var(--plum-faint); }
   var TESTFLIGHT = NATIVE && !!(window.scalesNative && window.scalesNative.testflight);
   window.scalesAI = function (status) {
     aiOk = status === "available";
-    $("aiSec").hidden = !NATIVE;
-    $("aiState").textContent = aiOk ? "" : "Apple Intelligence isn't on for this iPhone. It needs an iPhone 15 Pro or later with Apple Intelligence turned on in Settings.";
-    $("setAI").hidden = !aiOk; $("aiUses").hidden = !aiOk;
+    $("aiState").textContent = aiOk ? "" : "Apple Intelligence isn't on for this iPhone. With it (iPhone 15 Pro or later), Scales can argue with a thought and find tensions between them.";
+    $("aiState").hidden = aiOk || !NATIVE; $("setAI").hidden = !aiOk; $("aiUses").hidden = !aiOk;
     // 2.16.0: Argue with it and Tensions appear only where the model is there to do them.
     if (aiOk) { setTimeout(findTensions, 4000); if (mode === "edit") showArgBtn(); }
   };

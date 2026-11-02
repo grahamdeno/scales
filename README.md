@@ -17,6 +17,15 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **Insights (2.17.0):** Settings, Insights. Counted on the phone from what you did; only parts with something true
+  to say are shown. Turning points (skipped 3+ times, mostly, before the last two weeks, sat with since), What you've
+  lived (put away in 30 days, with your reason), Rewrites (first words above the words now), Still avoiding (4+ skips
+  in three weeks), When you think (time of day of longer visits, 8+ needed), Whose words hold you (share of longer
+  visits by who said it, 5+ visits per voice). Rewording a thought keeps its old words (the last 5) from 2.17.0.
+- **Say why (2.17.0):** the Put away message offers "Say why", one optional line kept as the reason; the Put away list
+  shows it under the thought, tap the words to change it; Bring back clears it.
+- **Settings order (2.17.0):** Add thoughts, Insights (Themes and your week when Apple Intelligence is on), Look, Your
+  data, Help and about.
 - **Apple Intelligence (2.16.0, iPhone app):** a regular feature wherever Apple's on-device model is on (iPhone 15 Pro
   or later); nothing leaves the phone, and it uses the bridge already in the shell, so no new build. **Argue with it**:
   a word in Edit; one tap shows "The case against" (two or three sentences) and "It assumes" (one line), kept with the

@@ -277,8 +277,8 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Backups/.test(await page.textContent("#settings")) && !/Restore from a backup/.test(await page.textContent("#settings")) && !/stay on this phone/.test(await page.textContent("#settings")), tag + "Settings has one Backups row, and the privacy line only once (2.13.0)");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.16\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/^2\.16\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.17\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/^2\.17\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     ok(await page.locator("#settings .made").count() === 1 && (await page.textContent("#settings .made")).trim() === "Your thoughts stay on your phone." && /pistachio\.png$/.test(await page.getAttribute("#settings .made img", "src")), tag + "Settings ends with the one-color icon and one line");
     ok(await page.evaluate(() => { const i = document.querySelector("#settings .made img"); return i.getBoundingClientRect().width <= 28 && i.getBoundingClientRect().width < 60; }), tag + "the footer icon is smaller than the icon choices");
     ok(await page.evaluate(() => { const i = document.querySelector("#settings .made img").getBoundingClientRect(), p = document.querySelector("#settings .made p").getBoundingClientRect(); return Math.abs((i.top + i.bottom) / 2 - (p.top + p.bottom) / 2) < 6 && p.left > i.right; }), tag + "the footer icon and line sit side by side (2.13.0)");
@@ -290,7 +290,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
     ok(Array.isArray(bk.events) && bk.events.length > 0, tag + "Back up carries the event log");
-    ok(bk.app === "scales" && bk.version === "2.16.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.17.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -343,7 +343,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(await page.locator("#backups.open").count() === 0 && await page.locator("#settings.open").count() === 1, tag + "Backups goes back to Settings");
     // Help, and back
     const heads = await page.evaluate(() => Array.from(document.querySelectorAll("#settings .sh")).filter((e) => e.offsetParent).map((e) => e.textContent).join("|"));
-    ok(heads === "Add thoughts|Look|Your data|Help|About", tag + "Settings is grouped: " + heads);
+    ok(heads === "Add thoughts|Insights|Look|Your data|Help and about", tag + "Settings is grouped: " + heads);
     await page.click("#setHelp"); await page.waitForTimeout(500);
     ok(await page.locator("#help.open").count() === 1 && /20 seconds or less/.test(await page.textContent("#help")) && /30 seconds or more/.test(await page.textContent("#help")), tag + "How Scales works opens with the new times");
     await page.screenshot({ path: path.join(shots, w + "-9-help.png") });
@@ -508,7 +508,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
       localStorage.setItem("scales.next.log.v1", JSON.stringify(log));
     });
     await page.click("#strip"); await page.waitForTimeout(700); await page.click("#libGear"); await page.waitForTimeout(500);
-    ok(await page.locator("#aiSec").isVisible() && await page.locator("#setAI").isVisible(), "TestFlight: Settings shows the Apple Intelligence test");
+    ok(await page.locator("#setAI").isVisible() && await page.locator("#aiUses").isVisible(), "Apple Intelligence: Settings shows Themes and your week under Insights");
     await page.click("#setAI"); await page.waitForTimeout(500);
     await page.click("#aiRun"); await page.waitForTimeout(2500);
     const d = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.ai.v1")));
@@ -677,7 +677,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop() || {})).value === "", tag + "the iPhone app hears Automatic at start");
     await page.evaluate(() => document.getElementById("libGear").click()); await page.waitForTimeout(500);
     ok(await page.locator("#lookSec").isVisible() && await page.getAttribute('[data-look="auto"]', "aria-checked") === "true", tag + "Settings offers Appearance with Automatic on");
-    ok(/^2\.16\.0 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
+    ok(/^2\.17\.0 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
     const other = scheme === "dark" ? "light" : "dark";
     await page.click('[data-look="' + other + '"]'); await page.waitForTimeout(300);
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop())).value === other, tag + "choosing " + other + " tells the iPhone app");
@@ -708,7 +708,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const kinds = new Set(ev.map((e) => e.e));
     ok(["session", "boot", "snapshot", "tap", "screen", "session_end"].every((k) => kinds.has(k)), "telemetry: session, boot, snapshot, taps, screens and session end are logged (" + [...kinds].join(",") + ")");
     const boot = ev.find((e) => e.e === "boot"), snap = ev.find((e) => e.e === "snapshot");
-    ok(boot && boot.v === "2.16.0" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
+    ok(boot && boot.v === "2.17.0" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
     ok(ev.some((e) => e.e === "tap" && e.id === "libGear") && ev.some((e) => e.e === "screen" && e.to === "help"), "telemetry: a tap is named by its button, and the screen it opened is logged");
     const sid = ev.find((e) => e.e === "session").s;
     ok(ev.filter((e) => e.e !== "session").every((e) => e.s === sid), "telemetry: every event carries its session");
@@ -798,10 +798,87 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     // Settings: a regular feature, no test wording
     await page.click("#strip"); await page.waitForTimeout(700); await page.click("#libGear"); await page.waitForTimeout(600);
     const set = await page.textContent("#settings");
-    ok(await page.locator("#aiSec").isVisible() && /Apple Intelligence/.test(set) && !/TestFlight|test\)/i.test(set) && /Argue with it/.test(set), "settings: Apple Intelligence is a regular section, with no test wording");
+    ok(await page.locator("#aiUses").isVisible() && /Apple Intelligence/.test(set) && !/TestFlight|test\)/i.test(set) && /Argue with it/.test(set), "settings: Apple Intelligence is a regular section, with no test wording");
     await page.click("#setAI"); await page.waitForTimeout(500);
     ok(!/TestFlight|A test/.test(await page.textContent("#ai")), "settings: the Themes page has no test wording");
     ok(!errs.length, "argue and tensions: no page errors (" + errs.join(" | ") + ")");
+    await ctx.close();
+  }
+  // 2.17.0: old wording kept, Say why after put away, Insights
+  for (const w of [375, 390, 430]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: 844 }, hasTouch: true });
+    const page = await ctx.newPage();
+    const errs = []; page.on("pageerror", (e) => errs.push(String(e)));
+    const D = 86400000, ago = (d) => new Date(Date.now() - d * D).toISOString(), day = new Date(Date.now() - 4 * 3600000).toISOString().slice(0, 10);
+    const sk = (d) => ({ at: ago(d), kind: "skipped", ms: 5000 }), th = (d) => ({ at: ago(d), kind: "thought", ms: 40000 });
+    const st = {
+      p0: { id: "p0", text: "Decide to do what you should, then do what you decided.", by: "Benjamin Franklin", note: "", created: ago(40), due: day, away: null, skips: 1, thinks: 1, works: 0, seen: ago(2), visits: [sk(30), sk(25), sk(20), sk(18), th(3)] },
+      p1: { id: "p1", text: "Very little is needed to live a happy life.", by: "Marcus Aurelius", note: "", created: ago(40), due: day, away: null, skips: 3, thinks: 0, works: 0, seen: ago(1), visits: [sk(12), sk(9), sk(6), sk(3), sk(1)] },
+      p2: { id: "p2", text: "Rest is part of the work.", by: "", note: "", created: ago(40), due: day, away: null, skips: 0, thinks: 3, works: 0, seen: ago(1), visits: [th(1)], was: [{ text: "Rest is not laziness.", at: ago(5) }] },
+      p4: { id: "p4", text: "The obstacle in the path becomes the path.", by: "", note: "", created: ago(40), due: new Date(Date.now() + 5 * D).toISOString().slice(0, 10), away: null, skips: 1, thinks: 1, works: 0, seen: ago(3), visits: [sk(30), sk(25), sk(20), sk(18), th(3)] },
+      p3: { id: "p3", text: "Speak only what may help others or yourself.", by: "Benjamin Franklin", note: "", created: ago(40), due: day, away: ago(4), awayWhy: "I do this without thinking now.", skips: 0, thinks: 5, works: 0, seen: ago(4), visits: [th(4)] }
+    };
+    const log = []; for (let i = 0; i < 20; i++) { const d = new Date(Date.now() - (i + 1) * D); d.setHours(6, 30, 0, 0); log.push({ at: d.toISOString(), id: i % 2 ? "p2" : "p1", kind: i % 2 ? "thought" : "skipped", ms: i % 2 ? 40000 : 5000 }); }
+    await page.addInitScript(([o, l]) => { if (!sessionStorage.getItem("s")) { localStorage.clear(); localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(o)); localStorage.setItem("scales.next.log.v1", JSON.stringify(l)); localStorage.setItem("scales.next.ui.v1", JSON.stringify({ nudged: true, cur: "p0" })); sessionStorage.setItem("s", "1"); } }, [st, log]);
+    await page.goto(base + "/"); await page.waitForTimeout(1000);
+    const tag = "[" + w + "] ";
+    // rewording keeps the old words
+    await page.click("#words"); await page.waitForTimeout(600);
+    await page.fill("#editText", "Decide what you should do, then do it."); await page.click("#editDone"); await page.waitForTimeout(600);
+    const t0 = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.thoughts.v1")).p0);
+    ok(t0.text === "Decide what you should do, then do it." && t0.was && t0.was[0].text === "Decide to do what you should, then do what you decided.", tag + "rewording keeps the words it had");
+    // put away: Say why is offered, optional, and kept
+    const cur = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.ui.v1")).cur);
+    await page.keyboard.press("ArrowDown"); await page.waitForTimeout(800);
+    ok(await page.locator("#toastWhy").isVisible() && /Put away/.test(await page.textContent("#toast")), tag + "the Put away message offers Say why");
+    await page.screenshot({ path: path.join(shots, w + "-whytoast.png") });
+    await page.click("#toastWhy"); await page.waitForTimeout(600);
+    ok(await page.locator("#whyPage.open").count() === 1 && (await page.textContent("#whyThought")).length > 5, tag + "Say why opens one line, with the thought above it");
+    await page.screenshot({ path: path.join(shots, w + "-why.png") });
+    await page.fill("#whyText", "I live this one now."); await page.click("#whyKeep"); await page.waitForTimeout(600);
+    ok((await page.evaluate((id) => JSON.parse(localStorage.getItem("scales.next.thoughts.v1"))[id].awayWhy, cur)) === "I live this one now." && await page.locator("#whyPage.open").count() === 0, tag + "Keep saves the reason and goes back");
+    // the reason shows in the Put away list and can be changed there
+    await page.click("#strip"); await page.waitForTimeout(700);
+    await page.click("#libList .arch"); await page.waitForTimeout(300);
+    ok(/I live this one now\./.test(await page.textContent("#libList")), tag + "the Put away list shows the reason under the thought");
+    await page.screenshot({ path: path.join(shots, w + "-awaylist.png") });
+    await page.click('#libList [data-why="' + cur + '"]'); await page.waitForTimeout(600);
+    ok(await page.locator("#whyPage.open").count() === 1 && (await page.inputValue("#whyText")) === "I live this one now.", tag + "tapping a put-away thought opens its reason to change");
+    await page.click("#whyBack"); await page.waitForTimeout(500);
+    ok(await page.locator("#lib.open").count() === 1, tag + "Cancel goes back to the list");
+    // Settings order and Insights
+    await page.click("#libList .arch"); await page.waitForTimeout(200);
+    await page.click("#libGear"); await page.waitForTimeout(600);
+    const heads = await page.evaluate(() => Array.from(document.querySelectorAll("#settings .sh")).filter((e) => e.offsetParent).map((e) => e.textContent).join("|"));
+    ok(heads === "Add thoughts|Insights|Look|Your data|Help and about", tag + "Settings order: " + heads);
+    await page.click("#setIns"); await page.waitForTimeout(600);
+    const ins = await page.textContent("#insBody");
+    ok(/Turning points/.test(ins) && /Skipped 4 times before/.test(ins), tag + "Insights: a turning point (skipped, then sat with)");
+    ok(/What you've lived/.test(ins) && /I do this without thinking now\./.test(ins) && /I live this one now\./.test(ins), tag + "Insights: what you've lived, with your reasons");
+    ok(/Rewrites/.test(ins) && /Rest is not laziness\./.test(ins), tag + "Insights: a rewrite, the old words above the new");
+    ok(/Still avoiding/.test(ins) && /Skipped 5 times in three weeks/.test(ins), tag + "Insights: still avoiding");
+    ok(/When you think/.test(ins) && /early morning/.test(ins), tag + "Insights: when you think");
+    await page.screenshot({ path: path.join(shots, w + "-insights.png") });
+    await page.evaluate(() => { document.getElementById("insBody").scrollTop = 9999; }); await page.waitForTimeout(200);
+    await page.screenshot({ path: path.join(shots, w + "-insights2.png") });
+    await page.click("#insBack"); await page.waitForTimeout(500);
+    ok(await page.locator("#insPage.open").count() === 0 && await page.locator("#settings.open").count() === 1, tag + "Insights goes back to Settings");
+    // Bring back clears the reason
+    await page.click("#setBack"); await page.waitForTimeout(500);
+    await page.click("#libList .arch"); await page.waitForTimeout(300);
+    await page.click('#libList [data-back="' + cur + '"]'); await page.waitForTimeout(300);
+    ok(!(await page.evaluate((id) => JSON.parse(localStorage.getItem("scales.next.thoughts.v1"))[id].awayWhy, cur)), tag + "Bring back clears the reason");
+    ok(!errs.length, tag + "no page errors (" + errs.join(" | ") + ")");
+    await ctx.close();
+  }
+  // an empty start: Insights says it fills in, without empty sections
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } }); const page = await ctx.newPage();
+    await page.addInitScript(() => { if (!sessionStorage.getItem("s")) { localStorage.clear(); localStorage.setItem("scales.next.thoughts.v1", JSON.stringify({ z1: { id: "z1", text: "A first thought.", note: "", created: new Date().toISOString(), due: "2000-01-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] } })); localStorage.setItem("scales.next.log.v1", "[]"); sessionStorage.setItem("s", "1"); } });
+    await page.goto(base + "/"); await page.waitForTimeout(800);
+    await page.click("#strip"); await page.waitForTimeout(600); await page.click("#libGear"); await page.waitForTimeout(500); await page.click("#setIns"); await page.waitForTimeout(500);
+    const ins = await page.textContent("#insBody");
+    ok(/fill in as you go/.test(ins) && !/Turning points|Rewrites|Still avoiding|When you think|Whose words/.test(ins), "Insights: with nothing to say yet, it says it fills in, with no empty sections");
     await ctx.close();
   }
   // without Apple Intelligence (a browser), neither appears
