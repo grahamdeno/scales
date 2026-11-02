@@ -283,8 +283,8 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Backups/.test(await page.textContent("#settings")) && !/Restore from a backup/.test(await page.textContent("#settings")) && !/stay on this phone/.test(await page.textContent("#settings")), tag + "Settings has one Backups row, and the privacy line only once (2.13.0)");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.20\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/^2\.20\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.21\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/^2\.21\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     ok(await page.locator("#settings .made").count() === 1 && (await page.textContent("#settings .made")).trim() === "Your thoughts stay on your phone." && /pistachio\.png$/.test(await page.getAttribute("#settings .made img", "src")), tag + "Settings ends with the one-color icon and one line");
     ok(await page.evaluate(() => { const i = document.querySelector("#settings .made img"); return i.getBoundingClientRect().width <= 28 && i.getBoundingClientRect().width < 60; }), tag + "the footer icon is smaller than the icon choices");
     ok(await page.evaluate(() => { const i = document.querySelector("#settings .made img").getBoundingClientRect(), p = document.querySelector("#settings .made p").getBoundingClientRect(); return Math.abs((i.top + i.bottom) / 2 - (p.top + p.bottom) / 2) < 6 && p.left > i.right; }), tag + "the footer icon and line sit side by side (2.13.0)");
@@ -296,7 +296,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
     ok(Array.isArray(bk.events) && bk.events.length > 0, tag + "Back up carries the event log");
-    ok(bk.app === "scales" && bk.version === "2.20.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.21.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -591,8 +591,9 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.screenshot({ path: path.join(shots, "dark-2-toast.png") });
     await page.click("#toastUndo"); await page.waitForTimeout(500);
     await page.mouse.click(195, 400); await page.waitForTimeout(700);
-    const ed = await page.evaluate(() => ({ bg: getComputedStyle(document.body).backgroundColor, theme: document.getElementById("themeColor").content }));
-    ok(ed.bg !== meet.bg && /23132A/i.test(ed.theme), "dark: Edit is the deeper plum, and the browser bar follows it (" + JSON.stringify(ed) + ")");
+    // 2.21.0: Edit is a sheet in the deeper plum over the thought; the top of the screen is still the thought's ground.
+    const ed = await page.evaluate(() => ({ bg: getComputedStyle(document.getElementById("vEdit")).backgroundColor, theme: document.getElementById("themeColor").content }));
+    ok(ed.bg === "rgb(35, 19, 42)" && !/23132A/i.test(ed.theme), "dark: the Edit sheet is the deeper plum over the thought (" + JSON.stringify(ed) + ")");
     await page.screenshot({ path: path.join(shots, "dark-3-edit.png") });
     await page.click("#editCancel"); await page.waitForTimeout(500);
     await page.click("#strip"); await page.waitForTimeout(700);
@@ -683,7 +684,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop() || {})).value === "", tag + "the iPhone app hears Automatic at start");
     await page.evaluate(() => document.getElementById("libGear").click()); await page.waitForTimeout(500);
     ok(await page.locator("#lookSec").isVisible() && await page.getAttribute('[data-look="auto"]', "aria-checked") === "true", tag + "Settings offers Appearance with Automatic on");
-    ok(/^2\.20\.0 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
+    ok(/^2\.21\.0 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
     const other = scheme === "dark" ? "light" : "dark";
     await page.click('[data-look="' + other + '"]'); await page.waitForTimeout(300);
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop())).value === other, tag + "choosing " + other + " tells the iPhone app");
@@ -714,7 +715,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const kinds = new Set(ev.map((e) => e.e));
     ok(["session", "boot", "snapshot", "tap", "screen", "session_end"].every((k) => kinds.has(k)), "telemetry: session, boot, snapshot, taps, screens and session end are logged (" + [...kinds].join(",") + ")");
     const boot = ev.find((e) => e.e === "boot"), snap = ev.find((e) => e.e === "snapshot");
-    ok(boot && boot.v === "2.20.0" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
+    ok(boot && boot.v === "2.21.0" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
     ok(ev.some((e) => e.e === "tap" && e.id === "libGear") && ev.some((e) => e.e === "screen" && e.to === "help"), "telemetry: a tap is named by its button, and the screen it opened is logged");
     const sid = ev.find((e) => e.e === "session").s;
     ok(ev.filter((e) => e.e !== "session").every((e) => e.s === sid), "telemetry: every event carries its session");
@@ -917,6 +918,15 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await pull(260);
     ok(!(await page.locator("#vEdit").isVisible()), "pull to keep: pulling down past the line closes Edit");
     ok((await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.thoughts.v1")).q1.note)) === "Pulled down to keep.", "pull to keep: what was written is kept, like Done");
+    // 2.21.0: Edit is a sheet over the thought; tapping above it keeps, like Done
+    await page.click("#words"); await page.waitForTimeout(700);
+    const sh = await page.evaluate(() => { const e = document.getElementById("vEdit").getBoundingClientRect(), w = document.getElementById("words"); return { top: e.top, meet: getComputedStyle(document.getElementById("vMeet")).visibility, grab: !!document.querySelector("#vEdit .egrab"), r: getComputedStyle(document.getElementById("vEdit")).borderTopLeftRadius }; });
+    ok(sh.top > 20 && sh.meet === "visible" && sh.grab && parseFloat(sh.r) >= 20, "sheet: Edit rises as a sheet with a handle, the thought still in view above it (" + JSON.stringify(sh) + ")");
+    ok(await page.locator("#editNote").isVisible() && !(await page.locator("#noteBtn").isVisible()), "sheet: a thought with a note shows it as text, with no Add a note");
+    await page.fill("#editNote", "Kept by tapping above."); await page.evaluate(() => document.activeElement.blur());
+    await page.mouse.click(195, 12); await page.waitForTimeout(600);
+    ok(!(await page.locator("#vEdit").isVisible()) && (await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.thoughts.v1")).q1.note)) === "Kept by tapping above.", "sheet: tapping above it keeps and closes, like Done");
+    await page.screenshot({ path: path.join(shots, "sheet-closed.png") });
     ok(!errs.length, "pull to keep: no page errors (" + errs.join(" | ") + ")");
     await ctx.close();
   }
