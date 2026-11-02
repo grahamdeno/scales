@@ -17,6 +17,9 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.24.1:** After Jung reworded further from the translations (darkness, inside, accept, light, fate, roots, irritate,
+  shadow), and two sources corrected: "someone in me" is Civilization in Transition (CW 10); "children learn" is The
+  Psychology of the Child Archetype (CW 9i, par. 293). Lines already on a phone keep their old words.
 - **2.24.0:** First run and a safety line. The very first thought written is due today, so it is the first card the
   person meets ("Kept. Here it is."). Until each move has been made once, "↑ Next" rests faintly above the thought and
   "Put away ↓" below it (static, so Reduce Motion keeps it). The first-run example is "Most things go better when I slow
