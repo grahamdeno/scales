@@ -84,6 +84,12 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok((await page.textContent("#editDelete")).trim() === "Tap again to delete", tag + "Delete asks for a second tap");
     await page.mouse.click(w / 2, 700); await page.waitForTimeout(100);
     ok((await page.textContent("#editDelete")).trim() === "Delete", tag + "tapping elsewhere takes Delete back");
+    // 2.19.0: the author sits under the thought; no labels; "Add a note" opens the note
+    ok(!(await page.locator("#vEdit .lbl").count()) && await page.locator("#noteBtn").isVisible() && !(await page.locator("#editNote").isVisible()), tag + "Edit: no labels; a note opens from Add a note");
+    const yT = (await page.locator("#editText").boundingBox()), yB = (await page.locator("#editBy").boundingBox()), yH = (await page.locator("#editHist").boundingBox());
+    ok(yB.y >= yT.y + yT.height - 2 && yB.y < yT.y + yT.height + 30 && yH.y > yB.y, tag + "Edit: who said it sits right under the thought, then the history line");
+    await page.click("#noteBtn"); await page.waitForTimeout(150);
+    ok(await page.locator("#editNote").isVisible(), tag + "Edit: Add a note opens a place to write");
     await page.fill("#editNote", "A note from the test");
     await page.screenshot({ path: path.join(shots, w + "-3-edit.png") });
     // Done is a word, not a pill
@@ -277,8 +283,8 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Backups/.test(await page.textContent("#settings")) && !/Restore from a backup/.test(await page.textContent("#settings")) && !/stay on this phone/.test(await page.textContent("#settings")), tag + "Settings has one Backups row, and the privacy line only once (2.13.0)");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.18\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/^2\.18\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.19\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/^2\.19\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     ok(await page.locator("#settings .made").count() === 1 && (await page.textContent("#settings .made")).trim() === "Your thoughts stay on your phone." && /pistachio\.png$/.test(await page.getAttribute("#settings .made img", "src")), tag + "Settings ends with the one-color icon and one line");
     ok(await page.evaluate(() => { const i = document.querySelector("#settings .made img"); return i.getBoundingClientRect().width <= 28 && i.getBoundingClientRect().width < 60; }), tag + "the footer icon is smaller than the icon choices");
     ok(await page.evaluate(() => { const i = document.querySelector("#settings .made img").getBoundingClientRect(), p = document.querySelector("#settings .made p").getBoundingClientRect(); return Math.abs((i.top + i.bottom) / 2 - (p.top + p.bottom) / 2) < 6 && p.left > i.right; }), tag + "the footer icon and line sit side by side (2.13.0)");
@@ -290,7 +296,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
     ok(Array.isArray(bk.events) && bk.events.length > 0, tag + "Back up carries the event log");
-    ok(bk.app === "scales" && bk.version === "2.18.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.19.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -677,7 +683,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop() || {})).value === "", tag + "the iPhone app hears Automatic at start");
     await page.evaluate(() => document.getElementById("libGear").click()); await page.waitForTimeout(500);
     ok(await page.locator("#lookSec").isVisible() && await page.getAttribute('[data-look="auto"]', "aria-checked") === "true", tag + "Settings offers Appearance with Automatic on");
-    ok(/^2\.18\.0 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
+    ok(/^2\.19\.0 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
     const other = scheme === "dark" ? "light" : "dark";
     await page.click('[data-look="' + other + '"]'); await page.waitForTimeout(300);
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop())).value === other, tag + "choosing " + other + " tells the iPhone app");
@@ -708,7 +714,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const kinds = new Set(ev.map((e) => e.e));
     ok(["session", "boot", "snapshot", "tap", "screen", "session_end"].every((k) => kinds.has(k)), "telemetry: session, boot, snapshot, taps, screens and session end are logged (" + [...kinds].join(",") + ")");
     const boot = ev.find((e) => e.e === "boot"), snap = ev.find((e) => e.e === "snapshot");
-    ok(boot && boot.v === "2.18.0" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
+    ok(boot && boot.v === "2.19.0" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
     ok(ev.some((e) => e.e === "tap" && e.id === "libGear") && ev.some((e) => e.e === "screen" && e.to === "help"), "telemetry: a tap is named by its button, and the screen it opened is logged");
     const sid = ev.find((e) => e.e === "session").s;
     ok(ev.filter((e) => e.e !== "session").every((e) => e.s === sid), "telemetry: every event carries its session");
@@ -778,6 +784,9 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#words"); await page.waitForTimeout(700);
     await page.click("#argBtn"); await page.waitForTimeout(150);
     ok(await page.locator("#argBox").isVisible() && (await page.evaluate(() => window.__ai.length)) === n0 + 1 && (await page.textContent("#argNote")).includes("Added to note"), "argue: the second time it shows the kept argument without asking again");
+    await page.click("#argBtn"); await page.waitForTimeout(150);
+    ok(!(await page.locator("#argBox").isVisible()) && await page.locator("#argBtn").isVisible(), "argue: tapping the word again closes it");
+    await page.click("#argBtn"); await page.waitForTimeout(150);
     await page.click("#argHide"); await page.waitForTimeout(150);
     ok(!(await page.locator("#argBox").isVisible()) && await page.locator("#argBtn").isVisible(), "argue: Hide puts it away");
     await page.click("#editCancel"); await page.waitForTimeout(600);
@@ -853,11 +862,15 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(heads === "Add thoughts|Insights|Look|Your data|Help and about", tag + "Settings order: " + heads);
     await page.click("#setIns"); await page.waitForTimeout(600);
     const ins = await page.textContent("#insBody");
-    ok(/Turning points/.test(ins) && /Skipped 4 times before/.test(ins), tag + "Insights: a turning point (skipped, then sat with)");
-    ok(/What you've lived/.test(ins) && /I do this without thinking now\./.test(ins) && /I live this one now\./.test(ins), tag + "Insights: what you've lived, with your reasons");
-    ok(/Rewrites/.test(ins) && /Rest is not laziness\./.test(ins), tag + "Insights: a rewrite, the old words above the new");
-    ok(/Still avoiding/.test(ins) && /Skipped 5 times in three weeks/.test(ins), tag + "Insights: still avoiding");
-    ok(/When you think/.test(ins) && /early morning/.test(ins), tag + "Insights: when you think");
+    ok(/One thought you used to skip, you now sit with\./.test(ins) && /You put away 2 thoughts in the last 30 days\./.test(ins) && /You gave a reason for each\./.test(ins) &&
+      /You reworded 2 thoughts\./.test(ins) && /One thought you keep skipping\./.test(ins) && /You think best in the early morning\./.test(ins), tag + "Insights: each finding is one sentence (" + ins.slice(0, 160) + ")");
+    ok((await page.locator("#insBody .ev").count()) === 0, tag + "Insights: the thoughts behind a finding stay closed until tapped");
+    const openF = async (k) => { await page.click('#insBody [data-f="' + k + '"]'); await page.waitForTimeout(250); return page.textContent("#insBody .ev"); };
+    ok(/Skipped 4 times before/.test(await openF("turn")), tag + "Insights: a turning point opens to show what changed");
+    const lv = await openF("lived");
+    ok(/I do this without thinking now\./.test(lv) && /I live this one now\./.test(lv) && (await page.locator("#insBody .ev").count()) === 1, tag + "Insights: what you've lived opens with your reasons, one finding open at a time");
+    ok(/Rest is not laziness\./.test(await openF("rew")), tag + "Insights: a rewrite opens, the old words above the new");
+    ok(/Skipped 5 times in three weeks/.test(await openF("avoid")), tag + "Insights: still avoiding opens to the thought");
     await page.screenshot({ path: path.join(shots, w + "-insights.png") });
     await page.evaluate(() => { document.getElementById("insBody").scrollTop = 9999; }); await page.waitForTimeout(200);
     await page.screenshot({ path: path.join(shots, w + "-insights2.png") });
@@ -878,7 +891,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.goto(base + "/"); await page.waitForTimeout(800);
     await page.click("#strip"); await page.waitForTimeout(600); await page.click("#libGear"); await page.waitForTimeout(500); await page.click("#setIns"); await page.waitForTimeout(500);
     const ins = await page.textContent("#insBody");
-    ok(["Turning points", "What you've lived", "Rewrites", "Still avoiding", "When you think", "Whose words hold you"].every((h) => ins.includes(h)) && /Appears once you have a few weeks/.test(ins) && /Nothing you keep skipping/.test(ins) && /0 so far/.test(ins), "Insights: all six parts always show, each saying what it waits for");
+    ok(/Still filling in: Turning points, What you've lived, Rewrites, Whose words hold you and When you think\./.test(ins) && /Nothing you keep skipping right now\./.test(ins), "Insights: with nothing yet, one quiet line names what's filling in (" + ins + ")");
     await ctx.close();
   }
   // without Apple Intelligence (a browser), neither appears

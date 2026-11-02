@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.18.0";
+  var VERSION = "2.19.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -832,14 +832,15 @@
     var lived = all.filter(function (t) { var a = t.away ? Date.parse(t.away) : NaN; return isFinite(a) && a >= cut30 && a <= T + DAY; })
       .sort(function (a, b) { return a.away < b.away ? 1 : -1; });
     out.livedCount = lived.length;
-    out.lived = lived.slice(0, 5).map(function (t) {
+    out.livedWhy = lived.filter(function (t) { return !!t.awayWhy; }).length;
+    out.lived = lived.slice(0, 40).map(function (t) {
       var n = (t.thinks || 0) + (t.works || 0);
       return { t: t, why: t.awayWhy || "", line: n ? "Sat with it " + (n === 1 ? "once" : n + " times") + " first." : "Put away " + shortDate(Date.parse(t.away)) + "." };
     });
     // Rewrites: the words it started with, and the words it has now. Newest change first.
     out.rewrites = all.filter(function (t) { return Array.isArray(t.was) && t.was.length && t.was[0].text && t.was[0].text !== t.text; })
       .sort(function (a, b) { var x = a.was[a.was.length - 1].at || "", y = b.was[b.was.length - 1].at || ""; return x < y ? 1 : -1; })
-      .slice(0, 3).map(function (t) { return { t: t, was: t.was[0].text, times: t.was.length }; });
+      .slice(0, 20).map(function (t) { return { t: t, was: t.was[0].text, times: t.was.length }; });
     // Still avoiding: skipped 4 or more times in the last three weeks.
     var cut21 = T - 21 * DAY;
     out.avoiding = all.filter(function (t) { return !t.away; }).map(function (t) {
@@ -853,7 +854,10 @@
     if (sits.length >= 8) {
       var top = counts.indexOf(Math.max.apply(null, counts)), share = counts[top] / sits.length;
       out.when = { counts: counts, labels: BUCKETS.map(function (b) { return b[0]; }), top: top,
-        line: share >= 0.35 ? "Most of your longer visits happen in the " + BUCKETS[top][0] + " (" + BUCKETS[top][1] + ")." : "Your longer visits are spread through the day." };
+        line: share >= 0.35 ? "Most of your longer visits happen in the " + BUCKETS[top][0] + " (" + BUCKETS[top][1] + ")." : "Your longer visits are spread through the day.",
+        // 2.19.0: the same, as a finding and the line under it
+        head: share >= 0.35 ? "You think best in the " + BUCKETS[top][0] + "." : "Your longer visits are spread through the day.",
+        sub: share >= 0.35 ? "Most of your longer visits happen from " + BUCKETS[top][1] + "." : "No one time of day stands out yet." };
     } else out.when = null;
     // Whose words hold you: the share of visits that were longer, by who said it. Needs 5 visits for a voice to count.
     var by = {};
@@ -870,6 +874,8 @@
       if (hi.rate - lo.rate >= 0.15 && name(lo.who) !== name(hi.who)) out.voices.push("You move fastest past " + name(lo.who) + ".");
     }
     out.sits = sits.length;
+    // 2.19.0: the voices as a list for the finding: who, and the share of their visits you stayed with.
+    out.voiceTop = out.voices.length ? voices.slice(0, 5).map(function (v) { return { who: v.who ? name(v.who) : "", pct: Math.round(v.rate * 100) }; }) : [];
     out.any = !!(out.turning.length || out.lived.length || out.rewrites.length || out.avoiding.length || out.when || out.voices.length);
     return out;
   }
