@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.16.0";
+  var VERSION = "2.17.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -504,6 +504,8 @@
       seen: typeof t.seen === "string" ? t.seen : null, visits: visits, from: typeof t.from === "string" ? t.from : undefined,
       by: cleanBy(t.by), set: typeof t.set === "string" && t.set ? t.set.slice(0, 40) : undefined,
       item: typeof t.item === "string" && t.item ? t.item.slice(0, 60) : undefined,
+      was: Array.isArray(t.was) ? t.was.filter(function (w) { return w && typeof w.text === "string" && w.text.trim(); }).slice(-5).map(function (w) { return { text: w.text.slice(0, 1500), at: typeof w.at === "string" ? w.at : nowIso }; }) : undefined,
+      awayWhy: typeof t.awayWhy === "string" && t.awayWhy.trim() ? t.awayWhy.trim().slice(0, 300) : undefined,
       arg: t.arg && typeof t.arg === "object" && typeof t.arg.text === "string" && typeof t.arg.against === "string" && typeof t.arg.assumes === "string"
         ? { text: t.arg.text.slice(0, 1500), against: t.arg.against.slice(0, 600), assumes: t.arg.assumes.slice(0, 300), at: typeof t.arg.at === "string" ? t.arg.at : nowIso } : undefined };
   }
@@ -800,7 +802,76 @@
     return ((data && data.pairs) || []).filter(function (p) { return own(store, p.a) && own(store, p.b) && !store[p.a].away && !store[p.b].away; });
   }
 
-  var api = { VERSION: VERSION, argRequest: argRequest, parseArg: parseArg, argFor: argFor, argNoteLine: argNoteLine, withArgNote: withArgNote,
+  // ---- Old wording, reasons, and Insights (2.17.0) ----
+  // When a thought is reworded, the words it had are kept (the last 5), so Insights can show how it changed.
+  var WAS_KEEP = 5;
+  function reword(t, text, now) {
+    if (!text || text === t.text) return false;
+    t.was = (Array.isArray(t.was) ? t.was : []).concat([{ text: t.text, at: now.toISOString() }]).slice(-WAS_KEEP);
+    t.text = text; return true;
+  }
+  function visitsAt(t) { return realVisits(t).filter(function (v) { return v.at && isFinite(Date.parse(v.at)); }); }
+  function sat(v) { return v.kind === "thought" || v.kind === "worked"; }
+  var BUCKETS = [["early morning", "4 to 8 am", 4, 8], ["morning", "8 am to noon", 8, 12], ["afternoon", "noon to 5 pm", 12, 17], ["evening", "5 to 9 pm", 17, 21], ["night", "9 pm to 4 am", 21, 28]];
+  function bucketOf(h) { var x = h < 4 ? h + 24 : h; for (var i = 0; i < BUCKETS.length; i++) if (x >= BUCKETS[i][2] && x < BUCKETS[i][3]) return i; return 4; }
+  function shortDate(ms) { return new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
+  function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
+  // Everything Insights shows, counted from what the person did. Each part is empty when there isn't enough to say
+  // something true; the page shows only the parts that have something.
+  function insights(store, log, now) {
+    var T = now.getTime(), DAY = 86400000, all = list(store), out = {};
+    // Turning points: skipped at least 3 times (most of the time) before the last two weeks, and sat with since.
+    var cut14 = T - 14 * DAY;
+    out.turning = all.filter(function (t) { return !t.away; }).map(function (t) {
+      var v = visitsAt(t), before = v.filter(function (x) { return Date.parse(x.at) < cut14; }), after = v.filter(function (x) { return Date.parse(x.at) >= cut14; });
+      var sk = before.filter(function (x) { return x.kind === "skipped"; }).length, st = after.filter(sat).length;
+      return sk >= 3 && sk / before.length >= 0.6 && st >= 1 ? { t: t, line: "Skipped " + plural(sk, "time", "times") + " before " + shortDate(cut14) + ". Sat with it " + (st === 1 ? "once" : st + " times") + " since.", k: st * 100 + sk } : null;
+    }).filter(Boolean).sort(function (a, b) { return b.k - a.k; }).slice(0, 3);
+    // What you've lived: put away in the last 30 days, newest first, with the reason if one was given.
+    var cut30 = T - 30 * DAY;
+    var lived = all.filter(function (t) { var a = t.away ? Date.parse(t.away) : NaN; return isFinite(a) && a >= cut30 && a <= T + DAY; })
+      .sort(function (a, b) { return a.away < b.away ? 1 : -1; });
+    out.livedCount = lived.length;
+    out.lived = lived.slice(0, 5).map(function (t) {
+      var n = (t.thinks || 0) + (t.works || 0);
+      return { t: t, why: t.awayWhy || "", line: n ? "Sat with it " + (n === 1 ? "once" : n + " times") + " first." : "Put away " + shortDate(Date.parse(t.away)) + "." };
+    });
+    // Rewrites: the words it started with, and the words it has now. Newest change first.
+    out.rewrites = all.filter(function (t) { return Array.isArray(t.was) && t.was.length && t.was[0].text && t.was[0].text !== t.text; })
+      .sort(function (a, b) { var x = a.was[a.was.length - 1].at || "", y = b.was[b.was.length - 1].at || ""; return x < y ? 1 : -1; })
+      .slice(0, 3).map(function (t) { return { t: t, was: t.was[0].text, times: t.was.length }; });
+    // Still avoiding: skipped 4 or more times in the last three weeks.
+    var cut21 = T - 21 * DAY;
+    out.avoiding = all.filter(function (t) { return !t.away; }).map(function (t) {
+      var n = visitsAt(t).filter(function (x) { return x.kind === "skipped" && Date.parse(x.at) >= cut21; }).length;
+      return n >= 4 ? { t: t, line: "Skipped " + n + " times in three weeks.", k: n } : null;
+    }).filter(Boolean).sort(function (a, b) { return b.k - a.k; }).slice(0, 3);
+    // When you think: the time of day of the longer visits (30 s or more, or an edit). Needs 8 or more.
+    var real = (log || []).filter(function (e) { return e && !e.undone && e.at && isFinite(Date.parse(e.at)) && e.kind !== "review"; });
+    var sits = real.filter(sat), counts = [0, 0, 0, 0, 0];
+    sits.forEach(function (e) { counts[bucketOf(new Date(e.at).getHours())]++; });
+    if (sits.length >= 8) {
+      var top = counts.indexOf(Math.max.apply(null, counts)), share = counts[top] / sits.length;
+      out.when = { counts: counts, labels: BUCKETS.map(function (b) { return b[0]; }), top: top,
+        line: share >= 0.35 ? "Most of your longer visits happen in the " + BUCKETS[top][0] + " (" + BUCKETS[top][1] + ")." : "Your longer visits are spread through the day." };
+    } else out.when = null;
+    // Whose words hold you: the share of visits that were longer, by who said it. Needs 5 visits for a voice to count.
+    var by = {};
+    real.forEach(function (e) { var t = own(store, e.id) ? store[e.id] : null; if (!t) return; var k = cleanBy(t.by) || ""; var r = by[k] || (by[k] = { n: 0, s: 0 }); r.n++; if (sat(e)) r.s++; });
+    var voices = Object.keys(by).filter(function (k) { return by[k].n >= 5; }).map(function (k) { return { who: k, rate: by[k].s / by[k].n, n: by[k].n }; })
+      .sort(function (a, b) { return b.rate - a.rate || b.n - a.n; });
+    var name = function (w) { return w ? w : "your own thoughts"; };
+    out.voices = [];
+    if (voices.length >= 2) {
+      var hi = voices[0], lo = voices[voices.length - 1];
+      out.voices.push("You stay with " + name(hi.who) + " most: " + Math.round(hi.rate * 100) + "% of visits.");
+      if (hi.rate - lo.rate >= 0.15) out.voices.push("You move fastest past " + name(lo.who) + ".");
+    }
+    out.any = !!(out.turning.length || out.lived.length || out.rewrites.length || out.avoiding.length || out.when || out.voices.length);
+    return out;
+  }
+
+  var api = { VERSION: VERSION, reword: reword, insights: insights, WAS_KEEP: WAS_KEEP, argRequest: argRequest, parseArg: parseArg, argFor: argFor, argNoteLine: argNoteLine, withArgNote: withArgNote,
     tensionBatches: tensionBatches, tensionRequest: tensionRequest, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
     standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
