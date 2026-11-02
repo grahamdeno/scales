@@ -17,6 +17,13 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.24.0:** First run and a safety line. The very first thought written is due today, so it is the first card the
+  person meets ("Kept. Here it is."). Until each move has been made once, "↑ Next" rests faintly above the thought and
+  "Put away ↓" below it (static, so Reduce Motion keeps it). The first-run example is "Most things go better when I slow
+  down." Argue with it never argues against a thought that protects someone (staying alive or safe, recovery, a
+  person's worth): plain cases are caught on the phone before the model is asked, the model answers SKIP for the rest,
+  and a guardrail stop reads the same. It shows "This one isn't for arguing with." with 988 (US) or the local emergency
+  number. Themes and Your week no longer show raw model errors.
 - **2.23.0:** Insights number first: each finding leads with a big number in the accent (or a short word: Early,
   Afternoon, 67%) and a two- or three-word label, so the eye can run down the column. A zero is faded and doesn't open.
   What isn't ready yet is a row of small tags under "Coming as you use Scales".

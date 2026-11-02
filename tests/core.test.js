@@ -856,3 +856,21 @@ test("insights voices: 'After' is dropped from a name, and a voice needs a fifth
   low.push(lg("a", "seen", 20));
   assert.deepEqual(N.insights(st, low, n).voices, [], "under a fifth: not shown");
 });
+
+test("argue with it: thoughts that protect someone are never argued with (2.24.0)", () => {
+  for (const t of ["I'm worth staying for.", "Stay sober, one day at a time.", "I relapsed but I keep going", "No self-harm tonight", "Call Sam before I hurt myself"])
+    assert.equal(N.protectedThought(t), true, t);
+  for (const t of ["Remember that you will die.", "End my day with a walk", "Decide to do what you should, then do it.", "People are not disturbed by things"])
+    assert.equal(N.protectedThought(t), false, t);
+  assert.match(N.argRequest("x").instructions, /SKIP/);
+  assert.deepEqual(N.parseArg("SKIP"), { skip: true });
+  assert.deepEqual(N.parseArg("**Skip**"), { skip: true });
+  assert.equal(N.parseArg("AGAINST: Skipping rest wears people down over time. ASSUMES: Rest is optional").skip, undefined);
+  assert.equal(N.argFor({ text: "a", arg: { skip: true, text: "a" } }), null);
+});
+
+test("the starter lines and sets are never caught by the protective check (2.24.0)", () => {
+  const S = JSON.parse(read("content/sets.json"));
+  const sets = S.sets || S;
+  for (const s of Object.values(sets)) for (const l of (s.lines || s.items || [])) assert.equal(N.protectedThought(l.text), false, l.id);
+});
