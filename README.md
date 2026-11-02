@@ -17,6 +17,9 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.23.0:** Insights number first: each finding leads with a big number in the accent (or a short word: Early,
+  Afternoon, 67%) and a two- or three-word label, so the eye can run down the column. A zero is faded and doesn't open.
+  What isn't ready yet is a row of small tags under "Coming as you use Scales".
 - **2.22.0:** a second theme, Stone (warm stone to read on, graphite for sheets, pistachio accent; Dark puts the thought
   on graphite with sheets a step darker), chosen in Settings, Look, Theme; Pistachio stays the default. Settings order:
   Insights, Look, Add and back up (Sets, Import thoughts, Backups), Help and about. Tensions: "Not a tension" on the

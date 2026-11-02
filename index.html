@@ -325,14 +325,23 @@ textarea::placeholder { color: var(--plum-faint); }
 #vEdit .argbox { margin-top: 18px; }
 /* 2.19.0 Insights as findings: one sentence each, the evidence a tap away. */
 #insBody { padding: 4px var(--pad) 0 !important; }
-.fd { display: flex; align-items: flex-start; gap: 12px; width: 100%; text-align: left; padding: 18px 0; border-bottom: 1px solid rgba(241,233,216,.12); }
-.fd .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.fd .s { font-size: 20px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; color: var(--plum-ink); }
-.fd .d { font-size: 14px; line-height: 1.4; color: var(--plum-muted); }
+.fd { display: grid; grid-template-columns: 92px 1fr 14px; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 16px 0; border-bottom: 1px solid rgba(241,233,216,.12); }
+/* 2.23.0: the number column */
+.fd .n { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: var(--pist); font-variant-numeric: tabular-nums; }
+.fd .n.word { font-size: 24px; letter-spacing: -0.01em; }
+.fd .n.word.long { font-size: 16px; letter-spacing: 0; }
+.fd .n.zero { color: var(--plum-muted); opacity: .55; }
+.fd .tx { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.fd .s { font-size: 17px; line-height: 1.2; font-weight: 600; color: var(--plum-ink); }
+.fd .d { font-size: 13.5px; line-height: 1.35; color: var(--plum-muted); }
+#insBody .soon { margin-top: 28px; }
+#insBody .soon p { margin: 0 0 10px; font-size: 13px; color: var(--plum-muted); }
+#insBody .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+#insBody .chips i { font-style: normal; font-size: 13px; color: var(--plum-muted); opacity: .85; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(241,233,216,.12); }
 .fd .c { font-size: 20px; color: var(--plum-muted); transition: transform .2s; display: inline-block; width: 12px; text-align: center; margin-top: 1px; }
 .fd.open .c { transform: rotate(90deg); }
 .fd.plain { cursor: default; } .fd.plain .c { visibility: hidden; }
-.ev { padding: 0 0 8px 14px; border-bottom: 1px solid rgba(241,233,216,.12); animation: argIn .35s ease both; }
+.ev { padding: 0 0 8px 102px; border-bottom: 1px solid rgba(241,233,216,.12); animation: argIn .35s ease both; }
 .ir { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(241,233,216,.08); font-size: 15px; }
 .ir:last-child { border-bottom: 0; }
 .ir .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -673,8 +682,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.22.0"></script>
-<script src="sets.js?v=2.22.0"></script>
+<script src="core.js?v=2.23.0"></script>
+<script src="sets.js?v=2.23.0"></script>
 <script>
 (function () {
   "use strict";
@@ -1349,42 +1358,40 @@ textarea::placeholder { color: var(--plum-faint); }
   $("whyClear").onclick = function () { var t = store[whyFor]; if (t) { delete t.awayWhy; save(); } closeWhy(); };
 
   // ---------- Insights (2.17.0) ----------
-  // 2.19.0: each finding is one plain sentence with a line under it; the thoughts behind it open with a tap. Parts
-  // without enough history are named once at the bottom, never shown as content.
+  // 2.23.0: number first. Each finding leads with one big number (or a short word where a number doesn't fit) and a
+  // two- or three-word label, so the eye can run down the column. The thoughts behind it open with a tap. A zero is
+  // faded and doesn't open. What isn't ready yet is a row of small tags.
   function renderInsights() {
-    var d = C.insights(store, lsGet(KEY_LOG, []), now()), open = ui.insOpen || null, h = "", waiting = [];
-    var plural = function (n, one, many) { return n + " " + (n === 1 ? one : many); };
+    var d = C.insights(store, lsGet(KEY_LOG, []), now()), open = ui.insOpen || null, h = "", soon = [];
     var row = function (t, meta, extra) { return '<div class="ir"><span class="t">' + esc(firstLine(t.text)) + (extra || "") + '</span><span class="m">' + esc(meta || "") + "</span></div>"; };
-    var F = function (key, head, sub, body) {
+    var F = function (key, n, label, sub, body, cls) {
       var isO = open === key && body;
-      return '<button type="button" class="fd' + (body ? "" : " plain") + (isO ? " open" : "") + '"' + (body ? ' data-f="' + key + '"' : " disabled") + '><span class="tx"><span class="s">' + esc(head) + '</span><span class="d">' + esc(sub) + '</span></span><span class="c" aria-hidden="true">\u203a</span></button>' +
+      return '<button type="button" class="fd' + (body ? "" : " plain") + (isO ? " open" : "") + '"' + (body ? ' data-f="' + key + '"' : " disabled") + '><span class="n ' + (cls || "") + '">' + esc(String(n)) + '</span><span class="tx"><span class="s">' + esc(label) + '</span><span class="d">' + esc(sub) + '</span></span><span class="c" aria-hidden="true">\u203a</span></button>' +
         (isO ? '<div class="ev">' + body + "</div>" : "");
     };
+    var word = function (w) { return w.length > 5 ? "word long" : "word"; };
     var day = function (iso) { return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
-    if (d.turning.length) h += F("turn", d.turning.length === 1 ? "One thought you used to skip, you now sit with." : d.turning.length + " thoughts you used to skip, you now sit with.",
-      firstLine(d.turning[0].t.text), d.turning.map(function (x) { return row(x.t, "", '<span class="w2">' + esc(x.line) + "</span>"); }).join(""));
-    else waiting.push("Turning points");
-    if (d.livedCount) h += F("lived", "You put away " + plural(d.livedCount, "thought", "thoughts") + " in the last 30 days.",
-      d.livedWhy ? (d.livedWhy === d.livedCount ? "You gave a reason for each." : "You gave a reason for " + d.livedWhy + " of them.") : "Pull one down and tap Say why to keep a reason.",
-      d.lived.slice(0, 8).map(function (x) { return row(x.t, day(x.t.away), x.why ? '<span class="w">\u201c' + esc(x.why) + "\u201d</span>" : ""); }).join("") +
-        (d.livedCount > 8 ? '<div class="ir more">and ' + (d.livedCount - 8) + " more</div>" : ""));
-    else waiting.push("What you've lived");
-    if (d.rewrites.length) h += F("rew", "You reworded " + plural(d.rewrites.length, "thought", "thoughts") + ".", firstLine(d.rewrites[0].t.text),
+    if (d.turning.length) h += F("turn", d.turning.length, "Turned around", "skipped, now sat with", d.turning.map(function (x) { return row(x.t, "", '<span class="w2">' + esc(x.line) + "</span>"); }).join(""));
+    else soon.push("Turning points");
+    if (d.livedCount) h += F("lived", d.livedCount, "Put away", d.livedWhy ? (d.livedWhy === d.livedCount ? "each with a reason" : d.livedWhy + " with a reason") : "in the last 30 days",
+      d.lived.slice(0, 8).map(function (x) { return row(x.t, day(x.t.away), x.why ? '<span class="w">\u201c' + esc(x.why) + "\u201d</span>" : ""); }).join("") + (d.livedCount > 8 ? '<div class="ir more">and ' + (d.livedCount - 8) + " more</div>" : ""));
+    else soon.push("Put away");
+    if (d.rewrites.length) h += F("rew", d.rewrites.length, "Reworded", "your words changed",
       d.rewrites.map(function (x) { return '<div class="ir pair"><span class="was">' + esc(firstLine(x.was)) + '</span><span class="now">' + esc(firstLine(x.t.text)) + "</span></div>"; }).join(""));
-    else waiting.push("Rewrites");
+    else soon.push("Rewrites");
+    h += F("avoid", d.avoiding.length, "Skipped often", "in the last three weeks", d.avoiding.length ? d.avoiding.map(function (x) { return row(x.t, "", '<span class="w2">' + esc(x.line) + "</span>"); }).join("") : "", d.avoiding.length ? "" : "zero");
+    if (d.when) {
+      var spread = /spread/.test(d.when.head), wd = spread ? "Spread" : ["Early", "Morning", "Afternoon", "Evening", "Night"][d.when.top];
+      h += F("when", wd, spread ? "When you think" : "When you think best", spread ? "no one time stands out" : d.when.sub.replace("Most of your longer visits happen from ", "most long visits, ").replace(/\.$/, ""),
+        '<div class="bars" aria-hidden="true">' + d.when.counts.map(function (c, i) { var mx = Math.max.apply(null, d.when.counts) || 1; return '<i class="' + (i === d.when.top ? "top" : "") + '" style="height:' + Math.max(6, Math.round(100 * c / mx)) + '%"></i>'; }).join("") +
+        '</div><div class="barl" aria-hidden="true">' + ["Early", "Morning", "Afternoon", "Evening", "Night"].map(function (l) { return "<span>" + l + "</span>"; }).join("") + "</div>", word(wd));
+    } else soon.push("Time of day");
     if (d.voiceTop.length) {
-      var lab = function (w) { return w || "your own thoughts"; }, cap = function (w) { return w ? w : "Your own thoughts"; };
-      h += F("voice", "You stay with " + lab(d.voiceTop[0].who) + " most.", d.voiceTop[1] ? "Followed by " + lab(d.voiceTop[1].who) + "." : d.voiceTop[0].pct + "% of their visits run long.",
-        d.voiceTop.map(function (v) { return '<div class="ir"><span class="t">' + esc(cap(v.who)) + '</span><span class="m">' + v.pct + "% of visits</span></div>"; }).join(""));
-    } else waiting.push("Whose words hold you");
-    h += d.avoiding.length ? F("avoid", d.avoiding.length === 1 ? "One thought you keep skipping." : d.avoiding.length + " thoughts you keep skipping.", firstLine(d.avoiding[0].t.text),
-      d.avoiding.map(function (x) { return row(x.t, "", '<span class="w2">' + esc(x.line) + "</span>"); }).join(""))
-      : F("avoid", "Nothing you keep skipping right now.", "A thought skipped 4 times in three weeks would show here.", "");
-    if (d.when) h += F("when", d.when.head, d.when.sub, '<div class="bars" aria-hidden="true">' +
-      d.when.counts.map(function (c, i) { var mx = Math.max.apply(null, d.when.counts) || 1; return '<i class="' + (i === d.when.top ? "top" : "") + '" style="height:' + Math.max(6, Math.round(100 * c / mx)) + '%"></i>'; }).join("") +
-      '</div><div class="barl" aria-hidden="true">' + ["Early", "Morning", "Afternoon", "Evening", "Night"].map(function (l) { return "<span>" + l + "</span>"; }).join("") + "</div>");
-    else waiting.push("When you think");
-    if (waiting.length) h += '<p class="fill">Still filling in: ' + esc(waiting.length > 1 ? waiting.slice(0, -1).join(", ") + " and " + waiting[waiting.length - 1] : waiting[0]) + ". Each appears once there's enough to say something true.</p>";
+      var top = d.voiceTop[0], who = top.who || "Your own thoughts";
+      h += F("voice", top.pct + "%", who, top.who ? "holds you longest" : "hold you longest",
+        d.voiceTop.map(function (v) { return '<div class="ir"><span class="t">' + esc(v.who || "Your own thoughts") + '</span><span class="m">' + v.pct + "% of visits</span></div>"; }).join(""), "word");
+    } else soon.push("Whose words");
+    if (soon.length) h += '<div class="soon"><p>Coming as you use Scales</p><div class="chips">' + soon.map(function (x) { return "<i>" + esc(x) + "</i>"; }).join("") + "</div></div>";
     $("insBody").innerHTML = h;
   }
   $("insBody").addEventListener("click", function (e) {
