@@ -1,23 +1,26 @@
 import UIKit
 import WebKit
 import UserNotifications
-import StoreKit
+import Network
 #if canImport(FoundationModels)
 import FoundationModels
 #endif
 
-/// Shows Scales and answers what it asks of the phone: reminders, the badge, haptics, downloads, and
-/// Scales Plus through StoreKit (1.72.0).
+/// Shows Scales and answers what it asks of the phone: haptics, the daily backup file, the app icon, appearance,
+/// Apple Intelligence, and downloads. (Build 39 took out Scales Plus, StoreKit and reminders.)
 final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, WKDownloadDelegate {
     private let home = URL(string: "https://scales.tangomike.app/app/?native=1")!
     private var web: WKWebView!
     private var ready = false          // Scales has started and can take scripts
     private let haptics = Haptics()
     private var queued: [String] = []  // scripts waiting for that
-    static let plusID = "com.grahamdeno.scales.plus.yearly"
-    private var storeUpdates: Task<Void, Never>?
+    // Build 39: when the page can't load (no connection, a failed load), a plain screen says so and offers Try again.
+    // It also tries again by itself when the connection comes back.
+    private var offline: UIView?
+    private var loadFailed = false
+    private let monitor = NWPathMonitor()
 
-    deinit { storeUpdates?.cancel() }
+    deinit { monitor.cancel() }
 
     override func loadView() {
         let config = WKWebViewConfiguration()
@@ -55,19 +58,19 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
                 : UIColor(red: 0xB9 / 255, green: 0xC9 / 255, blue: 0xA3 / 255, alpha: 1)
         }
         web.scrollView.backgroundColor = web.backgroundColor
+        #if DEBUG
         if #available(iOS 16.4, *) { web.isInspectable = true }
+        #endif
         view = web
         // 2.8.0: the Appearance chosen in Settings (Automatic, Light or Dark) holds from the first frame.
         applyLook(UserDefaults.standard.string(forKey: Self.lookKey) ?? "")
         web.load(URLRequest(url: home))
         NotificationCenter.default.addObserver(forName: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil, queue: .main) { [weak self] _ in self?.sendA11y() }
-        // Renewals, refunds and purchases made elsewhere (another device, Ask to Buy) arrive here.
-        storeUpdates = Task { [weak self] in
-            for await result in Transaction.updates {
-                if case .verified(let t) = result { await t.finish() }
-                await self?.sendPlus()
-            }
+        monitor.pathUpdateHandler = { [weak self] path in
+            guard path.status == .satisfied else { return }
+            DispatchQueue.main.async { if self?.loadFailed == true { self?.retry() } }
         }
+        monitor.start(queue: DispatchQueue.global(qos: .utility))
     }
 
     /// Run a script in Scales now, or once it has started.
@@ -85,22 +88,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             ready = true
             queued.forEach { web.evaluateJavaScript($0, completionHandler: nil) }
             queued.removeAll()
-            Task { await sendPreview() }
-            Task { await sendPlus() }
             sendIcon(); sendA11y()
-        case "plus":
-            Task { await sendPlus() }
-        case "purchase":
-            Task { await purchase() }
-        case "restore":
-            Task { await restore() }
-        case "manage":
-            Task {
-                if let scene = view.window?.windowScene { try? await AppStore.showManageSubscriptions(in: scene) }
-                await sendPlus()
-            }
-        case "schedule":
-            schedule(body["items"] as? [[String: Any]] ?? [])
         case "unschedule":
             clearReminders()
         case "badge":
@@ -236,34 +224,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         }
     }
 
-    /// Reminders, scheduled on the phone: no server. Scales sends the next week of them, each with its own
-    /// words and badge count, and sends them again whenever something changes, so the list replaces the old one.
-    private func schedule(_ items: [[String: Any]]) {
-        let center = UNUserNotificationCenter.current()
-        center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-            let state = granted ? "granted" : "denied"
-            DispatchQueue.main.async { self.run("window.scalesPermission && window.scalesPermission('\(state)')") }
-            guard granted else { return }
-            center.getPendingNotificationRequests { pending in
-                center.removePendingNotificationRequests(withIdentifiers: pending.map(\.identifier).filter { $0.hasPrefix("scales-") })
-                for item in items {
-                    guard let id = item["id"] as? String, let at = item["at"] as? Double else { continue }
-                    let when = Date(timeIntervalSince1970: at / 1000)
-                    guard when > Date() else { continue }
-                    let content = UNMutableNotificationContent()
-                    content.title = item["title"] as? String ?? "Scales"
-                    content.body = item["body"] as? String ?? ""
-                    content.sound = .default
-                    // 1.86.0: a reminder's badge is a plain 1 when something is waiting, never a count.
-                    if let badge = item["badge"] as? Int { content.badge = NSNumber(value: min(1, max(0, badge))) }
-                    let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: when)
-                    center.add(UNNotificationRequest(identifier: "scales-\(id)", content: content,
-                                                     trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)))
-                }
-            }
-        }
-    }
-
+    /// Clears any reminders and the badge an earlier version (Scales 1) left on this phone. Nothing is scheduled any more.
     private func clearReminders() {
         let center = UNUserNotificationCenter.current()
         center.getPendingNotificationRequests { pending in
@@ -279,103 +240,91 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         }
     }
 
-    // MARK: Scales Plus
+    // MARK: When the page can't load (build 39)
+    // Scales loads its page from the web. When that fails (no connection, a server error), a plain screen says so and
+    // offers Try again, and the app tries again by itself when the connection comes back. Thoughts are on the phone,
+    // so nothing is lost; they just can't be shown until the page loads once.
 
-    /// Tells Scales where Plus stands: whether it is active, the App Store's signed record of it (sent with
-    /// each AI request and checked by the server), the price, and the free trial if this Apple Account can
-    /// still have one. note says how a purchase or restore just ended.
-    private func sendPlus(note: String? = nil) async {
-        var state: [String: Any] = ["active": false]
-        for await result in Transaction.currentEntitlements {
-            guard case .verified(let t) = result, t.productID == Self.plusID, t.revocationDate == nil else { continue }
-            state["active"] = true
-            state["jws"] = result.jwsRepresentation
-            if let end = t.expirationDate { state["expires"] = end.timeIntervalSince1970 * 1000 }
-            state["trial"] = t.offerType == .introductory
-        }
-        if let product = try? await Product.products(for: [Self.plusID]).first {
-            state["price"] = product.displayPrice
-            if let sub = product.subscription {
-                if await sub.isEligibleForIntroOffer, let offer = sub.introductoryOffer, offer.paymentMode == .freeTrial {
-                    state["trialDays"] = Self.days(offer.period)
-                }
-                if let statuses = try? await sub.status {
-                    for status in statuses {
-                        if case .verified(let renewal) = status.renewalInfo, renewal.currentProductID == Self.plusID {
-                            state["renews"] = renewal.willAutoRenew
-                        }
-                    }
-                }
-            }
-        }
-        // TestFlight preview (1.82.0): a TestFlight copy can turn Plus on before the App Store approves it. The proof
-        // is Apple's signed AppTransaction for this copy. Hidden unless the build's ScalesPlusPreview flag is on.
-        if let note { state["note"] = note }
-        guard let data = try? JSONSerialization.data(withJSONObject: state),
-              let json = String(data: data, encoding: .utf8) else { return }
-        run("window.scalesStore && window.scalesStore(\(json))")
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        loadFailed = false
+        hideOffline()
     }
 
-    /// TestFlight preview (1.82.0, own message since 1.84.3): told on its own, first, so a slow App Store product
-    /// lookup can never hold it back. Hidden unless the build's ScalesPlusPreview flag is on. The proof is Apple's
-    /// signed AppTransaction for this copy; when there is none, the page is told why.
-    private func sendPreview() async {
-        guard Bundle.main.object(forInfoDictionaryKey: "ScalesPlusPreview") as? Bool == true else { return }
-        var state: [String: Any] = ["previewFlag": true]
-        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
-        state["build"] = build
-        let record = try? await AppTransaction.shared
-        switch record {
-        case .verified(let at)?:
-            if at.environment == .sandbox || at.environment == .xcode {
-                state["preview"] = record!.jwsRepresentation
-            } else {
-                state["previewWhy"] = "Apple reports this copy as " + at.environment.rawValue
-            }
-        case .unverified(_, let error)?:
-            state["previewWhy"] = "Apple's record for this copy did not verify (" + error.localizedDescription + ")"
-        case nil:
-            state["previewWhy"] = "Apple did not return a record for this copy"
-        }
-        guard let data = try? JSONSerialization.data(withJSONObject: state),
-              let json = String(data: data, encoding: .utf8) else { return }
-        run("window.scalesPreview && window.scalesPreview(\(json))")
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { loadError(error) }
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { loadError(error) }
+
+    private func loadError(_ error: Error) {
+        // A load that was cancelled on purpose (a link handed to Safari, an error page already shown) is not a failure.
+        if (error as NSError).code == NSURLErrorCancelled { return }
+        failed()
     }
 
-    private static func days(_ period: Product.SubscriptionPeriod) -> Int {
-        switch period.unit {
-        case .day: return period.value
-        case .week: return period.value * 7
-        case .month: return period.value * 30
-        case .year: return period.value * 365
-        @unknown default: return period.value
-        }
+    private func failed() {
+        loadFailed = true
+        ready = false
+        showOffline()
     }
 
-    private func purchase() async {
-        guard let product = try? await Product.products(for: [Self.plusID]).first else {
-            await sendPlus(note: "unavailable"); return
-        }
-        do {
-            switch try await product.purchase() {
-            case .success(let result):
-                if case .verified(let t) = result { await t.finish(); await sendPlus(note: "bought") }
-                else { await sendPlus(note: "failed") }
-            case .pending:
-                await sendPlus(note: "pending")
-            case .userCancelled:
-                await sendPlus(note: "cancelled")
-            @unknown default:
-                await sendPlus()
-            }
-        } catch {
-            await sendPlus(note: "failed")
-        }
+    private func retry() {
+        loadFailed = false
+        ready = false
+        web.load(URLRequest(url: home))
     }
 
-    private func restore() async {
-        do { try await AppStore.sync(); await sendPlus(note: "restored") }
-        catch { await sendPlus(note: "failed") }
+    @objc private func tryAgain() { retry() }
+
+    private func showOffline() {
+        if offline != nil { return }
+        let ink = UIColor { $0.userInterfaceStyle == .dark
+            ? UIColor(red: 0xF1 / 255, green: 0xE9 / 255, blue: 0xD8 / 255, alpha: 1)
+            : UIColor(red: 0x2A / 255, green: 0x1E / 255, blue: 0x2E / 255, alpha: 1) }
+        let panel = UIView(frame: view.bounds)
+        panel.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        panel.backgroundColor = web.backgroundColor
+        panel.layoutMargins = UIEdgeInsets(top: 0, left: 28, bottom: 0, right: 28)
+
+        let title = UILabel()
+        title.text = "Scales can't open right now."
+        title.font = UIFontMetrics(forTextStyle: .title2).scaledFont(for: UIFont.systemFont(ofSize: 26, weight: .bold))
+        title.adjustsFontForContentSizeCategory = true
+        title.textColor = ink
+        title.numberOfLines = 0
+
+        let note = UILabel()
+        note.text = "Check your connection, then try again. Your thoughts are safe on this phone."
+        note.font = UIFontMetrics(forTextStyle: .body).scaledFont(for: UIFont.systemFont(ofSize: 17))
+        note.adjustsFontForContentSizeCategory = true
+        note.textColor = ink
+        note.numberOfLines = 0
+
+        let button = UIButton(type: .system)
+        button.setTitle("Try again", for: .normal)
+        button.titleLabel?.font = UIFontMetrics(forTextStyle: .body).scaledFont(for: UIFont.systemFont(ofSize: 17, weight: .semibold))
+        button.titleLabel?.adjustsFontForContentSizeCategory = true
+        button.tintColor = ink
+        button.contentHorizontalAlignment = .leading
+        button.addTarget(self, action: #selector(tryAgain), for: .touchUpInside)
+        button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+
+        let stack = UIStackView(arrangedSubviews: [title, note, button])
+        stack.axis = .vertical
+        stack.alignment = .fill
+        stack.spacing = 14
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        panel.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: panel.layoutMarginsGuide.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: panel.layoutMarginsGuide.trailingAnchor),
+            stack.centerYAnchor.constraint(equalTo: panel.centerYAnchor)
+        ])
+        view.addSubview(panel)
+        offline = panel
+        UIAccessibility.post(notification: .screenChanged, argument: title)
+    }
+
+    private func hideOffline() {
+        offline?.removeFromSuperview()
+        offline = nil
     }
 
     // MARK: Links and downloads
@@ -393,7 +342,12 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor response: WKNavigationResponse) async -> WKNavigationResponsePolicy {
-        response.canShowMIMEType ? .allow : .download
+        // A server error (the host or the proxy is down) would otherwise show as a blank or broken page.
+        if response.isForMainFrame, let http = response.response as? HTTPURLResponse, http.statusCode >= 400 {
+            failed()
+            return .cancel
+        }
+        return response.canShowMIMEType ? .allow : .download
     }
 
     /// target="_blank" links open outside the app.

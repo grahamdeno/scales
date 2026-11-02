@@ -1,9 +1,8 @@
 import SwiftUI
 import UserNotifications
 
-/// Scales for iPhone. The app is the Scales web app (always the latest version, from
-/// scales.tangomike.app/app) in a native shell that adds what a web app can't do well on
-/// iPhone: reminders scheduled on the phone itself, and the Home Screen badge.
+/// Scales for iPhone. The app is the Scales web app (from scales.tangomike.app/app) in a native shell that adds what a
+/// web app can't do well on iPhone: haptics, the daily backup file, the app icon, and Apple Intelligence.
 @main
 struct ScalesApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
