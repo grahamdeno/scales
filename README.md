@@ -17,6 +17,11 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.19.0:** Edit is calmer: who said it is a quiet line right under the thought (tap to change; "Add who said it"
+  when blank), then the history line, then two words, "Add a note" and "Argue with it". No labels or boxes; a note is
+  plain text you tap to change. Insights is a list of findings, one sentence each with a line under it; the thoughts
+  behind a finding open with a tap, one finding at a time; parts without enough history are named in one line at the
+  bottom.
 - **2.18.0:** Insights always shows all six parts; one with nothing true to say yet says what it waits for. Voices
   drop "After" and anything after a comma ("Epictetus, The Enchiridion" is Epictetus) and need a fifth of visits.
   Website: a "Think it through" section (the three reasons, Argue with it, Tensions, Insights) with real screenshots

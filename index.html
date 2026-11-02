@@ -280,6 +280,43 @@ textarea::placeholder { color: var(--plum-faint); }
 #backups #setSaved { margin: 6px var(--pad) 16px; }
 /* 2.13.0: Edit's one line of history, quiet under the thought. */
 .hist { margin: 4px 0 6px; font-size: 13px; line-height: 1.4; color: var(--plum-muted); }
+/* 2.19.0 Edit, calmer: the author right under the thought as a quiet line, then one line of history, then two
+   words. No labels, no boxes; a note is plain text you tap to change. */
+#vEdit .sheetform { gap: 0; }
+.byline { flex: none; font: inherit; font-size: 16px; font-weight: 500; color: var(--plum-muted); background: transparent; border: 0; padding: 12px 0 0; outline: none; width: 100%; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
+.byline::placeholder { color: rgba(187,167,190,.55); }
+.byline:focus { color: var(--plum-ink); }
+#vEdit .hist { margin: 6px 0 0; color: rgba(187,167,190,.75); }
+.ewords { display: flex; gap: 28px; margin-top: 22px; flex: none; }
+.ewords[hidden] { display: none; }
+.ewords button { font-size: 16px; font-weight: 600; color: var(--pist); padding: 6px 0; }
+.ewords button.on { color: var(--plum-muted); font-weight: 500; }
+.ewords button[hidden] { display: none; }
+.enote { margin-top: 16px; font-size: 17px; line-height: 1.45; min-height: 52px; }
+.enote[hidden] { display: none; }
+#vEdit .argbox { margin-top: 18px; }
+/* 2.19.0 Insights as findings: one sentence each, the evidence a tap away. */
+#insBody { padding: 4px var(--pad) 0 !important; }
+.fd { display: flex; align-items: flex-start; gap: 12px; width: 100%; text-align: left; padding: 18px 0; border-bottom: 1px solid rgba(241,233,216,.12); }
+.fd .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.fd .s { font-size: 20px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; color: var(--plum-ink); }
+.fd .d { font-size: 14px; line-height: 1.4; color: var(--plum-muted); }
+.fd .c { font-size: 20px; color: var(--plum-muted); transition: transform .2s; display: inline-block; width: 12px; text-align: center; margin-top: 1px; }
+.fd.open .c { transform: rotate(90deg); }
+.fd.plain { cursor: default; } .fd.plain .c { visibility: hidden; }
+.ev { padding: 0 0 8px 14px; border-bottom: 1px solid rgba(241,233,216,.12); animation: argIn .35s ease both; }
+.ir { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(241,233,216,.08); font-size: 15px; }
+.ir:last-child { border-bottom: 0; }
+.ir .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ir .t .w, .ir .t .w2 { display: block; white-space: normal; font-size: 13px; margin-top: 3px; }
+.ir .t .w { color: var(--pist); } .ir .t .w2 { color: var(--plum-muted); }
+.ir .m { flex: none; font-size: 13px; color: var(--plum-muted); }
+.ir.more { color: var(--plum-muted); font-size: 14px; }
+.ir.pair { flex-direction: column; gap: 4px; }
+.ir.pair .was { color: var(--plum-muted); text-decoration: line-through; text-decoration-color: rgba(187,167,190,.5); font-size: 14px; }
+.ir.pair .now { font-size: 15px; }
+#insBody .fill { margin: 26px 0 0; font-size: 14px; line-height: 1.45; color: rgba(187,167,190,.7); }
+#insBody .bars { margin-top: 12px; }
 /* 2.17.0 Insights: plain text on plum, no cards. A quiet label, the thought, one line under it. */
 #insBody { padding-top: 4px; }
 #insBody .lead { margin: 6px var(--pad) 4px; font-size: 14px; line-height: 1.45; color: var(--plum-muted); }
@@ -309,8 +346,7 @@ textarea::placeholder { color: var(--plum-faint); }
 .lrow.one.away.has-why .t { white-space: normal; }
 .lrow.one.away.has-why .t .tt { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* 2.16.0 Argue with it: a word, then plain text under a thin rule. No box, no badge. */
-.argw { align-self: flex-start; margin: -8px 0 0; padding: 6px 0; font-size: 16px; font-weight: 600; color: var(--pist); }
-.argw:disabled { color: var(--plum-muted); font-weight: 500; }
+.ewords button:disabled { color: var(--plum-muted); font-weight: 500; }
 .argbox { margin-top: -6px; padding-top: 16px; border-top: 1px solid rgba(241,233,216,.12); animation: argIn .45s ease both; }
 @keyframes argIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .argbox .k { margin: 0 0 5px; font-size: 13px; color: var(--plum-muted); }
@@ -424,17 +460,17 @@ textarea::placeholder { color: var(--plum-faint); }
   <div class="sheetform">
     <label class="sr" for="editText">The thought</label>
     <textarea class="big" id="editText" rows="4" maxlength="1500"></textarea>
+    <label class="sr" for="editBy">Who said it</label>
+    <input class="byline" id="editBy" type="text" maxlength="200" placeholder="Add who said it" autocomplete="off">
     <p class="hist" id="editHist"></p>
-    <button class="argw" type="button" id="argBtn" hidden>Argue with it</button>
+    <div class="ewords" id="eWords"><button type="button" id="noteBtn">Add a note</button><button type="button" id="argBtn" hidden>Argue with it</button></div>
+    <label class="sr" for="editNote">A note</label>
+    <textarea class="enote" id="editNote" rows="2" maxlength="1500" placeholder="Anything that came up" hidden></textarea>
     <div class="argbox" id="argBox" hidden>
       <p class="k">The case against</p><p class="v" id="argAgainst"></p>
       <p class="k">It assumes</p><p class="v" id="argAssumes"></p>
       <div class="acts"><button type="button" id="argNote">Add to note</button><button type="button" class="quiet2" id="argHide">Hide</button></div>
     </div>
-    <label class="lbl" for="editBy">Who said it</label>
-    <input class="byfield" id="editBy" type="text" maxlength="200" placeholder="Blank if it's yours" autocomplete="off">
-    <label class="lbl" for="editNote">A note</label>
-    <textarea class="small" id="editNote" rows="4" maxlength="1500" placeholder="Anything that came up"></textarea>
   </div>
   <div class="formfoot"><button class="quiet" type="button" id="editDelete">Delete</button><button class="act" type="button" id="editDone">Done</button></div>
 </section>
@@ -602,8 +638,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.18.0"></script>
-<script src="sets.js?v=2.18.0"></script>
+<script src="core.js?v=2.19.0"></script>
+<script src="sets.js?v=2.19.0"></script>
 <script>
 (function () {
   "use strict";
@@ -970,7 +1006,9 @@ textarea::placeholder { color: var(--plum-faint); }
     $("editText").value = t.text; $("editNote").value = t.note || ""; $("editBy").value = t.by || "";
     setMark(!!t.bookmarked);
     $("editHist").textContent = C.historyLine(t, now());
-    argPending = null; $("argBox").hidden = true; showArgBtn();
+    argPending = null; $("argBox").hidden = true;
+    // 2.19.0: a note shows as plain text when there is one; otherwise "Add a note" opens a place to write it.
+    $("editNote").hidden = !t.note; noteWords(); showArgBtn();
     disarm();
     setMode("edit");
   }
@@ -1225,29 +1263,48 @@ textarea::placeholder { color: var(--plum-faint); }
   $("whyClear").onclick = function () { var t = store[whyFor]; if (t) { delete t.awayWhy; save(); } closeWhy(); };
 
   // ---------- Insights (2.17.0) ----------
+  // 2.19.0: each finding is one plain sentence with a line under it; the thoughts behind it open with a tap. Parts
+  // without enough history are named once at the bottom, never shown as content.
   function renderInsights() {
-    var d = C.insights(store, lsGet(KEY_LOG, []), now()), h = '<p class="lead">Counted on this phone from what you did. Nothing is sent anywhere.</p>';
-    var item = function (t, line, extra) { return '<div class="ins">' + (extra || "") + '<p class="q">' + esc(firstLine(t.text)) + '</p>' + (line ? '<p class="m">' + esc(line) + "</p>" : "") + "</div>"; };
-    // 2.18.0: every part is always there. One that has nothing true to say yet says what it is waiting for.
-    var wait = function (msg) { return '<div class="ins"><p class="m wait">' + esc(msg) + "</p></div>"; };
-    h += '<p class="sh">Turning points</p>' + (d.turning.length ? d.turning.map(function (x) { return item(x.t, x.line); }).join("") :
-      wait("A thought you used to skip and now sit with. Appears once you have a few weeks of history."));
-    h += '<p class="sh">What you\'ve lived' + (d.livedCount ? " \u00b7 " + d.livedCount + " in the last 30 days" : "") + "</p>" + (d.lived.length ? d.lived.map(function (x) {
-      return '<div class="ins"><p class="q">' + esc(firstLine(x.t.text)) + "</p>" + (x.why ? '<p class="why">\u201c' + esc(x.why) + '\u201d</p>' : "") + '<p class="m">' + esc(x.line) + "</p></div>"; }).join("") :
-      wait("Thoughts you put away show here, with your reasons if you give one."));
-    h += '<p class="sh">Rewrites</p>' + (d.rewrites.length ? d.rewrites.map(function (x) {
-      return '<div class="ins"><p class="was">' + esc(firstLine(x.was)) + '</p><p class="q">' + esc(firstLine(x.t.text)) + "</p>" + (x.times > 1 ? '<p class="m">Reworded ' + x.times + " times.</p>" : "") + "</div>"; }).join("") :
-      wait("When you reword a thought, its old words show here above the new."));
-    h += '<p class="sh">Still avoiding</p>' + (d.avoiding.length ? d.avoiding.map(function (x) { return item(x.t, x.line); }).join("") :
-      wait("Nothing you keep skipping right now."));
-    h += '<p class="sh">When you think</p>' + (d.when ? '<div class="ins say"><p class="q">' + esc(d.when.line) + '</p><div class="bars" aria-hidden="true">' +
+    var d = C.insights(store, lsGet(KEY_LOG, []), now()), open = ui.insOpen || null, h = "", waiting = [];
+    var plural = function (n, one, many) { return n + " " + (n === 1 ? one : many); };
+    var row = function (t, meta, extra) { return '<div class="ir"><span class="t">' + esc(firstLine(t.text)) + (extra || "") + '</span><span class="m">' + esc(meta || "") + "</span></div>"; };
+    var F = function (key, head, sub, body) {
+      var isO = open === key && body;
+      return '<button type="button" class="fd' + (body ? "" : " plain") + (isO ? " open" : "") + '"' + (body ? ' data-f="' + key + '"' : " disabled") + '><span class="tx"><span class="s">' + esc(head) + '</span><span class="d">' + esc(sub) + '</span></span><span class="c" aria-hidden="true">\u203a</span></button>' +
+        (isO ? '<div class="ev">' + body + "</div>" : "");
+    };
+    var day = function (iso) { return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+    if (d.turning.length) h += F("turn", d.turning.length === 1 ? "One thought you used to skip, you now sit with." : d.turning.length + " thoughts you used to skip, you now sit with.",
+      firstLine(d.turning[0].t.text), d.turning.map(function (x) { return row(x.t, "", '<span class="w2">' + esc(x.line) + "</span>"); }).join(""));
+    else waiting.push("Turning points");
+    if (d.livedCount) h += F("lived", "You put away " + plural(d.livedCount, "thought", "thoughts") + " in the last 30 days.",
+      d.livedWhy ? (d.livedWhy === d.livedCount ? "You gave a reason for each." : "You gave a reason for " + d.livedWhy + " of them.") : "Pull one down and tap Say why to keep a reason.",
+      d.lived.slice(0, 8).map(function (x) { return row(x.t, day(x.t.away), x.why ? '<span class="w">\u201c' + esc(x.why) + "\u201d</span>" : ""); }).join("") +
+        (d.livedCount > 8 ? '<div class="ir more">and ' + (d.livedCount - 8) + " more</div>" : ""));
+    else waiting.push("What you've lived");
+    if (d.rewrites.length) h += F("rew", "You reworded " + plural(d.rewrites.length, "thought", "thoughts") + ".", firstLine(d.rewrites[0].t.text),
+      d.rewrites.map(function (x) { return '<div class="ir pair"><span class="was">' + esc(firstLine(x.was)) + '</span><span class="now">' + esc(firstLine(x.t.text)) + "</span></div>"; }).join(""));
+    else waiting.push("Rewrites");
+    if (d.voiceTop.length) {
+      var lab = function (w) { return w || "your own thoughts"; }, cap = function (w) { return w ? w : "Your own thoughts"; };
+      h += F("voice", "You stay with " + lab(d.voiceTop[0].who) + " most.", d.voiceTop[1] ? "Followed by " + lab(d.voiceTop[1].who) + "." : d.voiceTop[0].pct + "% of their visits run long.",
+        d.voiceTop.map(function (v) { return '<div class="ir"><span class="t">' + esc(cap(v.who)) + '</span><span class="m">' + v.pct + "% of visits</span></div>"; }).join(""));
+    } else waiting.push("Whose words hold you");
+    h += d.avoiding.length ? F("avoid", d.avoiding.length === 1 ? "One thought you keep skipping." : d.avoiding.length + " thoughts you keep skipping.", firstLine(d.avoiding[0].t.text),
+      d.avoiding.map(function (x) { return row(x.t, "", '<span class="w2">' + esc(x.line) + "</span>"); }).join(""))
+      : F("avoid", "Nothing you keep skipping right now.", "A thought skipped 4 times in three weeks would show here.", "");
+    if (d.when) h += F("when", d.when.head, d.when.sub, '<div class="bars" aria-hidden="true">' +
       d.when.counts.map(function (c, i) { var mx = Math.max.apply(null, d.when.counts) || 1; return '<i class="' + (i === d.when.top ? "top" : "") + '" style="height:' + Math.max(6, Math.round(100 * c / mx)) + '%"></i>'; }).join("") +
-      '</div><div class="barl" aria-hidden="true">' + ["Early", "Morning", "Afternoon", "Evening", "Night"].map(function (l) { return "<span>" + l + "</span>"; }).join("") + "</div></div>" :
-      wait("The time of day you stay longest. Appears after 8 visits of 30 seconds or more (" + Math.min(d.sits, 7) + " so far)."));
-    h += '<p class="sh">Whose words hold you</p>' + (d.voices.length ? d.voices.map(function (l) { return '<div class="ins say"><p class="q">' + esc(l) + "</p></div>"; }).join("") :
-      wait("Which voices you stay with longest. Appears once you've spent time with a few of them."));
+      '</div><div class="barl" aria-hidden="true">' + ["Early", "Morning", "Afternoon", "Evening", "Night"].map(function (l) { return "<span>" + l + "</span>"; }).join("") + "</div>");
+    else waiting.push("When you think");
+    if (waiting.length) h += '<p class="fill">Still filling in: ' + esc(waiting.length > 1 ? waiting.slice(0, -1).join(", ") + " and " + waiting[waiting.length - 1] : waiting[0]) + ". Each appears once there's enough to say something true.</p>";
     $("insBody").innerHTML = h;
   }
+  $("insBody").addEventListener("click", function (e) {
+    var f = e.target.closest("[data-f]"); if (!f) return;
+    var k = f.getAttribute("data-f"); ui.insOpen = ui.insOpen === k ? null : k; saveUi(); haptic("tick"); renderInsights();
+  });
   $("setIns").onclick = function () { renderInsights(); $("insBody").scrollTop = 0; openPage("insPage", "insights"); };
   $("insBack").onclick = function () { closePage("insPage", "settings"); };
 
@@ -1482,16 +1539,27 @@ textarea::placeholder { color: var(--plum-faint); }
   var argPending = null, argBusy = false;
   function argText() { return $("editText").value.trim(); }
   function showArgBtn() {
-    var b = $("argBtn"); b.hidden = !aiOk || !$("argBox").hidden; b.disabled = argBusy; b.textContent = argBusy ? "Thinking it over\u2026" : "Argue with it";
+    var b = $("argBtn"); b.hidden = !aiOk; b.disabled = argBusy; b.textContent = argBusy ? "Thinking it over\u2026" : "Argue with it";
+    b.classList.toggle("on", !$("argBox").hidden); wordsRow();
   }
+  // The two words: "Add a note" only while there is no note showing; the row hides when neither applies.
+  function noteWords() { var n = $("noteBtn"); n.hidden = !$("editNote").hidden && !!$("editNote").value.trim(); n.classList.toggle("on", !$("editNote").hidden); wordsRow(); }
+  function wordsRow() { $("eWords").hidden = $("noteBtn").hidden && $("argBtn").hidden; }
+  $("noteBtn").onclick = function () {
+    var ta = $("editNote");
+    if (!ta.hidden && !ta.value.trim()) { ta.hidden = true; noteWords(); return; }
+    ta.hidden = false; noteWords(); grow(ta); ta.focus();
+  };
+  $("editNote").addEventListener("blur", function () { if (!this.value.trim()) { this.hidden = true; } noteWords(); });
   function showArg(a) {
     $("argAgainst").textContent = a.against; $("argAssumes").textContent = a.assumes;
     var inNote = $("editNote").value.indexOf(C.argNoteLine(a)) >= 0;
     $("argNote").disabled = inNote; $("argNote").textContent = inNote ? "Added to note \u2713" : "Add to note";
-    $("argBox").hidden = false; $("argBtn").hidden = true;
+    $("argBox").hidden = false; showArgBtn();
   }
   $("argBtn").onclick = function () {
     var t = store[ui.cur]; if (!t || argBusy) return;
+    if (!$("argBox").hidden) { $("argBox").hidden = true; showArgBtn(); return; }
     var text = argText(); if (!text) return;
     var kept = text === t.text ? C.argFor(t) : (argPending && argPending.text === text ? argPending : null);
     if (kept) { showArg(kept); haptic("tick"); track("tap", { id: "argue", kept: 1 }); return; }
@@ -1512,7 +1580,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("argNote").onclick = function () {
     var t = store[ui.cur]; if (!t) return;
     var a = argText() === t.text ? C.argFor(t) : argPending; if (!a) return;
-    $("editNote").value = C.withArgNote($("editNote").value, a); grow($("editNote"));
+    $("editNote").value = C.withArgNote($("editNote").value, a); $("editNote").hidden = false; grow($("editNote")); noteWords();
     $("argNote").disabled = true; $("argNote").textContent = "Added to note \u2713"; haptic("tick");
   };
 
