@@ -283,8 +283,8 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Backups/.test(await page.textContent("#settings")) && !/Restore from a backup/.test(await page.textContent("#settings")) && !/stay on this phone/.test(await page.textContent("#settings")), tag + "Settings has one Backups row, and the privacy line only once (2.13.0)");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.21\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/^2\.21\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.22\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/^2\.22\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     ok(await page.locator("#settings .made").count() === 1 && (await page.textContent("#settings .made")).trim() === "Your thoughts stay on your phone." && /pistachio\.png$/.test(await page.getAttribute("#settings .made img", "src")), tag + "Settings ends with the one-color icon and one line");
     ok(await page.evaluate(() => { const i = document.querySelector("#settings .made img"); return i.getBoundingClientRect().width <= 28 && i.getBoundingClientRect().width < 60; }), tag + "the footer icon is smaller than the icon choices");
     ok(await page.evaluate(() => { const i = document.querySelector("#settings .made img").getBoundingClientRect(), p = document.querySelector("#settings .made p").getBoundingClientRect(); return Math.abs((i.top + i.bottom) / 2 - (p.top + p.bottom) / 2) < 6 && p.left > i.right; }), tag + "the footer icon and line sit side by side (2.13.0)");
@@ -296,7 +296,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
     ok(Array.isArray(bk.events) && bk.events.length > 0, tag + "Back up carries the event log");
-    ok(bk.app === "scales" && bk.version === "2.21.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.22.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -349,7 +349,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(await page.locator("#backups.open").count() === 0 && await page.locator("#settings.open").count() === 1, tag + "Backups goes back to Settings");
     // Help, and back
     const heads = await page.evaluate(() => Array.from(document.querySelectorAll("#settings .sh")).filter((e) => e.offsetParent).map((e) => e.textContent).join("|"));
-    ok(heads === "Add thoughts|Insights|Look|Your data|Help and about", tag + "Settings is grouped: " + heads);
+    ok(heads === "Insights|Look|Add and back up|Help and about", tag + "Settings is grouped: " + heads);
     await page.click("#setHelp"); await page.waitForTimeout(500);
     ok(await page.locator("#help.open").count() === 1 && /20 seconds or less/.test(await page.textContent("#help")) && /30 seconds or more/.test(await page.textContent("#help")), tag + "How Scales works opens with the new times");
     await page.screenshot({ path: path.join(shots, w + "-9-help.png") });
@@ -684,7 +684,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop() || {})).value === "", tag + "the iPhone app hears Automatic at start");
     await page.evaluate(() => document.getElementById("libGear").click()); await page.waitForTimeout(500);
     ok(await page.locator("#lookSec").isVisible() && await page.getAttribute('[data-look="auto"]', "aria-checked") === "true", tag + "Settings offers Appearance with Automatic on");
-    ok(/^2\.21\.0 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
+    ok(/^2\.22\.0 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
     const other = scheme === "dark" ? "light" : "dark";
     await page.click('[data-look="' + other + '"]'); await page.waitForTimeout(300);
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop())).value === other, tag + "choosing " + other + " tells the iPhone app");
@@ -715,7 +715,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const kinds = new Set(ev.map((e) => e.e));
     ok(["session", "boot", "snapshot", "tap", "screen", "session_end"].every((k) => kinds.has(k)), "telemetry: session, boot, snapshot, taps, screens and session end are logged (" + [...kinds].join(",") + ")");
     const boot = ev.find((e) => e.e === "boot"), snap = ev.find((e) => e.e === "snapshot");
-    ok(boot && boot.v === "2.21.0" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
+    ok(boot && boot.v === "2.22.0" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
     ok(ev.some((e) => e.e === "tap" && e.id === "libGear") && ev.some((e) => e.e === "screen" && e.to === "help"), "telemetry: a tap is named by its button, and the screen it opened is logged");
     const sid = ev.find((e) => e.e === "session").s;
     ok(ev.filter((e) => e.e !== "session").every((e) => e.s === sid), "telemetry: every event carries its session");
@@ -805,6 +805,18 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.screenshot({ path: path.join(shots, "tension-390.png") });
     await page.keyboard.press("ArrowUp"); await page.waitForTimeout(600);
     ok(!(await page.locator("#ten").isVisible()) && (await page.textContent("#words")).trim().length > 0, "tensions: swipe up goes back to the thought you were on");
+    // 2.22.0: Not a tension
+    await page.click("#strip"); await page.waitForTimeout(700);
+    if (!(await page.locator("#libList .tpair").count())) { await page.click('#libList [data-group="tension"]'); await page.waitForTimeout(300); }
+    const nPairs = await page.locator("#libList .tpair").count();
+    await page.click("#libList .tpair"); await page.waitForTimeout(700);
+    ok(await page.locator("#tenNo").isVisible() && (await page.textContent("#tenNo")).trim() === "Not a tension", "tensions: the pair screen offers Not a tension");
+    await page.click("#tenNo"); await page.waitForTimeout(800);
+    const td1 = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.tensions.v1")));
+    ok(!(await page.locator("#ten").isVisible()) && td1.pairs.length === nPairs - 1 && td1.gone.length === 1 && /Won't pair these again/.test(await page.textContent("#toast")), "tensions: Not a tension removes the pair for good, and says so");
+    await page.click("#toastUndo"); await page.waitForTimeout(300);
+    const td2 = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.tensions.v1")));
+    ok(td2.pairs.length === nPairs && td2.gone.length === 0, "tensions: Undo puts the pair back");
     // Settings: a regular feature, no test wording
     await page.click("#strip"); await page.waitForTimeout(700); await page.click("#libGear"); await page.waitForTimeout(600);
     const set = await page.textContent("#settings");
@@ -860,7 +872,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#libList .arch"); await page.waitForTimeout(200);
     await page.click("#libGear"); await page.waitForTimeout(600);
     const heads = await page.evaluate(() => Array.from(document.querySelectorAll("#settings .sh")).filter((e) => e.offsetParent).map((e) => e.textContent).join("|"));
-    ok(heads === "Add thoughts|Insights|Look|Your data|Help and about", tag + "Settings order: " + heads);
+    ok(heads === "Insights|Look|Add and back up|Help and about", tag + "Settings order: " + heads);
     await page.click("#setIns"); await page.waitForTimeout(600);
     const ins = await page.textContent("#insBody");
     ok(/One thought you used to skip, you now sit with\./.test(ins) && /You put away 2 thoughts in the last 30 days\./.test(ins) && /You gave a reason for each\./.test(ins) &&
@@ -928,6 +940,29 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(!(await page.locator("#vEdit").isVisible()) && (await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.thoughts.v1")).q1.note)) === "Kept by tapping above.", "sheet: tapping above it keeps and closes, like Done");
     await page.screenshot({ path: path.join(shots, "sheet-closed.png") });
     ok(!errs.length, "pull to keep: no page errors (" + errs.join(" | ") + ")");
+    await ctx.close();
+  }
+  // 2.22.0: the Stone theme, light and dark, chosen in Settings and kept
+  for (const scheme of ["light", "dark"]) {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: scheme }); const page = await ctx.newPage();
+    const errs = []; page.on("pageerror", (e) => errs.push(String(e)));
+    await page.goto(base + "/"); await page.waitForTimeout(900);
+    if (!(await page.locator("#strip").isVisible())) { await page.click("#startFive").catch(() => {}); await page.waitForTimeout(800); }
+    const g0 = await page.evaluate(() => getComputedStyle(document.getElementById("vMeet")).getPropertyValue("--ground").trim() || getComputedStyle(document.documentElement).getPropertyValue("--ground").trim());
+    await page.click("#strip"); await page.waitForTimeout(700); await page.click("#libGear"); await page.waitForTimeout(500);
+    ok(await page.locator("#themeSeg").isVisible() && /Pistachio/.test(await page.textContent("#themeSeg")) && /Stone/.test(await page.textContent("#themeSeg")), "stone (" + scheme + "): Settings, Look offers Pistachio and Stone");
+    await page.click('[data-theme-pick="stone"]'); await page.waitForTimeout(200);
+    const want = scheme === "light" ? "#C9C6BD" : "#23262B";
+    const g1 = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--ground").trim());
+    ok(g1.toUpperCase() === want && (await page.getAttribute("html", "data-theme")) === "stone", "stone (" + scheme + "): choosing Stone changes the reading color to " + g1);
+    await page.reload(); await page.waitForTimeout(800);
+    const g2 = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--ground").trim());
+    ok(g2.toUpperCase() === want, "stone (" + scheme + "): it is kept after reopening");
+    await page.screenshot({ path: path.join(shots, "stone-" + scheme + ".png") });
+    await page.click("#strip"); await page.waitForTimeout(700); await page.screenshot({ path: path.join(shots, "stone-lib-" + scheme + ".png") });
+    await page.click("#libGear"); await page.waitForTimeout(500); await page.click('[data-theme-pick="pistachio"]'); await page.waitForTimeout(200);
+    ok((await page.getAttribute("html", "data-theme")) === null, "stone (" + scheme + "): Pistachio switches back");
+    ok(!errs.length, "stone (" + scheme + "): no page errors (" + errs.join(" | ") + ")");
     await ctx.close();
   }
   // without Apple Intelligence (a browser), neither appears
