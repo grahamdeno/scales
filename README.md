@@ -17,6 +17,9 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.20.0:** pull Edit down to keep and close, like Done. The screen follows the finger; past 140 px it closes (a tick
+  marks the line), short of it it springs back. Only from the top of the form; with the keyboard up the first pull
+  only lowers it. Cancel still throws changes away.
 - **2.19.0:** Edit is calmer: who said it is a quiet line right under the thought (tap to change; "Add who said it"
   when blank), then the history line, then two words, "Add a note" and "Argue with it". No labels or boxes; a note is
   plain text you tap to change. Insights is a list of findings, one sentence each with a line under it; the thoughts
