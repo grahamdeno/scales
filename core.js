@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.23.0";
+  var VERSION = "2.24.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -718,7 +718,13 @@
   var ARG_INSTRUCTIONS = "You help a person test a thought they hold. Give the strongest honest case against it: where it is wrong, " +
     "incomplete, or does harm if followed without judgment. Be direct and fair. Never praise the thought, never give advice, " +
     "never ask questions, never soften with phrases like 'while this is true'. Then name the one belief the thought quietly " +
-    "depends on. Answer in exactly this form and nothing else:\nAGAINST: <two or three sentences, under 60 words>\nASSUMES: <one sentence, under 20 words>";
+    "depends on. Answer in exactly this form and nothing else:\nAGAINST: <two or three sentences, under 60 words>\nASSUMES: <one sentence, under 20 words>\n" +
+    "Some thoughts are not for arguing with. If the thought is about staying alive or safe, not harming oneself, recovering from " +
+    "addiction or harm, a person's worth or reason to live, or keeping someone else safe, answer only the word SKIP.";
+  // 2.24.0: thoughts that protect someone are never argued with. This catches the plain cases before the model is asked;
+  // the instructions above ask the model to answer SKIP for the rest.
+  var PROTECTED_RE = /\b(suicid\w*|kill(ing)? myself|end(ing)? my life|end(ing)? it all|self[- ]?harm\w*|hurt(ing)? myself|cut(ting)? myself|harm(ing)? myself|want(ed)? to die|wish(ed)? i (was|were) dead|better off (dead|without me)|not worth living|reason(s)? to (live|stay)|worth staying|stay(ing)? alive|overdos\w*|relaps\w*|sober\w*|sobriety|stay(ing)? clean|clean for \d+|days? clean|in recovery)\b/i;
+  function protectedThought(text) { return PROTECTED_RE.test(String(text || "")); }
   function argRequest(text, by) {
     var who = cleanBy(by);
     return { instructions: ARG_INSTRUCTIONS, prompt: "The thought: \"" + String(text).trim().slice(0, 600) + "\"" + (who ? " (" + who + ")" : "") };
@@ -728,6 +734,8 @@
   }
   // Reads "AGAINST: ... ASSUMES: ..." in any case, with or without line breaks or markdown. Null if either is missing.
   function parseArg(raw) {
+    // 2.24.0: the model's way of saying this thought is not for arguing with.
+    if (/^[\s"'*_]*skip\b/i.test(String(raw || ""))) return { skip: true };
     var s = String(raw || ""), a = s.search(/against\s*:/i), b = s.search(/assumes?\s*:/i);
     if (a < 0 || b < 0 || b < a) return null;
     var against = tidyLine(s.slice(a, b).replace(/^[^:]*:/, "")), assumes = tidyLine(s.slice(b).replace(/^[^:]*:/, ""));
@@ -884,7 +892,7 @@
     tensionBatches: tensionBatches, tensionRequest: tensionRequest, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
     standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
-    make: make, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
+    make: make, protectedThought: protectedThought, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);
