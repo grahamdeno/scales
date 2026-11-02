@@ -330,27 +330,27 @@
    "items": [
     {
      "id": "jg-darkness",
-     "text": "The better I know my own darkness, the better I can deal with the darkness in other people.",
+     "text": "Knowing my own worst side makes me fairer with other people's.",
      "by": "After Carl Jung"
     },
     {
      "id": "jg-inside",
-     "text": "My vision clears only when I look into my own heart. Looking outward, I dream. Looking inward, I wake.",
+     "text": "I see most clearly when I stop watching the world and look at what is going on in me.",
      "by": "After Carl Jung"
     },
     {
      "id": "jg-accept",
-     "text": "I can't change what I refuse to accept. Condemning it only holds it in place.",
+     "text": "Judging a part of myself keeps it stuck. Change starts when I accept that it is mine.",
      "by": "After Carl Jung"
     },
     {
      "id": "jg-light",
-     "text": "I don't grow by picturing the light. I grow by looking honestly at what I keep in the dark.",
+     "text": "Imagining a better self changes little. Facing the parts I hide changes a lot.",
      "by": "After Carl Jung"
     },
     {
      "id": "jg-fate",
-     "text": "What I won't face inside me tends to happen to me outside, and I call it fate.",
+     "text": "What I refuse to see in myself keeps showing up in my life, as if it came from outside.",
      "by": "After Carl Jung"
     },
     {
@@ -370,7 +370,7 @@
     },
     {
      "id": "jg-roots",
-     "text": "Nothing grows tall unless its roots reach down into dark places.",
+     "text": "The more I want to grow, the more of my hidden side I have to own.",
      "by": "After Carl Jung"
     },
     {
@@ -380,12 +380,12 @@
     },
     {
      "id": "jg-irritate",
-     "text": "What irritates me in other people can show me something about myself.",
+     "text": "When someone gets under my skin, it is worth asking what that says about me.",
      "by": "After Carl Jung"
     },
     {
      "id": "jg-shadow",
-     "text": "I can't be whole without a shadow. Having a dark side is part of being real.",
+     "text": "Everyone real has a dark side, me included. Pretending otherwise makes me less solid, not more.",
      "by": "After Carl Jung"
     }
    ]
