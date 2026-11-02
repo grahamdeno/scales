@@ -1,0 +1,20 @@
+# Reads the App Store listing text with the App Store Connect key and prints it (scripts/listing.rb). Read only.
+name: App Store listing
+on:
+  push:
+    branches: [listing-read]
+    paths: ["scripts/listing.rb", ".github/workflows/listing.yml"]
+  workflow_dispatch:
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Read the listing
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          printf '%s\n' "${{ secrets.ASC_KEY_P8 }}" | sed 's/\r$//' > "$RUNNER_TEMP/asc.p8"
+          ASC_KEY_PATH="$RUNNER_TEMP/asc.p8" ruby scripts/listing.rb
+          rm -f "$RUNNER_TEMP/asc.p8"
