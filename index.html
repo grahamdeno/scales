@@ -283,6 +283,10 @@ textarea::placeholder { color: var(--plum-faint); }
 /* 2.19.0 Edit, calmer: the author right under the thought as a quiet line, then one line of history, then two
    words. No labels, no boxes; a note is plain text you tap to change. */
 #vEdit .sheetform { gap: 0; }
+/* 2.20.0: pull Edit down to keep and close, like an iPhone sheet. The screen follows the finger. */
+#vEdit.pulling { transition: none; }
+#vEdit.settle { transition: transform .28s cubic-bezier(.2,.8,.2,1); }
+#vEdit.closing { transition: transform .24s cubic-bezier(.4,0,1,1); transform: translateY(100%) !important; }
 .byline { flex: none; font: inherit; font-size: 16px; font-weight: 500; color: var(--plum-muted); background: transparent; border: 0; padding: 12px 0 0; outline: none; width: 100%; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
 .byline::placeholder { color: rgba(187,167,190,.55); }
 .byline:focus { color: var(--plum-ink); }
@@ -638,8 +642,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.19.0"></script>
-<script src="sets.js?v=2.19.0"></script>
+<script src="core.js?v=2.20.0"></script>
+<script src="sets.js?v=2.20.0"></script>
 <script>
 (function () {
   "use strict";
@@ -1031,6 +1035,39 @@ textarea::placeholder { color: var(--plum-faint); }
     if (editMarked !== !!t.bookmarked) { t.bookmarked = editMarked ? now().toISOString() : null; save(); renderLibCount(); }
     setMode("meet"); renderMeet(false);
   };
+  // ---------- Pull down to keep (2.20.0) ----------
+  // In Edit, pulling down past 140 px does what Done does. Only from the top of the form; a short pull springs back.
+  // With the keyboard up, the first pull only lowers it, so a half-typed word is never closed on.
+  var EDIT_PULL = 140, ePull = null;
+  function editForm() { return $("vEdit").querySelector(".sheetform"); }
+  $("vEdit").addEventListener("touchstart", function (e) {
+    if (mode !== "edit" || e.touches.length !== 1 || e.target.closest("button, a")) { ePull = null; return; }
+    ePull = { x0: e.touches[0].clientX, y0: e.touches[0].clientY, top: editForm().scrollTop <= 0, dy: 0, on: false };
+  }, { passive: true });
+  $("vEdit").addEventListener("touchmove", function (e) {
+    if (!ePull || !ePull.top) return;
+    var dx = e.touches[0].clientX - ePull.x0, dy = e.touches[0].clientY - ePull.y0;
+    if (!ePull.on) {
+      if (dy > 10 && Math.abs(dy) > Math.abs(dx) * 1.2) { ePull.on = true; $("vEdit").classList.add("pulling"); }
+      else { if (dy < -10 || Math.abs(dx) > 12) ePull = null; return; }
+    }
+    e.preventDefault();
+    ePull.dy = Math.max(0, dy);
+    $("vEdit").style.transform = "translateY(" + res(ePull.dy) + "px)";
+    if (!ePull.armed && ePull.dy > EDIT_PULL) { ePull.armed = true; haptic("tick"); } else if (ePull.armed && ePull.dy < EDIT_PULL) ePull.armed = false;
+  }, { passive: false });
+  function editSettle() { var v = $("vEdit"); v.classList.remove("pulling"); v.classList.add("settle"); v.style.transform = ""; setTimeout(function () { v.classList.remove("settle"); }, 300); }
+  function editEnd() {
+    var p = ePull; ePull = null; if (!p || !p.on) return;
+    if (p.dy < EDIT_PULL) { editSettle(); return; }
+    var a = document.activeElement;
+    if (a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT") && $("vEdit").contains(a)) { a.blur(); editSettle(); return; }
+    var v = $("vEdit"); v.classList.remove("pulling"); v.classList.add("closing"); track("tap", { id: "editPull" });
+    setTimeout(function () { $("editDone").click(); v.classList.remove("closing"); v.style.transform = ""; }, 240);
+  }
+  $("vEdit").addEventListener("touchend", editEnd);
+  $("vEdit").addEventListener("touchcancel", function () { if (ePull && ePull.on) editSettle(); ePull = null; });
+
   // Delete asks for a second tap rather than a dialog. A tap anywhere else takes it back.
   var delArmed = false;
   function disarm() { delArmed = false; $("editDelete").textContent = "Delete"; $("editDelete").classList.remove("armed"); }
