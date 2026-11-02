@@ -283,6 +283,17 @@ textarea::placeholder { color: var(--plum-faint); }
 /* 2.19.0 Edit, calmer: the author right under the thought as a quiet line, then one line of history, then two
    words. No labels, no boxes; a note is plain text you tap to change. */
 #vEdit .sheetform { gap: 0; }
+/* 2.21.0: Edit is a sheet. It rises over the thought, which stays in view above it, like Your thoughts. Pull it down,
+   tap above it, or tap Done to keep; Cancel to throw changes away. */
+#vEdit { top: calc(var(--top) + 36px); left: 0; right: 0; bottom: 0; background: var(--plum); color: var(--plum-ink); border-radius: 22px 22px 0 0;
+  z-index: 7; transform: translateY(100%); transition: transform .32s cubic-bezier(.2,.8,.2,1); box-shadow: 0 -10px 34px rgba(20,10,24,.22); }
+#vEdit.up { transform: none; }
+#vEdit .egrab { position: absolute; top: 0; left: 50%; margin-left: -58px; width: 116px; padding: 10px 40px 14px; z-index: 4; }
+#vEdit .egrab i { display: block; width: 36px; height: 4px; border-radius: 2px; background: rgba(241,233,216,.35); }
+#vEdit .corner { top: 12px; }
+#vEdit .sheetform { top: 72px; }
+#editShade { position: absolute; inset: 0; z-index: 6; background: rgba(20,10,24,.26); opacity: 0; pointer-events: none; transition: opacity .32s; }
+#editShade.on { opacity: 1; pointer-events: auto; }
 /* 2.20.0: pull Edit down to keep and close, like an iPhone sheet. The screen follows the finger. */
 #vEdit.pulling { transition: none; }
 #vEdit.settle { transition: transform .28s cubic-bezier(.2,.8,.2,1); }
@@ -458,7 +469,9 @@ textarea::placeholder { color: var(--plum-faint); }
 </section>
 
 <!-- Edit: plum. The thought and a note. -->
+<div id="editShade" aria-hidden="true"></div>
 <section class="view" id="vEdit" hidden aria-label="Edit thought">
+  <span class="egrab" aria-hidden="true"><i></i></span>
   <button class="corner l" id="editCancel" type="button">Cancel</button>
   <button class="corner" id="editMark" type="button" aria-pressed="false"><svg viewBox="0 0 16 20" aria-hidden="true"><path d="M2 1.5h12v17l-6-4.5-6 4.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span>Bookmark</span></button>
   <div class="sheetform">
@@ -642,8 +655,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.20.0"></script>
-<script src="sets.js?v=2.20.0"></script>
+<script src="core.js?v=2.21.0"></script>
+<script src="sets.js?v=2.21.0"></script>
 <script>
 (function () {
   "use strict";
@@ -784,15 +797,25 @@ textarea::placeholder { color: var(--plum-faint); }
     $("themeColor").setAttribute("content", v || "#B9C9A3");
   }
   if (darkMq && darkMq.addEventListener) darkMq.addEventListener("change", themeColor);
+  var editHideT = 0;
   function setMode(m) {
     if (m !== mode) track("screen", { to: m });
     if (mode === "meet" && m !== "meet") clockOff();
     mode = m;
     $("vMeet").hidden = false;
     $("vWrite").hidden = m !== "write";
-    $("vEdit").hidden = m !== "edit";
-    $("vMeet").style.visibility = (m === "write" || m === "edit") ? "hidden" : "visible";
-    document.body.classList.toggle("plum", m === "write" || m === "edit");
+    // 2.21.0: Edit rises as a sheet over the thought, which stays in view; Write still fills the screen.
+    var ev = $("vEdit"); clearTimeout(editHideT);
+    if (m === "edit") {
+      ev.hidden = false; $("editShade").classList.add("on"); void ev.offsetWidth; ev.classList.add("up");
+    } else if (!ev.hidden) {
+      $("editShade").classList.remove("on");
+      if (ev.classList.contains("up")) { ev.classList.remove("up"); editHideT = setTimeout(function () { if (mode !== "edit") ev.hidden = true; }, 330); }
+      else ev.hidden = true;
+    }
+    $("vMeet").style.visibility = m === "write" ? "hidden" : "visible";
+    $("vMeet").setAttribute("aria-hidden", m === "edit" || m === "write" ? "true" : "false");
+    document.body.classList.toggle("plum", m === "write");
     themeColor();
     if (m === "meet") clockOn();
     if (m === "write" || m === "edit") growAll();
@@ -1062,10 +1085,11 @@ textarea::placeholder { color: var(--plum-faint); }
     if (p.dy < EDIT_PULL) { editSettle(); return; }
     var a = document.activeElement;
     if (a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT") && $("vEdit").contains(a)) { a.blur(); editSettle(); return; }
-    var v = $("vEdit"); v.classList.remove("pulling"); v.classList.add("closing"); track("tap", { id: "editPull" });
+    var v = $("vEdit"); v.classList.remove("pulling", "up"); v.classList.add("closing"); $("editShade").classList.remove("on"); track("tap", { id: "editPull" });
     setTimeout(function () { $("editDone").click(); v.classList.remove("closing"); v.style.transform = ""; }, 240);
   }
   $("vEdit").addEventListener("touchend", editEnd);
+  $("editShade").addEventListener("click", function () { if (mode === "edit") { track("tap", { id: "editShade" }); $("editDone").click(); } });
   $("vEdit").addEventListener("touchcancel", function () { if (ePull && ePull.on) editSettle(); ePull = null; });
 
   // Delete asks for a second tap rather than a dialog. A tap anywhere else takes it back.
