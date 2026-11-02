@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/favicon-32.png">
-<script>try { var lk = (JSON.parse(localStorage.getItem("scales.next.ui.v1")) || {}).look; if (lk === "light" || lk === "dark") document.documentElement.setAttribute("data-look", lk); } catch (e) {}</script>
+<script>try { var u0 = JSON.parse(localStorage.getItem("scales.next.ui.v1")) || {}, lk = u0.look; if (lk === "light" || lk === "dark") document.documentElement.setAttribute("data-look", lk); if (u0.theme === "stone") document.documentElement.setAttribute("data-theme", "stone"); } catch (e) {}</script>
 <style>
 @font-face { font-family:"Geist"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/geist-latin.woff2") format("woff2"); }
 
@@ -40,6 +40,16 @@
   --plum: #23132A; --plum-muted: #B09CB4; --plum-faint: #85718A;
   --toast-bg: var(--pist); --toast-ink: #2A1E2E; color-scheme: dark; }
 :root[data-look="light"] { color-scheme: light; }
+/* 2.22.0 Stone: warm stone to read on, graphite for anything your hand is on; pistachio stays the accent.
+   Dark follows the default's rule: the thought on graphite, the sheets a step darker. */
+:root[data-theme="stone"] { --ground: #C9C6BD; --ground-ink: #1F2124; --ground-muted: #55524B; --ground-line: rgba(31,33,36,.14);
+  --plum: #23262B; --plum-ink: #EEEAE2; --plum-muted: #A5A39D; --plum-faint: #7E7C77; --toast-bg: #1F2124; --toast-ink: #C9C6BD; }
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="stone"]:not([data-look="light"]) { --ground: #23262B; --ground-ink: #EEEAE2; --ground-muted: #A5A39D; --ground-line: rgba(238,234,226,.14);
+    --plum: #16181B; --plum-muted: #98968F; --plum-faint: #75736E; --toast-bg: var(--pist); --toast-ink: #1F2124; }
+}
+:root[data-theme="stone"][data-look="dark"] { --ground: #23262B; --ground-ink: #EEEAE2; --ground-muted: #A5A39D; --ground-line: rgba(238,234,226,.14);
+  --plum: #16181B; --plum-muted: #98968F; --plum-faint: #75736E; --toast-bg: var(--pist); --toast-ink: #1F2124; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
 body {
@@ -273,6 +283,9 @@ textarea::placeholder { color: var(--plum-faint); }
 .grp .lookrow { display: flex; align-items: center; min-height: 52px; padding: 0 18px; font-size: 17px; }
 .grp .lookseg { margin: 0; padding: 0 18px 14px; }
 .grp #lookSec:not([hidden]) + .srow { border-top: 1px solid rgba(241,233,216,.12); }
+.grp #themeSec + #lookSec:not([hidden]) { border-top: 1px solid rgba(241,233,216,.12); }
+.grp #themeSec + #lookSec[hidden] + .srow:not([hidden]) { border-top: 1px solid rgba(241,233,216,.12); }
+.lookseg .tdot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
 /* The mark, small and last: the icon in one color, and where your thoughts live. */
 /* 2.13.0: the icon and the line side by side. */
 .made { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 10px; margin: 36px 34px 8px; text-align: left; }
@@ -384,6 +397,7 @@ textarea::placeholder { color: var(--plum-faint); }
 #ten .by { margin: 9px 0 0; font-size: 14px; font-weight: 500; color: var(--ground-muted); }
 #ten .yet { margin: 30px 0; display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; color: var(--ground-muted); }
 #ten .yet::after { content: ""; flex: 1; height: 1px; background: var(--ground-line); }
+#ten .no { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); font-size: 15px; font-weight: 500; color: var(--ground-muted); padding: 12px 20px; white-space: nowrap; }
 #ten.go { transition: transform .28s cubic-bezier(.4,0,.2,1), opacity .28s; transform: translateY(-60px); opacity: 0; }
 .made p { margin: 0; font-size: 12px; line-height: 1.45; color: var(--plum-muted); }
 /* Settings, Look (2.8.0): Appearance is three choices in a row, like the library filters. */
@@ -512,11 +526,6 @@ textarea::placeholder { color: var(--plum-faint); }
   <button class="pback" type="button" id="setBack">&#8249; Your thoughts</button>
   <h1>Settings</h1>
   <div class="body">
-    <p class="sh">Add thoughts</p>
-    <div class="grp">
-      <button class="srow" type="button" id="setSets"><span>Sets</span><span class="v"><span id="setSetsV"></span><span class="chev" aria-hidden="true">&#8250;</span></span></button>
-      <button class="srow" type="button" id="setImport"><span>Import thoughts</span><span class="chev" aria-hidden="true">&#8250;</span></button>
-    </div>
     <p class="sh">Insights</p>
     <div class="grp">
       <button class="srow" type="button" id="setIns"><span>Insights</span><span class="chev" aria-hidden="true">&#8250;</span></button>
@@ -526,6 +535,13 @@ textarea::placeholder { color: var(--plum-faint); }
     <p class="snote" id="aiUses" hidden>Apple Intelligence on this iPhone writes Themes and your week, Argue with it in Edit, and Tensions in Your thoughts. Nothing leaves your phone.</p>
     <p class="sh">Look</p>
     <div class="grp">
+      <div id="themeSec">
+        <div class="lookrow"><span>Theme</span></div>
+        <div class="seg lookseg" id="themeSeg" role="radiogroup" aria-label="Theme">
+          <button type="button" role="radio" data-theme-pick="pistachio" aria-checked="true"><i class="tdot" style="background:#B9C9A3"></i>Pistachio</button>
+          <button type="button" role="radio" data-theme-pick="stone" aria-checked="false"><i class="tdot" style="background:#C9C6BD"></i>Stone</button>
+        </div>
+      </div>
       <div id="lookSec" hidden>
         <div class="lookrow"><span>Appearance</span></div>
         <div class="seg lookseg" id="lookSeg" role="radiogroup" aria-label="Appearance">
@@ -537,8 +553,10 @@ textarea::placeholder { color: var(--plum-faint); }
       <button class="srow" type="button" id="setIcon" hidden><span>App icon</span><span class="v"><span id="setIconV">Automatic</span> <span class="chev" aria-hidden="true">&#8250;</span></span></button>
     </div>
     <p class="snote" id="lookMsg">Automatic follows your iPhone.</p>
-    <p class="sh">Your data</p>
+    <p class="sh">Add and back up</p>
     <div class="grp">
+      <button class="srow" type="button" id="setSets"><span>Sets</span><span class="v"><span id="setSetsV"></span><span class="chev" aria-hidden="true">&#8250;</span></span></button>
+      <button class="srow" type="button" id="setImport"><span>Import thoughts</span><span class="chev" aria-hidden="true">&#8250;</span></button>
       <button class="srow" type="button" id="setBackups"><span>Backups</span><span class="v"><span id="setBackupsV"></span> <span class="chev" aria-hidden="true">&#8250;</span></span></button>
     </div>
     <p class="sh">Help and about</p>
@@ -655,8 +673,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.21.0"></script>
-<script src="sets.js?v=2.21.0"></script>
+<script src="core.js?v=2.22.0"></script>
+<script src="sets.js?v=2.22.0"></script>
 <script>
 (function () {
   "use strict";
@@ -947,7 +965,8 @@ textarea::placeholder { color: var(--plum-faint); }
     dropId = canDrop || null; $("toastDel").hidden = !dropId; $("toastUndo").hidden = false; $("toast").classList.remove("done");
     $("toastWhy").hidden = !whyId; if (whyId) $("toastWhy").setAttribute("data-id", whyId);
     $("toastMsg").textContent = msg; $("toast").classList.add("on");
-    clearTimeout(toastT); toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; }, 5000);
+    clearTimeout(toastT); toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; tenUndo = null; }, 5000);
+    tenUndo = null;
   }
   // Delete: the set line is gone for good, with its visits, so it never counts toward anything.
   $("toastDel").onclick = function () {
@@ -968,6 +987,12 @@ textarea::placeholder { color: var(--plum-faint); }
     toastT = setTimeout(function () { $("toast").classList.remove("on"); setTimeout(function () { $("toast").classList.remove("done"); $("toastUndo").hidden = false; }, 250); }, 2600);
   }
   $("toastUndo").onclick = function () {
+    // 2.22.0: undoing "Not a tension" puts the pair back.
+    if (tenUndo) {
+      var d = tenData(); d.gone = (d.gone || []).filter(function (x) { return x !== tenUndo.k; });
+      if (tenUndo.pair) d.pairs = [tenUndo.pair].concat(d.pairs || []);
+      lsSet(KEY_TEN, d); tenUndo = null; $("toast").classList.remove("on"); buzz("undo"); return;
+    }
     if (!undoPoint) return;
     track("undo", { id: undoPoint.id });
     clockOff();
@@ -1426,6 +1451,16 @@ textarea::placeholder { color: var(--plum-faint); }
     if (tell) post({ type: "look", value: v === "auto" ? "" : v });
   }
   if (!NATIVE || (window.scalesNative && window.scalesNative.look)) $("lookSec").hidden = false;
+  // 2.22.0 Theme: Pistachio (the default) or Stone. A web choice; the iPhone app's icon is chosen separately.
+  function applyTheme() {
+    if (ui.theme === "stone") document.documentElement.setAttribute("data-theme", "stone"); else document.documentElement.removeAttribute("data-theme");
+    Array.prototype.forEach.call(document.querySelectorAll("#themeSeg [data-theme-pick]"), function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-theme-pick") === (ui.theme === "stone" ? "stone" : "pistachio"))); });
+    themeColor();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("#themeSeg [data-theme-pick]"), function (b) {
+    b.onclick = function () { ui.theme = b.getAttribute("data-theme-pick") === "stone" ? "stone" : null; saveUi(); haptic("tick"); track("tap", { id: "theme:" + (ui.theme || "pistachio") }); applyTheme(); };
+  });
+  applyTheme();
   $("lookMsg").textContent = NATIVE ? "Automatic follows your iPhone." : "Automatic follows your device.";
   Array.prototype.forEach.call(document.querySelectorAll("#lookSeg [data-look]"), function (b) {
     b.onclick = function () { ui.look = b.getAttribute("data-look"); saveUi(); haptic("tick"); applyLook(true); };
@@ -1669,9 +1704,20 @@ textarea::placeholder { color: var(--plum-faint); }
   function showTension(a, b) {
     var A = store[a], B = store[b]; if (!A || !B) return;
     var w = function (t) { var x = shown(t.text); return '<p class="w' + (x.length > 140 ? " long" : "") + '">' + esc(x) + "</p>" + (t.by ? '<p class="by">' + esc(t.by) + "</p>" : ""); };
-    $("ten").innerHTML = w(A) + '<div class="yet">and yet</div>' + w(B);
+    // 2.22.0: "Not a tension" for when the model got it wrong. The pair goes, and never comes back.
+    $("ten").innerHTML = w(A) + '<div class="yet">and yet</div>' + w(B) + '<button type="button" class="no" id="tenNo">Not a tension</button>';
+    $("tenNo").onclick = function (e) { e.stopPropagation(); dropTension(a, b); };
     $("ten").classList.remove("go"); $("ten").hidden = false;
     closeLib(); clockOff(); mode = "tension"; haptic("tick"); track("screen", { to: "tension" });
+  }
+  var tenUndo = null;
+  function dropTension(a, b) {
+    var d = tenData(), k = C.tensionKey(a, b), was = (d.pairs || []).filter(function (p) { return C.tensionKey(p.a, p.b) === k; })[0];
+    d.pairs = (d.pairs || []).filter(function (p) { return C.tensionKey(p.a, p.b) !== k; });
+    d.gone = (d.gone || []).filter(function (x) { return x !== k; }).concat([k]);
+    lsSet(KEY_TEN, d); track("tension_drop", {}); haptic("tick");
+    hideTension();
+    setTimeout(function () { toast("Won't pair these again"); tenUndo = { k: k, pair: was }; }, 300);
   }
   function hideTension() {
     if ($("ten").hidden) return;
@@ -1680,7 +1726,7 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   (function () {
     var y0 = null;
-    $("ten").addEventListener("pointerdown", function (e) { y0 = e.clientY; });
+    $("ten").addEventListener("pointerdown", function (e) { y0 = e.target.closest("#tenNo") ? null : e.clientY; });
     $("ten").addEventListener("pointerup", function (e) { if (y0 == null) return; var dy = e.clientY - y0; y0 = null; if (dy < -60 || Math.abs(dy) < 10) hideTension(); });
     document.addEventListener("keydown", function (e) { if (mode === "tension" && (e.key === "ArrowUp" || e.key === "Escape" || e.key === "Enter")) { e.preventDefault(); hideTension(); } });
   })();

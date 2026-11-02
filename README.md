@@ -17,6 +17,10 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.22.0:** a second theme, Stone (warm stone to read on, graphite for sheets, pistachio accent; Dark puts the thought
+  on graphite with sheets a step darker), chosen in Settings, Look, Theme; Pistachio stays the default. Settings order:
+  Insights, Look, Add and back up (Sets, Import thoughts, Backups), Help and about. Tensions: "Not a tension" on the
+  pair screen removes the pair for good (with Undo).
 - **2.21.0:** Edit is a sheet. It rises over the thought, which stays in view above it (dimmed), with a handle at the
   top. Pull it down, tap above it, or tap Done to keep; Cancel throws changes away. Write still fills the screen.
 - **2.20.0:** pull Edit down to keep and close, like Done. The screen follows the finger; past 140 px it closes (a tick
