@@ -71,6 +71,11 @@ read, never written or deleted.
 
 ## Open items
 
+- Subtitle idea, not adopted (2 November 2026): "Question your own thoughts" (26 characters) in place of "Write it down.
+  Let it return." It matches the Think it through direction (Argue with it, Tensions, Insights). Graham kept the
+  current subtitle for now and may come back to it; to change it, set "subtitle" in appstore/listing.json and run the
+  App Store listing workflow with write: true.
+
 - A bespoke put-away haptic would need an iPhone build (today it is thud plus letgo, sent from the page).
 - A reminder may come back later; for now Scales is something you open on your own.
 - 12 November evaluation: follow `docs/evaluation-plan.md` and run `scripts/evaluate.js` on the backup (timing lines,
