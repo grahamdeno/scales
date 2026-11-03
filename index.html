@@ -117,7 +117,17 @@ a { color: inherit; text-decoration: none; }
 #strip .grab { width: 36px; height: 4px; border-radius: 2px; background: rgba(241,233,216,.35); }
 #strip .row { display: flex; justify-content: space-between; width: 100%; padding: 0 var(--pad); font-size: 15px; }
 #strip .row b { font-weight: 600; } #strip .row span { color: var(--plum-muted); }
-body.plum #strip { opacity: 0; pointer-events: none; }
+/* 2.28.0: the count sits beside the words, and + New has the right end of the strip (its own button, laid over it). */
+#strip .row { justify-content: flex-start; gap: 10px; }
+#stripNew { position: absolute; right: 0; bottom: 0; height: var(--strip); z-index: 3; display: flex; align-items: flex-start;
+  padding: calc(10px + 4px + 12px - 14px) var(--pad) 0 28px; color: var(--pist); font-weight: 600; font-size: 16px; }
+#stripNew span { display: block; padding: 14px 0; line-height: 18px; margin-top: 1px; }
+body.plum #strip, body.plum #stripNew { opacity: 0; pointer-events: none; }
+/* 2.28.0: while the sheet is shut or shutting it lies under the strip, so it slides in behind the strip and its header
+   never shows in the strip's place; its contents fade as it goes. Open or being pulled up, it is on top (z-index 6). */
+#lib:not(.open):not(.drag) { z-index: 1; }
+#lib > * { transition: opacity .12s ease; }
+#lib:not(.open):not(.drag) > * { opacity: 0; }
 
 /* Undo: a small pill at the right, above the strip. Visible, but clear of the thought and of the thumb's swipe path. */
 #toast { position: absolute; right: 16px; bottom: calc(var(--strip) + 14px); background: var(--toast-bg); color: var(--toast-ink);
@@ -478,6 +488,7 @@ textarea::placeholder { color: var(--plum-faint); }
     <i class="grab" aria-hidden="true"></i>
     <span class="row"><b>Your thoughts</b><span id="stripN">0</span></span>
   </button>
+  <button id="stripNew" type="button" aria-label="New thought"><span>+ New</span></button>
   <div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastUndo">Undo</button><button type="button" id="toastWhy" hidden>Say why</button><button type="button" id="toastDel" hidden>Delete</button></div>
 </section>
 
@@ -530,7 +541,7 @@ textarea::placeholder { color: var(--plum-faint); }
   <header>
     <div class="top"><h2>Your thoughts</h2><span class="hbtns">
       <button class="gear" type="button" id="libGear" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
-      <button class="new" type="button" id="libNew"><span class="plus" aria-hidden="true">+</span>New</button></span></div>
+</span></div>
     <label class="sr" for="q">Search your thoughts</label>
     <input id="q" type="search" placeholder="Search" autocomplete="off" autocapitalize="off" spellcheck="false">
     <div class="seg" id="seg" aria-label="Show"><button type="button" data-view="all">All</button><button type="button" data-view="new">New</button><button type="button" data-view="marked" id="segMarked">Bookmarked</button></div>
@@ -683,15 +694,15 @@ textarea::placeholder { color: var(--plum-faint); }
     <p><strong>Pull down</strong> to put a thought away.<br>It waits in Your thoughts, under Put away.</p>
     <div class="demo" data-demo="tap" aria-hidden="true"><div class="dcard"><i></i><i></i></div><b class="dfinger"></b></div>
     <p><strong>Tap</strong> to edit it or add a note.<br>Undo lasts five seconds after any move.</p>
-    <p><strong>Write a new one:</strong> open Your thoughts at the bottom, then + New.</p>
+    <p><strong>Write a new one:</strong> tap + New at the bottom right.</p>
     <h2>How long you stay decides when it comes back.</h2>
     <p><strong>20 seconds or less:</strong> back in five days, a little bolder.<br><strong>30 seconds or more:</strong> it rests longer each time.<br><strong>An edit or a note:</strong> it rests longest.</p>
     <p>Each day leads with the ones you've gone longest without seeing, so all of them come round. Nothing leaves unless you put it away.</p>
   </div>
 </section>
 
-<script src="core.js?v=2.27.0"></script>
-<script src="sets.js?v=2.27.0"></script>
+<script src="core.js?v=2.28.0"></script>
+<script src="sets.js?v=2.28.0"></script>
 <script>
 (function () {
   "use strict";
@@ -1089,7 +1100,8 @@ textarea::placeholder { color: var(--plum-faint); }
   };
   $("earlyWrite").onclick = function () { openWrite(false); };
   $("earlyMarked").onclick = function () { ui.view = "marked"; saveUi(); openLib(); };
-  $("libNew").onclick = function () { openWrite(false); };
+  // 2.28.0: + New lives on the strip, outside the sheet.
+  $("stripNew").onclick = function () { if (mode === "meet") openWrite(false); };
   $("writeText").addEventListener("input", function () {
     $("writeKeep").disabled = !this.value.trim();
     // Typed with an opening quotation mark: it is probably a quote, so the "Who said it?" line opens (without the keyboard moving).
@@ -1255,7 +1267,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("strip").addEventListener("click", function () { if (stripTap) openLib(); stripTap = true; });
   // Shutting, from the grabber or the header
   function headDown(e) {
-    if (!lib.classList.contains("open") || e.target.closest("input, #libNew, #libGear, .seg button")) return;
+    if (!lib.classList.contains("open") || e.target.closest("input, #libGear, .seg button")) return;
     sheet = { y: e.clientY, t: Date.now(), dy: 0, from: "head", moved: false };
   }
   document.addEventListener("pointerdown", function (e) { if (e.target.closest("#lib header, #libClose")) headDown(e); });

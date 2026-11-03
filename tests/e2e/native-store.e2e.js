@@ -123,6 +123,13 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   ok(bm && /^\d{4}-\d{2}-\d{2} \d{2}\.\d{2}\.\d{2}$/.test(bm.stamp) && JSON.parse(bm.json).app === "scales", "Back up now sends the backup to the app with a date and time");
   await p2.evaluate(() => window.scalesBackedUp({ ok: true, where: "icloud", name: "Scales backup 2026-11-02 15.40.12.json" }));
   ok(/Saved .Scales backup 2026-11-02 15\.40\.12\.json. to iCloud Drive, Scales\./.test(await p2.textContent("#restoreMsg")), "and says where the file went");
+  // 2.28.0: + New on the strip opens a new thought; the sheet has no New of its own.
+  ok(await p2.locator("#libNew").count() === 0, "the sheet has no + New of its own");
+  await p2.goto(base + "/index.html?native=1"); await wait(1200);
+  await p2.click("#stripNew"); await wait(500);
+  ok(await p2.evaluate(() => !document.getElementById("vWrite").hidden), "+ New on the strip opens a new thought");
+  const sb = await p2.locator("#strip .row b").boundingBox(), cb = await p2.locator("#stripN").boundingBox();
+  ok(cb.x - (sb.x + sb.width) < 16, "the count sits beside Your thoughts");
   await ctx2.close();
 
   await browser.close(); server.close();
