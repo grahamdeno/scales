@@ -160,6 +160,13 @@ textarea::placeholder { color: var(--plum-faint); }
 .formfoot { position: absolute; left: var(--pad); right: var(--pad); bottom: calc(var(--bot) + 28px); display: flex; align-items: center; justify-content: space-between; }
 .quiet { color: var(--plum-muted); font-size: 15px; padding: 12px 0; }
 .quiet.armed { color: var(--plum-ink); font-weight: 700; }
+/* 2.29.0: Delete, armed, turns a soft coral, and a thin line shows the 4 seconds before it resets. */
+#editDelete { position: relative; }
+#editDelete.armed { color: #F2A69B; }
+#editDelete .dbar { position: absolute; left: 0; bottom: 6px; height: 3px; border-radius: 2px; background: rgba(242,166,155,.25); width: 100%; overflow: hidden; }
+#editDelete .dbar i { display: block; height: 100%; background: #F2A69B; width: 100%; transform-origin: left; animation: dbar 4s linear forwards; }
+@keyframes dbar { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { #editDelete .dbar i { animation: none; } }
 .kept { position: absolute; left: var(--pad); right: var(--pad); top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
 .kept p { margin: 0; } .kept .k1 { font-size: 20px; font-weight: 700; color: var(--pist); } .kept .k2 { font-size: 16px; color: var(--plum-muted); }
 
@@ -226,7 +233,23 @@ textarea::placeholder { color: var(--plum-faint); }
 .lrow .back { font-size: 13px; font-weight: 600; color: var(--pist); white-space: nowrap; padding: 4px 0; }
 #libList { padding-bottom: calc(var(--bot) + 40px); }
 #lib header .top { display: flex; justify-content: space-between; align-items: center; }
-#lib .hbtns { display: flex; align-items: center; margin-right: calc(-1 * var(--pad)); }
+/* 2.28.1: with + New gone from the sheet, the gear lines up with the search field and the list (its 24 px icon sits in a 48 px tap area). */
+#lib .hbtns { display: flex; align-items: center; margin-right: -12px; }
+/* 2.29.0: search and the gear on one row; the gear's icon lines up with the list's right edge. */
+#lib .qrow { display: flex; align-items: center; gap: 4px; }
+#lib .qrow #q { flex: 1 1 auto; min-width: 0; }
+#lib .qrow .gear { flex: none; margin-right: -12px; }
+/* 2.29.0: one finding from Insights, a sentence a day; tap for the page. */
+#lib .daily { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; align-items: center; width: 100%; text-align: left;
+  background: rgba(185,201,163,.12); border-radius: 14px; padding: 12px 14px; color: var(--plum-ink); }
+#lib .daily .k { grid-column: 1; font-size: 12px; color: var(--plum-muted); margin-bottom: 2px; }
+#lib .daily .s { grid-column: 1; font-size: 15px; line-height: 1.35; }
+#lib .daily .s b { color: var(--pist); font-weight: 700; }
+#lib .daily .v { grid-column: 2; grid-row: 1 / span 2; font-size: 18px; color: var(--plum-muted); }
+/* 2.29.0: Put away is a row like the others, set off by a little space. */
+#libList .lgrp.arch { margin-top: 18px; }
+#libList .lgrp .gc { min-width: 22px; text-align: right; }
+#libList .lgrp .gv { margin-left: 4px; }
 #lib .gear { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: var(--plum-ink); opacity: .7; }
 #lib .gear svg { width: 24px; height: 24px; }
 #lib .new { margin-right: 0; }
@@ -539,11 +562,14 @@ textarea::placeholder { color: var(--plum-faint); }
 <section id="lib" aria-label="Your thoughts" aria-hidden="true">
   <button class="grabbtn" type="button" id="libClose" aria-label="Close the list"><i></i></button>
   <header>
-    <div class="top"><h2>Your thoughts</h2><span class="hbtns">
+    <!-- 2.29.0: no visible title (the strip already says it); search and the gear share the top row; one insight below. -->
+    <h2 class="sr">Your thoughts</h2>
+    <div class="qrow">
+      <label class="sr" for="q">Search your thoughts</label>
+      <input id="q" type="search" placeholder="Search your thoughts" autocomplete="off" autocapitalize="off" spellcheck="false">
       <button class="gear" type="button" id="libGear" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
-</span></div>
-    <label class="sr" for="q">Search your thoughts</label>
-    <input id="q" type="search" placeholder="Search" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <button type="button" class="daily" id="libIns" hidden><span class="k">Insight</span><span class="s" id="libInsText"></span><span class="v" aria-hidden="true">&#8250;</span></button>
     <div class="seg" id="seg" aria-label="Show"><button type="button" data-view="all">All</button><button type="button" data-view="new">New</button><button type="button" data-view="marked" id="segMarked">Bookmarked</button></div>
   </header>
   <div id="libList"></div>
@@ -701,8 +727,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.28.0"></script>
-<script src="sets.js?v=2.28.0"></script>
+<script src="core.js?v=2.29.0"></script>
+<script src="sets.js?v=2.29.0"></script>
 <script>
 (function () {
   "use strict";
@@ -739,7 +765,7 @@ textarea::placeholder { color: var(--plum-faint); }
   if (!store) { store = C.importOld(lsGet(OLD, {}), now()); lsSet(KEY, store); }
   // Every open: anything still in Scales 1 that is not here yet joins. Nothing here is overwritten.
   else if (C.mergeOld(store, lsGet(OLD, {}), now(), lsGet(KEY_GONE, []))) lsSet(KEY, store);
-  var ui = Object.assign({ cur: null, ms: 0, worked: false, nudged: false, view: "all", saved: null, review: null }, lsGet(KEY_UI, {}));
+  var ui = Object.assign({ cur: null, ms: 0, worked: false, argued: false, nudged: false, view: "all", saved: null, review: null }, lsGet(KEY_UI, {}));
   // 2.24.0: which moves the person has made at least once. Older phones learn it from their visit log.
   if (ui.learnedUp === undefined || ui.learnedDown === undefined) {
     var lg0 = lsGet(KEY_LOG, []);
@@ -809,10 +835,12 @@ textarea::placeholder { color: var(--plum-faint); }
   startSession("launch");
 
   // ---------- the visit clock ----------
-  // Time counts only while the app is open and this thought is on screen. A long stretch with no touch at all
+  // Time counts only while the app is open and this thought is on screen, or open in Edit (2.29.0: time in Edit is
+  // time spent with the thought; before, opening Edit paused the clock). A long stretch with no touch at all
   // is read as the phone being set down, so it counts as seen, never as thought about.
   var since = null, lastTouch = Date.now(), softT = 0;
-  function clockOn() { if (since == null && ui.cur && !document.hidden && mode === "meet") since = Date.now(); scheduleSoften(); }
+  function counting(m) { return m === "meet" || m === "edit"; }
+  function clockOn() { if (since == null && ui.cur && !document.hidden && counting(mode)) since = Date.now(); scheduleSoften(); }
   function clockOff() { if (since != null) { ui.ms += Date.now() - since; since = null; saveUi(); } clearTimeout(softT); }
   function elapsed() { return ui.ms + (since != null ? Date.now() - since : 0); }
   // 2.25.0: the touch that ends a visit (the swipe itself) used to reset lastTouch before idle() was read, so idle was never
@@ -830,7 +858,7 @@ textarea::placeholder { color: var(--plum-faint); }
   document.addEventListener("visibilitychange", function () { if (document.hidden) clockOff(); else { lastTouch = Date.now(); clockOn(); } });
   window.addEventListener("pagehide", clockOff);
   ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, function () {
-    if (Date.now() - lastTouch > C.IDLE_MS && mode === "meet" && ui.cur) idleGap = true;
+    if (Date.now() - lastTouch > C.IDLE_MS && counting(mode) && ui.cur) idleGap = true;
     lastTouch = Date.now();
   }, true); });
 
@@ -841,14 +869,16 @@ textarea::placeholder { color: var(--plum-faint); }
     // A thought opened from Bookmarked is a review: logged as one, and it changes nothing about when the thought comes back.
     var review = ui.review === ui.cur; ui.review = null;
     var wasIdle = idle(); idleGap = false;
-    var cls = C.classify(ui.ms, ui.worked, wasIdle), kind = review ? "review" : C.recordVisit(t, ui.ms, ui.worked, wasIdle, now());
+    // 2.29.0: running Argue with it is thinking about the thought, whatever the clock says.
+    var ms = ui.argued ? Math.max(ui.ms, C.THOUGHT_MIN_MS) : ui.ms; if (ui.argued) wasIdle = false;
+    var cls = C.classify(ms, ui.worked, wasIdle), kind = review ? "review" : C.recordVisit(t, ms, ui.worked, wasIdle, now());
     var lg = lsGet(KEY_LOG, []), pile = ui.pile || (review ? "review" : "due"); ui.pile = null;
-    var entry = C.logVisit(lg, { at: now().toISOString(), id: t.id, ms: ui.ms, worked: ui.worked, idle: wasIdle, kind: kind, how: how || "other", len: t.text.length,
+    var entry = C.logVisit(lg, { at: now().toISOString(), id: t.id, ms: ui.ms, worked: ui.worked, argued: ui.argued ? 1 : 0, idle: wasIdle, kind: kind, how: how || "other", len: t.text.length,
       pile: pile, n: C.sessionPos(lg, now().getTime(), ui.ms), size: C.DAY_SIZE, cls: cls, s: sess && sess.id });
     // Storage full: keep the newest half of the log and try once more; if that fails too, say so.
     if (!lsSet(KEY_LOG, entry) && !lsSet(KEY_LOG, entry.slice(-2500))) saveWarn();
     if (sess) sess.cards++;
-    ui.cur = null; ui.ms = 0; ui.worked = false; saveUi(); save();
+    ui.cur = null; ui.ms = 0; ui.worked = false; ui.argued = false; saveUi(); save();
     return kind;
   }
 
@@ -869,8 +899,10 @@ textarea::placeholder { color: var(--plum-faint); }
   var editHideT = 0;
   function setMode(m) {
     if (m !== mode) track("screen", { to: m });
-    if (mode === "meet" && m !== "meet") clockOff();
+    if (counting(mode) && !counting(m)) clockOff();
+    var startClock = !counting(mode) && counting(m);
     mode = m;
+    if (startClock) clockOn();
     $("vMeet").hidden = false;
     $("vWrite").hidden = m !== "write";
     // 2.21.0: Edit rises as a sheet over the thought, which stays in view; Write still fills the screen.
@@ -901,7 +933,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function more() { return ui.more === C.dayKey(now()); }
   function pick(notId) {
     var r = C.nextCard(store, lsGet(KEY_LOG, []), now(), notId, more());
-    ui.cur = r.card ? r.card.id : null; ui.ms = 0; ui.worked = false; idleGap = false;
+    ui.cur = r.card ? r.card.id : null; ui.ms = 0; ui.worked = false; ui.argued = false; idleGap = false;
     ui.review = r.card && r.review ? r.card.id : null; ui.pile = r.card ? r.pile : null; ui.why = r.why || null;
     saveUi(); return r;
   }
@@ -1030,8 +1062,8 @@ textarea::placeholder { color: var(--plum-faint); }
     dropId = canDrop || null; $("toastDel").hidden = !dropId; $("toastUndo").hidden = false; $("toast").classList.remove("done");
     $("toastWhy").hidden = !whyId; if (whyId) $("toastWhy").setAttribute("data-id", whyId);
     $("toastMsg").textContent = msg; $("toast").classList.add("on");
-    clearTimeout(toastT); toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; tenUndo = null; }, 5000);
-    tenUndo = null;
+    clearTimeout(toastT); toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; tenUndo = null; delUndo = null; }, 5000);
+    tenUndo = null; delUndo = null;
   }
   // Delete: the set line is gone for good, with its visits, so it never counts toward anything.
   $("toastDel").onclick = function () {
@@ -1058,10 +1090,19 @@ textarea::placeholder { color: var(--plum-faint); }
       if (tenUndo.pair) d.pairs = [tenUndo.pair].concat(d.pairs || []);
       lsSet(KEY_TEN, d); tenUndo = null; $("toast").classList.remove("on"); buzz("undo"); return;
     }
+    // 2.29.0: undoing a delete puts the thought back, on screen, as it was.
+    if (delUndo) {
+      var du = delUndo; delUndo = null;
+      if (!du.wasGone) lsSet(KEY_GONE, lsGet(KEY_GONE, []).filter(function (x) { return x !== du.id; }));
+      // The card that showed for a moment after the delete isn't counted as a visit.
+      clockOff(); if (mode === "write") setMode("meet");
+      store[du.id] = du.t; ui.cur = du.id; ui.ms = 0; ui.worked = false; ui.argued = false; save(); saveUi();
+      track("undo", { id: du.id, what: "delete" }); $("toast").classList.remove("on"); buzz("undo"); renderMeet(true); return;
+    }
     if (!undoPoint) return;
     track("undo", { id: undoPoint.id });
     clockOff();
-    store[undoPoint.id] = undoPoint.t; ui.cur = undoPoint.id; ui.ms = undoPoint.ms; ui.worked = false; ui.review = undoPoint.review; ui.pile = undoPoint.pile; undoPoint = null;
+    store[undoPoint.id] = undoPoint.t; ui.cur = undoPoint.id; ui.ms = undoPoint.ms; ui.worked = false; ui.argued = false; ui.review = undoPoint.review; ui.pile = undoPoint.pile; undoPoint = null;
     // The undone visit stays in the log, marked, so it can be left out when the times are judged.
     var lg = lsGet(KEY_LOG, []); if (lg.length) { lg[lg.length - 1].undone = true; lsSet(KEY_LOG, lg); }
     save(); saveUi(); $("toast").classList.remove("on"); buzz("undo"); renderMeet(true);
@@ -1189,19 +1230,27 @@ textarea::placeholder { color: var(--plum-faint); }
 
   // Delete asks for a second tap rather than a dialog. A tap anywhere else takes it back.
   var delArmed = false;
-  function disarm() { delArmed = false; $("editDelete").textContent = "Delete"; $("editDelete").classList.remove("armed"); }
+  var delT = 0;
+  function disarm() { clearTimeout(delT); delArmed = false; $("editDelete").textContent = "Delete"; $("editDelete").classList.remove("armed"); }
   document.addEventListener("pointerdown", function (e) { if (delArmed && !e.target.closest("#editDelete")) disarm(); }, true);
   $("editDelete").onclick = function () {
-    if (!delArmed) { delArmed = true; this.textContent = "Tap again to delete"; this.classList.add("armed"); haptic("tick"); return; }
+    if (!delArmed) {
+      delArmed = true; this.innerHTML = 'Tap again to delete<span class="dbar" aria-hidden="true"><i></i></span>'; this.classList.add("armed");
+      haptic("warning"); clearTimeout(delT); delT = setTimeout(disarm, 4000); return;
+    }
     if (store[ui.cur]) track("delete", { id: ui.cur, where: "edit", from: store[ui.cur].from || (store[ui.cur].set ? "set" : "own") });
     var id = ui.cur;
+    // 2.29.0: Undo for 5 seconds puts it back exactly as it was.
+    var keptCopy = store[id] ? JSON.parse(JSON.stringify(store[id])) : null, wasGone = lsGet(KEY_GONE, []).indexOf(id) >= 0;
     // A thought that came from Scales 1 is remembered as deleted, so the catch-up never brings it back.
     if (store[id] && store[id].from) { var g = lsGet(KEY_GONE, []); g.push(id); lsSet(KEY_GONE, g); }
-    delete store[id]; ui.cur = null; ui.ms = 0; ui.worked = false; save(); saveUi(); disarm();
+    delete store[id]; ui.cur = null; ui.ms = 0; ui.worked = false; ui.argued = false; save(); saveUi(); disarm();
     buzz("remove");
     setMode("meet"); renderMeet(true);
-    done("Deleted.");
+    toast("Deleted.");
+    if (keptCopy) delUndo = { id: id, t: keptCopy, wasGone: wasGone };
   };
+  var delUndo = null;
 
   // ---------- Library ----------
   function openLib() {
@@ -1267,7 +1316,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("strip").addEventListener("click", function () { if (stripTap) openLib(); stripTap = true; });
   // Shutting, from the grabber or the header
   function headDown(e) {
-    if (!lib.classList.contains("open") || e.target.closest("input, #libGear, .seg button")) return;
+    if (!lib.classList.contains("open") || e.target.closest("input, #libGear, #libIns, .seg button")) return;
     sheet = { y: e.clientY, t: Date.now(), dy: 0, from: "head", moved: false };
   }
   document.addEventListener("pointerdown", function (e) { if (e.target.closest("#lib header, #libClose")) headDown(e); });
@@ -1306,6 +1355,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("seg").addEventListener("click", pickView);
   $("q").addEventListener("input", renderLib);
   function renderLib() {
+    renderInsightLine();
     var q = $("q").value.trim().toLowerCase(), n = now();
     var match = function (t) { return !q || t.text.toLowerCase().indexOf(q) !== -1 || (t.note || "").toLowerCase().indexOf(q) !== -1 || (t.by || "").toLowerCase().indexOf(q) !== -1; };
     var on = C.inRotation(store).filter(match).sort(function (a, b) { return a.due < b.due ? -1 : a.due > b.due ? 1 : (b.skips || 0) - (a.skips || 0); });
@@ -1369,7 +1419,7 @@ textarea::placeholder { color: var(--plum-faint); }
       }).join("") + "</div>";
       if (!on.length) h += none("Nothing here yet.");
       if (C.putAway(store).length) {
-        h += '<button type="button" class="lrow arch" data-view="away"><span class="t">Put away</span><span class="m">' + C.putAway(store).length + ' \u203a</span></button>';
+        h += '<button type="button" class="lgrp arch" data-view="away"><span class="gt"><span class="gn">Put away</span><span class="gd">One tap from coming back.</span></span><span class="gc">' + C.putAway(store).length + '</span><span class="gv" aria-hidden="true">\u203a</span></button>';
       }
     }
     $("libList").innerHTML = h;
@@ -1388,7 +1438,7 @@ textarea::placeholder { color: var(--plum-faint); }
       // Opening a thought from the list puts it on screen now. The thought you were on counts as visited.
       var id = o.getAttribute("data-open");
       if (ui.cur && ui.cur !== id) endVisit("list");
-      ui.cur = id; ui.ms = 0; ui.worked = false; ui.review = o.hasAttribute("data-review") ? id : null; ui.pile = ui.review ? "review" : "picked"; saveUi();
+      ui.cur = id; ui.ms = 0; ui.worked = false; ui.argued = false; ui.review = o.hasAttribute("data-review") ? id : null; ui.pile = ui.review ? "review" : "picked"; saveUi();
       closeLib(); renderMeet(true);
     } else if (b) {
       var t = store[b.getAttribute("data-back")]; if (!t) return;
@@ -1459,8 +1509,21 @@ textarea::placeholder { color: var(--plum-faint); }
     var f = e.target.closest("[data-f]"); if (!f) return;
     var k = f.getAttribute("data-f"); ui.insOpen = ui.insOpen === k ? null : k; saveUi(); haptic("tick"); renderInsights();
   });
-  $("setIns").onclick = function () { renderInsights(); $("insBody").scrollTop = 0; openPage("insPage", "insights"); };
-  $("insBack").onclick = function () { closePage("insPage", "settings"); };
+  // 2.29.0: Insights opens from Settings or from the insight in Your thoughts, and goes back to where it came from.
+  var insFrom = "settings";
+  function openInsights(from) {
+    insFrom = from; $("insBack").innerHTML = "&#8249; " + (from === "library" ? "Your thoughts" : "Settings");
+    renderInsights(); $("insBody").scrollTop = 0; openPage("insPage", "insights");
+  }
+  $("setIns").onclick = function () { openInsights("settings"); };
+  $("libIns").onclick = function () { haptic("tick"); track("tap", { id: "libIns" }); openInsights("library"); };
+  $("insBack").onclick = function () { closePage("insPage", insFrom); if (insFrom === "library") renderLib(); };
+  // The day's insight: one true finding, chosen by the day, or nothing when there isn't enough to say yet.
+  function renderInsightLine() {
+    var L = C.insightLine(C.insights(store, lsGet(KEY_LOG, []), now()), C.dayKey(now()));
+    $("libIns").hidden = !L;
+    if (L) $("libInsText").innerHTML = esc(L.lead) + (L.n != null ? "<b>" + esc(String(L.n)) + "</b>" : "") + esc(L.tail);
+  }
 
   // Everything, including Scales 1's data exactly as it is, so a backup never loses anything.
   function backupData() {
@@ -1475,6 +1538,37 @@ textarea::placeholder { color: var(--plum-faint); }
   var needsRender = false;
   function openPage(id, m) { var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; track("screen", { to: id }); }
   function closePage(id, m) { var p = $(id); p.classList.remove("open"); p.setAttribute("aria-hidden", "true"); mode = m; track("screen", { to: m }); }
+  // 2.29.0: a page that slid in from the right can be swiped back to the right to close it, from anywhere on the page.
+  // It follows the finger and closes past a third of the width or on a quick flick; otherwise it springs back. It takes
+  // over only once the movement is clearly sideways, so the page still scrolls, and rows that scroll sideways keep theirs.
+  (function () {
+    var sw = null;
+    document.addEventListener("pointerdown", function (e) {
+      var pg = e.target.closest && e.target.closest(".page.open");
+      if (!pg || e.target.closest("input, textarea, select, .seg, .chips, [data-noswipe]")) return;
+      sw = { pg: pg, x: e.clientX, y: e.clientY, t: Date.now(), dx: 0, on: false, off: false };
+    }, true);
+    document.addEventListener("pointermove", function (e) {
+      if (!sw || sw.off) return;
+      var dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+      if (!sw.on) {
+        if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { sw.off = true; return; }
+        if (dx > 10 && dx > Math.abs(dy) * 1.5) { sw.on = true; sw.pg.style.transition = "none"; } else return;
+      }
+      sw.dx = Math.max(0, dx); sw.pg.style.transform = "translateX(" + sw.dx + "px)";
+    }, true);
+    function up() {
+      if (!sw) return;
+      var s = sw; sw = null; if (!s.on) return;
+      var w = s.pg.offsetWidth || 1, v = s.dx / Math.max(1, Date.now() - s.t), close = s.dx > w / 3 || (s.dx > 40 && v > 0.5);
+      s.pg.style.transition = ""; s.pg.style.transform = "";
+      if (close) { var b = s.pg.querySelector(".pback"); haptic("tick"); if (b) b.click(); }
+      // A tap right after a swipe never lands on what was under the finger.
+      var stop = function (ev) { ev.stopPropagation(); ev.preventDefault(); document.removeEventListener("click", stop, true); };
+      document.addEventListener("click", stop, true); setTimeout(function () { document.removeEventListener("click", stop, true); }, 350);
+    }
+    document.addEventListener("pointerup", up, true); document.addEventListener("pointercancel", function () { if (sw && sw.on) { sw.pg.style.transition = ""; sw.pg.style.transform = ""; } sw = null; }, true);
+  })();
   function setsValue() {
     var S = window.ScalesSets; if (!S) return "";
     var n = S.sets.filter(function (s) { return s.items.some(function (it) { return Object.prototype.hasOwnProperty.call(store, "s-" + it.id); }); }).length;
@@ -1592,7 +1686,7 @@ textarea::placeholder { color: var(--plum-faint); }
     if (setArmed !== s.id) { setArmed = s.id; haptic("tick"); renderSets(); return; }
     var x = C.removeSet(store, s.id, now(), lsGet(KEY_GONE, []));
     save(); lsSet(KEY_GONE, x.gone); setArmed = null; buzz("remove"); needsRender = true;
-    if (store[ui.cur] === undefined) { ui.cur = null; ui.ms = 0; ui.worked = false; ui.review = null; saveUi(); }
+    if (store[ui.cur] === undefined) { ui.cur = null; ui.ms = 0; ui.worked = false; ui.argued = false; ui.review = null; saveUi(); }
     $("stripN").textContent = C.list(store).length; renderLib();
     setsMsg(s.name + " removed. " + (x.putAway ? x.putAway + " you had met " + (x.putAway === 1 ? "is" : "are") + " in Put away. " : "") + "Lines you bookmarked, noted or changed stay.", true);
     renderSets();
@@ -1746,6 +1840,7 @@ textarea::placeholder { color: var(--plum-faint); }
     var t = store[ui.cur]; if (!t || argBusy) return;
     if (!$("argBox").hidden || !$("argSafe").hidden) { $("argBox").hidden = true; $("argSafe").hidden = true; showArgBtn(); return; }
     var text = argText(); if (!text) return;
+    ui.argued = true; saveUi();
     // 2.24.0: a thought that protects someone is never sent to be argued with.
     if (C.protectedThought(text)) { showSafe(); track("tap", { id: "argue", safe: "local" }); return; }
     var kept = text === t.text ? C.argFor(t) : (argPending && argPending.text === text ? argPending : null);
@@ -1781,17 +1876,27 @@ textarea::placeholder { color: var(--plum-faint); }
   function findTensions() {
     var d = tenData(), day = C.dayKey(now());
     if (!aiOk || tenBusy || aiBusy || d.ran === day) return;
-    var batches = C.tensionBatches(C.inRotation(store), day); if (!batches.length) return;
-    tenBusy = true; var found = [], i = 0;
+    // 2.29.0: batches lean on themes (when sorted), the pairs this person dismissed become examples of a miss, and every
+    // pair the model offers gets a second look (agree, different things, or opposite) before it is kept.
+    var batches = C.tensionBatches(C.inRotation(store), day, aiData().tags || null); if (!batches.length) return;
+    var notPairs = (d.gone || []).map(function (k) { var ab = k.split("|"); return store[ab[0]] && store[ab[1]] ? [store[ab[0]].text, store[ab[1]].text] : null; }).filter(Boolean);
+    tenBusy = true; var found = [], offered = 0, i = 0;
     (function next() {
       if (i >= batches.length) {
-        var dd = tenData(), added = C.mergeTensions(dd, found, now().toISOString()); dd.ran = day; lsSet(KEY_TEN, dd); tenBusy = false;
-        track("tensions", { batches: batches.length, found: found.length, added: added, kept: dd.pairs.length });
+        var dd = tenData(), added = C.mergeTensions(dd, found, now().toISOString()); dd.ran = day;
+        dd.stats = dd.stats || { shown: 0, dropped: 0 }; dd.stats.shown += added; lsSet(KEY_TEN, dd); tenBusy = false;
+        track("tensions", { batches: batches.length, themed: batches.filter(function (b) { return b.themed; }).length, offered: offered, found: found.length, added: added, kept: dd.pairs.length });
         if (mode === "library") renderLib();
         return;
       }
-      var b = batches[i++], r = C.tensionRequest(b);
-      aiAsk(r.instructions, r.prompt).then(function (res) { if (res && res.text) found = found.concat(C.parseTensions(res.text, b)); next(); });
+      var b = batches[i++], r = C.tensionRequest(b, notPairs);
+      aiAsk(r.instructions, r.prompt).then(function (res) {
+        var cand = res && res.text ? C.parseTensions(res.text, b) : [];
+        if (!cand.length) return next();
+        offered++;
+        var c = C.tensionCheck(store[cand[0][0]], store[cand[0][1]]);
+        aiAsk(c.instructions, c.prompt).then(function (chk) { if (chk && chk.text && C.checkSaysTension(chk.text)) found.push(cand[0]); next(); });
+      });
     })();
   }
   function showTension(a, b) {
@@ -1808,6 +1913,7 @@ textarea::placeholder { color: var(--plum-faint); }
     var d = tenData(), k = C.tensionKey(a, b), was = (d.pairs || []).filter(function (p) { return C.tensionKey(p.a, p.b) === k; })[0];
     d.pairs = (d.pairs || []).filter(function (p) { return C.tensionKey(p.a, p.b) !== k; });
     d.gone = (d.gone || []).filter(function (x) { return x !== k; }).concat([k]);
+    d.stats = d.stats || { shown: 0, dropped: 0 }; d.stats.dropped++;
     lsSet(KEY_TEN, d); track("tension_drop", {}); haptic("tick");
     hideTension();
     setTimeout(function () { toast("Won't pair these again"); tenUndo = { k: k, pair: was }; }, 300);

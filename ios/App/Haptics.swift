@@ -28,6 +28,9 @@ final class Haptics {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         case "success":
             UINotificationFeedbackGenerator().notificationOccurred(.success)
+        case "warning":
+            // 2.29.0: Delete is armed; one more tap and the thought is gone.
+            UINotificationFeedbackGenerator().notificationOccurred(.warning)
         case "thud":
             UIImpactFeedbackGenerator(style: .heavy).impactOccurred(intensity: 1.0)
         case "signature":

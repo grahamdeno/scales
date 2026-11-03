@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.28.0";
+  var VERSION = "2.29.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -756,33 +756,69 @@
     return n ? n + "\n\n" + line : line;
   }
 
-  var TEN_INSTRUCTIONS = "You read a numbered list of short thoughts one person keeps. Find pairs that truly pull against each other: " +
-    "following one fully would mean going against the other, or they give opposite advice about the same part of life. " +
-    "Do not pair thoughts that agree, that say the same thing in other words, or that are simply about different things. " +
-    "Give at most 3 pairs, strongest first. Answer one pair per line in exactly this form: <number> | <number> | <a few words on why>. " +
-    "If there are no real pairs, answer NONE.";
-  var TEN_BATCH = 30, TEN_BATCHES = 3, TEN_KEEP = 12;
-  // Today's batches: the rotation shuffled with a seed from the day, so different thoughts meet each day and a pair
-  // that spans two batches today can be found tomorrow.
-  function tensionBatches(thoughts, day) {
-    // 2.26.0: a thought that protects someone (safety, recovery, worth) is never set against another one either.
-    var pool = thoughts.filter(function (t) { return !t.away && t.text && t.text.trim() && !protectedThought(t.text); })
-      .sort(function (a, b) { return shuffleKey(a.id, "ten" + day) - shuffleKey(b.id, "ten" + day); });
-    var out = [];
-    for (var i = 0; i < pool.length && out.length < TEN_BATCHES; i += TEN_BATCH) out.push(pool.slice(i, i + TEN_BATCH));
-    return out.filter(function (b) { return b.length >= 4; });
+  // 2.29.0: tuned on real misses (pairs that agreed, that were about different things, or that held a question).
+  // Small on-device models follow examples better than rules, so the prompt shows what is and isn't a tension, and makes
+  // the model name the conflict ("A says ... but B says ..."), which pairs that agree can't do.
+  var TEN_INSTRUCTIONS = "You read a numbered list of thoughts one person keeps. Find two that are in real tension. " +
+    "Two thoughts are a tension only if acting fully on one means acting against the other. " +
+    "Test: could a person follow both at the same moment with no conflict at all? If yes, they are not a tension.\n" +
+    "Tension: \"Speak your mind.\" / \"Hold your tongue.\"\n" +
+    "Tension: \"Accept what you can't change.\" / \"Never settle.\"\n" +
+    "Not a tension, they agree: \"Very little is needed to be happy.\" / \"Zoom out; it could be much worse.\"\n" +
+    "Not a tension, different subjects: \"Avoid extremes.\" / \"Be a man and do it.\"\n" +
+    "Not a tension, same words but no conflict: \"I panic when I'm not in charge.\" / \"Learn to follow well.\"\n" +
+    "Give at most 1 pair, in exactly this form: <number> | <number> | A says ... but B says ...\n" +
+    "If no pair is clearly a tension, answer NONE. NONE is a good answer.";
+  // The second look at each pair: a choice of three, not yes or no, because a small model tends to agree with a question.
+  var TEN_CHECK = "You compare two thoughts. Answer with one letter.\n" +
+    "A: they agree, or say much the same thing.\n" +
+    "B: they are about different things.\n" +
+    "C: they pull in opposite directions about the same part of life, so acting fully on one goes against the other.";
+  var TEN_BATCH = 12, TEN_BATCHES = 6, TEN_THEMED = 4, TEN_KEEP = 12, TEN_MAX_LEN = 280;
+  // What can be paired: in rotation, not protective (2.26.0), not a question (a question claims nothing, so it can't
+  // pull against anything), and not long (a poem or a page of notes holds many smaller thoughts) (2.29.0).
+  function tensionPool(thoughts) {
+    return thoughts.filter(function (t) {
+      var x = t.text && t.text.trim();
+      return !t.away && x && x.length <= TEN_MAX_LEN && !/\?["'\u201d\u2019)]*$/.test(x) && !protectedThought(x);
+    });
   }
-  function tensionRequest(batch) {
-    return { instructions: TEN_INSTRUCTIONS, prompt: batch.map(function (t, i) {
-      var x = t.text.replace(/\s+/g, " ").trim(); return (i + 1) + ". " + (x.length > 180 ? x.slice(0, 180) + "\u2026" : x);
-    }).join("\n") };
+  function chunk(list, n, max, out) {
+    for (var i = 0; i < list.length && out.length < max; i += n) { var b = list.slice(i, i + n); if (b.length >= 4) out.push(b); }
+    return out;
+  }
+  // Today's batches, of 12. With themes (tags: {id: theme}), about two thirds come from inside one theme, where pairs are
+  // about the same part of life, and the rest mix themes on purpose, because a tension across two parts of life is often
+  // the one worth seeing. Without themes, all are mixed. Shuffled with a seed from the day, so different thoughts meet.
+  function tensionBatches(thoughts, day, tags) {
+    var pool = tensionPool(thoughts), seed = function (s) { return function (a, b) { return shuffleKey(a.id, s) - shuffleKey(b.id, s); }; };
+    var out = [], byTheme = {};
+    if (tags) pool.forEach(function (t) { var th = tags[t.id]; if (th) (byTheme[th] = byTheme[th] || []).push(t); });
+    Object.keys(byTheme).sort(function (a, b) { return shuffleKey(a, "tt" + day) - shuffleKey(b, "tt" + day); }).forEach(function (th) {
+      chunk(byTheme[th].sort(seed("ten" + th + day)), TEN_BATCH, TEN_THEMED, out);
+    });
+    out.forEach(function (b) { b.themed = true; });
+    return chunk(pool.slice().sort(seed("ten" + day)), TEN_BATCH, TEN_BATCHES, out);
+  }
+  function short(t) { return t.text.replace(/\s+/g, " ").trim(); }
+  // notPairs: up to 3 pairs the person marked "Not a tension", as [textA, textB], shown as more examples of a miss.
+  function tensionRequest(batch, notPairs) {
+    var extra = (notPairs || []).slice(-3).map(function (p) { return "Not a tension (this person said so): \"" + p[0].slice(0, 160) + "\" / \"" + p[1].slice(0, 160) + "\"\n"; }).join("");
+    return { instructions: TEN_INSTRUCTIONS.replace("Give at most 1 pair", extra + "Give at most 1 pair"),
+      prompt: batch.map(function (t, i) { return (i + 1) + ". " + short(t); }).join("\n") };
+  }
+  function tensionCheck(a, b) { return { instructions: TEN_CHECK, prompt: "1. " + short(a) + "\n2. " + short(b) }; }
+  // Only C keeps a pair. Reads "C", "C.", "Answer: C", "(C)"; anything unclear drops it.
+  function checkSaysTension(raw) {
+    var m = String(raw || "").toUpperCase().match(/(?:^|[^A-Z])([ABC])(?![A-Z])/);
+    return !!m && m[1] === "C";
   }
   // Reads "3 | 17 | why" lines (and forgiving forms like "3 and 17", "(3, 17)"). Each line gives at most one pair, both
-  // numbers on the list and different. At most 3. Returns [[idA, idB]].
+  // numbers on the list and different. At most 1 (2.29.0). Returns [[idA, idB]].
   function parseTensions(raw, batch) {
     var out = [], seen = {};
     String(raw || "").split(/\n+/).forEach(function (line) {
-      if (out.length >= 3) return;
+      if (out.length >= 1) return;
       var m = line.match(/(\d{1,3})\D{1,12}?(\d{1,3})/); if (!m) return;
       var a = +m[1], b = +m[2];
       if (a === b || a < 1 || b < 1 || a > batch.length || b > batch.length) return;
@@ -809,6 +845,23 @@
   // The pairs whose two thoughts are both still here and in rotation.
   function liveTensions(data, store) {
     return ((data && data.pairs) || []).filter(function (p) { return own(store, p.a) && own(store, p.b) && !store[p.a].away && !store[p.b].away; });
+  }
+
+  // ---- The day's insight (2.29.0) ----
+  // One finding from Insights as a sentence for the top of Your thoughts: { lead, n, tail } (n is shown in bold, or null),
+  // chosen by the day from what Insights can truly say. Null when there is nothing yet.
+  var BUCKET_WORDS = ["early in the morning", "in the morning", "in the afternoon", "in the evening", "at night"];
+  function insightLine(d, day) {
+    if (!d) return null;
+    var c = [], pl = function (n, one, many) { return n === 1 ? one : many; };
+    if (d.turning && d.turning.length) c.push({ lead: "", n: d.turning.length, tail: pl(d.turning.length, " thought you used to skip, you now stay with.", " thoughts you used to skip, you now stay with.") });
+    if (d.livedCount) c.push({ lead: "You put away ", n: d.livedCount, tail: pl(d.livedCount, " thought in the last 30 days.", " thoughts in the last 30 days.") });
+    if (d.rewrites && d.rewrites.length) c.push({ lead: "You reworded ", n: d.rewrites.length, tail: pl(d.rewrites.length, " thought.", " thoughts.") });
+    if (d.avoiding && d.avoiding.length) c.push({ lead: "", n: d.avoiding.length, tail: pl(d.avoiding.length, " thought you've skipped often lately.", " thoughts you've skipped often lately.") });
+    if (d.when && !/spread/.test(d.when.head) && BUCKET_WORDS[d.when.top]) c.push({ lead: "You stay longest with your thoughts " + BUCKET_WORDS[d.when.top] + ".", n: null, tail: "" });
+    if (d.voiceTop && d.voiceTop.length) c.push(d.voiceTop[0].who ? { lead: d.voiceTop[0].who + " holds you longest.", n: null, tail: "" } : { lead: "Your own thoughts hold you longest.", n: null, tail: "" });
+    if (!c.length) return null;
+    return c[shuffleKey("ins", String(day || "")) % c.length];
   }
 
   // ---- Old wording, reasons, and Insights (2.17.0) ----
@@ -890,7 +943,7 @@
   }
 
   var api = { VERSION: VERSION, reword: reword, insights: insights, WAS_KEEP: WAS_KEEP, argRequest: argRequest, parseArg: parseArg, argFor: argFor, argNoteLine: argNoteLine, withArgNote: withArgNote,
-    tensionBatches: tensionBatches, tensionRequest: tensionRequest, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
+    insightLine: insightLine, tensionBatches: tensionBatches, tensionRequest: tensionRequest, tensionPool: tensionPool, tensionCheck: tensionCheck, checkSaysTension: checkSaysTension, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
     standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
     make: make, protectedThought: protectedThought, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,

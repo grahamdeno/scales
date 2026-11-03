@@ -874,3 +874,36 @@ test("the starter lines and sets are never caught by the protective check (2.24.
   const sets = S.sets || S;
   for (const s of Object.values(sets)) for (const l of (s.lines || s.items || [])) assert.equal(N.protectedThought(l.text), false, l.id);
 });
+
+test("Tensions 2.29.0: no questions, long thoughts or protective ones; batches of 12 that lean on themes; a second look", () => {
+  const mk = (id, text) => ({ id, text, away: null });
+  const pool = N.tensionPool([
+    mk("q", "What would make today count?"), mk("q2", "Who am I when no one is watching?”"),
+    mk("long", "x ".repeat(200)), mk("p", "I've stayed sober 90 days."), mk("ok", "Speak your mind."), { id: "aw", text: "Rest.", away: "2026-01-01" }]);
+  assert.deepEqual(pool.map((t) => t.id), ["ok"]);
+  const many = Array.from({ length: 60 }, (_, i) => mk("t" + i, "Thought number " + i + "."));
+  const plain = N.tensionBatches(many, "2026-11-03");
+  assert.equal(plain.length, 5); assert.ok(plain.every((b) => b.length <= 12 && b.length >= 4 && !b.themed));
+  const tags = {}; many.forEach((t, i) => { tags[t.id] = i < 30 ? "Work" : "Family"; });
+  const tb = N.tensionBatches(many, "2026-11-03", tags);
+  assert.equal(tb.length, 6); assert.equal(tb.filter((b) => b.themed).length, 4);
+  assert.ok(tb.filter((b) => b.themed).every((b) => new Set(b.map((t) => tags[t.id])).size === 1), "a themed batch stays inside one theme");
+  assert.ok(tb.filter((b) => !b.themed).some((b) => new Set(b.map((t) => tags[t.id])).size > 1), "a mixed batch crosses themes");
+  const r = N.tensionRequest(many.slice(0, 5), [["Avoid extremes.", "Be a man."]]);
+  assert.match(r.instructions, /this person said so\): "Avoid extremes\." \/ "Be a man\."\nGive at most 1 pair/);
+  assert.match(r.instructions, /A says \.\.\. but B says/); assert.match(r.prompt, /^1\. Thought number 0\./);
+  assert.equal(N.parseTensions("1 | 2 | A says x but B says y\n3 | 4 | more", many.slice(0, 5)).length, 1, "one pair a batch");
+  for (const yes of ["C", "C.", "Answer: C", "(C) they pull apart"]) assert.equal(N.checkSaysTension(yes), true, yes);
+  for (const no of ["A", "B", "B: different", "", "Can't say", "NONE"]) assert.equal(N.checkSaysTension(no), false, no);
+  assert.match(N.tensionCheck(mk("a", "Rest."), mk("b", "Work."))[ "prompt"], /^1\. Rest\.\n2\. Work\.$/);
+});
+
+test("The day's insight (2.29.0): a true sentence chosen by the day, or nothing", () => {
+  assert.equal(N.insightLine({ turning: [], livedCount: 0, rewrites: [], avoiding: [], when: null, voiceTop: [] }, "2026-11-03"), null);
+  const d = { turning: [], livedCount: 16, rewrites: [], avoiding: [1, 2], when: null, voiceTop: [{ who: "Benjamin Franklin", pct: 20 }] };
+  const seen = new Set();
+  for (let i = 1; i <= 28; i++) { const L = N.insightLine(d, "2026-11-" + String(i).padStart(2, "0")); seen.add(L.lead + (L.n == null ? "" : L.n) + L.tail); }
+  assert.deepEqual([...seen].sort(), ["2 thoughts you've skipped often lately.", "Benjamin Franklin holds you longest.", "You put away 16 thoughts in the last 30 days."]);
+  assert.equal(N.insightLine({ livedCount: 1 }, "x").tail, " thought in the last 30 days.");
+  assert.equal(N.insightLine(d, "2026-11-03").lead, N.insightLine(d, "2026-11-03").lead, "the same all day");
+});
