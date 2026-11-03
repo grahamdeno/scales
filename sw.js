@@ -2,8 +2,8 @@
 // Network first: online, the latest files are fetched and the copy refreshed; offline, the copy is used.
 
 // Must match VERSION in core.js (a test checks), so phones drop the old copy.
-const CACHE = "scales-v2.30.2";
-const SHELL = ["./", "index.html", "core.js", "core.js?v=2.30.2", "sets.js", "sets.js?v=2.30.2", "manifest.webmanifest", "fonts/geist-latin.woff2",
+const CACHE = "scales-v2.30.3";
+const SHELL = ["./", "index.html", "core.js", "core.js?v=2.30.3", "sets.js", "sets.js?v=2.30.3", "manifest.webmanifest", "fonts/geist-latin.woff2",
   "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/favicon-32.png",
   "icons/pick/auto.png", "icons/pick/pistachio.png", "icons/pick/plum.png", "icons/pick/bone.png"];
 

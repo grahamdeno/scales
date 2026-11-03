@@ -17,6 +17,7 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.30.3:** Add to note keeps the whole argument: "Against it: …" and "It assumes: …" (before, only the assumption).
 - **2.30.2:** The whole top of Your thoughts drags the sheet closed: search field, insight, chips and gear included. A tap
   still taps; a sideways swipe on the chips still scrolls them.
 - **2.30.1:** Onboarding pacing. One spotlight at a time instead of one per launch (an iPhone app is rarely relaunched, so

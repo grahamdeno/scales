@@ -907,3 +907,12 @@ test("The day's insight (2.29.0): a true sentence chosen by the day, or nothing"
   assert.equal(N.insightLine({ livedCount: 1 }, "x").tail, " thought in the last 30 days.");
   assert.equal(N.insightLine(d, "2026-11-03").lead, N.insightLine(d, "2026-11-03").lead, "the same all day");
 });
+
+test("Add to note keeps the whole argument (2.30.3)", () => {
+  const a = { against: "Holding to every decision can be stubbornness.", assumes: "That what you decided was right." };
+  const full = "Against it: Holding to every decision can be stubbornness.\nIt assumes: that what you decided was right.";
+  assert.equal(N.withArgNote("", a), full);
+  assert.equal(N.withArgNote("My note.", a), "My note.\n\n" + full);
+  assert.equal(N.withArgNote("My note.\n\n" + full, a), "My note.\n\n" + full, "never twice");
+  assert.equal(N.withArgNote("My note.\n\nIt assumes: that what you decided was right.", a), "My note.\n\n" + full, "an old note with only the assumption gets the case against");
+});

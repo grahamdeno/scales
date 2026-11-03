@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.30.2";
+  var VERSION = "2.30.3";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -748,12 +748,15 @@
   }
   // The kept argument, only if it was made for the words as they are now.
   function argFor(t) { return t && t.arg && t.arg.text === t.text && t.arg.against && t.arg.assumes ? t.arg : null; }
-  // The line "Add to note" puts in the note, and whether it is already there.
+  // What "Add to note" puts in the note: the whole argument, the case against and what it assumes (2.30.3; before, only
+  // the "It assumes" line went in). A note that already holds only that line gets the case against added above it.
   function argNoteLine(arg) { return "It assumes: " + arg.assumes.charAt(0).toLowerCase() + arg.assumes.slice(1); }
+  function argNoteBlock(arg) { return "Against it: " + String(arg.against || "").trim() + "\n" + argNoteLine(arg); }
   function withArgNote(note, arg) {
-    var line = argNoteLine(arg), n = String(note || "").trim();
-    if (n.indexOf(line) >= 0) return n;
-    return n ? n + "\n\n" + line : line;
+    var line = argNoteLine(arg), block = argNoteBlock(arg), n = String(note || "").trim();
+    if (n.indexOf(block) >= 0) return n;
+    if (n.indexOf(line) >= 0) return n.replace(line, block);
+    return n ? n + "\n\n" + block : block;
   }
 
   // 2.29.0: tuned on real misses (pairs that agreed, that were about different things, or that held a question).
