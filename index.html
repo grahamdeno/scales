@@ -179,6 +179,11 @@ textarea::placeholder { color: var(--plum-faint); }
   background: var(--plum-ink); color: var(--plum); font-size: 15px; font-weight: 600; padding: 11px 18px; border-radius: 999px;
   box-shadow: 0 8px 24px rgba(20,10,24,.3); pointer-events: none; animation: swipehint 4.5s ease forwards; z-index: 3; }
 @keyframes swipehint { 0% { opacity: 0; } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
+/* 2.31.0 (breathe-test): after 20 seconds with a thought and no touch, its words breathe: about 1% larger and back,
+   4 seconds in and 6 out. Any touch stops it; Reduce Motion and the Settings switch turn it off. */
+#words.breathe { animation: breathe 10s ease-in-out infinite; transform-origin: left center; }
+@keyframes breathe { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.012); } }
+@media (prefers-reduced-motion: reduce) { #words.breathe { animation: none; } }
 #strip.pulse { animation: strippulse 1.4s ease-in-out 2; }
 @keyframes strippulse { 50% { transform: translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { #strip.pulse { animation: none; } }
@@ -653,6 +658,7 @@ textarea::placeholder { color: var(--plum-faint); }
           <button type="button" role="radio" data-look="dark" aria-checked="false">Dark</button>
         </div>
       </div>
+      <button class="srow" type="button" role="switch" aria-checked="true" id="setBreathe"><span>Breathing words</span><span class="v" id="setBreatheV">On</span></button>
       <button class="srow" type="button" id="setIcon" hidden><span>App icon</span><span class="v"><span id="setIconV">Automatic</span> <span class="chev" aria-hidden="true">&#8250;</span></span></button>
     </div>
     <p class="snote" id="lookMsg">Automatic follows your iPhone.</p>
@@ -893,8 +899,15 @@ textarea::placeholder { color: var(--plum-faint); }
   // is read as the phone being set down, so it counts as seen, never as thought about.
   var since = null, lastTouch = Date.now(), softT = 0;
   function counting(m) { return m === "meet" || m === "edit"; }
-  function clockOn() { if (since == null && ui.cur && !document.hidden && counting(mode)) since = Date.now(); scheduleSoften(); }
-  function clockOff() { if (since != null) { ui.ms += Date.now() - since; since = null; saveUi(); } clearTimeout(softT); }
+  function clockOn() { if (since == null && ui.cur && !document.hidden && counting(mode)) since = Date.now(); scheduleSoften(); breatheLater(); }
+  function clockOff() { if (since != null) { ui.ms += Date.now() - since; since = null; saveUi(); } clearTimeout(softT); breatheOff(); }
+  // Breathing words (breathe-test): 20 seconds after the thought appears or the last touch, while it's on screen.
+  var breathT = 0;
+  function breatheOff() { clearTimeout(breathT); var w = document.getElementById("words"); if (w) w.classList.remove("breathe"); }
+  function breatheLater() {
+    breatheOff(); if (ui.breathe === false || !ui.cur) return;
+    breathT = setTimeout(function () { if (mode === "meet" && ui.cur && ui.breathe !== false && !document.hidden) $("words").classList.add("breathe"); }, 20000);
+  }
   function elapsed() { return ui.ms + (since != null ? Date.now() - since : 0); }
   // 2.25.0: the touch that ends a visit (the swipe itself) used to reset lastTouch before idle() was read, so idle was never
   // true. A gap over IDLE_MS is now noted at the touch that closes it, and cleared when the next card starts.
@@ -913,6 +926,7 @@ textarea::placeholder { color: var(--plum-faint); }
   ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, function () {
     if (Date.now() - lastTouch > C.IDLE_MS && counting(mode) && ui.cur) idleGap = true;
     lastTouch = Date.now();
+    if (mode === "meet") breatheLater(); else breatheOff();
   }, true); });
 
   // Ends the current visit: classifies it and schedules the thought's return.
@@ -1246,6 +1260,9 @@ textarea::placeholder { color: var(--plum-faint); }
     ui.tips = {}; ui.cardsMet = 0; ui.setNo = 0; ui.setTaken = false; spotBusy = false; lastSpot = null; saveUi();
     $("tipsAgainV").textContent = "They'll show as you go"; haptic("tick"); track("tips_again", {});
   };
+  function renderBreathe() { var on = ui.breathe !== false; $("setBreathe").setAttribute("aria-checked", String(on)); $("setBreatheV").textContent = on ? "On" : "Off"; }
+  renderBreathe();
+  $("setBreathe").onclick = function () { ui.breathe = ui.breathe === false; saveUi(); renderBreathe(); haptic("tick"); track("breathe", { on: ui.breathe ? 1 : 0 }); };
   $("setOfferNo").onclick = function () { ui.setNo = (ui.setNo || 0) + 1; saveUi(); track("offer_no", {}); hideOffer(); };
 
   // ---------- Write ----------

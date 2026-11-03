@@ -22,6 +22,8 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   protective thoughts). Refining a thought: after putting one away, Say why waits until the next move; the Say why page has
   "Save reason" and "Save and write the next one", which opens Write with the question from the reason; the two thoughts
   are linked ("Grew from" in Edit, "Led to" in Put away) and the new one shows next.
+  Breathing words (branch breathe-test): after 20 seconds with a thought and no touch, its words breathe, about 1% larger
+  and back, 4 seconds in and 6 out; any touch stops it; off under Reduce Motion or Settings, Look, Breathing words.
 - **2.30.3:** Add to note keeps the whole argument: "Against it: …" and "It assumes: …" (before, only the assumption).
 - **2.30.2:** The whole top of Your thoughts drags the sheet closed: search field, insight, chips and gear included. A tap
   still taps; a sideways swipe on the chips still scrolls them.
