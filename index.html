@@ -179,6 +179,11 @@ textarea::placeholder { color: var(--plum-faint); }
   background: var(--plum-ink); color: var(--plum); font-size: 15px; font-weight: 600; padding: 11px 18px; border-radius: 999px;
   box-shadow: 0 8px 24px rgba(20,10,24,.3); pointer-events: none; animation: swipehint 4.5s ease forwards; z-index: 3; }
 @keyframes swipehint { 0% { opacity: 0; } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
+/* 2.31.0 (breathe-test): after 20 seconds with a thought and no touch, its words breathe: about 1% larger and back,
+   4 seconds in and 6 out. Any touch stops it; Reduce Motion and the Settings switch turn it off. */
+#words.breathe { animation: breathe 10s ease-in-out infinite; transform-origin: left center; }
+@keyframes breathe { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.012); } }
+@media (prefers-reduced-motion: reduce) { #words.breathe { animation: none; } }
 #strip.pulse { animation: strippulse 1.4s ease-in-out 2; }
 @keyframes strippulse { 50% { transform: translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { #strip.pulse { animation: none; } }
@@ -441,7 +446,12 @@ textarea::placeholder { color: var(--plum-faint); }
 .whyt { margin: 0; font-size: 15px; line-height: 1.4; color: var(--plum-muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 #whyText { font-size: 22px; line-height: 1.3; font-weight: 500; min-height: 96px; }
 .whyfoot { display: flex; justify-content: space-between; align-items: center; }
-#toast #toastWhy { font-weight: 600; opacity: .85; padding-left: 2px; }
+#toast #toastWhy { font-weight: 600; padding: 7px 12px; margin-left: 4px; border-radius: 999px; background: var(--pist); color: var(--pist-ink); }
+/* 2.31.0: refining a thought. */
+.whynext { align-self: flex-start; color: var(--pist); font-weight: 600; font-size: 15px; padding: 12px 0; }
+#vEdit .grew { margin: 12px 0 0; padding: 12px 14px; border-radius: 12px; background: rgba(241,233,216,.06); font-size: 13px; line-height: 1.45; color: var(--plum-muted); }
+#vEdit .grew b { display: block; margin-top: 3px; color: var(--plum-ink); font-weight: 600; font-size: 14px; }
+.lrow .ledl { display: block; font-size: 13px; color: var(--pist); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lrow.one.away .t[data-why] { cursor: pointer; }
 .lrow .whyl { display: block; font-size: 13px; color: var(--plum-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lrow.one.away.has-why { align-items: flex-start; }
@@ -453,7 +463,13 @@ textarea::placeholder { color: var(--plum-faint); }
 @keyframes argIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .argbox .k { margin: 0 0 5px; font-size: 13px; color: var(--plum-muted); }
 .argbox .v { margin: 0 0 16px; font-size: 16px; line-height: 1.45; }
-.argbox .acts { display: flex; gap: 26px; }
+.argbox .acts { display: flex; flex-wrap: wrap; gap: 6px 24px; }
+/* 2.31.0: what the case against would let you off, one question, and the case for on request. */
+.argbox .free { margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; background: rgba(185,201,163,.10); }
+.argbox .free .k { color: var(--pist); } .argbox .free .v { margin: 0; }
+.argbox .ask { margin: 2px 0 10px; font-size: 16px; font-style: italic; line-height: 1.4; }
+.argbox .for { margin-top: 16px; padding-top: 14px; border-top: 1px dashed rgba(241,233,216,.14); }
+.argbox .for .v { margin: 0; }
 .argbox .acts button { font-size: 15px; font-weight: 600; color: var(--pist); padding: 4px 0; }
 .argbox .acts button:disabled { color: var(--plum-muted); font-weight: 500; }
 .argbox .acts button.quiet2 { color: var(--plum-muted); font-weight: 500; }
@@ -544,7 +560,7 @@ textarea::placeholder { color: var(--plum-faint); }
   <div id="setOffer" role="region" aria-label="Add a set" hidden><p id="setOfferText">Scales works best with 20 or more thoughts. Add a set?</p><div class="so" id="setOfferSets"></div><button type="button" class="no" id="setOfferNo">Not now</button></div>
   <div id="tip" hidden><div class="hole"></div><p class="tt" id="tipText"></p></div>
   <p class="sr" id="tipSay" aria-live="polite"></p>
-  <div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastUndo">Undo</button><button type="button" id="toastWhy" hidden>Say why</button><button type="button" id="toastDel" hidden>Delete</button></div>
+  <div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastWhy" hidden>Say why</button><button type="button" id="toastUndo">Undo</button><button type="button" id="toastDel" hidden>Delete</button></div>
 </section>
 
 <!-- Write: plum. One field. -->
@@ -575,13 +591,17 @@ textarea::placeholder { color: var(--plum-faint); }
     <label class="sr" for="editBy">Who said it</label>
     <input class="byline" id="editBy" type="text" maxlength="200" placeholder="Add who said it" autocomplete="off">
     <p class="hist" id="editHist"></p>
+    <div class="grew" id="editGrew" hidden></div>
     <div class="ewords" id="eWords"><button type="button" id="noteBtn">Add a note</button><button type="button" id="argBtn" hidden>Argue with it</button></div>
     <label class="sr" for="editNote">A note</label>
     <textarea class="enote" id="editNote" rows="2" maxlength="1500" placeholder="Anything that came up" hidden></textarea>
     <div class="argbox" id="argBox" hidden>
       <p class="k">The case against</p><p class="v" id="argAgainst"></p>
       <p class="k">It assumes</p><p class="v" id="argAssumes"></p>
-      <div class="acts"><button type="button" id="argNote">Add to note</button><button type="button" class="quiet2" id="argHide">Hide</button></div>
+      <div class="free" id="argFreeBox" hidden><p class="k">If this wins, you'd be free to</p><p class="v" id="argFree"></p></div>
+      <p class="ask">Which would you rather be true? Why?</p>
+      <div class="acts"><button type="button" id="argWrite">Write a note</button><button type="button" id="argPro">Argue for it instead</button><button type="button" class="quiet2" id="argNote">Add to note</button><button type="button" class="quiet2" id="argHide">Hide</button></div>
+      <div class="for" id="argForBox" hidden><p class="k">The case for it</p><p class="v" id="argForText"></p></div>
     </div>
     <div class="argbox" id="argSafe" hidden>
       <p class="v">This one isn't for arguing with.</p>
@@ -638,6 +658,7 @@ textarea::placeholder { color: var(--plum-faint); }
           <button type="button" role="radio" data-look="dark" aria-checked="false">Dark</button>
         </div>
       </div>
+      <button class="srow" type="button" role="switch" aria-checked="true" id="setBreathe"><span>Breathing words</span><span class="v" id="setBreatheV">On</span></button>
       <button class="srow" type="button" id="setIcon" hidden><span>App icon</span><span class="v"><span id="setIconV">Automatic</span> <span class="chev" aria-hidden="true">&#8250;</span></span></button>
     </div>
     <p class="snote" id="lookMsg">Automatic follows your iPhone.</p>
@@ -671,7 +692,8 @@ textarea::placeholder { color: var(--plum-faint); }
     <p class="whyt" id="whyThought"></p>
     <label class="sr" for="whyText">Why you put it away</label>
     <textarea id="whyText" rows="3" maxlength="300" placeholder="Why you're putting it away"></textarea>
-    <div class="whyfoot"><button class="quiet" type="button" id="whyClear" hidden>Remove</button><span></span><button class="act" type="button" id="whyKeep">Keep</button></div>
+    <button type="button" class="whynext" id="whyNext">Save and write the next one</button>
+    <div class="whyfoot"><button class="quiet" type="button" id="whyClear" hidden>Remove</button><span></span><button class="act" type="button" id="whyKeep">Save reason</button></div>
   </div>
 </section>
 <!-- Backups (2.13.0): automatic in the iPhone app, so it sits one step in. -->
@@ -755,6 +777,7 @@ textarea::placeholder { color: var(--plum-faint); }
     <div class="demo" data-demo="tap" aria-hidden="true"><div class="dcard"><i></i><i></i></div><b class="dfinger"></b></div>
     <p><strong>Tap</strong> to edit it or add a note.<br>Undo lasts five seconds after any move.</p>
     <p><strong>Write a new one:</strong> tap + New at the bottom right.</p>
+    <p><strong>Say why</strong> you put a thought away right after, or later from Put away. Found a sharper question? Save and write the next one.</p>
     <h2>How long you stay decides when it comes back.</h2>
     <p><strong>20 seconds or less:</strong> back in five days, a little bolder.<br><strong>30 seconds or more:</strong> it rests longer each time.<br><strong>An edit or a note:</strong> it rests longest.</p>
     <p>Each day leads with the ones you've gone longest without seeing, so all of them come round. Nothing leaves unless you put it away.</p>
@@ -762,8 +785,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.30.2"></script>
-<script src="sets.js?v=2.30.2"></script>
+<script src="core.js?v=2.31.0"></script>
+<script src="sets.js?v=2.31.0"></script>
 <script>
 (function () {
   "use strict";
@@ -876,8 +899,15 @@ textarea::placeholder { color: var(--plum-faint); }
   // is read as the phone being set down, so it counts as seen, never as thought about.
   var since = null, lastTouch = Date.now(), softT = 0;
   function counting(m) { return m === "meet" || m === "edit"; }
-  function clockOn() { if (since == null && ui.cur && !document.hidden && counting(mode)) since = Date.now(); scheduleSoften(); }
-  function clockOff() { if (since != null) { ui.ms += Date.now() - since; since = null; saveUi(); } clearTimeout(softT); }
+  function clockOn() { if (since == null && ui.cur && !document.hidden && counting(mode)) since = Date.now(); scheduleSoften(); breatheLater(); }
+  function clockOff() { if (since != null) { ui.ms += Date.now() - since; since = null; saveUi(); } clearTimeout(softT); breatheOff(); }
+  // Breathing words (breathe-test): 20 seconds after the thought appears or the last touch, while it's on screen.
+  var breathT = 0;
+  function breatheOff() { clearTimeout(breathT); var w = document.getElementById("words"); if (w) w.classList.remove("breathe"); }
+  function breatheLater() {
+    breatheOff(); if (ui.breathe === false || !ui.cur) return;
+    breathT = setTimeout(function () { if (mode === "meet" && ui.cur && ui.breathe !== false && !document.hidden) $("words").classList.add("breathe"); }, 20000);
+  }
   function elapsed() { return ui.ms + (since != null ? Date.now() - since : 0); }
   // 2.25.0: the touch that ends a visit (the swipe itself) used to reset lastTouch before idle() was read, so idle was never
   // true. A gap over IDLE_MS is now noted at the touch that closes it, and cleared when the next card starts.
@@ -896,6 +926,7 @@ textarea::placeholder { color: var(--plum-faint); }
   ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, function () {
     if (Date.now() - lastTouch > C.IDLE_MS && counting(mode) && ui.cur) idleGap = true;
     lastTouch = Date.now();
+    if (mode === "meet") breatheLater(); else breatheOff();
   }, true); });
 
   // Ends the current visit: classifies it and schedules the thought's return.
@@ -1077,14 +1108,18 @@ textarea::placeholder { color: var(--plum-faint); }
   // Both moves can be undone for 5 s: the thought comes back as it was, and the visit is not counted.
   var undoPoint = null;
   function snapshot() { clockOff(); return { id: ui.cur, t: JSON.parse(JSON.stringify(store[ui.cur])), ms: ui.ms, review: ui.review || null, pile: ui.pile || null }; }
+  // A waiting Say why goes when the next move is made.
+  function dropWaitingToast() { if (!$("toastWhy").hidden && $("toast").classList.contains("on")) { $("toast").classList.remove("on"); undoPoint = null; } }
   function goNext() {
     if (!store[ui.cur]) return;
+    dropWaitingToast();
     var snap = snapshot(), id = ui.cur; endVisit("next"); learned("up");
     undoPoint = snap;
     fly(-1, function () { pick(id); renderMeet(true); toast("Moved on"); });
   }
   function goAway() {
     if (!store[ui.cur]) return;
+    dropWaitingToast();
     // A set line not yet kept (met twice, or noted, changed or bookmarked) can be deleted here instead of archived.
     var trial = C.onTrial(store[ui.cur]);
     var snap = snapshot(), id = ui.cur; endVisit("away"); learned("down");
@@ -1101,7 +1136,8 @@ textarea::placeholder { color: var(--plum-faint); }
     dropId = canDrop || null; $("toastDel").hidden = !dropId; $("toastUndo").hidden = false; $("toast").classList.remove("done");
     $("toastWhy").hidden = !whyId; if (whyId) $("toastWhy").setAttribute("data-id", whyId);
     $("toastMsg").textContent = msg; $("toast").classList.add("on");
-    clearTimeout(toastT); toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; tenUndo = null; delUndo = null; }, 5000);
+    // 2.31.0: after putting a thought away, Say why and Undo wait until the next move instead of fading after 5 seconds.
+    clearTimeout(toastT); if (!whyId) toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; tenUndo = null; delUndo = null; }, 5000);
     tenUndo = null; delUndo = null;
   }
   // Delete: the set line is gone for good, with its visits, so it never counts toward anything.
@@ -1224,12 +1260,16 @@ textarea::placeholder { color: var(--plum-faint); }
     ui.tips = {}; ui.cardsMet = 0; ui.setNo = 0; ui.setTaken = false; spotBusy = false; lastSpot = null; saveUi();
     $("tipsAgainV").textContent = "They'll show as you go"; haptic("tick"); track("tips_again", {});
   };
+  function renderBreathe() { var on = ui.breathe !== false; $("setBreathe").setAttribute("aria-checked", String(on)); $("setBreatheV").textContent = on ? "On" : "Off"; }
+  renderBreathe();
+  $("setBreathe").onclick = function () { ui.breathe = ui.breathe === false; saveUi(); renderBreathe(); haptic("tick"); track("breathe", { on: ui.breathe ? 1 : 0 }); };
   $("setOfferNo").onclick = function () { ui.setNo = (ui.setNo || 0) + 1; saveUi(); track("offer_no", {}); hideOffer(); };
 
   // ---------- Write ----------
   var writeHome = false;
+  var writeFrom = null;
   function openWrite(home) {
-    writeHome = !!home;
+    writeHome = !!home; writeFrom = null; $("writeHead").textContent = "What's on your mind?";
     $("writeText").value = ""; $("writeKeep").disabled = true;
     $("writeBy").value = ""; $("writeBy").hidden = true; $("writeByAdd").hidden = false;
     $("writeKept").hidden = true; $("writeForm").hidden = false; $("writeKeep").parentNode.hidden = false;
@@ -1274,13 +1314,20 @@ textarea::placeholder { color: var(--plum-faint); }
     var t = C.make(text, now(), $("writeBy").hidden ? "" : $("writeBy").value);
     // 2.24.0: the very first thought is due today, so it is the first card the person meets, not a closed day.
     var firstOne = !C.list(store).length; if (firstOne) t.due = C.dayKey(now());
+    // 2.31.0: written from a reason: linked both ways, and it comes up next.
+    var fromId = writeFrom && store[writeFrom] ? writeFrom : null; writeFrom = null;
+    if (fromId) { t.grewFrom = fromId; store[fromId].ledTo = t.id; t.due = C.dayKey(now()); }
     store[t.id] = t; save();
     track("write", { id: t.id, len: text.length, lines: text.split("\n").length, by: t.by ? 1 : 0, quoted: C.looksQuoted(text) ? 1 : 0 });
     $("writeText").blur();
     buzz("keep");
-    $("writeKeptSub").textContent = firstOne ? "Here it is." : "It comes back tomorrow.";
+    $("writeKeptSub").textContent = firstOne || fromId ? "Here it is." : "It comes back tomorrow.";
     $("writeForm").hidden = true; $("writeKeep").parentNode.hidden = true; $("writeKept").hidden = false; $("writeCancel").hidden = true;
-    setTimeout(function () { setMode("meet"); renderMeet(true); if (firstOne) setTimeout(function () { offerSets("first"); }, 900); }, 1600);
+    setTimeout(function () {
+      // The card that showed for a moment after putting the old one away isn't counted as a visit.
+      if (fromId) { clockOff(); ui.cur = t.id; ui.ms = 0; ui.worked = false; ui.argued = false; ui.pile = "picked"; saveUi(); }
+      setMode("meet"); renderMeet(true); if (firstOne) setTimeout(function () { offerSets("first"); }, 900);
+    }, 1600);
   };
 
   // ---------- Edit ----------
@@ -1289,7 +1336,11 @@ textarea::placeholder { color: var(--plum-faint); }
     $("editText").value = t.text; $("editNote").value = t.note || ""; $("editBy").value = t.by || "";
     setMark(!!t.bookmarked);
     $("editHist").textContent = C.historyLine(t, now());
-    argPending = null; $("argBox").hidden = true; $("argSafe").hidden = true;
+    // 2.31.0: a thought written from a reason says what it grew from.
+    var g = t.grewFrom && store[t.grewFrom];
+    $("editGrew").hidden = !g;
+    if (g) $("editGrew").innerHTML = "Grew from<b>" + esc(firstLine(g.text)) + "</b>" + (g.awayWhy ? "\u201c" + esc(g.awayWhy) + "\u201d" : "");
+    argPending = null; proPending = null; $("argBox").hidden = true; $("argSafe").hidden = true; $("editNote").placeholder = "Anything that came up";
     // 2.19.0: a note shows as plain text when there is one; otherwise "Add a note" opens a place to write it.
     $("editNote").hidden = !t.note; noteWords(); showArgBtn();
     disarm();
@@ -1309,6 +1360,7 @@ textarea::placeholder { color: var(--plum-faint); }
     if (text && (text !== t.text || note !== (t.note || ""))) { C.reword(t, text, now()); t.note = note; ui.worked = true; save(); saveUi(); haptic("medium"); }
     // An argument made for words typed but not yet kept is kept now, if those are the words that were kept.
     if (argPending && argPending.text === t.text) { t.arg = argPending; save(); } argPending = null;
+    if (proPending && proPending.text === t.text) { t.pro = proPending; save(); } proPending = null;
     // Who said it is a label, like the bookmark: changing it never counts as work on the thought.
     var by = $("editBy").value.trim().slice(0, 200);
     if (text && by !== (t.by || "")) { t.by = by; save(); }
@@ -1505,7 +1557,7 @@ textarea::placeholder { color: var(--plum-faint); }
     };
     var awayRow = function (t) {
       // 2.17.0: the reason, if one was given, under the words; tap the words to say or change why.
-      return '<div class="lrow one away' + (t.awayWhy ? " has-why" : "") + '"><span class="t" data-why="' + esc(t.id) + '"><span class="tt">' + esc(firstLine(t.text)) + "</span>" + (t.awayWhy ? '<span class="whyl">' + esc(t.awayWhy) + "</span>" : "") + '</span><span class="m">' + mark(t) + '<button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button></span></div>';
+      return '<div class="lrow one away' + (t.awayWhy ? " has-why" : "") + '"><span class="t" data-why="' + esc(t.id) + '"><span class="tt">' + esc(firstLine(t.text)) + "</span>" + (t.awayWhy ? '<span class="whyl">' + esc(t.awayWhy) + "</span>" : "") + (t.ledTo && store[t.ledTo] ? '<span class="ledl">Led to: ' + esc(firstLine(store[t.ledTo].text)) + "</span>" : "") + '</span><span class="m">' + mark(t) + '<button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button></span></div>';
     };
     var none = function (msg) { return '<p class="lrow"><span class="m">' + msg + "</span></p>"; };
     if (view === "marked") {
@@ -1600,6 +1652,19 @@ textarea::placeholder { color: var(--plum-faint); }
     var w = $("whyText").value.replace(/\s+/g, " ").trim().slice(0, 300);
     if (w) t.awayWhy = w; else delete t.awayWhy;
     save(); haptic("tick"); track("why", { id: t.id, len: w.length }); closeWhy();
+  };
+  // 2.31.0: Save and write the next one: the reason is saved, then Write opens with the question it holds (the last one
+  // written), or the whole reason selected, so the sharper thought can be kept straight away and linked to the old one.
+  $("whyNext").onclick = function () {
+    var t = store[whyFor]; if (!t) return closeWhy();
+    var raw = $("whyText").value.replace(/\s+/g, " ").trim().slice(0, 300), from = t.id;
+    if (raw) t.awayWhy = raw; save(); track("why", { id: t.id, len: raw.length, next: 1 });
+    var qs = raw.match(/[^.?!]*\?/g), seed = raw;
+    if (qs) { seed = qs[qs.length - 1]; if (seed.indexOf(":") >= 0) seed = seed.slice(seed.lastIndexOf(":") + 1); seed = seed.replace(/^[\s;,\-]+/, "").trim(); }
+    closeWhy(); openWrite(false);
+    writeFrom = from; $("writeHead").textContent = "From your reason"; $("writeHead").hidden = false;
+    $("writeText").value = seed; $("writeKeep").disabled = !seed; grow($("writeText"));
+    setTimeout(function () { var w = $("writeText"); w.focus(); if (!qs) w.select(); else w.setSelectionRange(w.value.length, w.value.length); }, 80);
   };
   $("whyClear").onclick = function () { var t = store[whyFor]; if (t) { delete t.awayWhy; save(); } closeWhy(); };
 
@@ -1967,8 +2032,9 @@ textarea::placeholder { color: var(--plum-faint); }
   function showArg(a) {
     $("argSafe").hidden = true;
     $("argAgainst").textContent = a.against; $("argAssumes").textContent = a.assumes;
-    var inNote = $("editNote").value.indexOf(C.argNoteLine(a)) >= 0;
-    $("argNote").disabled = inNote; $("argNote").textContent = inNote ? "Added to note \u2713" : "Add to note";
+    $("argFreeBox").hidden = !a.free; $("argFree").textContent = a.free || "";
+    $("argForBox").hidden = true; $("argPro").textContent = "Argue for it instead"; $("argPro").disabled = false;
+    noteState();
     $("argBox").hidden = false; showArgBtn();
   }
   $("argBtn").addEventListener("click", function () { used("argue"); spotDone("argue"); });
@@ -1997,12 +2063,49 @@ textarea::placeholder { color: var(--plum-faint); }
     });
   };
   $("argHide").onclick = function () { $("argBox").hidden = true; showArgBtn(); };
+  // The argument and case for that belong to the words in the field now (kept with the thought, or made while editing).
+  function curArg() { var t = store[ui.cur]; if (!t) return null; return argText() === t.text ? C.argFor(t) : argPending; }
+  function curPro() { var t = store[ui.cur]; if (!t) return null; return argText() === t.text ? C.proFor(t) : (proPending && proPending.text === argText() ? proPending : null); }
+  function noteState() {
+    var a = curArg(); if (!a) return;
+    var pro = $("argForBox").hidden ? null : curPro(), n = $("editNote").value.trim(), inNote = !!n && C.withArgNote(n, a, pro) === n;
+    $("argNote").disabled = inNote; $("argNote").textContent = inNote ? "Added to note \u2713" : "Add to note";
+  }
   $("argNote").onclick = function () {
-    var t = store[ui.cur]; if (!t) return;
-    var a = argText() === t.text ? C.argFor(t) : argPending; if (!a) return;
-    $("editNote").value = C.withArgNote($("editNote").value, a); $("editNote").hidden = false; grow($("editNote")); noteWords();
-    $("argNote").disabled = true; $("argNote").textContent = "Added to note \u2713"; haptic("tick");
+    var a = curArg(); if (!a) return;
+    var pro = $("argForBox").hidden ? null : curPro();
+    $("editNote").value = C.withArgNote($("editNote").value, a, pro); $("editNote").hidden = false; grow($("editNote")); noteWords();
+    noteState(); haptic("tick");
   };
+  // 2.31.0: Write a note, with the question as its prompt. Writing counts as work on the thought, as any note does.
+  $("argWrite").onclick = function () {
+    var n = $("editNote"); n.hidden = false; if (!n.value.trim()) n.placeholder = "Which would I rather be true, and why?";
+    noteWords(); grow(n); n.focus(); haptic("tick");
+  };
+  // 2.31.0: Argue for it instead: the strongest case for the thought, shown under the case against.
+  var proPending = null, proBusy = false;
+  $("argPro").onclick = function () {
+    var t = store[ui.cur]; if (!t || proBusy) return;
+    if (!$("argForBox").hidden) { $("argForBox").hidden = true; this.textContent = "Argue for it instead"; noteState(); return; }
+    var text = argText(); if (!text) return;
+    if (C.protectedThought(text)) { showSafe(); return; }
+    ui.argued = true; saveUi();
+    var kept = curPro();
+    if (kept) { showPro(kept); track("tap", { id: "argue_for", kept: 1 }); return; }
+    proBusy = true; this.disabled = true; this.textContent = "Thinking it over\u2026"; track("tap", { id: "argue_for", kept: 0 });
+    var r = C.argForRequest(text, $("editBy").value), id = t.id, btn = this;
+    aiAsk(r.instructions, r.prompt).then(function (res) {
+      proBusy = false; btn.disabled = false;
+      var p = res && res.text ? C.parseFor(res.text) : null;
+      if (mode !== "edit" || ui.cur !== id) return;
+      if ((p && p.skip) || (res && res.err && /guardrail|unsafe|sensitive/i.test(String(res.err)))) { showSafe(); track("ai_safe", { what: "argue_for" }); return; }
+      if (!p) { btn.textContent = "Couldn't make the case just now. Try again."; track("ai_fail", { what: "argue_for", err: res && res.err ? String(res.err).slice(0, 60) : "shape" }); return; }
+      p.text = text; p.at = now().toISOString();
+      if (text === store[id].text) { store[id].pro = p; save(); } else proPending = p;
+      haptic("tick"); showPro(p);
+    });
+  };
+  function showPro(p) { $("argForText").textContent = p.pro; $("argForBox").hidden = false; $("argPro").textContent = "Hide the case for"; noteState(); }
 
   // ---------- Tensions (2.16.0) ----------
   // Once a day, a few batches of the rotation go to the model, shuffled by the day, and it names pairs that pull
