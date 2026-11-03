@@ -1538,6 +1538,37 @@ textarea::placeholder { color: var(--plum-faint); }
   var needsRender = false;
   function openPage(id, m) { var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; track("screen", { to: id }); }
   function closePage(id, m) { var p = $(id); p.classList.remove("open"); p.setAttribute("aria-hidden", "true"); mode = m; track("screen", { to: m }); }
+  // 2.29.0: a page that slid in from the right can be swiped back to the right to close it, from anywhere on the page.
+  // It follows the finger and closes past a third of the width or on a quick flick; otherwise it springs back. It takes
+  // over only once the movement is clearly sideways, so the page still scrolls, and rows that scroll sideways keep theirs.
+  (function () {
+    var sw = null;
+    document.addEventListener("pointerdown", function (e) {
+      var pg = e.target.closest && e.target.closest(".page.open");
+      if (!pg || e.target.closest("input, textarea, select, .seg, .chips, [data-noswipe]")) return;
+      sw = { pg: pg, x: e.clientX, y: e.clientY, t: Date.now(), dx: 0, on: false, off: false };
+    }, true);
+    document.addEventListener("pointermove", function (e) {
+      if (!sw || sw.off) return;
+      var dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+      if (!sw.on) {
+        if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { sw.off = true; return; }
+        if (dx > 10 && dx > Math.abs(dy) * 1.5) { sw.on = true; sw.pg.style.transition = "none"; } else return;
+      }
+      sw.dx = Math.max(0, dx); sw.pg.style.transform = "translateX(" + sw.dx + "px)";
+    }, true);
+    function up() {
+      if (!sw) return;
+      var s = sw; sw = null; if (!s.on) return;
+      var w = s.pg.offsetWidth || 1, v = s.dx / Math.max(1, Date.now() - s.t), close = s.dx > w / 3 || (s.dx > 40 && v > 0.5);
+      s.pg.style.transition = ""; s.pg.style.transform = "";
+      if (close) { var b = s.pg.querySelector(".pback"); haptic("tick"); if (b) b.click(); }
+      // A tap right after a swipe never lands on what was under the finger.
+      var stop = function (ev) { ev.stopPropagation(); ev.preventDefault(); document.removeEventListener("click", stop, true); };
+      document.addEventListener("click", stop, true); setTimeout(function () { document.removeEventListener("click", stop, true); }, 350);
+    }
+    document.addEventListener("pointerup", up, true); document.addEventListener("pointercancel", function () { if (sw && sw.on) { sw.pg.style.transition = ""; sw.pg.style.transform = ""; } sw = null; }, true);
+  })();
   function setsValue() {
     var S = window.ScalesSets; if (!S) return "";
     var n = S.sets.filter(function (s) { return s.items.some(function (it) { return Object.prototype.hasOwnProperty.call(store, "s-" + it.id); }); }).length;

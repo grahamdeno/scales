@@ -22,6 +22,7 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   model name the conflict; each pair then gets a second look (agree, different things, or opposite) and only "opposite"
   is kept. Pairs marked Not a tension become examples of a miss. Shown and dismissed pairs are counted on the phone.
   The gear in Your thoughts lines up with the search field (2.28.1).
+  Pages that slide in from the right (Settings, Insights, Backups and the rest) swipe back to the right to close.
   Delete, armed, turns soft coral with a warning haptic and a 4-second line, then resets; deleting offers Undo for 5 seconds.
   Visits: time with Edit open now counts, and running Argue with it counts as thinking about the thought.
   Your thoughts: no visible title; search and the gear share the top row; one insight a day sits under them and opens
