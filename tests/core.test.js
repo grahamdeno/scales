@@ -922,8 +922,8 @@ test("Argue with it 2.31.0: what it would let you off, the case for, and both in
   assert.equal(a.free, "keep the evening scroll and skip the early night");
   assert.equal(N.parseArg("AGAINST: Discomfort today doesn't promise a better tomorrow at all.\nASSUMES: that pleasure is wasted.").free, undefined, "older answers have no FREE line");
   assert.deepEqual(N.parseFor("FOR: Small choices compound; an evening traded is cheap."), { pro: "Small choices compound; an evening traded is cheap." });
-  assert.deepEqual(N.parseFor("SKIP"), { skip: true });
-  assert.match(N.argForRequest("Rest is work.", "").instructions, /strongest honest case for it/);
+  assert.deepEqual(N.parseFor("SKIP"), { skip: true }); assert.doesNotMatch(N.argForRequest("x", "").instructions, /SKIP|argu/i, "2.31.1: no SKIP rule, no arguing words");
+  assert.match(N.argForRequest("Rest is work.", "").instructions, /what the thought gets right/);
   const pro = { pro: "Small choices compound over time, quietly." };
   let n = N.withArgNote("", a); assert.match(n, /If this wins, I'd be free to: keep the evening scroll/);
   n = N.withArgNote(n, a, pro); assert.match(n, /\nFor it: Small choices/); assert.equal((n.match(/Against it:/g) || []).length, 1);

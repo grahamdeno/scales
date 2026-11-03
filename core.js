@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.31.0";
+  var VERSION = "2.31.1";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -736,11 +736,12 @@
   function protectedThought(text) { return PROTECTED_RE.test(String(text || "")); }
   // 2.31.0: "Argue for it instead": the strongest honest case for the thought, so the case against can be weighed, not
   // just taken. Same rules: no praise, no advice, and never for a thought about safety, recovery or worth.
-  var ARG_FOR_INSTRUCTIONS = "You help a person weigh a thought they hold. Give the strongest honest case for it: why it is right, " +
-    "what following it protects, what it costs to drop it. Be direct and fair. Never flatter, never give advice, never ask questions. " +
-    "Answer in exactly this form and nothing else:\nFOR: <two or three sentences, under 60 words>\n" +
-    "Some thoughts are not for arguing about. If the thought is about staying alive or safe, not harming oneself, recovering from " +
-    "addiction or harm, a person's worth or reason to live, or keeping someone else safe, answer only the word SKIP.";
+  // 2.31.1: worded as explaining what a thought gets right, not as arguing or persuading, and without the SKIP clause.
+  // On the iPhone, "argue for" and the SKIP rule made the model decline nearly every thought. The safety gate has already
+  // run by the time this is offered: the thought passed the local check and the case against was made.
+  var ARG_FOR_INSTRUCTIONS = "You help a person look at a thought they wrote down, fairly. Explain what the thought gets right: " +
+    "the best reasons it holds, and what someone would lose by setting it aside. Plain and specific. Do not flatter, do not give " +
+    "advice, do not ask questions. Answer in exactly this form and nothing else:\nFOR: <two or three sentences, under 60 words>";
   function argForRequest(text, by) {
     var who = cleanBy(by);
     return { instructions: ARG_FOR_INSTRUCTIONS, prompt: "The thought: \"" + String(text).trim().slice(0, 600) + "\"" + (who ? " (" + who + ")" : "") };

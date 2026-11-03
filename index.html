@@ -470,6 +470,7 @@ textarea::placeholder { color: var(--plum-faint); }
 .argbox .ask { margin: 2px 0 10px; font-size: 16px; font-style: italic; line-height: 1.4; }
 .argbox .for { margin-top: 16px; padding-top: 14px; border-top: 1px dashed rgba(241,233,216,.14); }
 .argbox .for .v { margin: 0; }
+.argbox .for .v.quiet { color: var(--plum-muted); font-size: 15px; }
 .argbox .acts button { font-size: 15px; font-weight: 600; color: var(--pist); padding: 4px 0; }
 .argbox .acts button:disabled { color: var(--plum-muted); font-weight: 500; }
 .argbox .acts button.quiet2 { color: var(--plum-muted); font-weight: 500; }
@@ -785,8 +786,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.31.0"></script>
-<script src="sets.js?v=2.31.0"></script>
+<script src="core.js?v=2.31.1"></script>
+<script src="sets.js?v=2.31.1"></script>
 <script>
 (function () {
   "use strict";
@@ -2068,12 +2069,12 @@ textarea::placeholder { color: var(--plum-faint); }
   function curPro() { var t = store[ui.cur]; if (!t) return null; return argText() === t.text ? C.proFor(t) : (proPending && proPending.text === argText() ? proPending : null); }
   function noteState() {
     var a = curArg(); if (!a) return;
-    var pro = $("argForBox").hidden ? null : curPro(), n = $("editNote").value.trim(), inNote = !!n && C.withArgNote(n, a, pro) === n;
+    var pro = $("argForBox").hidden || proFailed ? null : curPro(), n = $("editNote").value.trim(), inNote = !!n && C.withArgNote(n, a, pro) === n;
     $("argNote").disabled = inNote; $("argNote").textContent = inNote ? "Added to note \u2713" : "Add to note";
   }
   $("argNote").onclick = function () {
     var a = curArg(); if (!a) return;
-    var pro = $("argForBox").hidden ? null : curPro();
+    var pro = $("argForBox").hidden || proFailed ? null : curPro();
     $("editNote").value = C.withArgNote($("editNote").value, a, pro); $("editNote").hidden = false; grow($("editNote")); noteWords();
     noteState(); haptic("tick");
   };
@@ -2098,14 +2099,20 @@ textarea::placeholder { color: var(--plum-faint); }
       proBusy = false; btn.disabled = false;
       var p = res && res.text ? C.parseFor(res.text) : null;
       if (mode !== "edit" || ui.cur !== id) return;
-      if ((p && p.skip) || (res && res.err && /guardrail|unsafe|sensitive/i.test(String(res.err)))) { showSafe(); track("ai_safe", { what: "argue_for" }); return; }
-      if (!p) { btn.textContent = "Couldn't make the case just now. Try again."; track("ai_fail", { what: "argue_for", err: res && res.err ? String(res.err).slice(0, 60) : "shape" }); return; }
+      // 2.31.1: when the case for can't be made, the argument stays and a quiet line says so. The crisis note is only for
+      // thoughts the local check marks as protective, never for a model that declined or a guardrail on this request.
+      if (!p || p.skip) {
+        var how = p && p.skip ? "skip" : res && res.err ? (/guardrail|unsafe|sensitive/i.test(String(res.err)) ? "guardrail" : "error") : "shape";
+        showPro({ pro: "Couldn't find the case for this one just now." }); $("argForText").classList.add("quiet"); proFailed = true;
+        track("ai_fail", { what: "argue_for", how: how, err: res && res.err ? String(res.err).slice(0, 60) : "" }); return;
+      }
       p.text = text; p.at = now().toISOString();
       if (text === store[id].text) { store[id].pro = p; save(); } else proPending = p;
       haptic("tick"); showPro(p);
     });
   };
-  function showPro(p) { $("argForText").textContent = p.pro; $("argForBox").hidden = false; $("argPro").textContent = "Hide the case for"; noteState(); }
+  var proFailed = false;
+  function showPro(p) { proFailed = false; $("argForText").classList.remove("quiet"); $("argForText").textContent = p.pro; $("argForBox").hidden = false; $("argPro").textContent = "Hide the case for"; noteState(); }
 
   // ---------- Tensions (2.16.0) ----------
   // Once a day, a few batches of the rotation go to the model, shuffled by the day, and it names pairs that pull
