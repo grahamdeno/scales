@@ -17,6 +17,10 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.30.1:** Onboarding pacing. One spotlight at a time instead of one per launch (an iPhone app is rarely relaunched, so
+  that meant days): the next shows once the person has done what the last pointed at (open Edit after the edit hint, and
+  Argue with it is pointed out), or after 5 minutes away. "Swipe right to go back" is a clear pill, not faint text. Help
+  has "Show the tips again".
 - **2.30.0:** Onboarding. The first screen asks one thing ("What's on your mind?") with a lighter example, and offers five
   lines from the sets as a clear second choice. After the first thought of your own, and on the end screen while there are
   fewer than 10 thoughts, two sets are offered (stops after two "Not now"s). One-time hints: a spotlight on tap to edit

@@ -173,8 +173,11 @@ textarea::placeholder { color: var(--plum-faint); }
 #tip .hole { position: absolute; border-radius: 16px; box-shadow: 0 0 0 200vmax rgba(18,9,22,.66); pointer-events: none; transition: opacity .2s; }
 #tip .tt { position: absolute; left: var(--pad); right: var(--pad); color: #F1E9D8; font-size: 17px; font-weight: 600; line-height: 1.35; }
 #tip .tt span { display: block; margin-top: 8px; font-size: 14px; font-weight: 400; color: #BBA7BE; }
-.swipehint { position: absolute; left: 0; right: 0; bottom: calc(var(--bot) + 14px); text-align: center; font-size: 13px; color: var(--plum-muted);
-  pointer-events: none; animation: swipehint 3.6s ease forwards; }
+#tipsAgain { margin-top: 18px; border-top: 1px solid rgba(241,233,216,.12); padding-left: 0; padding-right: 0; }
+#tipsAgain .v { font-size: 14px; color: var(--plum-muted); }
+.swipehint { position: absolute; left: 50%; bottom: calc(var(--bot) + 18px); transform: translateX(-50%); white-space: nowrap;
+  background: var(--plum-ink); color: var(--plum); font-size: 15px; font-weight: 600; padding: 11px 18px; border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(20,10,24,.3); pointer-events: none; animation: swipehint 4.5s ease forwards; z-index: 3; }
 @keyframes swipehint { 0% { opacity: 0; } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
 #strip.pulse { animation: strippulse 1.4s ease-in-out 2; }
 @keyframes strippulse { 50% { transform: translateY(-6px); } }
@@ -755,11 +758,12 @@ textarea::placeholder { color: var(--plum-faint); }
     <h2>How long you stay decides when it comes back.</h2>
     <p><strong>20 seconds or less:</strong> back in five days, a little bolder.<br><strong>30 seconds or more:</strong> it rests longer each time.<br><strong>An edit or a note:</strong> it rests longest.</p>
     <p>Each day leads with the ones you've gone longest without seeing, so all of them come round. Nothing leaves unless you put it away.</p>
+    <button class="srow" type="button" id="tipsAgain"><span>Show the tips again</span><span class="v" id="tipsAgainV"></span></button>
   </div>
 </section>
 
-<script src="core.js?v=2.30.0"></script>
-<script src="sets.js?v=2.30.0"></script>
+<script src="core.js?v=2.30.1"></script>
+<script src="sets.js?v=2.30.1"></script>
 <script>
 (function () {
   "use strict";
@@ -840,6 +844,7 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   function startSession(src) {
     sess = { id: new Date().toISOString(), cards: 0, start: Date.now(), closing: null };
+    if (typeof spotBusy !== "undefined") { spotBusy = false; lastSpot = null; }
     track("session", { src: src, hour: new Date().getHours(), dow: new Date().getDay() });
     snapDaily();
   }
@@ -1151,11 +1156,14 @@ textarea::placeholder { color: var(--plum-faint); }
   window.scalesA11y = function (o) { voiceOverOn = !!(o && o.voiceOver); };
   function tips() { ui.tips = ui.tips || {}; return ui.tips; }
   function used(key) { var t = tips(); if (!t[key]) { t[key] = 1; saveUi(); } }
-  var spotThisSession = false;
+  // 2.30.1: one spotlight at a time, not one per launch (an iPhone app is rarely relaunched, so "per launch" meant days).
+  // The next one may show once the person has done what the last one pointed at, or after a new session (5 minutes away).
+  var spotBusy = false, lastSpot = null;
+  function spotDone(key) { if (lastSpot === key) { spotBusy = false; lastSpot = null; } }
   function spot(el, key, text, sub) {
-    if (!ONBOARD || tips()[key] || spotThisSession || !el || el.hidden) return false;
+    if (!ONBOARD || tips()[key] || spotBusy || !el || el.hidden) return false;
     var a = document.activeElement; if (a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT")) return false;
-    used(key); spotThisSession = true; track("tip", { k: key });
+    used(key); spotBusy = true; lastSpot = key; track("tip", { k: key });
     if (voiceOverOn) { $("tipSay").textContent = text + (sub ? " " + sub : ""); return true; }
     var r = el.getBoundingClientRect(), box = $("vMeet").getBoundingClientRect(), pad = 10, hole = $("tip").querySelector(".hole");
     // The thought's spotlight takes in who said it and the note, when they show.
@@ -1184,8 +1192,8 @@ textarea::placeholder { color: var(--plum-faint); }
   // "Swipe right to go back", once, the first time a page slides in.
   function swipeHint(pg) {
     if (!ONBOARD || tips().swipe) return;
-    used("swipe"); var h = document.createElement("p"); h.className = "swipehint"; h.textContent = "Swipe right to go back"; pg.appendChild(h);
-    setTimeout(function () { h.remove(); }, 3800);
+    used("swipe"); var h = document.createElement("p"); h.className = "swipehint"; h.textContent = "Swipe right to go back \u2192"; pg.appendChild(h);
+    setTimeout(function () { h.remove(); }, 4700);
   }
   // The set offer: after the first thought of your own, and on the end screen while there are fewer than 10 thoughts.
   // Two sets not yet added; after two "Not now"s it stops. The sets are always in Settings.
@@ -1211,6 +1219,11 @@ textarea::placeholder { color: var(--plum-faint); }
     done(s.name + ": " + r.added + " lines added. Two arrive each day, starting today.", 4000);
     if (was === "end") { pick(); renderMeet(true); }
   });
+  // 2.30.1: Help, Show the tips again: every hint and the set offer can show once more.
+  $("tipsAgain").onclick = function () {
+    ui.tips = {}; ui.cardsMet = 0; ui.setNo = 0; ui.setTaken = false; spotBusy = false; lastSpot = null; saveUi();
+    $("tipsAgainV").textContent = "They'll show as you go"; haptic("tick"); track("tips_again", {});
+  };
   $("setOfferNo").onclick = function () { ui.setNo = (ui.setNo || 0) + 1; saveUi(); track("offer_no", {}); hideOffer(); };
 
   // ---------- Write ----------
@@ -1280,7 +1293,7 @@ textarea::placeholder { color: var(--plum-faint); }
     // 2.19.0: a note shows as plain text when there is one; otherwise "Add a note" opens a place to write it.
     $("editNote").hidden = !t.note; noteWords(); showArgBtn();
     disarm();
-    setMode("edit"); used("edit"); if (setOfferWhere) hideOffer();
+    setMode("edit"); used("edit"); spotDone("edit"); if (setOfferWhere) hideOffer();
     // 2.30.0: the first time Edit opens where Argue with it is available, it is pointed out once.
     setTimeout(function () { if (mode === "edit" && aiOk && !$("argBtn").hidden) spot($("argBtn"), "argue", "Argue with it", "Shows the strongest honest case against this thought, made on your iPhone."); }, 500);
   }
@@ -1947,7 +1960,7 @@ textarea::placeholder { color: var(--plum-faint); }
     $("argNote").disabled = inNote; $("argNote").textContent = inNote ? "Added to note \u2713" : "Add to note";
     $("argBox").hidden = false; showArgBtn();
   }
-  $("argBtn").addEventListener("click", function () { used("argue"); });
+  $("argBtn").addEventListener("click", function () { used("argue"); spotDone("argue"); });
   $("argBtn").onclick = function () {
     var t = store[ui.cur]; if (!t || argBusy) return;
     if (!$("argBox").hidden || !$("argSafe").hidden) { $("argBox").hidden = true; $("argSafe").hidden = true; showArgBtn(); return; }
