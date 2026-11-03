@@ -17,6 +17,12 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.30.0:** Onboarding. The first screen asks one thing ("What's on your mind?") with a lighter example, and offers five
+  lines from the sets as a clear second choice. After the first thought of your own, and on the end screen while there are
+  fewer than 10 thoughts, two sets are offered (stops after two "Not now"s). One-time hints: a spotlight on tap to edit
+  after the third card, on Argue with it at the first Edit, and on Tensions when the first pair appears (one spotlight a
+  session, never while typing, read aloud under VoiceOver); a pulse on the strip at 10 thoughts if the list was never
+  opened; "Swipe right to go back" the first time a page slides in. Automated browsers see none of it unless ?tips=1.
 - **2.29.0:** Tensions tuned on real misses. Questions, long thoughts (over 280 characters) and protective thoughts are
   left out. Batches of 12, about two thirds inside one theme and the rest mixed. A stricter prompt with examples makes the
   model name the conflict; each pair then gets a second look (agree, different things, or opposite) and only "opposite"
