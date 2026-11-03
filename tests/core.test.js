@@ -916,3 +916,19 @@ test("Add to note keeps the whole argument (2.30.3)", () => {
   assert.equal(N.withArgNote("My note.\n\n" + full, a), "My note.\n\n" + full, "never twice");
   assert.equal(N.withArgNote("My note.\n\nIt assumes: that what you decided was right.", a), "My note.\n\n" + full, "an old note with only the assumption gets the case against");
 });
+
+test("Argue with it 2.31.0: what it would let you off, the case for, and both in the note and the backup", () => {
+  const a = N.parseArg("AGAINST: Discomfort today doesn't promise a better tomorrow at all.\nASSUMES: that pleasure is wasted.\nFREE: Keep the evening scroll and skip the early night.");
+  assert.equal(a.free, "keep the evening scroll and skip the early night");
+  assert.equal(N.parseArg("AGAINST: Discomfort today doesn't promise a better tomorrow at all.\nASSUMES: that pleasure is wasted.").free, undefined, "older answers have no FREE line");
+  assert.deepEqual(N.parseFor("FOR: Small choices compound; an evening traded is cheap."), { pro: "Small choices compound; an evening traded is cheap." });
+  assert.deepEqual(N.parseFor("SKIP"), { skip: true });
+  assert.match(N.argForRequest("Rest is work.", "").instructions, /strongest honest case for it/);
+  const pro = { pro: "Small choices compound over time, quietly." };
+  let n = N.withArgNote("", a); assert.match(n, /If this wins, I'd be free to: keep the evening scroll/);
+  n = N.withArgNote(n, a, pro); assert.match(n, /\nFor it: Small choices/); assert.equal((n.match(/Against it:/g) || []).length, 1);
+  assert.equal(N.withArgNote(n, a, pro), n, "never twice");
+  const t = { id: "x", text: "Rest is work.", arg: Object.assign({ text: "Rest is work.", at: "2026-11-03T00:00:00Z" }, a), pro: { text: "Rest is work.", pro: pro.pro, at: "2026-11-03T00:00:00Z" } };
+  const r = N.restoreFrom({}, { app: "scales", version: "2.31.0", thoughts: { x: t } }, new Date("2026-11-03T12:00:00Z"), []);
+  assert.equal(r.added, 1);
+});

@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.30.3";
+  var VERSION = "2.31.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -507,7 +507,11 @@
       was: Array.isArray(t.was) ? t.was.filter(function (w) { return w && typeof w.text === "string" && w.text.trim(); }).slice(-5).map(function (w) { return { text: w.text.slice(0, 1500), at: typeof w.at === "string" ? w.at : nowIso }; }) : undefined,
       awayWhy: typeof t.awayWhy === "string" && t.awayWhy.trim() ? t.awayWhy.trim().slice(0, 300) : undefined,
       arg: t.arg && typeof t.arg === "object" && typeof t.arg.text === "string" && typeof t.arg.against === "string" && typeof t.arg.assumes === "string"
-        ? { text: t.arg.text.slice(0, 1500), against: t.arg.against.slice(0, 600), assumes: t.arg.assumes.slice(0, 300), at: typeof t.arg.at === "string" ? t.arg.at : nowIso } : undefined };
+        ? { text: t.arg.text.slice(0, 1500), against: t.arg.against.slice(0, 600), assumes: t.arg.assumes.slice(0, 300), at: typeof t.arg.at === "string" ? t.arg.at : nowIso,
+            free: typeof t.arg.free === "string" && t.arg.free ? t.arg.free.slice(0, 200) : undefined } : undefined,
+      // 2.31.0: the case for, kept like the argument.
+      pro: t.pro && typeof t.pro === "object" && typeof t.pro.text === "string" && typeof t.pro.pro === "string"
+        ? { text: t.pro.text.slice(0, 1500), pro: t.pro.pro.slice(0, 600), at: typeof t.pro.at === "string" ? t.pro.at : nowIso } : undefined };
   }
   function restoreFrom(store, data, now, gone) {
     var res = { ok: false, kind: null, added: 0, ids: [], gone: (gone || []).slice(), visits: [], events: [] };
@@ -718,13 +722,36 @@
   var ARG_INSTRUCTIONS = "You help a person test a thought they hold. Give the strongest honest case against it: where it is wrong, " +
     "incomplete, or does harm if followed without judgment. Be direct and fair. Never praise the thought, never give advice, " +
     "never ask questions, never soften with phrases like 'while this is true'. Then name the one belief the thought quietly " +
-    "depends on. Answer in exactly this form and nothing else:\nAGAINST: <two or three sentences, under 60 words>\nASSUMES: <one sentence, under 20 words>\n" +
+    "depends on. Then say what the person would no longer have to do if the case against were right: the comfort it offers, " +
+    "starting with a verb, plain and specific. Answer in exactly this form and nothing else:\nAGAINST: <two or three sentences, under 60 words>\n" +
+    "ASSUMES: <one sentence, under 20 words>\nFREE: <a short phrase, under 18 words, starting with a verb>\n" +
     "Some thoughts are not for arguing with. If the thought is about staying alive or safe, not harming oneself, recovering from " +
     "addiction or harm, a person's worth or reason to live, or keeping someone else safe, answer only the word SKIP.";
   // 2.24.0: thoughts that protect someone are never argued with. This catches the plain cases before the model is asked;
   // the instructions above ask the model to answer SKIP for the rest.
   var PROTECTED_RE = /\b(suicid\w*|kill(ing)? myself|end(ing)? my life|end(ing)? it all|self[- ]?harm\w*|hurt(ing)? myself|cut(ting)? myself|harm(ing)? myself|want(ed)? to die|wish(ed)? i (was|were) dead|better off (dead|without me)|not worth living|reason(s)? to (live|stay)|worth staying|stay(ing)? alive|overdos\w*|relaps\w*|sober\w*|sobriety|stay(ing)? clean|clean for \d+|days? clean|in recovery)\b/i;
   function protectedThought(text) { return PROTECTED_RE.test(String(text || "")); }
+  // 2.31.0: "Argue for it instead": the strongest honest case for the thought, so the case against can be weighed, not
+  // just taken. Same rules: no praise, no advice, and never for a thought about safety, recovery or worth.
+  var ARG_FOR_INSTRUCTIONS = "You help a person weigh a thought they hold. Give the strongest honest case for it: why it is right, " +
+    "what following it protects, what it costs to drop it. Be direct and fair. Never flatter, never give advice, never ask questions. " +
+    "Answer in exactly this form and nothing else:\nFOR: <two or three sentences, under 60 words>\n" +
+    "Some thoughts are not for arguing about. If the thought is about staying alive or safe, not harming oneself, recovering from " +
+    "addiction or harm, a person's worth or reason to live, or keeping someone else safe, answer only the word SKIP.";
+  function argForRequest(text, by) {
+    var who = cleanBy(by);
+    return { instructions: ARG_FOR_INSTRUCTIONS, prompt: "The thought: \"" + String(text).trim().slice(0, 600) + "\"" + (who ? " (" + who + ")" : "") };
+  }
+  function parseFor(raw) {
+    if (/^[\s"'*_]*skip\b/i.test(String(raw || ""))) return { skip: true };
+    var s = String(raw || ""), a = s.search(/for\s*:/i);
+    var pro = tidyLine(a >= 0 ? s.slice(a).replace(/^[^:]*:/, "") : s);
+    if (pro.length < 20) return null;
+    if (pro.length > 480) pro = pro.slice(0, 480).replace(/\s+\S*$/, "") + "\u2026";
+    return { pro: pro };
+  }
+  // The kept case for, only if it was made for the words as they are now.
+  function proFor(t) { return t && t.pro && t.pro.text === t.text && t.pro.pro ? t.pro : null; }
   function argRequest(text, by) {
     var who = cleanBy(by);
     return { instructions: ARG_INSTRUCTIONS, prompt: "The thought: \"" + String(text).trim().slice(0, 600) + "\"" + (who ? " (" + who + ")" : "") };
@@ -736,24 +763,38 @@
   function parseArg(raw) {
     // 2.24.0: the model's way of saying this thought is not for arguing with.
     if (/^[\s"'*_]*skip\b/i.test(String(raw || ""))) return { skip: true };
-    var s = String(raw || ""), a = s.search(/against\s*:/i), b = s.search(/assumes?\s*:/i);
+    var s = String(raw || ""), a = s.search(/against\s*:/i), b = s.search(/assumes?\s*:/i), f = s.search(/free\s*:/i);
     if (a < 0 || b < 0 || b < a) return null;
-    var against = tidyLine(s.slice(a, b).replace(/^[^:]*:/, "")), assumes = tidyLine(s.slice(b).replace(/^[^:]*:/, ""));
+    var against = tidyLine(s.slice(a, b).replace(/^[^:]*:/, "")), assumes = tidyLine(s.slice(b, f > b ? f : undefined).replace(/^[^:]*:/, ""));
+    // 2.31.0: what the person would be let off, if the case against won. Optional: older answers and some replies lack it.
+    var free = f > b ? tidyLine(s.slice(f).replace(/^[^:]*:/, "")) : "";
+    if (free.length > 160) free = free.slice(0, 160).replace(/\s+\S*$/, "") + "\u2026";
+    free = free.charAt(0).toLowerCase() + free.slice(1);
     if (against.length < 20 || assumes.length < 6) return null;
     if (against.length > 480) against = against.slice(0, 480).replace(/\s+\S*$/, "") + "\u2026";
     if (assumes.length > 220) assumes = assumes.slice(0, 220).replace(/\s+\S*$/, "") + "\u2026";
     // A one-letter start is nicer capitalised: "that what you decided..." reads as a fragment.
     assumes = assumes.charAt(0).toUpperCase() + assumes.slice(1);
-    return { against: against, assumes: assumes };
+    var out = { against: against, assumes: assumes }; if (free.length >= 6) out.free = free.replace(/\.$/, "");
+    return out;
   }
   // The kept argument, only if it was made for the words as they are now.
   function argFor(t) { return t && t.arg && t.arg.text === t.text && t.arg.against && t.arg.assumes ? t.arg : null; }
   // What "Add to note" puts in the note: the whole argument, the case against and what it assumes (2.30.3; before, only
   // the "It assumes" line went in). A note that already holds only that line gets the case against added above it.
   function argNoteLine(arg) { return "It assumes: " + arg.assumes.charAt(0).toLowerCase() + arg.assumes.slice(1); }
-  function argNoteBlock(arg) { return "Against it: " + String(arg.against || "").trim() + "\n" + argNoteLine(arg); }
-  function withArgNote(note, arg) {
-    var line = argNoteLine(arg), block = argNoteBlock(arg), n = String(note || "").trim();
+  // 2.31.0: the block also carries what the argument would let you off, and the case for when it was asked for.
+  function argNoteBlock(arg, pro) {
+    return "Against it: " + String(arg.against || "").trim() + "\n" + argNoteLine(arg) +
+      (arg.free ? "\nIf this wins, I'd be free to: " + arg.free + "." : "") + (pro && pro.pro ? "\nFor it: " + pro.pro : "");
+  }
+  function withArgNote(note, arg, pro) {
+    var line = argNoteLine(arg), block = argNoteBlock(arg, pro), n = String(note || "").trim();
+    // A block added earlier without the newer lines is replaced by the full one.
+    var noPro = argNoteBlock(arg), older = argNoteBlock({ against: arg.against, assumes: arg.assumes });
+    if (n.indexOf(block) >= 0) return n;
+    if (noPro !== block && n.indexOf(noPro) >= 0) return n.replace(noPro, block);
+    if (n.indexOf(older) >= 0) return n.replace(older, block);
     if (n.indexOf(block) >= 0) return n;
     if (n.indexOf(line) >= 0) return n.replace(line, block);
     return n ? n + "\n\n" + block : block;
@@ -946,7 +987,7 @@
   }
 
   var api = { VERSION: VERSION, reword: reword, insights: insights, WAS_KEEP: WAS_KEEP, argRequest: argRequest, parseArg: parseArg, argFor: argFor, argNoteLine: argNoteLine, withArgNote: withArgNote,
-    insightLine: insightLine, tensionBatches: tensionBatches, tensionRequest: tensionRequest, tensionPool: tensionPool, tensionCheck: tensionCheck, checkSaysTension: checkSaysTension, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
+    insightLine: insightLine, argForRequest: argForRequest, parseFor: parseFor, proFor: proFor, argNoteBlock: argNoteBlock, tensionBatches: tensionBatches, tensionRequest: tensionRequest, tensionPool: tensionPool, tensionCheck: tensionCheck, checkSaysTension: checkSaysTension, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
     standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
     make: make, protectedThought: protectedThought, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
