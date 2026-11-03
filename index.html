@@ -762,8 +762,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.30.1"></script>
-<script src="sets.js?v=2.30.1"></script>
+<script src="core.js?v=2.30.2"></script>
+<script src="sets.js?v=2.30.2"></script>
 <script>
 (function () {
   "use strict";
@@ -1439,15 +1439,23 @@ textarea::placeholder { color: var(--plum-faint); }
   $("strip").addEventListener("pointerup", stripUp); $("strip").addEventListener("pointercancel", stripUp);
   $("strip").addEventListener("click", function () { if (stripTap) openLib(); stripTap = true; });
   // Shutting, from the grabber or the header
+  // 2.30.2: the whole header drags, search field, insight and chips included (with the title gone, leaving those out
+  // left only thin gaps to grab, which made closing flaky). A tap still taps; a drag down never also taps.
   function headDown(e) {
-    if (!lib.classList.contains("open") || e.target.closest("input, #libGear, #libIns, .seg button")) return;
-    sheet = { y: e.clientY, t: Date.now(), dy: 0, from: "head", moved: false };
+    if (!lib.classList.contains("open")) return;
+    if (e.target.closest("input") && document.activeElement === e.target.closest("input")) return; // typing in search
+    sheet = { x: e.clientX, y: e.clientY, t: Date.now(), dy: 0, from: "head", moved: false };
   }
   document.addEventListener("pointerdown", function (e) { if (e.target.closest("#lib header, #libClose")) headDown(e); });
   document.addEventListener("pointermove", function (e) {
     if (!sheet || sheet.from !== "head") return;
     sheet.dy = e.clientY - sheet.y;
-    if (!sheet.moved && Math.abs(sheet.dy) < 8) return;
+    if (!sheet.moved) {
+      var dx = Math.abs(e.clientX - sheet.x);
+      if (dx > 8 && dx > Math.abs(sheet.dy)) { sheet = null; return; } // sideways: the chips scroll, the sheet stays
+      if (Math.abs(sheet.dy) < 8) return;
+      if (document.activeElement && document.activeElement.id === "q") document.activeElement.blur();
+    }
     sheet.moved = true; sheetTo(sheet.dy);
   });
   function headUp() {
@@ -1455,6 +1463,9 @@ textarea::placeholder { color: var(--plum-faint); }
     var s = sheet; sheet = null;
     if (!s.moved) return;
     libCloseBlock = Date.now();
+    // The tap a drag would otherwise end with (on the insight, a chip, the gear) never lands.
+    var stop = function (ev) { ev.stopPropagation(); ev.preventDefault(); document.removeEventListener("click", stop, true); };
+    document.addEventListener("click", stop, true); setTimeout(function () { document.removeEventListener("click", stop, true); }, 350);
     sheetSettle(decide(s.dy, Date.now() - s.t, false));
   }
   document.addEventListener("pointerup", headUp); document.addEventListener("pointercancel", headUp);
