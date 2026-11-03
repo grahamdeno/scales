@@ -758,7 +758,7 @@ textarea::placeholder { color: var(--plum-faint); }
   if (!store) { store = C.importOld(lsGet(OLD, {}), now()); lsSet(KEY, store); }
   // Every open: anything still in Scales 1 that is not here yet joins. Nothing here is overwritten.
   else if (C.mergeOld(store, lsGet(OLD, {}), now(), lsGet(KEY_GONE, []))) lsSet(KEY, store);
-  var ui = Object.assign({ cur: null, ms: 0, worked: false, nudged: false, view: "all", saved: null, review: null }, lsGet(KEY_UI, {}));
+  var ui = Object.assign({ cur: null, ms: 0, worked: false, argued: false, nudged: false, view: "all", saved: null, review: null }, lsGet(KEY_UI, {}));
   // 2.24.0: which moves the person has made at least once. Older phones learn it from their visit log.
   if (ui.learnedUp === undefined || ui.learnedDown === undefined) {
     var lg0 = lsGet(KEY_LOG, []);
@@ -828,10 +828,12 @@ textarea::placeholder { color: var(--plum-faint); }
   startSession("launch");
 
   // ---------- the visit clock ----------
-  // Time counts only while the app is open and this thought is on screen. A long stretch with no touch at all
+  // Time counts only while the app is open and this thought is on screen, or open in Edit (2.29.0: time in Edit is
+  // time spent with the thought; before, opening Edit paused the clock). A long stretch with no touch at all
   // is read as the phone being set down, so it counts as seen, never as thought about.
   var since = null, lastTouch = Date.now(), softT = 0;
-  function clockOn() { if (since == null && ui.cur && !document.hidden && mode === "meet") since = Date.now(); scheduleSoften(); }
+  function counting(m) { return m === "meet" || m === "edit"; }
+  function clockOn() { if (since == null && ui.cur && !document.hidden && counting(mode)) since = Date.now(); scheduleSoften(); }
   function clockOff() { if (since != null) { ui.ms += Date.now() - since; since = null; saveUi(); } clearTimeout(softT); }
   function elapsed() { return ui.ms + (since != null ? Date.now() - since : 0); }
   // 2.25.0: the touch that ends a visit (the swipe itself) used to reset lastTouch before idle() was read, so idle was never
@@ -849,7 +851,7 @@ textarea::placeholder { color: var(--plum-faint); }
   document.addEventListener("visibilitychange", function () { if (document.hidden) clockOff(); else { lastTouch = Date.now(); clockOn(); } });
   window.addEventListener("pagehide", clockOff);
   ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, function () {
-    if (Date.now() - lastTouch > C.IDLE_MS && mode === "meet" && ui.cur) idleGap = true;
+    if (Date.now() - lastTouch > C.IDLE_MS && counting(mode) && ui.cur) idleGap = true;
     lastTouch = Date.now();
   }, true); });
 
@@ -860,14 +862,16 @@ textarea::placeholder { color: var(--plum-faint); }
     // A thought opened from Bookmarked is a review: logged as one, and it changes nothing about when the thought comes back.
     var review = ui.review === ui.cur; ui.review = null;
     var wasIdle = idle(); idleGap = false;
-    var cls = C.classify(ui.ms, ui.worked, wasIdle), kind = review ? "review" : C.recordVisit(t, ui.ms, ui.worked, wasIdle, now());
+    // 2.29.0: running Argue with it is thinking about the thought, whatever the clock says.
+    var ms = ui.argued ? Math.max(ui.ms, C.THOUGHT_MIN_MS) : ui.ms; if (ui.argued) wasIdle = false;
+    var cls = C.classify(ms, ui.worked, wasIdle), kind = review ? "review" : C.recordVisit(t, ms, ui.worked, wasIdle, now());
     var lg = lsGet(KEY_LOG, []), pile = ui.pile || (review ? "review" : "due"); ui.pile = null;
-    var entry = C.logVisit(lg, { at: now().toISOString(), id: t.id, ms: ui.ms, worked: ui.worked, idle: wasIdle, kind: kind, how: how || "other", len: t.text.length,
+    var entry = C.logVisit(lg, { at: now().toISOString(), id: t.id, ms: ui.ms, worked: ui.worked, argued: ui.argued ? 1 : 0, idle: wasIdle, kind: kind, how: how || "other", len: t.text.length,
       pile: pile, n: C.sessionPos(lg, now().getTime(), ui.ms), size: C.DAY_SIZE, cls: cls, s: sess && sess.id });
     // Storage full: keep the newest half of the log and try once more; if that fails too, say so.
     if (!lsSet(KEY_LOG, entry) && !lsSet(KEY_LOG, entry.slice(-2500))) saveWarn();
     if (sess) sess.cards++;
-    ui.cur = null; ui.ms = 0; ui.worked = false; saveUi(); save();
+    ui.cur = null; ui.ms = 0; ui.worked = false; ui.argued = false; saveUi(); save();
     return kind;
   }
 
@@ -888,8 +892,10 @@ textarea::placeholder { color: var(--plum-faint); }
   var editHideT = 0;
   function setMode(m) {
     if (m !== mode) track("screen", { to: m });
-    if (mode === "meet" && m !== "meet") clockOff();
+    if (counting(mode) && !counting(m)) clockOff();
+    var startClock = !counting(mode) && counting(m);
     mode = m;
+    if (startClock) clockOn();
     $("vMeet").hidden = false;
     $("vWrite").hidden = m !== "write";
     // 2.21.0: Edit rises as a sheet over the thought, which stays in view; Write still fills the screen.
@@ -920,7 +926,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function more() { return ui.more === C.dayKey(now()); }
   function pick(notId) {
     var r = C.nextCard(store, lsGet(KEY_LOG, []), now(), notId, more());
-    ui.cur = r.card ? r.card.id : null; ui.ms = 0; ui.worked = false; idleGap = false;
+    ui.cur = r.card ? r.card.id : null; ui.ms = 0; ui.worked = false; ui.argued = false; idleGap = false;
     ui.review = r.card && r.review ? r.card.id : null; ui.pile = r.card ? r.pile : null; ui.why = r.why || null;
     saveUi(); return r;
   }
@@ -1080,7 +1086,7 @@ textarea::placeholder { color: var(--plum-faint); }
     if (!undoPoint) return;
     track("undo", { id: undoPoint.id });
     clockOff();
-    store[undoPoint.id] = undoPoint.t; ui.cur = undoPoint.id; ui.ms = undoPoint.ms; ui.worked = false; ui.review = undoPoint.review; ui.pile = undoPoint.pile; undoPoint = null;
+    store[undoPoint.id] = undoPoint.t; ui.cur = undoPoint.id; ui.ms = undoPoint.ms; ui.worked = false; ui.argued = false; ui.review = undoPoint.review; ui.pile = undoPoint.pile; undoPoint = null;
     // The undone visit stays in the log, marked, so it can be left out when the times are judged.
     var lg = lsGet(KEY_LOG, []); if (lg.length) { lg[lg.length - 1].undone = true; lsSet(KEY_LOG, lg); }
     save(); saveUi(); $("toast").classList.remove("on"); buzz("undo"); renderMeet(true);
@@ -1216,7 +1222,7 @@ textarea::placeholder { color: var(--plum-faint); }
     var id = ui.cur;
     // A thought that came from Scales 1 is remembered as deleted, so the catch-up never brings it back.
     if (store[id] && store[id].from) { var g = lsGet(KEY_GONE, []); g.push(id); lsSet(KEY_GONE, g); }
-    delete store[id]; ui.cur = null; ui.ms = 0; ui.worked = false; save(); saveUi(); disarm();
+    delete store[id]; ui.cur = null; ui.ms = 0; ui.worked = false; ui.argued = false; save(); saveUi(); disarm();
     buzz("remove");
     setMode("meet"); renderMeet(true);
     done("Deleted.");
@@ -1408,7 +1414,7 @@ textarea::placeholder { color: var(--plum-faint); }
       // Opening a thought from the list puts it on screen now. The thought you were on counts as visited.
       var id = o.getAttribute("data-open");
       if (ui.cur && ui.cur !== id) endVisit("list");
-      ui.cur = id; ui.ms = 0; ui.worked = false; ui.review = o.hasAttribute("data-review") ? id : null; ui.pile = ui.review ? "review" : "picked"; saveUi();
+      ui.cur = id; ui.ms = 0; ui.worked = false; ui.argued = false; ui.review = o.hasAttribute("data-review") ? id : null; ui.pile = ui.review ? "review" : "picked"; saveUi();
       closeLib(); renderMeet(true);
     } else if (b) {
       var t = store[b.getAttribute("data-back")]; if (!t) return;
@@ -1625,7 +1631,7 @@ textarea::placeholder { color: var(--plum-faint); }
     if (setArmed !== s.id) { setArmed = s.id; haptic("tick"); renderSets(); return; }
     var x = C.removeSet(store, s.id, now(), lsGet(KEY_GONE, []));
     save(); lsSet(KEY_GONE, x.gone); setArmed = null; buzz("remove"); needsRender = true;
-    if (store[ui.cur] === undefined) { ui.cur = null; ui.ms = 0; ui.worked = false; ui.review = null; saveUi(); }
+    if (store[ui.cur] === undefined) { ui.cur = null; ui.ms = 0; ui.worked = false; ui.argued = false; ui.review = null; saveUi(); }
     $("stripN").textContent = C.list(store).length; renderLib();
     setsMsg(s.name + " removed. " + (x.putAway ? x.putAway + " you had met " + (x.putAway === 1 ? "is" : "are") + " in Put away. " : "") + "Lines you bookmarked, noted or changed stay.", true);
     renderSets();
@@ -1779,6 +1785,7 @@ textarea::placeholder { color: var(--plum-faint); }
     var t = store[ui.cur]; if (!t || argBusy) return;
     if (!$("argBox").hidden || !$("argSafe").hidden) { $("argBox").hidden = true; $("argSafe").hidden = true; showArgBtn(); return; }
     var text = argText(); if (!text) return;
+    ui.argued = true; saveUi();
     // 2.24.0: a thought that protects someone is never sent to be argued with.
     if (C.protectedThought(text)) { showSafe(); track("tap", { id: "argue", safe: "local" }); return; }
     var kept = text === t.text ? C.argFor(t) : (argPending && argPending.text === text ? argPending : null);

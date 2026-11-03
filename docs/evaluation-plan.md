@@ -113,3 +113,9 @@ worth looking at.
   of whether Scales works; everything else is behavior.
 - **How the app was opened:** from the Home Screen icon, a widget or a notification. Needs a new iPhone build.
 - **Apple Intelligence use:** how often themes and the week are run, and whether the result is opened again.
+
+## Visit rules changed in 2.29.0
+
+From 2.29.0, time with Edit open counts toward a visit, and running Argue with it makes a visit at least "thought". Visits
+before 2.29.0 paused the clock in Edit, so a visit that went to Edit may read shorter than it was. Read them under the
+old rules, and treat visits before 2.25.0 over 5 minutes as seen (idle was never recorded then).
