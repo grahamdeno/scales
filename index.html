@@ -226,7 +226,8 @@ textarea::placeholder { color: var(--plum-faint); }
 .lrow .back { font-size: 13px; font-weight: 600; color: var(--pist); white-space: nowrap; padding: 4px 0; }
 #libList { padding-bottom: calc(var(--bot) + 40px); }
 #lib header .top { display: flex; justify-content: space-between; align-items: center; }
-#lib .hbtns { display: flex; align-items: center; margin-right: calc(-1 * var(--pad)); }
+/* 2.28.1: with + New gone from the sheet, the gear lines up with the search field and the list (its 24 px icon sits in a 48 px tap area). */
+#lib .hbtns { display: flex; align-items: center; margin-right: -12px; }
 #lib .gear { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: var(--plum-ink); opacity: .7; }
 #lib .gear svg { width: 24px; height: 24px; }
 #lib .new { margin-right: 0; }
@@ -701,8 +702,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.28.0"></script>
-<script src="sets.js?v=2.28.0"></script>
+<script src="core.js?v=2.28.1"></script>
+<script src="sets.js?v=2.28.1"></script>
 <script>
 (function () {
   "use strict";
