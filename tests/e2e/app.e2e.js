@@ -132,7 +132,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     for (let i = 1; i <= 10; i++) await page.mouse.move(w / 2, sb.y + 30 - i * 40);
     await page.mouse.up(); await page.waitForTimeout(600);
     ok(await page.locator("#lib.open").count() === 1, tag + "pulling the strip up opens the library");
-    const hb = await page.locator("#lib h2").boundingBox();
+    const hb = await page.locator("#libClose").boundingBox();
     await page.mouse.move(w / 2, hb.y + 5); await page.mouse.down();
     for (let i = 1; i <= 40; i++) await page.mouse.move(w / 2, hb.y + 5 + i * 30);
     ok(await libTop() <= sb.y + 1, tag + "pulled far down, the sheet stops at the strip (" + Math.round(await libTop()) + " vs " + Math.round(sb.y) + ")");

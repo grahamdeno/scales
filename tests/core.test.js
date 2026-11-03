@@ -897,3 +897,13 @@ test("Tensions 2.29.0: no questions, long thoughts or protective ones; batches o
   for (const no of ["A", "B", "B: different", "", "Can't say", "NONE"]) assert.equal(N.checkSaysTension(no), false, no);
   assert.match(N.tensionCheck(mk("a", "Rest."), mk("b", "Work."))[ "prompt"], /^1\. Rest\.\n2\. Work\.$/);
 });
+
+test("The day's insight (2.29.0): a true sentence chosen by the day, or nothing", () => {
+  assert.equal(N.insightLine({ turning: [], livedCount: 0, rewrites: [], avoiding: [], when: null, voiceTop: [] }, "2026-11-03"), null);
+  const d = { turning: [], livedCount: 16, rewrites: [], avoiding: [1, 2], when: null, voiceTop: [{ who: "Benjamin Franklin", pct: 20 }] };
+  const seen = new Set();
+  for (let i = 1; i <= 28; i++) { const L = N.insightLine(d, "2026-11-" + String(i).padStart(2, "0")); seen.add(L.lead + (L.n == null ? "" : L.n) + L.tail); }
+  assert.deepEqual([...seen].sort(), ["2 thoughts you've skipped often lately.", "Benjamin Franklin holds you longest.", "You put away 16 thoughts in the last 30 days."]);
+  assert.equal(N.insightLine({ livedCount: 1 }, "x").tail, " thought in the last 30 days.");
+  assert.equal(N.insightLine(d, "2026-11-03").lead, N.insightLine(d, "2026-11-03").lead, "the same all day");
+});

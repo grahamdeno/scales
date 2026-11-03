@@ -228,6 +228,21 @@ textarea::placeholder { color: var(--plum-faint); }
 #lib header .top { display: flex; justify-content: space-between; align-items: center; }
 /* 2.28.1: with + New gone from the sheet, the gear lines up with the search field and the list (its 24 px icon sits in a 48 px tap area). */
 #lib .hbtns { display: flex; align-items: center; margin-right: -12px; }
+/* 2.29.0: search and the gear on one row; the gear's icon lines up with the list's right edge. */
+#lib .qrow { display: flex; align-items: center; gap: 4px; }
+#lib .qrow #q { flex: 1 1 auto; min-width: 0; }
+#lib .qrow .gear { flex: none; margin-right: -12px; }
+/* 2.29.0: one finding from Insights, a sentence a day; tap for the page. */
+#lib .daily { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; align-items: center; width: 100%; text-align: left;
+  background: rgba(185,201,163,.12); border-radius: 14px; padding: 12px 14px; color: var(--plum-ink); }
+#lib .daily .k { grid-column: 1; font-size: 12px; color: var(--plum-muted); margin-bottom: 2px; }
+#lib .daily .s { grid-column: 1; font-size: 15px; line-height: 1.35; }
+#lib .daily .s b { color: var(--pist); font-weight: 700; }
+#lib .daily .v { grid-column: 2; grid-row: 1 / span 2; font-size: 18px; color: var(--plum-muted); }
+/* 2.29.0: Put away is a row like the others, set off by a little space. */
+#libList .lgrp.arch { margin-top: 18px; }
+#libList .lgrp .gc { min-width: 22px; text-align: right; }
+#libList .lgrp .gv { margin-left: 4px; }
 #lib .gear { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: var(--plum-ink); opacity: .7; }
 #lib .gear svg { width: 24px; height: 24px; }
 #lib .new { margin-right: 0; }
@@ -540,11 +555,14 @@ textarea::placeholder { color: var(--plum-faint); }
 <section id="lib" aria-label="Your thoughts" aria-hidden="true">
   <button class="grabbtn" type="button" id="libClose" aria-label="Close the list"><i></i></button>
   <header>
-    <div class="top"><h2>Your thoughts</h2><span class="hbtns">
+    <!-- 2.29.0: no visible title (the strip already says it); search and the gear share the top row; one insight below. -->
+    <h2 class="sr">Your thoughts</h2>
+    <div class="qrow">
+      <label class="sr" for="q">Search your thoughts</label>
+      <input id="q" type="search" placeholder="Search your thoughts" autocomplete="off" autocapitalize="off" spellcheck="false">
       <button class="gear" type="button" id="libGear" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
-</span></div>
-    <label class="sr" for="q">Search your thoughts</label>
-    <input id="q" type="search" placeholder="Search" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <button type="button" class="daily" id="libIns" hidden><span class="k">Insight</span><span class="s" id="libInsText"></span><span class="v" aria-hidden="true">&#8250;</span></button>
     <div class="seg" id="seg" aria-label="Show"><button type="button" data-view="all">All</button><button type="button" data-view="new">New</button><button type="button" data-view="marked" id="segMarked">Bookmarked</button></div>
   </header>
   <div id="libList"></div>
@@ -1268,7 +1286,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("strip").addEventListener("click", function () { if (stripTap) openLib(); stripTap = true; });
   // Shutting, from the grabber or the header
   function headDown(e) {
-    if (!lib.classList.contains("open") || e.target.closest("input, #libGear, .seg button")) return;
+    if (!lib.classList.contains("open") || e.target.closest("input, #libGear, #libIns, .seg button")) return;
     sheet = { y: e.clientY, t: Date.now(), dy: 0, from: "head", moved: false };
   }
   document.addEventListener("pointerdown", function (e) { if (e.target.closest("#lib header, #libClose")) headDown(e); });
@@ -1307,6 +1325,7 @@ textarea::placeholder { color: var(--plum-faint); }
   $("seg").addEventListener("click", pickView);
   $("q").addEventListener("input", renderLib);
   function renderLib() {
+    renderInsightLine();
     var q = $("q").value.trim().toLowerCase(), n = now();
     var match = function (t) { return !q || t.text.toLowerCase().indexOf(q) !== -1 || (t.note || "").toLowerCase().indexOf(q) !== -1 || (t.by || "").toLowerCase().indexOf(q) !== -1; };
     var on = C.inRotation(store).filter(match).sort(function (a, b) { return a.due < b.due ? -1 : a.due > b.due ? 1 : (b.skips || 0) - (a.skips || 0); });
@@ -1370,7 +1389,7 @@ textarea::placeholder { color: var(--plum-faint); }
       }).join("") + "</div>";
       if (!on.length) h += none("Nothing here yet.");
       if (C.putAway(store).length) {
-        h += '<button type="button" class="lrow arch" data-view="away"><span class="t">Put away</span><span class="m">' + C.putAway(store).length + ' \u203a</span></button>';
+        h += '<button type="button" class="lgrp arch" data-view="away"><span class="gt"><span class="gn">Put away</span><span class="gd">One tap from coming back.</span></span><span class="gc">' + C.putAway(store).length + '</span><span class="gv" aria-hidden="true">\u203a</span></button>';
       }
     }
     $("libList").innerHTML = h;
@@ -1460,8 +1479,21 @@ textarea::placeholder { color: var(--plum-faint); }
     var f = e.target.closest("[data-f]"); if (!f) return;
     var k = f.getAttribute("data-f"); ui.insOpen = ui.insOpen === k ? null : k; saveUi(); haptic("tick"); renderInsights();
   });
-  $("setIns").onclick = function () { renderInsights(); $("insBody").scrollTop = 0; openPage("insPage", "insights"); };
-  $("insBack").onclick = function () { closePage("insPage", "settings"); };
+  // 2.29.0: Insights opens from Settings or from the insight in Your thoughts, and goes back to where it came from.
+  var insFrom = "settings";
+  function openInsights(from) {
+    insFrom = from; $("insBack").innerHTML = "&#8249; " + (from === "library" ? "Your thoughts" : "Settings");
+    renderInsights(); $("insBody").scrollTop = 0; openPage("insPage", "insights");
+  }
+  $("setIns").onclick = function () { openInsights("settings"); };
+  $("libIns").onclick = function () { haptic("tick"); track("tap", { id: "libIns" }); openInsights("library"); };
+  $("insBack").onclick = function () { closePage("insPage", insFrom); if (insFrom === "library") renderLib(); };
+  // The day's insight: one true finding, chosen by the day, or nothing when there isn't enough to say yet.
+  function renderInsightLine() {
+    var L = C.insightLine(C.insights(store, lsGet(KEY_LOG, []), now()), C.dayKey(now()));
+    $("libIns").hidden = !L;
+    if (L) $("libInsText").innerHTML = esc(L.lead) + (L.n != null ? "<b>" + esc(String(L.n)) + "</b>" : "") + esc(L.tail);
+  }
 
   // Everything, including Scales 1's data exactly as it is, so a backup never loses anything.
   function backupData() {

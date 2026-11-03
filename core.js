@@ -847,6 +847,23 @@
     return ((data && data.pairs) || []).filter(function (p) { return own(store, p.a) && own(store, p.b) && !store[p.a].away && !store[p.b].away; });
   }
 
+  // ---- The day's insight (2.29.0) ----
+  // One finding from Insights as a sentence for the top of Your thoughts: { lead, n, tail } (n is shown in bold, or null),
+  // chosen by the day from what Insights can truly say. Null when there is nothing yet.
+  var BUCKET_WORDS = ["early in the morning", "in the morning", "in the afternoon", "in the evening", "at night"];
+  function insightLine(d, day) {
+    if (!d) return null;
+    var c = [], pl = function (n, one, many) { return n === 1 ? one : many; };
+    if (d.turning && d.turning.length) c.push({ lead: "", n: d.turning.length, tail: pl(d.turning.length, " thought you used to skip, you now stay with.", " thoughts you used to skip, you now stay with.") });
+    if (d.livedCount) c.push({ lead: "You put away ", n: d.livedCount, tail: pl(d.livedCount, " thought in the last 30 days.", " thoughts in the last 30 days.") });
+    if (d.rewrites && d.rewrites.length) c.push({ lead: "You reworded ", n: d.rewrites.length, tail: pl(d.rewrites.length, " thought.", " thoughts.") });
+    if (d.avoiding && d.avoiding.length) c.push({ lead: "", n: d.avoiding.length, tail: pl(d.avoiding.length, " thought you've skipped often lately.", " thoughts you've skipped often lately.") });
+    if (d.when && !/spread/.test(d.when.head) && BUCKET_WORDS[d.when.top]) c.push({ lead: "You stay longest with your thoughts " + BUCKET_WORDS[d.when.top] + ".", n: null, tail: "" });
+    if (d.voiceTop && d.voiceTop.length) c.push(d.voiceTop[0].who ? { lead: d.voiceTop[0].who + " holds you longest.", n: null, tail: "" } : { lead: "Your own thoughts hold you longest.", n: null, tail: "" });
+    if (!c.length) return null;
+    return c[shuffleKey("ins", String(day || "")) % c.length];
+  }
+
   // ---- Old wording, reasons, and Insights (2.17.0) ----
   // When a thought is reworded, the words it had are kept (the last 5), so Insights can show how it changed.
   var WAS_KEEP = 5;
@@ -926,7 +943,7 @@
   }
 
   var api = { VERSION: VERSION, reword: reword, insights: insights, WAS_KEEP: WAS_KEEP, argRequest: argRequest, parseArg: parseArg, argFor: argFor, argNoteLine: argNoteLine, withArgNote: withArgNote,
-    tensionBatches: tensionBatches, tensionRequest: tensionRequest, tensionPool: tensionPool, tensionCheck: tensionCheck, checkSaysTension: checkSaysTension, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
+    insightLine: insightLine, tensionBatches: tensionBatches, tensionRequest: tensionRequest, tensionPool: tensionPool, tensionCheck: tensionCheck, checkSaysTension: checkSaysTension, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
     standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
     make: make, protectedThought: protectedThought, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
