@@ -55,17 +55,13 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const t1 = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.ui.v1")).tips);
   ok(t1 && t1.edit === 1, "and it is remembered, so it never shows again");
 
-  // One spotlight a session: Argue with it waits for the next session
-  await page.$eval("#srEdit", (e) => e.click()); await wait(1000);
-  ok(!(await page.isVisible("#tip")), "one spotlight a session: Argue with it waits");
-  await page.click("#editCancel"); await wait(400);
-
-  // Next session: Argue with it
-  await page.reload(); await wait(1500);
+  // One at a time, chained: doing what the last spotlight pointed at (opening Edit) lets the next one show
   await page.$eval("#srEdit", (e) => e.click()); await wait(1100);
-  ok(await page.isVisible("#tip") && /Argue with it/.test(await page.textContent("#tipText")), "next session, first Edit: Argue with it is spotlighted");
+  ok(await page.isVisible("#tip") && /Argue with it/.test(await page.textContent("#tipText")), "opening Edit after the edit hint: Argue with it is spotlighted next");
   await page.screenshot({ path: path.join(shots, "onb-4-spot-argue.png") });
   await page.click("#tip"); await page.click("#editCancel"); await wait(400);
+  // But never two in a row without the person acting: dismissing Argue without using it holds the next one
+  ok(await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.ui.v1")).tips.argue === 1), "Argue with it is remembered");
 
   // Swipe hint the first time a page slides in
   await page.click("#strip"); await wait(800); await page.click("#libGear"); await wait(400);
@@ -73,6 +69,11 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   await page.screenshot({ path: path.join(shots, "onb-5-swipe.png") });
   await wait(4000); await page.click("#setBack"); await wait(500); await page.click("#libGear"); await wait(400);
   ok(await page.locator("#settings .swipehint").count() === 0, "and only once");
+
+  // Help, Show the tips again
+  await page.click("#setHelp"); await wait(500); await page.click("#tipsAgain"); await wait(200);
+  ok(await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem("scales.next.ui.v1")).tips || {}).length === 0), "Show the tips again clears every hint");
+  await page.screenshot({ path: path.join(shots, "onb-6-help.png") });
 
   // Hints are off in automated browsers without ?tips=1
   const p2 = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
