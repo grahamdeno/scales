@@ -36,6 +36,8 @@ jobs:
           exit $code
       - name: iPhone store script
         run: node tests/e2e/native-store.e2e.js
+      - name: Onboarding
+        run: node tests/e2e/onboarding.e2e.js
 
   # After tests pass on main, tag the commit with the version in core.js
   # (for example v1.21.0) unless that version is already tagged.

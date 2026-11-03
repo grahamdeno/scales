@@ -153,6 +153,32 @@ textarea::placeholder { color: var(--plum-faint); }
 .small { font-size: 17px; line-height: 1.45; border-top: 1px solid rgba(241,233,216,.2); padding-top: 14px; }
 .lbl { font-size: 13px; color: var(--plum-muted); margin-bottom: -14px; }
 /* "Add who said it": words, not a button; one line appears under the thought when tapped. */
+/* 2.30.0: onboarding. The first screen asks one thing, and offers a set as an equal second choice. */
+.whead { margin: 0 0 -10px; font-size: 15px; font-weight: 600; color: var(--plum-muted); flex: none; }
+#writeText.example::placeholder { color: rgba(241,233,216,.38); }
+.startset { align-self: stretch; text-align: left; margin-top: 6px; padding: 14px 16px; border-radius: 14px; background: rgba(185,201,163,.12);
+  color: var(--plum-ink); font-size: 15px; line-height: 1.35; flex: none; }
+.startset b { display: block; color: var(--pist); font-weight: 600; margin-bottom: 2px; }
+/* The set offer: on the reading screen after the first thought, and on the end screen while there are few thoughts. */
+#setOffer { position: absolute; left: 16px; right: 16px; bottom: calc(var(--strip) + 14px); z-index: 4; background: var(--plum); color: var(--plum-ink);
+  border-radius: 18px; padding: 16px 18px 10px; box-shadow: 0 10px 30px rgba(20,10,24,.25); }
+#setOffer[hidden] { display: none; }
+#setOffer p { margin: 0 0 10px; font-size: 15px; line-height: 1.4; }
+#setOffer .so { display: flex; flex-wrap: wrap; gap: 8px; }
+#setOffer .so button { font-size: 14px; padding: 9px 14px; border-radius: 999px; background: rgba(185,201,163,.16); color: var(--pist); font-weight: 600; }
+#setOffer .no { display: block; margin-top: 4px; padding: 12px 0 6px; font-size: 14px; color: var(--plum-muted); }
+/* Hints, once each: a spotlight that dims everything but the one thing, or a quiet line that fades. */
+#tip { position: absolute; inset: 0; z-index: 40; }
+#tip[hidden] { display: none; }
+#tip .hole { position: absolute; border-radius: 16px; box-shadow: 0 0 0 200vmax rgba(18,9,22,.66); pointer-events: none; transition: opacity .2s; }
+#tip .tt { position: absolute; left: var(--pad); right: var(--pad); color: #F1E9D8; font-size: 17px; font-weight: 600; line-height: 1.35; }
+#tip .tt span { display: block; margin-top: 8px; font-size: 14px; font-weight: 400; color: #BBA7BE; }
+.swipehint { position: absolute; left: 0; right: 0; bottom: calc(var(--bot) + 14px); text-align: center; font-size: 13px; color: var(--plum-muted);
+  pointer-events: none; animation: swipehint 3.6s ease forwards; }
+@keyframes swipehint { 0% { opacity: 0; } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
+#strip.pulse { animation: strippulse 1.4s ease-in-out 2; }
+@keyframes strippulse { 50% { transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { #strip.pulse { animation: none; } }
 .bylink { align-self: flex-start; color: var(--plum-muted); font-size: 15px; padding: 10px 24px 10px 0; flex: none; }
 .byfield { flex: none; font: inherit; font-size: 17px; color: var(--plum-ink); background: transparent; border: 0; border-top: 1px solid rgba(241,233,216,.2); border-radius: 0;
   padding: 14px 0 4px; outline: none; width: 100%; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
@@ -512,6 +538,9 @@ textarea::placeholder { color: var(--plum-faint); }
     <span class="row"><b>Your thoughts</b><span id="stripN">0</span></span>
   </button>
   <button id="stripNew" type="button" aria-label="New thought"><span>+ New</span></button>
+  <div id="setOffer" role="region" aria-label="Add a set" hidden><p id="setOfferText">Scales works best with 20 or more thoughts. Add a set?</p><div class="so" id="setOfferSets"></div><button type="button" class="no" id="setOfferNo">Not now</button></div>
+  <div id="tip" hidden><div class="hole"></div><p class="tt" id="tipText"></p></div>
+  <p class="sr" id="tipSay" aria-live="polite"></p>
   <div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastUndo">Undo</button><button type="button" id="toastWhy" hidden>Say why</button><button type="button" id="toastDel" hidden>Delete</button></div>
 </section>
 
@@ -519,13 +548,15 @@ textarea::placeholder { color: var(--plum-faint); }
 <section class="view" id="vWrite" hidden aria-label="New thought">
   <button class="corner l" id="writeCancel" type="button">Cancel</button>
   <div class="sheetform center" id="writeForm">
+    <p class="whead" id="writeHead" hidden>What's on your mind?</p>
     <label class="sr" for="writeText">A thought</label>
     <textarea class="big" id="writeText" rows="5" maxlength="1500" placeholder="What's on your mind?"></textarea>
     <button class="bylink" type="button" id="writeByAdd">Add who said it</button>
     <label class="sr" for="writeBy">Who said it</label>
     <input class="byfield" id="writeBy" type="text" maxlength="200" placeholder="Who said it?" autocomplete="off" hidden>
+    <button class="startset" type="button" id="startFive" hidden><b>Or start with five lines worth keeping</b>From the Stoics, Franklin and more. Add your own any time.</button>
   </div>
-  <div class="formfoot"><button class="quiet" type="button" id="startFive" hidden>Or start with five</button><span></span><button class="act" type="button" id="writeKeep" disabled>Keep</button></div>
+  <div class="formfoot"><span></span><button class="act" type="button" id="writeKeep" disabled>Keep</button></div>
   <div class="kept" id="writeKept" hidden><p class="k1">Kept.</p><p class="k2" id="writeKeptSub">It comes back tomorrow.</p></div>
 </section>
 
@@ -727,8 +758,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.29.0"></script>
-<script src="sets.js?v=2.29.0"></script>
+<script src="core.js?v=2.30.0"></script>
+<script src="sets.js?v=2.30.0"></script>
 <script>
 (function () {
   "use strict";
@@ -954,9 +985,12 @@ textarea::placeholder { color: var(--plum-faint); }
       var bm = C.bookmarked(store).length;
       $("earlyBtn").hidden = !probe.card;
       $("earlyMarked").hidden = !bm; $("earlyMarked").textContent = "Bookmarked \u00b7 " + bm;
+      offerSets("end");
       return;
     }
     $("empty").hidden = true; $("carry").hidden = false; $("srActs").hidden = false;
+    if (setOfferWhere) hideOffer();
+    noteCard(); maybePulse();
     restHints();
     var w = $("words");
     w.textContent = shown(t.text); w.className = sizeClass(t.text);
@@ -1108,6 +1142,77 @@ textarea::placeholder { color: var(--plum-faint); }
     save(); saveUi(); $("toast").classList.remove("on"); buzz("undo"); renderMeet(true);
   };
 
+  // ---------- Onboarding (2.30.0) ----------
+  // Teach one thing at the moment it's needed, never a tour. Each hint shows once, at most one spotlight a session,
+  // never while typing, and a hint never shows for something already used. VoiceOver hears the hint instead of a spotlight.
+  // Automated browsers (navigator.webdriver) see none of this unless the address has ?tips=1, so other tests aren't covered.
+  var ONBOARD = !navigator.webdriver || /[?&]tips=1/.test(location.search);
+  var voiceOverOn = false;
+  window.scalesA11y = function (o) { voiceOverOn = !!(o && o.voiceOver); };
+  function tips() { ui.tips = ui.tips || {}; return ui.tips; }
+  function used(key) { var t = tips(); if (!t[key]) { t[key] = 1; saveUi(); } }
+  var spotThisSession = false;
+  function spot(el, key, text, sub) {
+    if (!ONBOARD || tips()[key] || spotThisSession || !el || el.hidden) return false;
+    var a = document.activeElement; if (a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT")) return false;
+    used(key); spotThisSession = true; track("tip", { k: key });
+    if (voiceOverOn) { $("tipSay").textContent = text + (sub ? " " + sub : ""); return true; }
+    var r = el.getBoundingClientRect(), box = $("vMeet").getBoundingClientRect(), pad = 10, hole = $("tip").querySelector(".hole");
+    // The thought's spotlight takes in who said it and the note, when they show.
+    if (el.id === "words") ["by", "note"].forEach(function (id) { var x = $(id); if (x && !x.hidden && x.offsetHeight) { var q = x.getBoundingClientRect(); r = { left: Math.min(r.left, q.left), top: r.top, width: Math.max(r.right, q.right) - Math.min(r.left, q.left), height: q.bottom - r.top, right: Math.max(r.right, q.right), bottom: q.bottom }; } });
+    var top = r.top - box.top - pad, h = r.height + pad * 2;
+    hole.style.left = (r.left - box.left - pad) + "px"; hole.style.top = top + "px"; hole.style.width = (r.width + pad * 2) + "px"; hole.style.height = h + "px";
+    $("tipText").innerHTML = esc(text) + (sub ? "<span>" + esc(sub) + "</span>" : "");
+    var below = top + h + 18, tt = $("tipText");
+    tt.style.top = ""; tt.style.bottom = "";
+    if (below < box.height - 160) tt.style.top = below + "px"; else tt.style.bottom = (box.height - top + 18) + "px";
+    $("tip").hidden = false; haptic("tick");
+    return true;
+  }
+  $("tip").addEventListener("click", function (e) { e.stopPropagation(); $("tip").hidden = true; });
+  // The spotlight on the thought itself, after the third card of the first days: tap to edit or add a note.
+  function noteCard() {
+    if (!ONBOARD || tips().edit || mode !== "meet") return;
+    ui.cardsMet = (ui.cardsMet || 0) + 1; saveUi();
+    if (ui.cardsMet >= 3) setTimeout(function () { if (mode === "meet" && !$("carry").hidden) spot($("words"), "edit", "Tap a thought to edit it or add a note.", "Tap anywhere to carry on."); }, 1200);
+  }
+  // A pulse on the strip once there are 10 thoughts, if the list has never been opened.
+  function maybePulse() {
+    if (!ONBOARD || tips().sheet || C.list(store).length < 10 || mode !== "meet") return;
+    used("sheet"); var st = $("strip"); st.classList.add("pulse"); setTimeout(function () { st.classList.remove("pulse"); }, 3000);
+  }
+  // "Swipe right to go back", once, the first time a page slides in.
+  function swipeHint(pg) {
+    if (!ONBOARD || tips().swipe) return;
+    used("swipe"); var h = document.createElement("p"); h.className = "swipehint"; h.textContent = "Swipe right to go back"; pg.appendChild(h);
+    setTimeout(function () { h.remove(); }, 3800);
+  }
+  // The set offer: after the first thought of your own, and on the end screen while there are fewer than 10 thoughts.
+  // Two sets not yet added; after two "Not now"s it stops. The sets are always in Settings.
+  var setOfferWhere = null, OFFER_ORDER = ["stoics", "questions", "franklin", "know", "jung"];
+  function setHas(S, id) { var s = S.sets.filter(function (x) { return x.id === id; })[0]; return s && s.items.some(function (it) { return own(store, "s-" + it.id); }); }
+  function offerSets(where) {
+    var S = window.ScalesSets;
+    if (!ONBOARD || !S || (ui.setNo || 0) >= 2 || ui.setTaken || C.list(store).length >= 10) return;
+    if (where === "first" && mode !== "meet") return;
+    var pick2 = OFFER_ORDER.filter(function (id) { return !setHas(S, id); }).slice(0, 2); if (!pick2.length) return;
+    $("setOfferSets").innerHTML = pick2.map(function (id) { var s = S.sets.filter(function (x) { return x.id === id; })[0]; return '<button type="button" data-offer="' + id + '">+ ' + esc(s.name) + "</button>"; }).join("");
+    $("setOffer").hidden = false; setOfferWhere = where; track("offer", { where: where });
+  }
+  function hideOffer() { $("setOffer").hidden = true; setOfferWhere = null; }
+  function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+  $("setOfferSets").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-offer]"); if (!b) return;
+    var S = window.ScalesSets, s = S.sets.filter(function (x) { return x.id === b.getAttribute("data-offer"); })[0]; if (!s) return;
+    var r = C.addSet(store, s, now(), lsGet(KEY_GONE, []));
+    if (!lsSet(KEY, store)) { store = lsGet(KEY, store); hideOffer(); done("There isn't room on this phone to add that set."); return; }
+    lsSet(KEY_GONE, r.gone); ui.setTaken = true; saveUi(); buzz("keep"); track("offer_take", { set: s.id, added: r.added });
+    $("stripN").textContent = C.list(store).length; var was = setOfferWhere; hideOffer();
+    done(s.name + ": " + r.added + " lines added. Two arrive each day, starting today.", 4000);
+    if (was === "end") { pick(); renderMeet(true); }
+  });
+  $("setOfferNo").onclick = function () { ui.setNo = (ui.setNo || 0) + 1; saveUi(); track("offer_no", {}); hideOffer(); };
+
   // ---------- Write ----------
   var writeHome = false;
   function openWrite(home) {
@@ -1120,6 +1225,8 @@ textarea::placeholder { color: var(--plum-faint); }
     // The very first time, the field shows an example until it is tapped, and five ready-made thoughts are offered.
     var first = !C.list(store).length;
     $("writeText").placeholder = first ? EXAMPLE : "What's on your mind?";
+    // 2.30.0: the first time, a heading says what to do, the example is lighter, and the set is a clear second choice.
+    $("writeText").classList.toggle("example", first); $("writeHead").hidden = !first;
     $("startFive").hidden = !(first && window.ScalesSets);
     closeLib(); setMode("write");
     if (!first) setTimeout(function () { $("writeText").focus(); }, 60);
@@ -1160,7 +1267,7 @@ textarea::placeholder { color: var(--plum-faint); }
     buzz("keep");
     $("writeKeptSub").textContent = firstOne ? "Here it is." : "It comes back tomorrow.";
     $("writeForm").hidden = true; $("writeKeep").parentNode.hidden = true; $("writeKept").hidden = false; $("writeCancel").hidden = true;
-    setTimeout(function () { setMode("meet"); renderMeet(true); }, 1600);
+    setTimeout(function () { setMode("meet"); renderMeet(true); if (firstOne) setTimeout(function () { offerSets("first"); }, 900); }, 1600);
   };
 
   // ---------- Edit ----------
@@ -1173,7 +1280,9 @@ textarea::placeholder { color: var(--plum-faint); }
     // 2.19.0: a note shows as plain text when there is one; otherwise "Add a note" opens a place to write it.
     $("editNote").hidden = !t.note; noteWords(); showArgBtn();
     disarm();
-    setMode("edit");
+    setMode("edit"); used("edit"); if (setOfferWhere) hideOffer();
+    // 2.30.0: the first time Edit opens where Argue with it is available, it is pointed out once.
+    setTimeout(function () { if (mode === "edit" && aiOk && !$("argBtn").hidden) spot($("argBtn"), "argue", "Argue with it", "Shows the strongest honest case against this thought, made on your iPhone."); }, 500);
   }
   // The bookmark is set here and applied with Done, like the words; Cancel leaves it as it was.
   var editMarked = false;
@@ -1257,7 +1366,9 @@ textarea::placeholder { color: var(--plum-faint); }
     if (!$("ten").hidden) { $("ten").hidden = true; mode = "meet"; }
     clockOff(); $("q").value = ""; renderLib();
     $("lib").classList.add("open"); $("lib").setAttribute("aria-hidden", "false"); $("libShade").classList.add("on");
-    mode = "library";
+    mode = "library"; used("sheet"); if (setOfferWhere === "first") hideOffer();
+    // 2.30.0: the first time there are tensions, the row is pointed out once.
+    setTimeout(function () { var tr = document.querySelector('#libList [data-group="tension"]:not([disabled])'); if (mode === "library" && tr) spot(tr, "ten", "Tensions", "Pairs of your own thoughts that pull against each other. Open one to see both side by side."); }, 500);
   }
   function closeLib() {
     if (!$("lib").classList.contains("open")) return;
@@ -1536,7 +1647,7 @@ textarea::placeholder { color: var(--plum-faint); }
   window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { what: "save" }); ui.saved = { ok: !!(r && r.ok), where: r && r.where, at: now().toISOString() }; saveUi(); };
   // ---------- Settings and Help ----------
   var needsRender = false;
-  function openPage(id, m) { var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; track("screen", { to: id }); }
+  function openPage(id, m) { var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; track("screen", { to: id }); swipeHint(p); }
   function closePage(id, m) { var p = $(id); p.classList.remove("open"); p.setAttribute("aria-hidden", "true"); mode = m; track("screen", { to: m }); }
   // 2.29.0: a page that slid in from the right can be swiped back to the right to close it, from anywhere on the page.
   // It follows the finger and closes past a third of the width or on a quick flick; otherwise it springs back. It takes
@@ -1836,6 +1947,7 @@ textarea::placeholder { color: var(--plum-faint); }
     $("argNote").disabled = inNote; $("argNote").textContent = inNote ? "Added to note \u2713" : "Add to note";
     $("argBox").hidden = false; showArgBtn();
   }
+  $("argBtn").addEventListener("click", function () { used("argue"); });
   $("argBtn").onclick = function () {
     var t = store[ui.cur]; if (!t || argBusy) return;
     if (!$("argBox").hidden || !$("argSafe").hidden) { $("argBox").hidden = true; $("argSafe").hidden = true; showArgBtn(); return; }
