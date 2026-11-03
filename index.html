@@ -160,6 +160,13 @@ textarea::placeholder { color: var(--plum-faint); }
 .formfoot { position: absolute; left: var(--pad); right: var(--pad); bottom: calc(var(--bot) + 28px); display: flex; align-items: center; justify-content: space-between; }
 .quiet { color: var(--plum-muted); font-size: 15px; padding: 12px 0; }
 .quiet.armed { color: var(--plum-ink); font-weight: 700; }
+/* 2.29.0: Delete, armed, turns a soft coral, and a thin line shows the 4 seconds before it resets. */
+#editDelete { position: relative; }
+#editDelete.armed { color: #F2A69B; }
+#editDelete .dbar { position: absolute; left: 0; bottom: 6px; height: 3px; border-radius: 2px; background: rgba(242,166,155,.25); width: 100%; overflow: hidden; }
+#editDelete .dbar i { display: block; height: 100%; background: #F2A69B; width: 100%; transform-origin: left; animation: dbar 4s linear forwards; }
+@keyframes dbar { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { #editDelete .dbar i { animation: none; } }
 .kept { position: absolute; left: var(--pad); right: var(--pad); top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
 .kept p { margin: 0; } .kept .k1 { font-size: 20px; font-weight: 700; color: var(--pist); } .kept .k2 { font-size: 16px; color: var(--plum-muted); }
 
@@ -1055,8 +1062,8 @@ textarea::placeholder { color: var(--plum-faint); }
     dropId = canDrop || null; $("toastDel").hidden = !dropId; $("toastUndo").hidden = false; $("toast").classList.remove("done");
     $("toastWhy").hidden = !whyId; if (whyId) $("toastWhy").setAttribute("data-id", whyId);
     $("toastMsg").textContent = msg; $("toast").classList.add("on");
-    clearTimeout(toastT); toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; tenUndo = null; }, 5000);
-    tenUndo = null;
+    clearTimeout(toastT); toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; tenUndo = null; delUndo = null; }, 5000);
+    tenUndo = null; delUndo = null;
   }
   // Delete: the set line is gone for good, with its visits, so it never counts toward anything.
   $("toastDel").onclick = function () {
@@ -1082,6 +1089,15 @@ textarea::placeholder { color: var(--plum-faint); }
       var d = tenData(); d.gone = (d.gone || []).filter(function (x) { return x !== tenUndo.k; });
       if (tenUndo.pair) d.pairs = [tenUndo.pair].concat(d.pairs || []);
       lsSet(KEY_TEN, d); tenUndo = null; $("toast").classList.remove("on"); buzz("undo"); return;
+    }
+    // 2.29.0: undoing a delete puts the thought back, on screen, as it was.
+    if (delUndo) {
+      var du = delUndo; delUndo = null;
+      if (!du.wasGone) lsSet(KEY_GONE, lsGet(KEY_GONE, []).filter(function (x) { return x !== du.id; }));
+      // The card that showed for a moment after the delete isn't counted as a visit.
+      clockOff(); if (mode === "write") setMode("meet");
+      store[du.id] = du.t; ui.cur = du.id; ui.ms = 0; ui.worked = false; ui.argued = false; save(); saveUi();
+      track("undo", { id: du.id, what: "delete" }); $("toast").classList.remove("on"); buzz("undo"); renderMeet(true); return;
     }
     if (!undoPoint) return;
     track("undo", { id: undoPoint.id });
@@ -1214,19 +1230,27 @@ textarea::placeholder { color: var(--plum-faint); }
 
   // Delete asks for a second tap rather than a dialog. A tap anywhere else takes it back.
   var delArmed = false;
-  function disarm() { delArmed = false; $("editDelete").textContent = "Delete"; $("editDelete").classList.remove("armed"); }
+  var delT = 0;
+  function disarm() { clearTimeout(delT); delArmed = false; $("editDelete").textContent = "Delete"; $("editDelete").classList.remove("armed"); }
   document.addEventListener("pointerdown", function (e) { if (delArmed && !e.target.closest("#editDelete")) disarm(); }, true);
   $("editDelete").onclick = function () {
-    if (!delArmed) { delArmed = true; this.textContent = "Tap again to delete"; this.classList.add("armed"); haptic("tick"); return; }
+    if (!delArmed) {
+      delArmed = true; this.innerHTML = 'Tap again to delete<span class="dbar" aria-hidden="true"><i></i></span>'; this.classList.add("armed");
+      haptic("warning"); clearTimeout(delT); delT = setTimeout(disarm, 4000); return;
+    }
     if (store[ui.cur]) track("delete", { id: ui.cur, where: "edit", from: store[ui.cur].from || (store[ui.cur].set ? "set" : "own") });
     var id = ui.cur;
+    // 2.29.0: Undo for 5 seconds puts it back exactly as it was.
+    var keptCopy = store[id] ? JSON.parse(JSON.stringify(store[id])) : null, wasGone = lsGet(KEY_GONE, []).indexOf(id) >= 0;
     // A thought that came from Scales 1 is remembered as deleted, so the catch-up never brings it back.
     if (store[id] && store[id].from) { var g = lsGet(KEY_GONE, []); g.push(id); lsSet(KEY_GONE, g); }
     delete store[id]; ui.cur = null; ui.ms = 0; ui.worked = false; ui.argued = false; save(); saveUi(); disarm();
     buzz("remove");
     setMode("meet"); renderMeet(true);
-    done("Deleted.");
+    toast("Deleted.");
+    if (keptCopy) delUndo = { id: id, t: keptCopy, wasGone: wasGone };
   };
+  var delUndo = null;
 
   // ---------- Library ----------
   function openLib() {
