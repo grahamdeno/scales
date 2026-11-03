@@ -509,6 +509,9 @@
       arg: t.arg && typeof t.arg === "object" && typeof t.arg.text === "string" && typeof t.arg.against === "string" && typeof t.arg.assumes === "string"
         ? { text: t.arg.text.slice(0, 1500), against: t.arg.against.slice(0, 600), assumes: t.arg.assumes.slice(0, 300), at: typeof t.arg.at === "string" ? t.arg.at : nowIso,
             free: typeof t.arg.free === "string" && t.arg.free ? t.arg.free.slice(0, 200) : undefined } : undefined,
+      // 2.31.0: where a refined thought came from, and what it led to.
+      grewFrom: typeof t.grewFrom === "string" && t.grewFrom ? t.grewFrom.slice(0, 60) : undefined,
+      ledTo: typeof t.ledTo === "string" && t.ledTo ? t.ledTo.slice(0, 60) : undefined,
       // 2.31.0: the case for, kept like the argument.
       pro: t.pro && typeof t.pro === "object" && typeof t.pro.text === "string" && typeof t.pro.pro === "string"
         ? { text: t.pro.text.slice(0, 1500), pro: t.pro.pro.slice(0, 600), at: typeof t.pro.at === "string" ? t.pro.at : nowIso } : undefined };

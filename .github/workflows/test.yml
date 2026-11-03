@@ -38,6 +38,8 @@ jobs:
         run: node tests/e2e/native-store.e2e.js
       - name: Onboarding
         run: node tests/e2e/onboarding.e2e.js
+      - name: Refining a thought
+        run: node tests/e2e/refine.e2e.js
 
   # After tests pass on main, tag the commit with the version in core.js
   # (for example v1.21.0) unless that version is already tagged.
