@@ -17,6 +17,11 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.29.0:** Tensions tuned on real misses. Questions, long thoughts (over 280 characters) and protective thoughts are
+  left out. Batches of 12, about two thirds inside one theme and the rest mixed. A stricter prompt with examples makes the
+  model name the conflict; each pair then gets a second look (agree, different things, or opposite) and only "opposite"
+  is kept. Pairs marked Not a tension become examples of a miss. Shown and dismissed pairs are counted on the phone.
+  The gear in Your thoughts lines up with the search field (2.28.1).
 - **2.28.0:** + New moves to the strip at the bottom right, the count sits beside Your thoughts, and the sheet has no
   New of its own. Shutting the sheet, it slides in behind the strip, so its header no longer lingers in the strip's place.
 - **2.27.0:** Back up now, in the iPhone app, saves its own file into iCloud Drive, Scales, named with the date and

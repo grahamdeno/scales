@@ -702,8 +702,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.28.1"></script>
-<script src="sets.js?v=2.28.1"></script>
+<script src="core.js?v=2.29.0"></script>
+<script src="sets.js?v=2.29.0"></script>
 <script>
 (function () {
   "use strict";
@@ -1782,17 +1782,27 @@ textarea::placeholder { color: var(--plum-faint); }
   function findTensions() {
     var d = tenData(), day = C.dayKey(now());
     if (!aiOk || tenBusy || aiBusy || d.ran === day) return;
-    var batches = C.tensionBatches(C.inRotation(store), day); if (!batches.length) return;
-    tenBusy = true; var found = [], i = 0;
+    // 2.29.0: batches lean on themes (when sorted), the pairs this person dismissed become examples of a miss, and every
+    // pair the model offers gets a second look (agree, different things, or opposite) before it is kept.
+    var batches = C.tensionBatches(C.inRotation(store), day, aiData().tags || null); if (!batches.length) return;
+    var notPairs = (d.gone || []).map(function (k) { var ab = k.split("|"); return store[ab[0]] && store[ab[1]] ? [store[ab[0]].text, store[ab[1]].text] : null; }).filter(Boolean);
+    tenBusy = true; var found = [], offered = 0, i = 0;
     (function next() {
       if (i >= batches.length) {
-        var dd = tenData(), added = C.mergeTensions(dd, found, now().toISOString()); dd.ran = day; lsSet(KEY_TEN, dd); tenBusy = false;
-        track("tensions", { batches: batches.length, found: found.length, added: added, kept: dd.pairs.length });
+        var dd = tenData(), added = C.mergeTensions(dd, found, now().toISOString()); dd.ran = day;
+        dd.stats = dd.stats || { shown: 0, dropped: 0 }; dd.stats.shown += added; lsSet(KEY_TEN, dd); tenBusy = false;
+        track("tensions", { batches: batches.length, themed: batches.filter(function (b) { return b.themed; }).length, offered: offered, found: found.length, added: added, kept: dd.pairs.length });
         if (mode === "library") renderLib();
         return;
       }
-      var b = batches[i++], r = C.tensionRequest(b);
-      aiAsk(r.instructions, r.prompt).then(function (res) { if (res && res.text) found = found.concat(C.parseTensions(res.text, b)); next(); });
+      var b = batches[i++], r = C.tensionRequest(b, notPairs);
+      aiAsk(r.instructions, r.prompt).then(function (res) {
+        var cand = res && res.text ? C.parseTensions(res.text, b) : [];
+        if (!cand.length) return next();
+        offered++;
+        var c = C.tensionCheck(store[cand[0][0]], store[cand[0][1]]);
+        aiAsk(c.instructions, c.prompt).then(function (chk) { if (chk && chk.text && C.checkSaysTension(chk.text)) found.push(cand[0]); next(); });
+      });
     })();
   }
   function showTension(a, b) {
@@ -1809,6 +1819,7 @@ textarea::placeholder { color: var(--plum-faint); }
     var d = tenData(), k = C.tensionKey(a, b), was = (d.pairs || []).filter(function (p) { return C.tensionKey(p.a, p.b) === k; })[0];
     d.pairs = (d.pairs || []).filter(function (p) { return C.tensionKey(p.a, p.b) !== k; });
     d.gone = (d.gone || []).filter(function (x) { return x !== k; }).concat([k]);
+    d.stats = d.stats || { shown: 0, dropped: 0 }; d.stats.dropped++;
     lsSet(KEY_TEN, d); track("tension_drop", {}); haptic("tick");
     hideTension();
     setTimeout(function () { toast("Won't pair these again"); tenUndo = { k: k, pair: was }; }, 300);
