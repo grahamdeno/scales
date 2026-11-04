@@ -448,6 +448,8 @@ textarea::placeholder { color: var(--plum-faint); }
 .whyfoot { display: flex; justify-content: space-between; align-items: center; }
 #toast #toastWhy { font-weight: 600; padding: 7px 12px; margin-left: 4px; border-radius: 999px; background: var(--pist); color: var(--pist-ink); }
 /* 2.31.0: refining a thought. */
+.getapp { display: block; margin: 6px var(--pad) 4px; padding: 14px 16px; border-radius: 14px; background: rgba(185,201,163,.12); color: var(--plum-ink); text-decoration: none; font-size: 14px; line-height: 1.4; }
+.getapp b { display: block; font-size: 15px; margin-bottom: 2px; } .getapp span { display: block; margin-top: 6px; color: var(--pist); font-weight: 600; }
 .whynext { align-self: flex-start; color: var(--pist); font-weight: 600; font-size: 15px; padding: 12px 0; }
 #vEdit .grew { margin: 12px 0 0; padding: 12px 14px; border-radius: 12px; background: rgba(241,233,216,.06); font-size: 13px; line-height: 1.45; color: var(--plum-muted); }
 #vEdit .grew b { display: block; margin-top: 3px; color: var(--plum-ink); font-weight: 600; font-size: 14px; }
@@ -649,6 +651,7 @@ textarea::placeholder { color: var(--plum-faint); }
   <button class="pback" type="button" id="setBack">&#8249; Your thoughts</button>
   <h1>Settings</h1>
   <div class="body">
+    <a class="getapp" id="getApp" hidden target="_blank" rel="noopener"><b>Scales for iPhone</b>Argue with it, Tensions and an automatic iCloud backup are in the iPhone app.<span>Get it on the App Store &#8250;</span></a>
     <p class="sh">Insights</p>
     <div class="grp">
       <button class="srow" type="button" id="setIns"><span>Insights</span><span class="chev" aria-hidden="true">&#8250;</span></button>
@@ -1219,6 +1222,11 @@ textarea::placeholder { color: var(--plum-faint); }
     var lg = lsGet(KEY_LOG, []); if (lg.length) { lg[lg.length - 1].undone = true; lsSet(KEY_LOG, lg); }
     save(); saveUi(); $("toast").classList.remove("on"); buzz("undo"); renderMeet(true);
   };
+
+  // ---------- The iPhone app, offered in the browser (launch) ----------
+  // Only in a browser, and only once the App Store address is filled in (it stays hidden while it holds a placeholder).
+  var APP_STORE_URL = "https://apps.apple.com/app/apple-store/id{APP_ID}?pt={PROVIDER_TOKEN}&ct=browser-app&mt=8";
+  if (!NATIVE && APP_STORE_URL.indexOf("{") < 0) { $("getApp").href = APP_STORE_URL; $("getApp").hidden = false; }
 
   // ---------- Onboarding (2.30.0) ----------
   // Teach one thing at the moment it's needed, never a tour. Each hint shows once, at most one spotlight a session,
