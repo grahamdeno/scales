@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.31.1";
+  var VERSION = "2.32.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -726,7 +726,7 @@
     "incomplete, or does harm if followed without judgment. Be direct and fair. Never praise the thought, never give advice, " +
     "never ask questions, never soften with phrases like 'while this is true'. Then name the one belief the thought quietly " +
     "depends on. Then say what the person would no longer have to do if the case against were right: the comfort it offers, " +
-    "starting with a verb, plain and specific. Answer in exactly this form and nothing else:\nAGAINST: <two or three sentences, under 60 words>\n" +
+    "starting with a verb, plain and specific. Answer in exactly this form and nothing else:\nAGAINST: <two sentences, under 40 words>\n" +
     "ASSUMES: <one sentence, under 20 words>\nFREE: <a short phrase, under 18 words, starting with a verb>\n" +
     "Some thoughts are not for arguing with. If the thought is about staying alive or safe, not harming oneself, recovering from " +
     "addiction or harm, a person's worth or reason to live, or keeping someone else safe, answer only the word SKIP.";
@@ -741,7 +741,7 @@
   // run by the time this is offered: the thought passed the local check and the case against was made.
   var ARG_FOR_INSTRUCTIONS = "You help a person look at a thought they wrote down, fairly. Explain what the thought gets right: " +
     "the best reasons it holds, and what someone would lose by setting it aside. Plain and specific. Do not flatter, do not give " +
-    "advice, do not ask questions. Answer in exactly this form and nothing else:\nFOR: <two or three sentences, under 60 words>";
+    "advice, do not ask questions. Answer in exactly this form and nothing else:\nFOR: <two sentences, under 40 words>";
   function argForRequest(text, by) {
     var who = cleanBy(by);
     return { instructions: ARG_FOR_INSTRUCTIONS, prompt: "The thought: \"" + String(text).trim().slice(0, 600) + "\"" + (who ? " (" + who + ")" : "") };

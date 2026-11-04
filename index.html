@@ -179,10 +179,10 @@ textarea::placeholder { color: var(--plum-faint); }
   background: var(--plum-ink); color: var(--plum); font-size: 15px; font-weight: 600; padding: 11px 18px; border-radius: 999px;
   box-shadow: 0 8px 24px rgba(20,10,24,.3); pointer-events: none; animation: swipehint 4.5s ease forwards; z-index: 3; }
 @keyframes swipehint { 0% { opacity: 0; } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
-/* 2.31.0 (breathe-test): after 20 seconds with a thought and no touch, its words breathe: about 1% larger and back,
+/* 2.31.0 (breathe-test): after 20 seconds with a thought and no touch, its words breathe: about 1.8% larger and back,
    4 seconds in and 6 out. Any touch stops it; Reduce Motion and the Settings switch turn it off. */
 #words.breathe { animation: breathe 10s ease-in-out infinite; transform-origin: left center; }
-@keyframes breathe { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.012); } }
+@keyframes breathe { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.018); } }
 @media (prefers-reduced-motion: reduce) { #words.breathe { animation: none; } }
 #strip.pulse { animation: strippulse 1.4s ease-in-out 2; }
 @keyframes strippulse { 50% { transform: translateY(-6px); } }
@@ -470,6 +470,24 @@ textarea::placeholder { color: var(--plum-faint); }
 .argbox .ask { margin: 2px 0 10px; font-size: 16px; font-style: italic; line-height: 1.4; }
 .argbox .for { margin-top: 16px; padding-top: 14px; border-top: 1px dashed rgba(241,233,216,.14); }
 .argbox .for .v { margin: 0; }
+/* 2.32.0: the Argue with it page. */
+#argPage .argbody { padding: 0 var(--pad) 16px; }
+#argPage .aw { margin: 4px 0 18px; font-size: 16px; line-height: 1.35; color: var(--plum-muted); font-weight: 500; }
+#argPage .al { margin: 0 0 6px; font-size: 13px; color: var(--plum-muted); }
+#argPage .ab { margin: 0 0 6px; font-size: 18px; line-height: 1.42; font-weight: 500; }
+#argPage .ab.quiet { color: var(--plum-muted); font-size: 16px; font-weight: 400; }
+#argPage .aa { margin: 6px 0 0; font-size: 14px; line-height: 1.4; color: var(--plum-muted); }
+#argPage .aretry { color: var(--pist); font-weight: 600; font-size: 15px; padding: 6px 0; }
+#argPage .yet { display: flex; align-items: center; gap: 12px; margin: 18px 0; font-size: 13px; color: var(--plum-muted); }
+#argPage .yet::after { content: ""; flex: 1; height: 1px; background: rgba(241,233,216,.12); }
+#argPage .af { margin: 18px 0 0; font-size: 15px; line-height: 1.4; color: var(--pist); }
+#argPage .af span { color: var(--plum-muted); }
+#argPage .aend { flex: none; border-top: 1px solid rgba(241,233,216,.12); padding: 14px var(--pad) calc(var(--bot) + 18px); }
+#argPage .ask { margin: 0 0 8px; font-size: 16px; font-style: italic; }
+#argPage .lk { display: flex; gap: 24px; } #argPage .lk button { color: var(--pist); font-weight: 600; font-size: 15px; padding: 6px 0; }
+#argPage .lk button.q { color: var(--plum-muted); font-weight: 500; } #argPage .lk button:disabled { color: var(--plum-muted); }
+#argPage textarea { width: 100%; margin-top: 10px; font: inherit; font-size: 15px; color: var(--plum-ink); background: rgba(241,233,216,.07); border: 0; border-radius: 12px;
+  padding: 10px 12px; outline: none; resize: none; max-height: 30vh; overflow-y: auto; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
 .argbox .for .v.quiet { color: var(--plum-muted); font-size: 15px; }
 .argbox .acts button { font-size: 15px; font-weight: 600; color: var(--pist); padding: 4px 0; }
 .argbox .acts button:disabled { color: var(--plum-muted); font-weight: 500; }
@@ -596,14 +614,6 @@ textarea::placeholder { color: var(--plum-faint); }
     <div class="ewords" id="eWords"><button type="button" id="noteBtn">Add a note</button><button type="button" id="argBtn" hidden>Argue with it</button></div>
     <label class="sr" for="editNote">A note</label>
     <textarea class="enote" id="editNote" rows="2" maxlength="1500" placeholder="Anything that came up" hidden></textarea>
-    <div class="argbox" id="argBox" hidden>
-      <p class="k">The case against</p><p class="v" id="argAgainst"></p>
-      <p class="k">It assumes</p><p class="v" id="argAssumes"></p>
-      <div class="free" id="argFreeBox" hidden><p class="k">If this wins, you'd be free to</p><p class="v" id="argFree"></p></div>
-      <p class="ask">Which would you rather be true? Why?</p>
-      <div class="acts"><button type="button" id="argWrite">Write a note</button><button type="button" id="argPro">Argue for it instead</button><button type="button" class="quiet2" id="argNote">Add to note</button><button type="button" class="quiet2" id="argHide">Hide</button></div>
-      <div class="for" id="argForBox" hidden><p class="k">The case for it</p><p class="v" id="argForText"></p></div>
-    </div>
     <div class="argbox" id="argSafe" hidden>
       <p class="v">This one isn't for arguing with.</p>
       <p class="k">If you're going through something hard, call or text <a href="tel:988">988</a> in the US, or your local emergency number.</p>
@@ -687,6 +697,26 @@ textarea::placeholder { color: var(--plum-faint); }
   <div class="body" id="insBody"></div>
 </section>
 <!-- Say why (2.17.0): one optional line about why a thought was put away. -->
+<section class="page" id="argPage" aria-label="Argue with it" aria-hidden="true">
+  <button class="pback" type="button" id="argBack">&#8249; Edit</button>
+  <div class="body argbody">
+    <p class="aw" id="apThought"></p>
+    <p class="al">Against it</p>
+    <p class="ab" id="apAgainst"></p>
+    <button type="button" class="aretry" id="apRetry" hidden>Try again</button>
+    <p class="aa" id="apAssumes"></p>
+    <div class="yet">and yet</div>
+    <p class="al">For it</p>
+    <p class="ab" id="apFor"></p>
+    <p class="af" id="apFree" hidden></p>
+  </div>
+  <div class="aend">
+    <p class="ask">Which would you rather be true? Why?</p>
+    <div class="lk"><button type="button" id="apWrite">Write a note</button><button type="button" class="q" id="apNote">Add to note</button></div>
+    <label class="sr" for="apNoteText">Your note</label>
+    <textarea id="apNoteText" rows="3" maxlength="1500" placeholder="Which would I rather be true, and why?" hidden></textarea>
+  </div>
+</section>
 <section class="page" id="whyPage" aria-label="Why it was put away" aria-hidden="true">
   <button class="pback" type="button" id="whyBack">Cancel</button>
   <div class="body whybody">
@@ -786,8 +816,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.31.1"></script>
-<script src="sets.js?v=2.31.1"></script>
+<script src="core.js?v=2.32.0"></script>
+<script src="sets.js?v=2.32.0"></script>
 <script>
 (function () {
   "use strict";
@@ -899,7 +929,7 @@ textarea::placeholder { color: var(--plum-faint); }
   // time spent with the thought; before, opening Edit paused the clock). A long stretch with no touch at all
   // is read as the phone being set down, so it counts as seen, never as thought about.
   var since = null, lastTouch = Date.now(), softT = 0;
-  function counting(m) { return m === "meet" || m === "edit"; }
+  function counting(m) { return m === "meet" || m === "edit" || m === "argue"; }
   function clockOn() { if (since == null && ui.cur && !document.hidden && counting(mode)) since = Date.now(); scheduleSoften(); breatheLater(); }
   function clockOff() { if (since != null) { ui.ms += Date.now() - since; since = null; saveUi(); } clearTimeout(softT); breatheOff(); }
   // Breathing words (breathe-test): 20 seconds after the thought appears or the last touch, while it's on screen.
@@ -1341,7 +1371,7 @@ textarea::placeholder { color: var(--plum-faint); }
     var g = t.grewFrom && store[t.grewFrom];
     $("editGrew").hidden = !g;
     if (g) $("editGrew").innerHTML = "Grew from<b>" + esc(firstLine(g.text)) + "</b>" + (g.awayWhy ? "\u201c" + esc(g.awayWhy) + "\u201d" : "");
-    argPending = null; proPending = null; $("argBox").hidden = true; $("argSafe").hidden = true; $("editNote").placeholder = "Anything that came up";
+    argPending = null; proPending = null; $("argSafe").hidden = true; $("editNote").placeholder = "Anything that came up";
     // 2.19.0: a note shows as plain text when there is one; otherwise "Add a note" opens a place to write it.
     $("editNote").hidden = !t.note; noteWords(); showArgBtn();
     disarm();
@@ -2018,7 +2048,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function argText() { return $("editText").value.trim(); }
   function showArgBtn() {
     var b = $("argBtn"); b.hidden = !aiOk; b.disabled = argBusy; b.textContent = argBusy ? "Thinking it over\u2026" : "Argue with it";
-    b.classList.toggle("on", !$("argBox").hidden || !$("argSafe").hidden); wordsRow();
+    b.classList.toggle("on", !$("argSafe").hidden); wordsRow();
   }
   // The two words: "Add a note" only while there is no note showing; the row hides when neither applies.
   function noteWords() { var n = $("noteBtn"); n.hidden = !$("editNote").hidden && !!$("editNote").value.trim(); n.classList.toggle("on", !$("editNote").hidden); wordsRow(); }
@@ -2029,90 +2059,84 @@ textarea::placeholder { color: var(--plum-faint); }
     ta.hidden = false; noteWords(); grow(ta); ta.focus();
   };
   $("editNote").addEventListener("blur", function () { if (!this.value.trim()) { this.hidden = true; } noteWords(); });
-  function showSafe() { $("argBox").hidden = true; $("argSafe").hidden = false; showArgBtn(); }
-  function showArg(a) {
-    $("argSafe").hidden = true;
-    $("argAgainst").textContent = a.against; $("argAssumes").textContent = a.assumes;
-    $("argFreeBox").hidden = !a.free; $("argFree").textContent = a.free || "";
-    $("argForBox").hidden = true; $("argPro").textContent = "Argue for it instead"; $("argPro").disabled = false;
-    noteState();
-    $("argBox").hidden = false; showArgBtn();
+  // 2.32.0: Argue with it opens its own page, like a tension: the case against, "and yet", the case for, what the case
+  // against would let you off, and one question with a note to answer it. Edit keeps only the word. Both cases are kept
+  // with the thought; reopening never asks the model again. A protective thought gets the safety note in Edit instead.
+  function showSafe() { $("argSafe").hidden = false; showArgBtn(); }
+  function curArg() { var t = store[ui.cur]; if (!t) return null; return argText() === t.text ? C.argFor(t) : (argPending && argPending.text === argText() ? argPending : null); }
+  function curPro() { var t = store[ui.cur]; if (!t) return null; return argText() === t.text ? C.proFor(t) : (proPending && proPending.text === argText() ? proPending : null); }
+  var proPending = null, proFailed = false, apId = null;
+  function apOpen() { return $("argPage").classList.contains("open") && apId === ui.cur; }
+  function apSet(id, text, quiet) { var el = $(id); el.textContent = text; el.classList.toggle("quiet", !!quiet); }
+  function fillAgainst(a) {
+    apSet("apAgainst", a.against); $("apAssumes").textContent = "It assumes " + a.assumes.charAt(0).toLowerCase() + a.assumes.slice(1).replace(/\.$/, "") + ".";
+    $("apFree").hidden = !a.free; if (a.free) $("apFree").innerHTML = "<span>If the case against wins, you'd be free to</span> " + esc(a.free) + ".";
+    $("apRetry").hidden = true; apNoteState();
+  }
+  function fillFor(p) { proFailed = false; apSet("apFor", p.pro); apNoteState(); }
+  function apNoteState() {
+    var a = curArg(), b = $("apNote"); if (!a) { b.disabled = true; return; }
+    var n = $("editNote").value.trim(), inNote = !!n && C.withArgNote(n, a, proFailed ? null : curPro()) === n;
+    b.disabled = inNote; b.textContent = inNote ? "Added to note ✓" : "Add to note";
+  }
+  function askAgainst(text, id) {
+    argBusy = true; showArgBtn(); track("tap", { id: "argue", kept: 0 });
+    var r = C.argRequest(text, $("editBy").value);
+    aiAsk(r.instructions, r.prompt).then(function (res) {
+      argBusy = false; showArgBtn();
+      var a = res && res.text ? C.parseArg(res.text) : null;
+      if (ui.cur !== id) return;
+      if ((a && a.skip) || (res && res.err && /guardrail|unsafe|sensitive/i.test(String(res.err)))) {
+        if (apOpen()) $("argBack").click(); showSafe(); track("ai_safe", { what: "argue", how: a && a.skip ? "skip" : "guardrail" }); return;
+      }
+      if (!a) { apSet("apAgainst", "Couldn't argue with it just now.", true); $("apRetry").hidden = false; track("ai_fail", { what: "argue", err: res && res.err ? String(res.err).slice(0, 60) : "shape" }); return; }
+      a.text = text; a.at = now().toISOString();
+      if (text === store[id].text) { store[id].arg = a; save(); } else argPending = a;
+      if (apOpen()) { haptic("tick"); fillAgainst(a); if (!curPro()) askFor(text, id); }
+    });
+  }
+  function askFor(text, id) {
+    apSet("apFor", "Finding the case for…", true); track("tap", { id: "argue_for", kept: 0 });
+    var r = C.argForRequest(text, $("editBy").value);
+    aiAsk(r.instructions, r.prompt).then(function (res) {
+      var p = res && res.text ? C.parseFor(res.text) : null;
+      if (ui.cur !== id) return;
+      if (!p || p.skip) {
+        proFailed = true; if (apOpen()) apSet("apFor", "Couldn't find the case for this one just now.", true);
+        track("ai_fail", { what: "argue_for", how: p && p.skip ? "skip" : res && res.err ? (/guardrail|unsafe|sensitive/i.test(String(res.err)) ? "guardrail" : "error") : "shape", err: res && res.err ? String(res.err).slice(0, 60) : "" }); return;
+      }
+      p.text = text; p.at = now().toISOString();
+      if (text === store[id].text) { store[id].pro = p; save(); } else proPending = p;
+      if (apOpen()) fillFor(p);
+    });
   }
   $("argBtn").addEventListener("click", function () { used("argue"); spotDone("argue"); });
   $("argBtn").onclick = function () {
     var t = store[ui.cur]; if (!t || argBusy) return;
-    if (!$("argBox").hidden || !$("argSafe").hidden) { $("argBox").hidden = true; $("argSafe").hidden = true; showArgBtn(); return; }
     var text = argText(); if (!text) return;
     ui.argued = true; saveUi();
     // 2.24.0: a thought that protects someone is never sent to be argued with.
     if (C.protectedThought(text)) { showSafe(); track("tap", { id: "argue", safe: "local" }); return; }
-    var kept = text === t.text ? C.argFor(t) : (argPending && argPending.text === text ? argPending : null);
-    if (kept) { showArg(kept); haptic("tick"); track("tap", { id: "argue", kept: 1 }); return; }
-    argBusy = true; showArgBtn(); track("tap", { id: "argue", kept: 0 });
-    var r = C.argRequest(text, $("editBy").value), id = t.id;
-    aiAsk(r.instructions, r.prompt).then(function (res) {
-      argBusy = false;
-      var a = res && res.text ? C.parseArg(res.text) : null;
-      if (mode !== "edit" || ui.cur !== id) return;
-      // The model answered SKIP, or Apple's guardrails stopped it: the same calm note, never an error.
-      if ((a && a.skip) || (res && res.err && /guardrail|unsafe|sensitive/i.test(String(res.err)))) { showSafe(); track("ai_safe", { what: "argue", how: a && a.skip ? "skip" : "guardrail" }); return; }
-      if (!a) { showArgBtn(); $("argBtn").textContent = "Couldn't argue with it just now. Try again."; track("ai_fail", { what: "argue", err: res && res.err ? String(res.err).slice(0, 60) : "shape" }); return; }
-      a.text = text; a.at = now().toISOString();
-      // Kept with the thought straight away when the words are the ones already kept; otherwise kept at Done.
-      if (text === store[id].text) { store[id].arg = a; save(); } else argPending = a;
-      haptic("tick"); showArg(a);
-    });
+    $("argSafe").hidden = true; apId = t.id; proFailed = false;
+    $("apThought").textContent = text;
+    $("apNoteText").value = $("editNote").value; $("apNoteText").hidden = !$("editNote").value.trim();
+    var a = curArg(), p = curPro();
+    if (a) { fillAgainst(a); track("tap", { id: "argue", kept: 1 }); } else { apSet("apAgainst", "Thinking it over…", true); $("apAssumes").textContent = ""; $("apFree").hidden = true; $("apRetry").hidden = true; }
+    if (p) fillFor(p); else apSet("apFor", a ? "Finding the case for…" : "", true);
+    apNoteState();
+    openPage("argPage", "argue"); $("argPage").querySelector(".body").scrollTop = 0;
+    if (!a) askAgainst(text, t.id); else if (!p) askFor(text, t.id);
   };
-  $("argHide").onclick = function () { $("argBox").hidden = true; showArgBtn(); };
-  // The argument and case for that belong to the words in the field now (kept with the thought, or made while editing).
-  function curArg() { var t = store[ui.cur]; if (!t) return null; return argText() === t.text ? C.argFor(t) : argPending; }
-  function curPro() { var t = store[ui.cur]; if (!t) return null; return argText() === t.text ? C.proFor(t) : (proPending && proPending.text === argText() ? proPending : null); }
-  function noteState() {
+  $("apRetry").onclick = function () { var t = store[apId]; if (t && !argBusy) { apSet("apAgainst", "Thinking it over…", true); this.hidden = true; askAgainst(argText(), t.id); } };
+  $("argBack").onclick = function () { closePage("argPage", "edit"); showArgBtn(); noteWords(); };
+  // Write a note, right under the question; it is the thought's own note, kept with Done in Edit like any note.
+  $("apWrite").onclick = function () { var ta = $("apNoteText"); ta.hidden = false; grow(ta); ta.focus(); haptic("tick"); };
+  $("apNoteText").addEventListener("input", function () { var en = $("editNote"); en.value = this.value; en.hidden = !this.value.trim(); grow(this); apNoteState(); });
+  $("apNote").onclick = function () {
     var a = curArg(); if (!a) return;
-    var pro = $("argForBox").hidden || proFailed ? null : curPro(), n = $("editNote").value.trim(), inNote = !!n && C.withArgNote(n, a, pro) === n;
-    $("argNote").disabled = inNote; $("argNote").textContent = inNote ? "Added to note \u2713" : "Add to note";
-  }
-  $("argNote").onclick = function () {
-    var a = curArg(); if (!a) return;
-    var pro = $("argForBox").hidden || proFailed ? null : curPro();
-    $("editNote").value = C.withArgNote($("editNote").value, a, pro); $("editNote").hidden = false; grow($("editNote")); noteWords();
-    noteState(); haptic("tick");
+    var en = $("editNote"); en.value = C.withArgNote(en.value, a, proFailed ? null : curPro()); en.hidden = false;
+    var ta = $("apNoteText"); ta.value = en.value; ta.hidden = false; grow(ta); apNoteState(); haptic("tick");
   };
-  // 2.31.0: Write a note, with the question as its prompt. Writing counts as work on the thought, as any note does.
-  $("argWrite").onclick = function () {
-    var n = $("editNote"); n.hidden = false; if (!n.value.trim()) n.placeholder = "Which would I rather be true, and why?";
-    noteWords(); grow(n); n.focus(); haptic("tick");
-  };
-  // 2.31.0: Argue for it instead: the strongest case for the thought, shown under the case against.
-  var proPending = null, proBusy = false;
-  $("argPro").onclick = function () {
-    var t = store[ui.cur]; if (!t || proBusy) return;
-    if (!$("argForBox").hidden) { $("argForBox").hidden = true; this.textContent = "Argue for it instead"; noteState(); return; }
-    var text = argText(); if (!text) return;
-    if (C.protectedThought(text)) { showSafe(); return; }
-    ui.argued = true; saveUi();
-    var kept = curPro();
-    if (kept) { showPro(kept); track("tap", { id: "argue_for", kept: 1 }); return; }
-    proBusy = true; this.disabled = true; this.textContent = "Thinking it over\u2026"; track("tap", { id: "argue_for", kept: 0 });
-    var r = C.argForRequest(text, $("editBy").value), id = t.id, btn = this;
-    aiAsk(r.instructions, r.prompt).then(function (res) {
-      proBusy = false; btn.disabled = false;
-      var p = res && res.text ? C.parseFor(res.text) : null;
-      if (mode !== "edit" || ui.cur !== id) return;
-      // 2.31.1: when the case for can't be made, the argument stays and a quiet line says so. The crisis note is only for
-      // thoughts the local check marks as protective, never for a model that declined or a guardrail on this request.
-      if (!p || p.skip) {
-        var how = p && p.skip ? "skip" : res && res.err ? (/guardrail|unsafe|sensitive/i.test(String(res.err)) ? "guardrail" : "error") : "shape";
-        showPro({ pro: "Couldn't find the case for this one just now." }); $("argForText").classList.add("quiet"); proFailed = true;
-        track("ai_fail", { what: "argue_for", how: how, err: res && res.err ? String(res.err).slice(0, 60) : "" }); return;
-      }
-      p.text = text; p.at = now().toISOString();
-      if (text === store[id].text) { store[id].pro = p; save(); } else proPending = p;
-      haptic("tick"); showPro(p);
-    });
-  };
-  var proFailed = false;
-  function showPro(p) { proFailed = false; $("argForText").classList.remove("quiet"); $("argForText").textContent = p.pro; $("argForBox").hidden = false; $("argPro").textContent = "Hide the case for"; noteState(); }
 
   // ---------- Tensions (2.16.0) ----------
   // Once a day, a few batches of the rotation go to the model, shuffled by the day, and it names pairs that pull
