@@ -482,6 +482,10 @@ textarea::placeholder { color: var(--plum-faint); }
 #argPage .yet::after { content: ""; flex: 1; height: 1px; background: rgba(241,233,216,.12); }
 #argPage .af { margin: 18px 0 0; font-size: 15px; line-height: 1.4; color: var(--pist); }
 #argPage .af span { color: var(--plum-muted); }
+#argPage .aearly { display: block; margin-top: 26px; font-size: 14px; color: var(--plum-muted); padding: 8px 0; }
+#argPage .aearlylist .ea { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(241,233,216,.05); font-size: 14px; line-height: 1.45; }
+#argPage .aearlylist .ea .w { color: var(--plum-muted); text-decoration: line-through; text-decoration-color: rgba(187,167,190,.45); margin: 0 0 8px; }
+#argPage .aearlylist .ea p { margin: 0 0 6px; } #argPage .aearlylist .ea b { font-weight: 600; color: var(--plum-muted); font-size: 12px; display: block; }
 #argPage .aend { flex: none; border-top: 1px solid rgba(241,233,216,.12); padding: 14px var(--pad) calc(var(--bot) + 18px); }
 #argPage .ask { margin: 0 0 8px; font-size: 16px; font-style: italic; }
 #argPage .lk { display: flex; gap: 24px; } #argPage .lk button { color: var(--pist); font-weight: 600; font-size: 15px; padding: 6px 0; }
@@ -709,10 +713,12 @@ textarea::placeholder { color: var(--plum-faint); }
     <p class="al">For it</p>
     <p class="ab" id="apFor"></p>
     <p class="af" id="apFree" hidden></p>
+    <button type="button" class="aearly" id="apEarlyBtn" hidden></button>
+    <div class="aearlylist" id="apEarly" hidden></div>
   </div>
   <div class="aend">
     <p class="ask">Which would you rather be true? Why?</p>
-    <div class="lk"><button type="button" id="apWrite">Write a note</button><button type="button" class="q" id="apNote">Add to note</button></div>
+    <div class="lk"><button type="button" id="apWrite">Write your answer</button></div>
     <label class="sr" for="apNoteText">Your note</label>
     <textarea id="apNoteText" rows="3" maxlength="1500" placeholder="Which would I rather be true, and why?" hidden></textarea>
   </div>
@@ -816,8 +822,8 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.32.0"></script>
-<script src="sets.js?v=2.32.0"></script>
+<script src="core.js?v=2.32.1"></script>
+<script src="sets.js?v=2.32.1"></script>
 <script>
 (function () {
   "use strict";
@@ -1390,7 +1396,7 @@ textarea::placeholder { color: var(--plum-faint); }
     track("edit", { id: t.id, text: text && text !== t.text ? 1 : 0, note: note !== (t.note || "") ? 1 : 0, by: $("editBy").value.trim().slice(0, 200) !== (t.by || "") ? 1 : 0, mark: editMarked !== !!t.bookmarked ? 1 : 0 });
     if (text && (text !== t.text || note !== (t.note || ""))) { C.reword(t, text, now()); t.note = note; ui.worked = true; save(); saveUi(); haptic("medium"); }
     // An argument made for words typed but not yet kept is kept now, if those are the words that were kept.
-    if (argPending && argPending.text === t.text) { t.arg = argPending; save(); } argPending = null;
+    if (argPending && argPending.text === t.text) { C.keepArg(t, argPending); save(); } argPending = null;
     if (proPending && proPending.text === t.text) { t.pro = proPending; save(); } proPending = null;
     // Who said it is a label, like the bookmark: changing it never counts as work on the thought.
     var by = $("editBy").value.trim().slice(0, 200);
@@ -2071,14 +2077,10 @@ textarea::placeholder { color: var(--plum-faint); }
   function fillAgainst(a) {
     apSet("apAgainst", a.against); $("apAssumes").textContent = "It assumes " + a.assumes.charAt(0).toLowerCase() + a.assumes.slice(1).replace(/\.$/, "") + ".";
     $("apFree").hidden = !a.free; if (a.free) $("apFree").innerHTML = "<span>If the case against wins, you'd be free to</span> " + esc(a.free) + ".";
-    $("apRetry").hidden = true; apNoteState();
+    $("apRetry").hidden = true;
   }
-  function fillFor(p) { proFailed = false; apSet("apFor", p.pro); apNoteState(); }
-  function apNoteState() {
-    var a = curArg(), b = $("apNote"); if (!a) { b.disabled = true; return; }
-    var n = $("editNote").value.trim(), inNote = !!n && C.withArgNote(n, a, proFailed ? null : curPro()) === n;
-    b.disabled = inNote; b.textContent = inNote ? "Added to note ✓" : "Add to note";
-  }
+  function fillFor(p) { proFailed = false; apSet("apFor", p.pro); }
+
   function askAgainst(text, id) {
     argBusy = true; showArgBtn(); track("tap", { id: "argue", kept: 0 });
     var r = C.argRequest(text, $("editBy").value);
@@ -2091,7 +2093,7 @@ textarea::placeholder { color: var(--plum-faint); }
       }
       if (!a) { apSet("apAgainst", "Couldn't argue with it just now.", true); $("apRetry").hidden = false; track("ai_fail", { what: "argue", err: res && res.err ? String(res.err).slice(0, 60) : "shape" }); return; }
       a.text = text; a.at = now().toISOString();
-      if (text === store[id].text) { store[id].arg = a; save(); } else argPending = a;
+      if (text === store[id].text) { C.keepArg(store[id], a); save(); } else argPending = a;
       if (apOpen()) { haptic("tick"); fillAgainst(a); if (!curPro()) askFor(text, id); }
     });
   }
@@ -2123,7 +2125,7 @@ textarea::placeholder { color: var(--plum-faint); }
     var a = curArg(), p = curPro();
     if (a) { fillAgainst(a); track("tap", { id: "argue", kept: 1 }); } else { apSet("apAgainst", "Thinking it over…", true); $("apAssumes").textContent = ""; $("apFree").hidden = true; $("apRetry").hidden = true; }
     if (p) fillFor(p); else apSet("apFor", a ? "Finding the case for…" : "", true);
-    apNoteState();
+    renderEarly();
     openPage("argPage", "argue"); $("argPage").querySelector(".body").scrollTop = 0;
     if (!a) askAgainst(text, t.id); else if (!p) askFor(text, t.id);
   };
@@ -2131,12 +2133,25 @@ textarea::placeholder { color: var(--plum-faint); }
   $("argBack").onclick = function () { closePage("argPage", "edit"); showArgBtn(); noteWords(); };
   // Write a note, right under the question; it is the thought's own note, kept with Done in Edit like any note.
   $("apWrite").onclick = function () { var ta = $("apNoteText"); ta.hidden = false; grow(ta); ta.focus(); haptic("tick"); };
-  $("apNoteText").addEventListener("input", function () { var en = $("editNote"); en.value = this.value; en.hidden = !this.value.trim(); grow(this); apNoteState(); });
-  $("apNote").onclick = function () {
-    var a = curArg(); if (!a) return;
-    var en = $("editNote"); en.value = C.withArgNote(en.value, a, proFailed ? null : curPro()); en.hidden = false;
-    var ta = $("apNoteText"); ta.value = en.value; ta.hidden = false; grow(ta); apNoteState(); haptic("tick");
-  };
+  $("apNoteText").addEventListener("input", function () { var en = $("editNote"); en.value = this.value; en.hidden = !this.value.trim(); grow(this); });
+  // 2.32.1: the arguments made for earlier wordings, one tap away at the bottom of the page.
+  function renderEarly() {
+    var t = store[ui.cur], cur = argText(), list = [];
+    if (t) {
+      // The kept argument counts as earlier while the words in Edit have changed and not yet been kept.
+      if (t.arg && t.arg.text !== cur && t.arg.against) list.push({ text: t.arg.text, against: t.arg.against, pro: t.pro && t.pro.text === t.arg.text ? t.pro.pro : "" });
+      list = list.concat(C.earlierArgs(t).filter(function (x) { return x.text !== cur; }));
+    }
+    $("apEarlyBtn").hidden = !list.length; $("apEarly").hidden = true;
+    if (!list.length) return;
+    $("apEarlyBtn").textContent = "Earlier arguments (" + list.length + ")";
+    $("apEarly").innerHTML = list.map(function (x) {
+      return '<div class="ea"><p class="w">' + esc(firstLine(x.text)) + "</p><p><b>Against it</b>" + esc(x.against) + "</p>" +
+        (x.pro ? "<p><b>For it</b>" + esc(x.pro) + "</p>" : "") + "</div>";
+    }).join("");
+  }
+  $("apEarlyBtn").onclick = function () { var el = $("apEarly"); el.hidden = !el.hidden; haptic("tick"); };
+
 
   // ---------- Tensions (2.16.0) ----------
   // Once a day, a few batches of the rotation go to the model, shuffled by the day, and it names pairs that pull
