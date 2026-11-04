@@ -17,7 +17,10 @@ agents stop before them. Steps Claude can't do go to Grok as prompts, with the i
 2. Graham checks the version page: no red banners, build 55, screenshots in order.
 3. Graham presses Submit for Review. Claude freezes main and `release` until Apple decides.
 
-## Public beta (optional, before or alongside review)
+## Public beta (deferred)
+
+Decided 4 November: no public beta for now. Graham tunes the timing on his own data over the next few weeks; the beta is
+revisited after reviewing his telemetry. The plan below is kept for then.
 
 Goal: more people using Scales so the timing rules (20 s / 30 s / 5-minute idle, day size 30) can be tuned on real use.
 Telemetry never leaves a phone by itself; testers choose to send it.
