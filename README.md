@@ -17,6 +17,8 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.32.1:** The argument page has one action, "Write your answer". Add to note is gone: every argument is kept with the
+  thought, and rewording keeps the earlier ones (up to 8), shown at the bottom as "Earlier arguments".
 - **2.32.0:** Argue with it opens its own page, like a tension: the case against and what it assumes, "and yet", the case
   for (filled in a moment later), what the case against would let you off, and the question with a note to answer it.
   Both cases are shorter (two sentences under 40 words). Edit keeps only the word. Breathing words at 1.8%.

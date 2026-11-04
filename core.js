@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.32.0";
+  var VERSION = "2.32.1";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -512,6 +512,10 @@
       // 2.31.0: where a refined thought came from, and what it led to.
       grewFrom: typeof t.grewFrom === "string" && t.grewFrom ? t.grewFrom.slice(0, 60) : undefined,
       ledTo: typeof t.ledTo === "string" && t.ledTo ? t.ledTo.slice(0, 60) : undefined,
+      // 2.32.1: earlier arguments, kept when the words changed.
+      argsWas: Array.isArray(t.argsWas) ? t.argsWas.filter(function (x) { return x && typeof x.text === "string" && typeof x.against === "string" && typeof x.assumes === "string"; }).slice(-8).map(function (x) {
+        var o = { text: x.text.slice(0, 1500), against: x.against.slice(0, 600), assumes: x.assumes.slice(0, 300), at: typeof x.at === "string" ? x.at : nowIso };
+        if (typeof x.free === "string" && x.free) o.free = x.free.slice(0, 200); if (typeof x.pro === "string" && x.pro) o.pro = x.pro.slice(0, 600); return o; }) : undefined,
       // 2.31.0: the case for, kept like the argument.
       pro: t.pro && typeof t.pro === "object" && typeof t.pro.text === "string" && typeof t.pro.pro === "string"
         ? { text: t.pro.text.slice(0, 1500), pro: t.pro.pro.slice(0, 600), at: typeof t.pro.at === "string" ? t.pro.at : nowIso } : undefined };
@@ -754,6 +758,20 @@
     if (pro.length > 480) pro = pro.slice(0, 480).replace(/\s+\S*$/, "") + "\u2026";
     return { pro: pro };
   }
+  // 2.32.1: every argument is kept. A new one for new words moves the old one (with its case for, if any) into
+  // t.argsWas, newest last, at most 8, so rewording a thought never loses an argument.
+  var ARGS_KEEP = 8;
+  function keepArg(t, a) {
+    if (t.arg && t.arg.text && t.arg.text !== a.text && t.arg.against) {
+      var old = { text: t.arg.text, against: t.arg.against, assumes: t.arg.assumes, at: t.arg.at };
+      if (t.arg.free) old.free = t.arg.free;
+      if (t.pro && t.pro.text === t.arg.text && t.pro.pro) old.pro = t.pro.pro;
+      t.argsWas = (Array.isArray(t.argsWas) ? t.argsWas : []).concat([old]).slice(-ARGS_KEEP);
+    }
+    t.arg = a;
+  }
+  // The earlier arguments for other wordings than the current one, newest first.
+  function earlierArgs(t) { return (Array.isArray(t && t.argsWas) ? t.argsWas : []).filter(function (x) { return x && x.text !== t.text && x.against; }).slice().reverse(); }
   // The kept case for, only if it was made for the words as they are now.
   function proFor(t) { return t && t.pro && t.pro.text === t.text && t.pro.pro ? t.pro : null; }
   function argRequest(text, by) {
@@ -991,7 +1009,7 @@
   }
 
   var api = { VERSION: VERSION, reword: reword, insights: insights, WAS_KEEP: WAS_KEEP, argRequest: argRequest, parseArg: parseArg, argFor: argFor, argNoteLine: argNoteLine, withArgNote: withArgNote,
-    insightLine: insightLine, argForRequest: argForRequest, parseFor: parseFor, proFor: proFor, argNoteBlock: argNoteBlock, tensionBatches: tensionBatches, tensionRequest: tensionRequest, tensionPool: tensionPool, tensionCheck: tensionCheck, checkSaysTension: checkSaysTension, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
+    insightLine: insightLine, argForRequest: argForRequest, parseFor: parseFor, proFor: proFor, argNoteBlock: argNoteBlock, keepArg: keepArg, earlierArgs: earlierArgs, tensionBatches: tensionBatches, tensionRequest: tensionRequest, tensionPool: tensionPool, tensionCheck: tensionCheck, checkSaysTension: checkSaysTension, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
     standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
     make: make, protectedThought: protectedThought, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,

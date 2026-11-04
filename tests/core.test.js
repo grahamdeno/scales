@@ -932,3 +932,17 @@ test("Argue with it 2.31.0: what it would let you off, the case for, and both in
   const r = N.restoreFrom({}, { app: "scales", version: "2.31.0", thoughts: { x: t } }, new Date("2026-11-03T12:00:00Z"), []);
   assert.equal(r.added, 1);
 });
+
+test("Every argument is kept: rewording moves the old one to argsWas (2.32.1)", () => {
+  const t = { id: "x", text: "Two", arg: { text: "One", against: "Old case against, long enough.", assumes: "Old.", free: "rest", at: "a" }, pro: { text: "One", pro: "Old case for.", at: "a" } };
+  N.keepArg(t, { text: "Two", against: "New case against, long enough.", assumes: "New.", at: "b" });
+  assert.equal(t.arg.text, "Two"); assert.equal(t.argsWas.length, 1);
+  assert.deepEqual(t.argsWas[0], { text: "One", against: "Old case against, long enough.", assumes: "Old.", at: "a", free: "rest", pro: "Old case for." });
+  N.keepArg(t, { text: "Two", against: "Again, same words.", assumes: "Same.", at: "c" });
+  assert.equal(t.argsWas.length, 1, "a new argument for the same words doesn't stack");
+  assert.deepEqual(N.earlierArgs(t).map((x) => x.text), ["One"]);
+  for (let i = 0; i < 12; i++) { t.text = "W" + i; N.keepArg(t, { text: "W" + i, against: "Case " + i + " long enough here.", assumes: "A.", at: "d" }); }
+  assert.equal(t.argsWas.length, 8, "at most 8 kept");
+  const r = {}; N.restoreFrom(r, { app: "scales", version: "2.32.1", thoughts: { x: t } }, new Date(), []);
+  assert.equal(r.x.argsWas.length, 8, "backups keep them");
+});
