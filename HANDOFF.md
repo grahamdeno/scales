@@ -58,8 +58,8 @@ Cleanup log below.
 - App: 2.32.1, iPhone build 55. The web app is bundled into the iPhone app; the browser copy at
   scales.tangomike.app/app/ serves the `release` branch and runs the same code. Version history is in README.md.
 - App Store: version 1.0 is Prepare for Submission with build 55 attached. Listing text updated on 4 November (iOS 26,
-  works without a connection, the case for). New 8 screenshots in `appstore/screenshots/`; Grok uploads them (not yet
-  confirmed). Release is manual. Graham has not submitted and will decide when; only he presses Submit for Review and
+  works without a connection, the case for). The 8 screenshots in `appstore/screenshots/` were uploaded by Grok on
+  4 November (6.9" set, en-US). Release is manual. Graham has not submitted and will decide when; only he presses Submit for Review and
   Release.
 - Public beta: deferred (4 November). Graham tunes the timing on his own data for a few weeks first; plan kept in
   `docs/release-plan.md`.
