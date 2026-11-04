@@ -10,7 +10,7 @@ const PLUM = { bg: "#3B2240", head: "#F1E9D8", sub: "#BBA7BE" };
 const PIST = { bg: "#B9C9A3", head: "#2A1E2E", sub: "#3E4830" };
 const slides = [
   ["01-one-thought", "meet-light", PLUM, "One thought at a time.", "Write down what's on your mind. Scales hands it back later."],
-  ["02-argue", "argue", PIST, "Hear the other side.", "One tap shows the case against a thought, and what it assumes."],
+  ["02-argue", "argue", PIST, "Hear the other side.", "The case against a thought, the case for it, and what it would let you off."],
   ["03-tensions", "tension", PLUM, "See where your thoughts disagree.", "Pairs of your own thoughts that pull against each other."],
   ["04-insights", "insights", PIST, "See what's changing.", "Counted on your phone from what you actually did."],
   ["05-two-moves", "pull", PLUM, "Two moves. That's all.", "Swipe up to move on. Pull down to put it away."],
