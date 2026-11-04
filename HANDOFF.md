@@ -50,21 +50,33 @@ read, never written or deleted.
 - Choosing a model: Opus for feel, data safety and judgment calls; Sonnet for well-specified building, tests and
   shipping; Haiku for mechanical edits.
 
-## Where things stand (31 October 2026)
+## Where things stand (4 November 2026)
 
-- Web app: 2.25.0 (idle fix, save-failure warning, contrast, copy, site without beta, AI server no longer deployed). Before it, 2.24.1 (After Jung reworded, two sources corrected). Before it, 2.24.0 (first thought shows at once; resting Next and Put away hints; Argue with it never argues against a thought that protects someone, with 988; plain AI errors). Before it, 2.23.0 (Insights number first). Before it, 2.22.0 (Stone theme; Settings reordered; Not a tension). Before it, 2.21.0 (Edit is a sheet over the thought; tap above it to keep). Before it, 2.20.0 (pull Edit down to keep and close). Before it, 2.19.0 (calmer Edit: author under the thought, Add a note and Argue with it as words; Insights as one-sentence findings that open). Before it, 2.18.0 (Insights shows every part with what it waits for; website Think it through section, privacy and support for Apple Intelligence; App Store screenshots and listing.json ready, not yet put on App Store Connect). Before it, 2.17.0 (Insights page; Say why on put away; old wording kept on rewording; Settings reordered with Help and about last). Before it, 2.16.0 (Apple Intelligence a regular feature: Argue with it in Edit, Tensions in Your thoughts; test wording removed from Settings; web only, uses the existing shell bridge). Before it, 2.15.0 (Your thoughts by where you stand: Just seen, then Avoiding, Sitting with, Seen not sat with, Not met yet; flat search). Before it, 2.14.0 (quiet line on the reading screen when a thought is avoided or long untouched). Before it, 2.13.0 (calm library: one-line rows, age, grouped by added; Edit history line; Backups page; footer on one line; + New only in the library; Help updated). Before it, 2.12.0 (pile rework: skip back in 5 days, 5 avoided a day, longest unseen first, day-seeded shuffle, top-up and Keep going are real visits). Before it, 2.11.2. Settings is grouped cards (also Sets and Import), the daily pile is 30 with Keep going,
-  Appearance (Automatic, Light, Dark; the control shows only in builds from 38), telemetry on the phone only, and a small
-  footer in Settings ("Your thoughts stay on your phone." with the Pistachio icon).
-- Website (`site/`): redesigned and live (real screenshots in Light and Dark, Sets, Support and Privacy updated). Check it
-  by `https://scales.tangomike.app`. Stylesheet is `?v=2.2.0`; the Website workflow checks it.
-- App Store: version 1.0 is a draft with build 38 attached, seven captioned 6.9-inch screenshots uploaded (made by
-  `scripts/shots.js` and `scripts/appstore.js`, files in `appstore/screenshots/`), release set to manual, status Prepare
-  for Submission. Graham chose to wait until after 12 November to press Submit for Review. Only he presses it.
-- Build 39 (privacy manifest, no StoreKit or reminders, Inspector in Debug only) merged 2 November. Build 40
-  (2.26.0 bundled, native store, migration) is the one for 1.0: test it, attach it to 1.0 in place of 38, and
-  Graham presses Submit for Review. EU is off, so trader status is not needed for 1.0.
+Start here in a new session: this section, `docs/release-plan.md` (submit, launch day, beta, after launch), and the
+Cleanup log below.
+
+- App: 2.32.1, iPhone build 55. The web app is bundled into the iPhone app; the browser copy at
+  scales.tangomike.app/app/ serves the `release` branch and runs the same code. Version history is in README.md.
+- App Store: version 1.0 is Prepare for Submission with build 55 attached. Listing text updated on 4 November (iOS 26,
+  works without a connection, the case for). New 8 screenshots in `appstore/screenshots/`; Grok uploads them (not yet
+  confirmed). Release is manual. Graham has not submitted and will decide when; only he presses Submit for Review and
+  Release.
+- Public beta: deferred (4 November). Graham tunes the timing on his own data for a few weeks first; plan kept in
+  `docs/release-plan.md`.
+- Held branch `launch-day`: App Store as the main button on the landing page and an iPhone-app card in the browser app;
+  links are placeholders until launch (see the release plan).
+- Rollback points (branches): `before-argue-v2` (before 2.31.0) and `before-argue-page` (before 2.32.0). Feature branches
+  as shipped: `argue-v2`, `refine-v1`, `breathe-test`, `argue-page`, `argue-keep`.
+- Tensions log: Graham sends screenshots of Tensions as they appear; each is judged and logged, with tuning ideas, in his
+  private Claude doc "Scales Tensions Log" (https://claude.ai/artifact/LUNmkyw1gpvgBEyFaTn9Fx), never in this public
+  repo. No prompt changes until he asks for the full analysis. Pairs from before 4 November came from the old prompt.
 - 12 November, 8:40 am ET: a scheduled task starts a fresh session that asks for "Scales backup.json" and runs
-  `docs/evaluation-plan.md`. From build 40, rule changes from the evaluation need a new build to reach the iPhone.
+  `docs/evaluation-plan.md`. Rule changes now need a new build to reach the iPhone.
+- Shipping: open a PR, wait for the `test` and `browser` checks, merge, move `release` to the merge commit
+  (`git push origin <sha>:refs/heads/release`), then run the `iPhone app` workflow on main; a run GitHub cancels for want of a
+  Mac ("not acquired") is re-run. Build number = run number. Tags can't be pushed from Claude sessions; use branches.
+- Working agreements: Graham says "ship" before anything merges; prompts for Grok put the irreversible steps first and
+  ask for a report; plain words, no em-dashes; Opus for judgment and data safety, Sonnet for building.
 
 ## Before the App Store submission
 
