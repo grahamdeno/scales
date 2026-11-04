@@ -17,6 +17,8 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.31.1:** Argue for it instead no longer declines nearly every thought: it asks what the thought gets right, with no SKIP
+  rule (the safety check has already run). If it can't make the case, the argument stays with a quiet line, never the crisis note.
 - **2.31.0:** Argue with it names what the case against would let you off ("If this wins, you'd be free to"), asks "Which
   would you rather be true? Why?" with Write a note, and can argue for the thought instead (kept with it; never for
   protective thoughts). Refining a thought: after putting one away, Say why waits until the next move; the Say why page has
