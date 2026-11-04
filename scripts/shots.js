@@ -25,7 +25,7 @@ function seed(now) {
     epictetus: line("stoics", "People are not disturbed"),
     busy: line("questions", "What am I avoiding"),
     franklin: line("franklin", "Give everything you own"),
-    jung: line("jung", "I can't change what"),
+    jung: line("jung", "Judging a part of myself"),
     dread: own("Most problems are smaller than the dread before them.", { skips: 2, seen: "2026-10-20T12:00:00.000Z", visits: [{ at: "x", kind: "skipped", ms: 4000 }] }),
     rest: own("Rest is part of the work.", { due: C.addDays(today, 1), seen: "2026-10-25T12:00:00.000Z", visits: [{}] }),
     hard: own("Say the hard thing early, while it is still small.", { due: C.addDays(today, 2), seen: "2026-10-25T12:00:00.000Z", visits: [{}], bookmarked: "2026-10-26T12:00:00.000Z" }),
@@ -45,8 +45,10 @@ function seed(now) {
   Object.assign(st[ids.polite], { awayWhy: "I do this in every meeting now.", thinks: 5, away: at(6, 20) });
   Object.assign(st[ids.epictetus], { thinks: 2, seen: at(2), visits: [v("thought", 12), v("thought", 2)],
     arg: { text: st[ids.epictetus].text, at: at(2),
-      against: "Some things do disturb people directly: loss, pain, injustice. Treating every reaction as a choice of view can turn into blaming yourself for being hurt, or waving away harm that deserves a response.",
-      assumes: "That you can choose your view of something as easily as you notice it." } });
+      against: "Some things do disturb us directly: loss, pain, injustice. Treating every reaction as a chosen view can turn into blaming yourself for being hurt.",
+      assumes: "That you can choose your view as easily as you notice it.", free: "skip the work of changing how you see things" },
+    // 2.32.0: the case for, shown on the argument page.
+    pro: { text: st[ids.epictetus].text, at: at(2), pro: "Much of what weighs on us is the story we tell about an event, not the event. Seeing that gives you somewhere to start." } });
   Object.assign(st[ids.busy], { seen: at(4), visits: [v("seen", 4)] });
   Object.assign(st[ids.franklin], { seen: at(3), visits: [v("skipped", 10), v("skipped", 3)] });
   Object.assign(st[ids.silence], { seen: at(2), visits: [v("thought", 2)] });
@@ -136,7 +138,7 @@ if (!process.argv.includes("--frame")) (async () => {
     await page.click("#setSets"); await page.waitForTimeout(700);
   });
   await shot("write", "light", "epictetus", async (page) => {
-    await page.click("#strip"); await page.waitForTimeout(800); await page.click("#libNew"); await page.waitForTimeout(700);
+    await page.click("#stripNew"); await page.waitForTimeout(700);
     await page.fill("#writeText", "The meeting I keep dreading is mostly a conversation I haven't had yet.");
     await page.evaluate(() => { document.activeElement && document.activeElement.blur(); document.getElementById("writeText").dispatchEvent(new Event("input", { bubbles: true })); });
     await page.waitForTimeout(400);
