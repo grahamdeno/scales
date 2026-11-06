@@ -119,3 +119,16 @@ jobs:
           code=$?
           if [ $code -ne 0 ]; then echo "::error::upload failed"; report upload.log; exit $code; fi
           echo "::notice::Uploaded build ${{ github.run_number }} to TestFlight"
+      # After the upload: wait for processing, set What to Test, add the build to the external "Beta testers" group
+      # and submit it for Beta App Review. Testers are not changed; TestFlight's own auto-notify decides who hears.
+      # The build is already uploaded, so a problem here is a warning to finish by hand, not a failed build.
+      - name: Send to beta testers
+        if: env.HAS_KEY == 'true' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          BUILD_NUMBER: ${{ github.run_number }}
+          TESTER_GROUP: Beta testers
+          WHAT_TO_TEST_FILE: docs/testflight/what-to-test.md
+        run: ASC_KEY_PATH="$RUNNER_TEMP/asc.p8" ruby scripts/testflight.rb
