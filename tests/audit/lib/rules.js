@@ -122,7 +122,17 @@ function pageRules(opts) {
   // Controls: size, name, focus zoom.
   const ctrls = Array.from(document.querySelectorAll("button, a[href], input:not([type=file]):not([type=hidden]), textarea, select, [role=button], [role=radio], [role=switch]")).filter(seen);
   ctrls.forEach((el) => {
-    const r = el.getBoundingClientRect();
+    const r0 = el.getBoundingClientRect();
+    // An invisible ::before or ::after laid over the control widens what a finger can hit; count it.
+    let hw = r0.width, hh = r0.height;
+    ["::before", "::after"].forEach((pe) => {
+      const ps = getComputedStyle(el, pe);
+      if (!ps.content || ps.content === "none" || ps.content === "normal" || ps.position !== "absolute") return;
+      const ph = parseFloat(ps.height), pw = parseFloat(ps.width);
+      if (isFinite(ph)) hh = Math.max(hh, ph);
+      if (isFinite(pw)) hw = Math.max(hw, pw);
+    });
+    const r = { width: hw, height: hh };
     if ((r.width < 44 || r.height < 44) && !/^(INPUT|TEXTAREA)$/.test(el.tagName)) {
       // Effective target: padding counts, an inline text link inside prose is reported as minor.
       const small = Math.min(r.width, r.height);

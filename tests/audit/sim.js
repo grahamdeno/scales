@@ -129,7 +129,7 @@ function analyse(s) {
   ck(out.stats.dupesInDay === 0, "No thought shows twice in one day", out.stats.dupesInDay + " days with repeats");
   ck(out.stats.avoidMax <= C.AVOID_PER_DAY, "Avoided thoughts never take more than " + C.AVOID_PER_DAY + " places a day", "most in a day: " + out.stats.avoidMax);
   ck(out.stats.newMax <= 12, "New thoughts arrive a few a day, never a flood", "most in a day: " + out.stats.newMax);
-  ck(wrongGap === 0 && out.stats.skipReturnEarly === 0, "A skipped thought is due again in exactly 5 days and the day's pile never brings it sooner", "early returns: " + out.stats.skipReturnEarly + (out.stats.earlyByKeepGoing ? "; " + out.stats.earlyByKeepGoing + " came back sooner through Keep going, by design" : ""));
+  ck(wrongGap === 0 && out.stats.skipReturnEarly === 0 && !out.stats.earlyByKeepGoing, "A skipped thought comes back in 5 days, never sooner, Keep going included", "early returns: " + out.stats.skipReturnEarly + ", through Keep going: " + (out.stats.earlyByKeepGoing || 0));
   if (s.kind === "steady" || s.kind === "keen") {
     ck(coverOld != null && coverOld <= 7, "Every thought already here is met within 7 days", coverOld == null ? "not all met in 30 days" : "all met by day " + coverOld + " (with new ones still arriving, everything by day " + coverDay + ")");
     ck(out.stats.newWaitMax != null && out.stats.newWaitMax <= 1, "A new thought is met within a day of arriving", "longest wait " + out.stats.newWaitMax + " days");

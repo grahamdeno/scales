@@ -11,13 +11,17 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/favicon-32.png">
-<script>try { var u0 = JSON.parse(localStorage.getItem("scales.next.ui.v1")) || {}, lk = u0.look; if (lk === "light" || lk === "dark") document.documentElement.setAttribute("data-look", lk); if (u0.theme === "stone") document.documentElement.setAttribute("data-theme", "stone"); } catch (e) {}</script>
+<script>try { var ts0 = window.scalesNative && +window.scalesNative.textScale; if (ts0 > 0) { document.documentElement.style.setProperty("--ts", Math.min(1.5, Math.max(0.82, ts0))); document.documentElement.style.setProperty("--tw", Math.min(1.3, Math.max(0.82, ts0))); } } catch (e) {}
+try { var u0 = JSON.parse(localStorage.getItem("scales.next.ui.v1")) || {}, lk = u0.look; if (lk === "light" || lk === "dark") document.documentElement.setAttribute("data-look", lk); if (u0.theme === "stone") document.documentElement.setAttribute("data-theme", "stone"); } catch (e) {}</script>
 <style>
 @font-face { font-family:"Geist"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/geist-latin.woff2") format("woff2"); }
 
 /* Two grounds and one ink each. Pistachio is for reading; plum is for when your own hand is on it
    (writing, editing, the library). There is no accent color: the other ground is the accent. */
 :root {
+  /* 2.33.0: the iPhone's text size. --ts scales all type (capped at 1.5 so the strip and sheets still hold);
+     --tw scales the thought itself, capped lower (1.3) so a long thought still fits on one screen. */
+  --ts: 1; --tw: 1;
   --pist: #B9C9A3; --pist-ink: #2A1E2E; --pist-muted: #3E4830;
   --plum: #3B2240; --plum-ink: #F1E9D8; --plum-muted: #BBA7BE; --plum-faint: #8E7A92;
   /* The reading ground (Meet). Pistachio in Light; in Dark (2.5.0) it turns plum with bone words, like the Plum icon,
@@ -70,10 +74,10 @@ a { color: inherit; text-decoration: none; }
 [hidden] { display: none !important; }
 
 /* The corner buttons reach well past their words (2.0.1), so a thumb slightly off still lands on them. */
-.corner { position: absolute; top: calc(var(--top) + 4px); font-size: 16px; font-weight: 500; padding: 20px 28px 20px var(--pad); min-width: 150px; text-align: left; z-index: 3; }
+.corner { position: absolute; top: calc(var(--top) + 4px); font-size: calc(16px * var(--ts)); font-weight: 500; padding: 20px 28px 20px var(--pad); min-width: 150px; text-align: left; z-index: 3; }
 .corner.l { left: 0; } .corner.r { right: var(--pad); }
 /* Keep and Done are words, like every other action here: pistachio, bold, with a wide tap area. */
-.act { color: var(--pist); font-weight: 700; font-size: 18px; padding: 16px 0 16px 36px; margin-right: 0; }
+.act { color: var(--pist); font-weight: 700; font-size: calc(18px * var(--ts)); padding: 16px 0 16px 36px; margin-right: 0; }
 .act:disabled { opacity: 0; pointer-events: none; }
 
 /* ---- Meet ---- */
@@ -81,15 +85,15 @@ a { color: inherit; text-decoration: none; }
 #stage { position: absolute; left: 0; right: 0; top: calc(var(--top) + 72px); bottom: var(--strip); touch-action: none; }
 #carry { transform-origin: center bottom; position: absolute; left: var(--pad); right: var(--pad); top: 0; bottom: 24px; display: flex; flex-direction: column; justify-content: center; will-change: transform; }
 /* Line breaks you typed show as typed (2.5.0); runs of spaces and tabs read as one space. */
-#words { white-space: pre-line; margin: 0; font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600; transition: font-weight 1.2s ease; overflow-wrap: anywhere; }
-#words.long { font-size: 24px; line-height: 1.25; }
-#words.vlong { font-size: 19px; line-height: 1.35; }
+#words { white-space: pre-line; margin: 0; font-size: calc(32px * var(--tw)); line-height: 1.15; letter-spacing: -0.02em; font-weight: 600; transition: font-weight 1.2s ease; overflow-wrap: anywhere; }
+#words.long { font-size: calc(24px * var(--tw)); line-height: 1.25; }
+#words.vlong { font-size: calc(19px * var(--tw)); line-height: 1.35; }
 /* Who said it (2.3.0): under the thought, quiet, like the note. */
-#by { margin: 12px 0 0; font-size: 15px; font-weight: 500; color: var(--ground-muted); overflow-wrap: anywhere; }
-#note { margin: 18px 0 0; font-size: 16px; line-height: 1.45; color: var(--ground-muted); white-space: pre-wrap; }
+#by { margin: 12px 0 0; font-size: calc(15px * var(--ts)); font-weight: 500; color: var(--ground-muted); overflow-wrap: anywhere; }
+#note { margin: 18px 0 0; font-size: calc(16px * var(--ts)); line-height: 1.45; color: var(--ground-muted); white-space: pre-wrap; }
 /* 2.14.0: shown only when the thought is being avoided or has sat untouched; small and faded so it never competes. */
-#nudge { margin: 18px 0 0; font-size: 13px; line-height: 1.4; color: var(--ground-muted); }
-.hint { position: absolute; left: 0; right: 0; margin: 0; text-align: center; font-size: 15px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .12s; }
+#nudge { margin: 18px 0 0; font-size: calc(13px * var(--ts)); line-height: 1.4; color: var(--ground-muted); }
+.hint { position: absolute; left: 0; right: 0; margin: 0; text-align: center; font-size: calc(15px * var(--ts)); font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .12s; }
 #hintUp { top: calc(var(--top) + 76px); }
 #hintDown { bottom: calc(var(--strip) + 68px); }
 .hint.on { font-weight: 700; }
@@ -100,12 +104,12 @@ a { color: inherit; text-decoration: none; }
 /* The day's end is a message, not a thought (2.3.1): smaller, lighter, set high, with its choices as rows like Settings,
    so it is never mistaken for a thought to swipe. */
 #empty { position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--top) + 150px); bottom: var(--strip); display: flex; flex-direction: column; justify-content: flex-start; gap: 6px; }
-#empty h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
-#empty p { margin: 0; font-size: 16px; color: var(--ground-muted); }
+#empty h1 { margin: 0; font-size: calc(22px * var(--ts)); font-weight: 600; letter-spacing: -0.01em; }
+#empty p { margin: 0; font-size: calc(16px * var(--ts)); color: var(--ground-muted); }
 #emptyActs { display: flex; flex-direction: column; margin-top: 28px; border-bottom: 1px solid var(--ground-line); }
 #emptyActs button { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 52px; padding: 0; text-align: left;
-  color: var(--ground-ink); font-weight: 500; font-size: 17px; border-top: 1px solid var(--ground-line); }
-#emptyActs button::after { content: "\203A"; font-size: 22px; color: var(--ground-muted); }
+  color: var(--ground-ink); font-weight: 500; font-size: calc(17px * var(--ts)); border-top: 1px solid var(--ground-line); }
+#emptyActs button::after { content: "\203A"; font-size: calc(22px * var(--ts)); color: var(--ground-muted); }
 #emptyActs button[hidden] { display: none; }
 @keyframes nudge { 0%,100% { transform: translateY(0) } 30% { transform: translateY(-14px) } 62% { transform: translateY(6px) } }
 @keyframes arrive { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: none } }
@@ -115,13 +119,13 @@ a { color: inherit; text-decoration: none; }
 #strip { position: absolute; left: 0; right: 0; bottom: 0; height: var(--strip); background: var(--plum); color: var(--plum-ink);
   border-radius: 22px 22px 0 0; display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 12px; transition: height .25s ease; z-index: 2; width: 100%; }
 #strip .grab { width: 36px; height: 4px; border-radius: 2px; background: rgba(241,233,216,.35); }
-#strip .row { display: flex; justify-content: space-between; width: 100%; padding: 0 var(--pad); font-size: 15px; }
+#strip .row { display: flex; justify-content: space-between; width: 100%; padding: 0 var(--pad); font-size: calc(15px * var(--ts)); }
 #strip .row b { font-weight: 600; } #strip .row span { color: var(--plum-muted); }
 /* 2.28.0: the count sits beside the words, and + New has the right end of the strip (its own button, laid over it). */
 #strip .row { justify-content: flex-start; gap: 10px; }
 #stripNew { position: absolute; right: 0; bottom: 0; height: var(--strip); z-index: 3; display: flex; align-items: flex-start;
-  padding: calc(10px + 4px + 12px - 14px) var(--pad) 0 28px; color: var(--pist); font-weight: 600; font-size: 16px; }
-#stripNew span { display: block; padding: 14px 0; line-height: 18px; margin-top: 1px; }
+  padding: calc(10px + 4px + 12px - 14px) var(--pad) 0 28px; color: var(--pist); font-weight: 600; font-size: calc(16px * var(--ts)); }
+#stripNew span { display: block; padding: 14px 0; line-height: calc(18px * var(--ts)); margin-top: 1px; }
 body.plum #strip, body.plum #stripNew { opacity: 0; pointer-events: none; }
 /* 2.28.0: while the sheet is shut or shutting it lies under the strip, so it slides in behind the strip and its header
    never shows in the strip's place; its contents fade as it goes. Open or being pulled up, it is on top (z-index 6). */
@@ -131,7 +135,7 @@ body.plum #strip, body.plum #stripNew { opacity: 0; pointer-events: none; }
 
 /* Undo: a small pill at the right, above the strip. Visible, but clear of the thought and of the thumb's swipe path. */
 #toast { position: absolute; right: 16px; bottom: calc(var(--strip) + 14px); background: var(--toast-bg); color: var(--toast-ink);
-  border-radius: 999px; padding: 4px 4px 4px 16px; display: flex; align-items: center; gap: 2px; font-size: 14px; z-index: 5;
+  border-radius: 999px; padding: 4px 4px 4px 16px; display: flex; align-items: center; gap: 2px; font-size: calc(14px * var(--ts)); z-index: 5;
   opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; pointer-events: none; }
 #toast.on { opacity: 1; transform: none; pointer-events: auto; }
 #toast span { opacity: .75; }
@@ -139,6 +143,13 @@ body.plum #strip, body.plum #stripNew { opacity: 0; pointer-events: none; }
 #toast #toastDel { padding-left: 4px; }
 #toast.done { padding: 12px 18px; }
 #toast.done span { opacity: 1; font-weight: 600; }
+/* 2.33.0: a failed save. Its own place at the top, above every sheet, so a move's Undo can never cover it. */
+#saveFail { position: fixed; left: 12px; right: 12px; top: calc(var(--top) + 6px); z-index: 50; background: var(--toast-bg); color: var(--toast-ink);
+  border-radius: 18px; padding: 14px 8px 6px 18px; font-size: calc(15px * var(--ts)); line-height: 1.35; box-shadow: 0 8px 28px rgba(0,0,0,.25); }
+#saveFail p { margin: 0 10px 4px 0; font-weight: 600; }
+#saveFail .sfa { display: flex; justify-content: flex-end; gap: 4px; }
+#saveFail button { min-height: 44px; padding: 0 12px; font-weight: 700; color: inherit; }
+#saveFail #saveFailOk { font-weight: 500; opacity: .8; }
 .plus { font-weight: 400; margin-right: 3px; }
 
 /* ---- Write and Edit (plum) ---- */
@@ -149,34 +160,36 @@ body.plum #strip, body.plum #stripNew { opacity: 0; pointer-events: none; }
 .sheetform.center { justify-content: center; }
 textarea { font: inherit; color: var(--plum-ink); background: transparent; border: 0; outline: none; resize: none; width: 100%; padding: 0; caret-color: var(--pist); user-select: text; -webkit-user-select: text; touch-action: auto; }
 textarea::placeholder { color: var(--plum-faint); }
-.big { font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 700; }
-.small { font-size: 17px; line-height: 1.45; border-top: 1px solid rgba(241,233,216,.2); padding-top: 14px; }
-.lbl { font-size: 13px; color: var(--plum-muted); margin-bottom: -14px; }
+.big { font-size: calc(32px * var(--ts)); line-height: 1.15; letter-spacing: -0.02em; font-weight: 700; }
+.small { font-size: calc(17px * var(--ts)); line-height: 1.45; border-top: 1px solid rgba(241,233,216,.2); padding-top: 14px; }
+.lbl { font-size: calc(13px * var(--ts)); color: var(--plum-muted); margin-bottom: -14px; }
 /* "Add who said it": words, not a button; one line appears under the thought when tapped. */
 /* 2.30.0: onboarding. The first screen asks one thing, and offers a set as an equal second choice. */
-.whead { margin: 0 0 -10px; font-size: 15px; font-weight: 600; color: var(--plum-muted); flex: none; }
+.whead { margin: 0 0 -10px; font-size: calc(15px * var(--ts)); font-weight: 600; color: var(--plum-muted); flex: none; }
 #writeText.example::placeholder { color: rgba(241,233,216,.38); }
 .startset { align-self: stretch; text-align: left; margin-top: 6px; padding: 14px 16px; border-radius: 14px; background: rgba(185,201,163,.12);
-  color: var(--plum-ink); font-size: 15px; line-height: 1.35; flex: none; }
+  color: var(--plum-ink); font-size: calc(15px * var(--ts)); line-height: 1.35; flex: none; }
 .startset b { display: block; color: var(--pist); font-weight: 600; margin-bottom: 2px; }
 /* The set offer: on the reading screen after the first thought, and on the end screen while there are few thoughts. */
 #setOffer { position: absolute; left: 16px; right: 16px; bottom: calc(var(--strip) + 14px); z-index: 4; background: var(--plum); color: var(--plum-ink);
   border-radius: 18px; padding: 16px 18px 10px; box-shadow: 0 10px 30px rgba(20,10,24,.25); }
 #setOffer[hidden] { display: none; }
-#setOffer p { margin: 0 0 10px; font-size: 15px; line-height: 1.4; }
+#setOffer p { margin: 0 0 10px; font-size: calc(15px * var(--ts)); line-height: 1.4; }
 #setOffer .so { display: flex; flex-wrap: wrap; gap: 8px; }
-#setOffer .so button { font-size: 14px; padding: 9px 14px; border-radius: 999px; background: rgba(185,201,163,.16); color: var(--pist); font-weight: 600; }
-#setOffer .no { display: block; margin-top: 4px; padding: 12px 0 6px; font-size: 14px; color: var(--plum-muted); }
+/* 2.33.0: words, like every other action in Scales. */
+#setOffer .so button { font-size: calc(15px * var(--ts)); padding: 9px 0; color: var(--pist); font-weight: 600; }
+#setOffer .so { column-gap: 24px; }
+#setOffer .no { display: block; margin-top: 4px; padding: 12px 0 6px; font-size: calc(14px * var(--ts)); color: var(--plum-muted); }
 /* Hints, once each: a spotlight that dims everything but the one thing, or a quiet line that fades. */
 #tip { position: absolute; inset: 0; z-index: 40; }
 #tip[hidden] { display: none; }
 #tip .hole { position: absolute; border-radius: 16px; box-shadow: 0 0 0 200vmax rgba(18,9,22,.66); pointer-events: none; transition: opacity .2s; }
-#tip .tt { position: absolute; left: var(--pad); right: var(--pad); color: #F1E9D8; font-size: 17px; font-weight: 600; line-height: 1.35; }
-#tip .tt span { display: block; margin-top: 8px; font-size: 14px; font-weight: 400; color: #BBA7BE; }
+#tip .tt { position: absolute; left: var(--pad); right: var(--pad); color: #F1E9D8; font-size: calc(17px * var(--ts)); font-weight: 600; line-height: 1.35; }
+#tip .tt span { display: block; margin-top: 8px; font-size: calc(14px * var(--ts)); font-weight: 400; color: #BBA7BE; }
 #tipsAgain { margin-top: 18px; border-top: 1px solid rgba(241,233,216,.12); padding-left: 0; padding-right: 0; }
-#tipsAgain .v { font-size: 14px; color: var(--plum-muted); }
+#tipsAgain .v { font-size: calc(14px * var(--ts)); color: var(--plum-muted); }
 .swipehint { position: absolute; left: 50%; bottom: calc(var(--bot) + 18px); transform: translateX(-50%); white-space: nowrap;
-  background: var(--plum-ink); color: var(--plum); font-size: 15px; font-weight: 600; padding: 11px 18px; border-radius: 999px;
+  background: var(--plum-ink); color: var(--plum); font-size: calc(15px * var(--ts)); font-weight: 600; padding: 11px 18px; border-radius: 999px;
   box-shadow: 0 8px 24px rgba(20,10,24,.3); pointer-events: none; animation: swipehint 4.5s ease forwards; z-index: 3; }
 @keyframes swipehint { 0% { opacity: 0; } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
 /* 2.31.0 (breathe-test): after 20 seconds with a thought and no touch, its words breathe: about 1.8% larger and back,
@@ -187,12 +200,12 @@ textarea::placeholder { color: var(--plum-faint); }
 #strip.pulse { animation: strippulse 1.4s ease-in-out 2; }
 @keyframes strippulse { 50% { transform: translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { #strip.pulse { animation: none; } }
-.bylink { align-self: flex-start; color: var(--plum-muted); font-size: 15px; padding: 10px 24px 10px 0; flex: none; }
-.byfield { flex: none; font: inherit; font-size: 17px; color: var(--plum-ink); background: transparent; border: 0; border-top: 1px solid rgba(241,233,216,.2); border-radius: 0;
+.bylink { align-self: flex-start; color: var(--plum-muted); font-size: calc(15px * var(--ts)); padding: 10px 24px 10px 0; flex: none; }
+.byfield { flex: none; font: inherit; font-size: calc(17px * var(--ts)); color: var(--plum-ink); background: transparent; border: 0; border-top: 1px solid rgba(241,233,216,.2); border-radius: 0;
   padding: 14px 0 4px; outline: none; width: 100%; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
 .byfield::placeholder { color: var(--plum-faint); }
 .formfoot { position: absolute; left: var(--pad); right: var(--pad); bottom: calc(var(--bot) + 28px); display: flex; align-items: center; justify-content: space-between; }
-.quiet { color: var(--plum-muted); font-size: 15px; padding: 12px 0; }
+.quiet { color: var(--plum-muted); font-size: calc(15px * var(--ts)); padding: 12px 0; }
 .quiet.armed { color: var(--plum-ink); font-weight: 700; }
 /* 2.29.0: Delete, armed, turns a soft coral, and a thin line shows the 4 seconds before it resets. */
 #editDelete { position: relative; }
@@ -202,7 +215,7 @@ textarea::placeholder { color: var(--plum-faint); }
 @keyframes dbar { to { transform: scaleX(0); } }
 @media (prefers-reduced-motion: reduce) { #editDelete .dbar i { animation: none; } }
 .kept { position: absolute; left: var(--pad); right: var(--pad); top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
-.kept p { margin: 0; } .kept .k1 { font-size: 20px; font-weight: 700; color: var(--pist); } .kept .k2 { font-size: 16px; color: var(--plum-muted); }
+.kept p { margin: 0; } .kept .k1 { font-size: calc(20px * var(--ts)); font-weight: 700; color: var(--pist); } .kept .k2 { font-size: calc(16px * var(--ts)); color: var(--plum-muted); }
 
 /* ---- Library ---- */
 #lib { position: absolute; left: 0; right: 0; top: calc(var(--top) + 36px); bottom: 0; background: var(--plum); color: var(--plum-ink); border-radius: 22px 22px 0 0;
@@ -220,30 +233,38 @@ textarea::placeholder { color: var(--plum-faint); }
 #lib .grabbtn i { display: block; width: 36px; height: 4px; border-radius: 2px; background: rgba(241,233,216,.35); }
 #lib header { padding: 0 var(--pad) 14px; display: flex; flex-direction: column; gap: 14px; touch-action: none; }
 #lib header div { display: flex; justify-content: space-between; align-items: baseline; }
-#lib h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+#lib h2 { margin: 0; font-size: calc(28px * var(--ts)); font-weight: 700; letter-spacing: -0.02em; }
 /* Words, not a button shape: pistachio on plum, with room around it for a thumb. */
-#lib .new { color: var(--pist); font-weight: 600; font-size: 16px; padding: 14px var(--pad) 14px 24px; margin-right: calc(-1 * var(--pad)); }
+#lib .new { color: var(--pist); font-weight: 600; font-size: calc(16px * var(--ts)); padding: 14px var(--pad) 14px 24px; margin-right: calc(-1 * var(--pad)); }
 /* The filters scroll sideways when they do not fit; the right edge fades to show there is more. */
 #lib .seg { display: flex; gap: 8px; justify-content: flex-start; overflow-x: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x; scrollbar-width: none;
   margin: 0 calc(-1 * var(--pad)); padding: 0 var(--pad); -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
 #lib .seg::-webkit-scrollbar { display: none; }
 #lib .seg::after { content: ""; flex: 0 0 24px; }
-.seg button { font-size: 14px; padding: 7px 13px; border-radius: 999px; color: var(--plum-muted); background: rgba(241,233,216,.06); white-space: nowrap; flex: none; }
+/* 2.33.0: every word-action is at least 44 points tall to a finger (Apple's minimum), without changing how it looks:
+   an invisible ::before widens the touch area around the word. The filter row gets room above and below so its
+   sideways scroll doesn't clip that area. */
+.lrow .back, .seg button, .bylink, .ewords button, #setOffer .so button, #setOffer .no, #impFileBtn, #argPage .lk button, .whynext, #toast button, #lib .grabbtn { position: relative; }
+.lrow .back::before, .seg button::before, .bylink::before, .ewords button::before, #editDelete::before, #ten .no::before, #setOffer .so button::before, #setOffer .no::before,
+#impFileBtn::before, #argPage .lk button::before, .whynext::before, #toast button::before, #lib .grabbtn::before, #saveFail button::before {
+  content: ""; position: absolute; left: -6px; right: -6px; top: 50%; height: max(44px, 100%); transform: translateY(-50%); }
+#lib .seg { padding-top: 6px; padding-bottom: 6px; margin-top: -6px; margin-bottom: -6px; }
+.seg button { font-size: calc(14px * var(--ts)); padding: 7px 13px; border-radius: 999px; color: var(--plum-muted); background: rgba(241,233,216,.06); white-space: nowrap; flex: none; }
 .seg button[aria-pressed="true"] { color: var(--plum); background: var(--plum-ink); font-weight: 600; }
-#q { width: 100%; font: inherit; font-size: 16px; color: var(--plum-ink); background: rgba(241,233,216,.08); border: 0; border-radius: 12px; padding: 12px 14px; outline: none; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
+#q { width: 100%; font: inherit; font-size: calc(16px * var(--ts)); color: var(--plum-ink); background: rgba(241,233,216,.08); border: 0; border-radius: 12px; padding: 12px 14px; outline: none; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
 #q::placeholder { color: var(--plum-faint); }
 #libList { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 0 var(--pad) calc(var(--bot) + 32px); }
-#libList h3 { margin: 18px 0 2px; font-size: 13px; font-weight: 500; color: var(--plum-muted); }
+#libList h3 { margin: 18px 0 2px; font-size: calc(13px * var(--ts)); font-weight: 500; color: var(--plum-muted); }
 .lrow { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid rgba(241,233,216,.12); width: 100%; text-align: left; }
-.lrow .t { font-size: 17px; line-height: 1.3; }
-.lrow .m { font-size: 13px; color: var(--plum-muted); white-space: nowrap; }
+.lrow .t { font-size: calc(17px * var(--ts)); line-height: 1.3; }
+.lrow .m { font-size: calc(13px * var(--ts)); color: var(--plum-muted); white-space: nowrap; }
 /* 2.15.0: the list by where you stand. Each group is one row (name, a short line, count); tap to open it. */
 .lgrp { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 15px 0; border-bottom: 1px solid rgba(241,233,216,.12); min-height: 64px; }
 .lgrp .gt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.lgrp .gn { font-size: 17px; font-weight: 600; }
-.lgrp .gd { font-size: 13px; color: var(--plum-muted); }
-.lgrp .gc { font-size: 15px; color: var(--plum-muted); font-variant-numeric: tabular-nums; }
-.lgrp .gv { display: inline-block; font-size: 18px; color: var(--plum-muted); transition: transform .2s; width: 12px; text-align: center; }
+.lgrp .gn { font-size: calc(17px * var(--ts)); font-weight: 600; }
+.lgrp .gd { font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
+.lgrp .gc { font-size: calc(15px * var(--ts)); color: var(--plum-muted); font-variant-numeric: tabular-nums; }
+.lgrp .gv { display: inline-block; font-size: calc(18px * var(--ts)); color: var(--plum-muted); transition: transform .2s; width: 12px; text-align: center; }
 .lgrp[aria-expanded="true"] .gv { transform: rotate(90deg); }
 .lgrp + .gbody .lrow.one { padding-left: 14px; }
 .gbody { border-bottom: 1px solid rgba(241,233,216,.12); }
@@ -252,19 +273,20 @@ textarea::placeholder { color: var(--plum-faint); }
 /* 2.13.0: one calm line per thought, cut with an ellipsis, so the list can be scanned. */
 .lrow.one { align-items: center; padding: 13px 0; }
 .lrow.one .t { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 400; }
+.lrow.one.hit .t { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .lrow.one .m { display: inline-flex; align-items: center; gap: 6px; flex: none; }
 .lrow.one .m .bk { width: 10px; height: 13px; margin: 0; }
 .lrow.away .t { color: var(--plum-muted); }
 /* The archive row: quiet, at the foot of All; and the way back at the top of Put away. */
 .lrow.arch { align-items: center; margin-top: 20px; min-height: 52px; }
-.lrow.arch .t { color: var(--plum-muted); font-size: 16px; }
-.lrow.arch .m { font-size: 15px; }
+.lrow.arch .t { color: var(--plum-muted); font-size: calc(16px * var(--ts)); }
+.lrow.arch .m { font-size: calc(15px * var(--ts)); }
 #libList .lrow.arch:first-child { margin-top: 4px; }
 .bk { width: 11px; height: 14px; margin-left: 7px; color: var(--pist); vertical-align: -1px; }
 #editMark { right: 0; min-width: 0; padding: 20px var(--pad) 20px 28px; display: flex; align-items: center; gap: 8px; color: var(--plum-muted); }
 #editMark svg { width: 16px; height: 20px; }
 #editMark[aria-pressed="true"] { color: var(--pist); font-weight: 600; }
-.lrow .back { font-size: 13px; font-weight: 600; color: var(--pist); white-space: nowrap; padding: 4px 0; }
+.lrow .back { font-size: calc(13px * var(--ts)); font-weight: 600; color: var(--pist); white-space: nowrap; padding: 4px 0; }
 #libList { padding-bottom: calc(var(--bot) + 40px); }
 #lib header .top { display: flex; justify-content: space-between; align-items: center; }
 /* 2.28.1: with + New gone from the sheet, the gear lines up with the search field and the list (its 24 px icon sits in a 48 px tap area). */
@@ -276,10 +298,10 @@ textarea::placeholder { color: var(--plum-faint); }
 /* 2.29.0: one finding from Insights, a sentence a day; tap for the page. */
 #lib .daily { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; align-items: center; width: 100%; text-align: left;
   background: rgba(185,201,163,.12); border-radius: 14px; padding: 12px 14px; color: var(--plum-ink); }
-#lib .daily .k { grid-column: 1; font-size: 12px; color: var(--plum-muted); margin-bottom: 2px; }
-#lib .daily .s { grid-column: 1; font-size: 15px; line-height: 1.35; }
+#lib .daily .k { grid-column: 1; font-size: calc(12px * var(--ts)); color: var(--plum-muted); margin-bottom: 2px; }
+#lib .daily .s { grid-column: 1; font-size: calc(15px * var(--ts)); line-height: 1.35; }
 #lib .daily .s b { color: var(--pist); font-weight: 700; }
-#lib .daily .v { grid-column: 2; grid-row: 1 / span 2; font-size: 18px; color: var(--plum-muted); }
+#lib .daily .v { grid-column: 2; grid-row: 1 / span 2; font-size: calc(18px * var(--ts)); color: var(--plum-muted); }
 /* 2.29.0: Put away is a row like the others, set off by a little space. */
 #libList .lgrp.arch { margin-top: 18px; }
 #libList .lgrp .gc { min-width: 22px; text-align: right; }
@@ -292,49 +314,49 @@ textarea::placeholder { color: var(--plum-faint); }
 .page { position: absolute; inset: 0; background: var(--plum); color: var(--plum-ink); z-index: 8; display: flex; flex-direction: column;
   transform: translateX(100%); visibility: hidden; transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s .35s; touch-action: none; }
 .page.open { transform: none; visibility: visible; transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s; }
-.page .pback { align-self: flex-start; margin-top: calc(var(--top) + 4px); padding: 20px 28px 12px var(--pad); font-size: 16px; font-weight: 500; }
-.page h1 { margin: 0; padding: 0 var(--pad) 10px; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+.page .pback { align-self: flex-start; margin-top: calc(var(--top) + 4px); padding: 20px 28px 12px var(--pad); font-size: calc(16px * var(--ts)); font-weight: 500; }
+.page h1 { margin: 0; padding: 0 var(--pad) 10px; font-size: calc(28px * var(--ts)); font-weight: 700; letter-spacing: -0.02em; }
 .page .body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 0 0 calc(var(--bot) + 40px); }
-.page .sh { margin: 26px var(--pad) 4px; font-size: 13px; font-weight: 500; color: var(--plum-muted); }
-.srow { display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%; min-height: 52px; padding: 0 var(--pad); font-size: 17px; text-align: left;
+.page .sh { margin: 26px var(--pad) 4px; font-size: calc(13px * var(--ts)); font-weight: 500; color: var(--plum-muted); }
+.srow { display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%; min-height: 52px; padding: 0 var(--pad); font-size: calc(17px * var(--ts)); text-align: left;
   border-bottom: 1px solid rgba(241,233,216,.12); }
-.srow .v { font-size: 15px; color: var(--plum-muted); white-space: nowrap; }
-.srow .chev { color: var(--plum-muted); font-size: 20px; }
+.srow .v { font-size: calc(15px * var(--ts)); color: var(--plum-muted); white-space: nowrap; }
+.srow .chev { color: var(--plum-muted); font-size: calc(20px * var(--ts)); }
 .srow .v .chev { margin-left: 6px; vertical-align: -1px; }
 /* Sets (2.3.0): the name and what it is, with the one thing you can do on the right. */
 .srow.setr { align-items: center; padding-top: 12px; padding-bottom: 12px; }
 .srow.setr .nm { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.srow.setr .nm small { font-size: 14px; color: var(--plum-muted); line-height: 1.35; }
+.srow.setr .nm small { font-size: calc(14px * var(--ts)); color: var(--plum-muted); line-height: 1.35; }
 .srow .v.add { color: var(--pist); font-weight: 600; }
 .srow .v.armed { color: var(--plum-ink); font-weight: 700; }
 /* Import (2.7.0) */
-.imptext { display: block; margin: 14px var(--pad) 0; width: calc(100% - 2 * var(--pad)); min-height: 150px; font-size: 16px; line-height: 1.45;
+.imptext { display: block; margin: 14px var(--pad) 0; width: calc(100% - 2 * var(--pad)); min-height: 150px; font-size: calc(16px * var(--ts)); line-height: 1.45;
   background: rgba(241,233,216,.06); border-radius: 12px; padding: 12px 14px; }
 .improw { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px var(--pad) 0; flex-wrap: wrap; }
 .improw .seg { display: flex; gap: 6px; }
 .improw .seg[hidden] { display: none; }
 #impList { margin-top: 6px; }
 #impList .ir { display: block; width: 100%; text-align: left; padding: 12px var(--pad); border-bottom: 1px solid rgba(241,233,216,.12); }
-#impList .ir .t { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 16px; line-height: 1.35; white-space: pre-line; }
-#impList .ir .b { display: block; margin-top: 4px; font-size: 13px; color: var(--plum-muted); }
+#impList .ir .t { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: calc(16px * var(--ts)); line-height: 1.35; white-space: pre-line; }
+#impList .ir .b { display: block; margin-top: 4px; font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
 #impList .ir.off .t, #impList .ir.off .b { text-decoration: line-through; opacity: .45; }
-#impList .more { margin: 10px var(--pad); font-size: 14px; color: var(--plum-muted); }
+#impList .more { margin: 10px var(--pad); font-size: calc(14px * var(--ts)); color: var(--plum-muted); }
 .impfoot { display: flex; justify-content: flex-end; padding: 0 var(--pad); }
 /* Apple Intelligence test (2.6.0) */
-#aiThemes .ex { margin: 0 var(--pad) 8px; padding: 0 0 8px 14px; font-size: 14px; line-height: 1.45; color: var(--plum-muted); border-left: 2px solid rgba(241,233,216,.12); }
+#aiThemes .ex { margin: 0 var(--pad) 8px; padding: 0 0 8px 14px; font-size: calc(14px * var(--ts)); line-height: 1.45; color: var(--plum-muted); border-left: 2px solid rgba(241,233,216,.12); }
 #aiThemes .ex p { margin: 6px 0; }
-#aiNote .note { margin: 14px var(--pad) 6px; font-size: 18px; line-height: 1.5; }
-#aiNote .facts { margin: 6px var(--pad) 0; padding: 0 0 0 18px; font-size: 14px; line-height: 1.5; color: var(--plum-muted); }
-#aiNote table { margin: 10px var(--pad) 0; width: calc(100% - 2 * var(--pad)); border-collapse: collapse; font-size: 13px; color: var(--plum-muted); font-variant-numeric: tabular-nums; }
+#aiNote .note { margin: 14px var(--pad) 6px; font-size: calc(18px * var(--ts)); line-height: 1.5; }
+#aiNote .facts { margin: 6px var(--pad) 0; padding: 0 0 0 18px; font-size: calc(14px * var(--ts)); line-height: 1.5; color: var(--plum-muted); }
+#aiNote table { margin: 10px var(--pad) 0; width: calc(100% - 2 * var(--pad)); border-collapse: collapse; font-size: calc(13px * var(--ts)); color: var(--plum-muted); font-variant-numeric: tabular-nums; }
 #aiNote th, #aiNote td { text-align: right; padding: 4px 0 4px 8px; border-bottom: 1px solid rgba(241,233,216,.08); }
 #aiNote th:first-child, #aiNote td:first-child { text-align: left; padding-left: 0; }
-.srow.clr { min-height: 44px; font-size: 15px; color: var(--plum-muted); padding-left: calc(var(--pad) + 14px); }
+.srow.clr { min-height: 44px; font-size: calc(15px * var(--ts)); color: var(--plum-muted); padding-left: calc(var(--pad) + 14px); }
 .srow.clr.armed { color: var(--plum-ink); font-weight: 700; }
-.snote { margin: 10px var(--pad) 0; font-size: 14px; line-height: 1.45; color: var(--plum-muted); }
+.snote { margin: 10px var(--pad) 0; font-size: calc(14px * var(--ts)); line-height: 1.45; color: var(--plum-muted); }
 .snote.ok { color: var(--pist); }
 /* Settings (2.11.0): each group is a card one step lighter than the page, with its label above. */
 .grp { margin: 0 16px; background: rgba(241,233,216,.08); border-radius: 16px; overflow: hidden; }
-#settings .sh { margin: 28px calc(16px + 18px) 8px; font-size: 13px; font-weight: 500; letter-spacing: .02em; color: var(--plum-muted); }
+#settings .sh { margin: 28px calc(16px + 18px) 8px; font-size: calc(13px * var(--ts)); font-weight: 500; letter-spacing: .02em; color: var(--plum-muted); }
 #settings .snote, #sets .snote, #imp .snote { margin-left: calc(16px + 18px); margin-right: calc(16px + 18px); }
 /* Sets and Import take the same cards. */
 #setList:not(:empty) { margin: 14px 16px 0; background: rgba(241,233,216,.08); border-radius: 16px; overflow: hidden; }
@@ -350,7 +372,7 @@ textarea::placeholder { color: var(--plum-faint); }
 #imp .impfoot { padding: 0 34px; }
 .grp > .srow, .grp > div > .srow { padding: 0 18px; }
 .grp > .srow:last-child, .grp > :last-child { border-bottom: 0; }
-.grp .lookrow { display: flex; align-items: center; min-height: 52px; padding: 0 18px; font-size: 17px; }
+.grp .lookrow { display: flex; align-items: center; min-height: 52px; padding: 0 18px; font-size: calc(17px * var(--ts)); }
 .grp .lookseg { margin: 0; padding: 0 18px 14px; }
 .grp #lookSec:not([hidden]) + .srow { border-top: 1px solid rgba(241,233,216,.12); }
 .grp #themeSec + #lookSec:not([hidden]) { border-top: 1px solid rgba(241,233,216,.12); }
@@ -362,7 +384,7 @@ textarea::placeholder { color: var(--plum-faint); }
 .made img { width: 24px; height: 24px; border-radius: 6px; opacity: .85; box-shadow: 0 0 0 1px rgba(241,233,216,.18); flex: none; }
 #backups #setSaved { margin: 6px var(--pad) 16px; }
 /* 2.13.0: Edit's one line of history, quiet under the thought. */
-.hist { margin: 4px 0 6px; font-size: 13px; line-height: 1.4; color: var(--plum-muted); }
+.hist { margin: 4px 0 6px; font-size: calc(13px * var(--ts)); line-height: 1.4; color: var(--plum-muted); }
 /* 2.19.0 Edit, calmer: the author right under the thought as a quiet line, then one line of history, then two
    words. No labels, no boxes; a note is plain text you tap to change. */
 #vEdit .sheetform { gap: 0; }
@@ -381,79 +403,81 @@ textarea::placeholder { color: var(--plum-faint); }
 #vEdit.pulling { transition: none; }
 #vEdit.settle { transition: transform .28s cubic-bezier(.2,.8,.2,1); }
 #vEdit.closing { transition: transform .24s cubic-bezier(.4,0,1,1); transform: translateY(100%) !important; }
-.byline { flex: none; font: inherit; font-size: 16px; font-weight: 500; color: var(--plum-muted); background: transparent; border: 0; padding: 12px 0 0; outline: none; width: 100%; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
+.byline { flex: none; font: inherit; font-size: calc(16px * var(--ts)); font-weight: 500; color: var(--plum-muted); background: transparent; border: 0; padding: 12px 0 0; outline: none; width: 100%; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
 .byline::placeholder { color: var(--plum-muted); }
 .byline:focus { color: var(--plum-ink); }
 #vEdit .hist { margin: 6px 0 0; color: var(--plum-muted); }
 .ewords { display: flex; gap: 28px; margin-top: 22px; flex: none; }
 .ewords[hidden] { display: none; }
-.ewords button { font-size: 16px; font-weight: 600; color: var(--pist); padding: 6px 0; }
+.ewords button { font-size: calc(16px * var(--ts)); font-weight: 600; color: var(--pist); padding: 6px 0; }
 .ewords button.on { color: var(--plum-muted); font-weight: 500; }
 .ewords button[hidden] { display: none; }
-.enote { margin-top: 16px; font-size: 17px; line-height: 1.45; min-height: 52px; }
+.enote { margin-top: 16px; font-size: calc(17px * var(--ts)); line-height: 1.45; min-height: 52px; }
 .enote[hidden] { display: none; }
 #vEdit .argbox { margin-top: 18px; }
 /* 2.19.0 Insights as findings: one sentence each, the evidence a tap away. */
 #insBody { padding: 4px var(--pad) 0 !important; }
 .fd { display: grid; grid-template-columns: 92px 1fr 14px; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 16px 0; border-bottom: 1px solid rgba(241,233,216,.12); }
 /* 2.23.0: the number column */
-.fd .n { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: var(--pist); font-variant-numeric: tabular-nums; }
-.fd .n.word { font-size: 24px; letter-spacing: -0.01em; }
-.fd .n.word.long { font-size: 16px; letter-spacing: 0; }
+.fd .n { font-size: calc(40px * var(--ts)); font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: var(--pist); font-variant-numeric: tabular-nums; }
+.fd .n.word { font-size: calc(24px * var(--ts)); letter-spacing: -0.01em; }
+.fd .n.word.long { font-size: calc(16px * var(--ts)); letter-spacing: 0; }
 .fd .n.zero { color: var(--plum-muted); }
 .fd .tx { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.fd .s { font-size: 17px; line-height: 1.2; font-weight: 600; color: var(--plum-ink); }
-.fd .d { font-size: 13.5px; line-height: 1.35; color: var(--plum-muted); }
+.fd .s { font-size: calc(17px * var(--ts)); line-height: 1.2; font-weight: 600; color: var(--plum-ink); }
+.fd .d { font-size: calc(13.5px * var(--ts)); line-height: 1.35; color: var(--plum-muted); }
 #insBody .soon { margin-top: 28px; }
-#insBody .soon p { margin: 0 0 10px; font-size: 13px; color: var(--plum-muted); }
+#insBody .soon p { margin: 0 0 10px; font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
 #insBody .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-#insBody .chips i { font-style: normal; font-size: 13px; color: var(--plum-muted); opacity: .85; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(241,233,216,.12); }
-.fd .c { font-size: 20px; color: var(--plum-muted); transition: transform .2s; display: inline-block; width: 12px; text-align: center; margin-top: 1px; }
+#insBody .chips i { font-style: normal; font-size: calc(13px * var(--ts)); color: var(--plum-muted); opacity: .85; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(241,233,216,.12); }
+.fd .c { font-size: calc(20px * var(--ts)); color: var(--plum-muted); transition: transform .2s; display: inline-block; width: 12px; text-align: center; margin-top: 1px; }
 .fd.open .c { transform: rotate(90deg); }
 .fd.plain { cursor: default; } .fd.plain .c { visibility: hidden; }
 .ev { padding: 0 0 8px 102px; border-bottom: 1px solid rgba(241,233,216,.12); animation: argIn .35s ease both; }
-.ir { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(241,233,216,.08); font-size: 15px; }
+.ir { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(241,233,216,.08); font-size: calc(15px * var(--ts)); }
 .ir:last-child { border-bottom: 0; }
 .ir .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ir .t .w, .ir .t .w2 { display: block; white-space: normal; font-size: 13px; margin-top: 3px; }
+.ir .t .w, .ir .t .w2 { display: block; white-space: normal; font-size: calc(13px * var(--ts)); margin-top: 3px; }
 .ir .t .w { color: var(--pist); } .ir .t .w2 { color: var(--plum-muted); }
-.ir .m { flex: none; font-size: 13px; color: var(--plum-muted); }
-.ir.more { color: var(--plum-muted); font-size: 14px; }
+.ir .m { flex: none; font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
+.ir.more { color: var(--plum-muted); font-size: calc(14px * var(--ts)); }
 .ir.pair { flex-direction: column; gap: 4px; }
-.ir.pair .was { color: var(--plum-muted); text-decoration: line-through; text-decoration-color: rgba(187,167,190,.5); font-size: 14px; }
-.ir.pair .now { font-size: 15px; }
-#insBody .fill { margin: 26px 0 0; font-size: 14px; line-height: 1.45; color: rgba(187,167,190,.7); }
+.ir.pair .was { color: var(--plum-muted); text-decoration: line-through; text-decoration-color: rgba(187,167,190,.5); font-size: calc(14px * var(--ts)); }
+.ir.pair .now { font-size: calc(15px * var(--ts)); }
+#insBody .fill { margin: 26px 0 0; font-size: calc(14px * var(--ts)); line-height: 1.45; color: rgba(187,167,190,.7); }
 #insBody .bars { margin-top: 12px; }
 /* 2.17.0 Insights: plain text on plum, no cards. A quiet label, the thought, one line under it. */
 #insBody { padding-top: 4px; }
-#insBody .lead { margin: 6px var(--pad) 4px; font-size: 14px; line-height: 1.45; color: var(--plum-muted); }
+#insBody .lead { margin: 6px var(--pad) 4px; font-size: calc(14px * var(--ts)); line-height: 1.45; color: var(--plum-muted); }
 #insBody .sh { margin-top: 30px; }
 .ins { margin: 0 var(--pad); padding: 12px 0; border-bottom: 1px solid rgba(241,233,216,.12); }
 .ins:last-of-type { border-bottom: 0; }
-.ins .q { margin: 0; font-size: 17px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.ins .was { margin: 0 0 6px; font-size: 15px; line-height: 1.35; color: var(--plum-muted); text-decoration: line-through; text-decoration-color: rgba(187,167,190,.5); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.ins .m { margin: 5px 0 0; font-size: 13px; line-height: 1.4; color: var(--plum-muted); }
-.ins .m.wait { margin: 0; font-size: 14px; }
-.ins .why { margin: 6px 0 0; font-size: 15px; line-height: 1.4; color: var(--pist); }
-.ins.say .q { font-size: 17px; display: block; }
+.ins .q { margin: 0; font-size: calc(17px * var(--ts)); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ins .was { margin: 0 0 6px; font-size: calc(15px * var(--ts)); line-height: 1.35; color: var(--plum-muted); text-decoration: line-through; text-decoration-color: rgba(187,167,190,.5); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ins .m { margin: 5px 0 0; font-size: calc(13px * var(--ts)); line-height: 1.4; color: var(--plum-muted); }
+.ins .m.wait { margin: 0; font-size: calc(14px * var(--ts)); }
+.ins .why { margin: 6px 0 0; font-size: calc(15px * var(--ts)); line-height: 1.4; color: var(--pist); }
+.ins.say .q { font-size: calc(17px * var(--ts)); display: block; }
 .bars { display: flex; align-items: flex-end; gap: 8px; height: 46px; margin: 14px 0 6px; }
 .bars i { flex: 1; background: rgba(241,233,216,.16); border-radius: 3px 3px 0 0; min-height: 3px; }
 .bars i.top { background: var(--pist); }
-.barl { display: flex; gap: 8px; font-size: 11px; color: var(--plum-muted); }
+.barl { display: flex; gap: 8px; font-size: calc(11px * var(--ts)); color: var(--plum-muted); }
 .barl span { flex: 1; text-align: center; }
 /* Say why */
 .whybody { display: flex; flex-direction: column; gap: 18px; padding: 8px var(--pad) 0 !important; }
-.whyt { margin: 0; font-size: 15px; line-height: 1.4; color: var(--plum-muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-#whyText { font-size: 22px; line-height: 1.3; font-weight: 500; min-height: 96px; }
+.whyt { margin: 0; font-size: calc(15px * var(--ts)); line-height: 1.4; color: var(--plum-muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+#whyText { font-size: calc(22px * var(--ts)); line-height: 1.3; font-weight: 500; min-height: 96px; }
 .whyfoot { display: flex; justify-content: space-between; align-items: center; }
-#toast #toastWhy { font-weight: 600; padding: 7px 12px; margin-left: 4px; border-radius: 999px; background: var(--pist); color: var(--pist-ink); }
+/* 2.33.0: Undo is the strongest word; Say why is a plain word; the label is plain text, set apart by a thin line. */
+#toast #toastWhy { font-weight: 500; padding: 10px 12px; margin-left: 2px; opacity: .85; }
+#toast:not(.done) #toastMsg { padding-right: 12px; margin-right: 2px; border-right: 1px solid currentColor; border-right-color: color-mix(in srgb, currentColor 30%, transparent); }
 /* 2.31.0: refining a thought. */
-.whynext { align-self: flex-start; color: var(--pist); font-weight: 600; font-size: 15px; padding: 12px 0; }
-#vEdit .grew { margin: 12px 0 0; padding: 12px 14px; border-radius: 12px; background: rgba(241,233,216,.06); font-size: 13px; line-height: 1.45; color: var(--plum-muted); }
-#vEdit .grew b { display: block; margin-top: 3px; color: var(--plum-ink); font-weight: 600; font-size: 14px; }
-.lrow .ledl { display: block; font-size: 13px; color: var(--pist); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.whynext { align-self: flex-start; color: var(--pist); font-weight: 600; font-size: calc(15px * var(--ts)); padding: 12px 0; }
+#vEdit .grew { margin: 12px 0 0; padding: 12px 14px; border-radius: 12px; background: rgba(241,233,216,.06); font-size: calc(13px * var(--ts)); line-height: 1.45; color: var(--plum-muted); }
+#vEdit .grew b { display: block; margin-top: 3px; color: var(--plum-ink); font-weight: 600; font-size: calc(14px * var(--ts)); }
+.lrow .ledl { display: block; font-size: calc(13px * var(--ts)); color: var(--pist); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lrow.one.away .t[data-why] { cursor: pointer; }
-.lrow .whyl { display: block; font-size: 13px; color: var(--plum-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lrow .whyl { display: block; font-size: calc(13px * var(--ts)); color: var(--plum-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lrow.one.away.has-why { align-items: flex-start; }
 .lrow.one.away.has-why .t { white-space: normal; }
 .lrow.one.away.has-why .t .tt { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -461,70 +485,73 @@ textarea::placeholder { color: var(--plum-faint); }
 .ewords button:disabled { color: var(--plum-muted); font-weight: 500; }
 .argbox { margin-top: -6px; padding-top: 16px; border-top: 1px solid rgba(241,233,216,.12); animation: argIn .45s ease both; }
 @keyframes argIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.argbox .k { margin: 0 0 5px; font-size: 13px; color: var(--plum-muted); }
-.argbox .v { margin: 0 0 16px; font-size: 16px; line-height: 1.45; }
+.argbox .k { margin: 0 0 5px; font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
+.argbox .v { margin: 0 0 16px; font-size: calc(16px * var(--ts)); line-height: 1.45; }
 .argbox .acts { display: flex; flex-wrap: wrap; gap: 6px 24px; }
 /* 2.31.0: what the case against would let you off, one question, and the case for on request. */
 .argbox .free { margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; background: rgba(185,201,163,.10); }
 .argbox .free .k { color: var(--pist); } .argbox .free .v { margin: 0; }
-.argbox .ask { margin: 2px 0 10px; font-size: 16px; font-style: italic; line-height: 1.4; }
+.argbox .ask { margin: 2px 0 10px; font-size: calc(16px * var(--ts)); font-style: italic; line-height: 1.4; }
 .argbox .for { margin-top: 16px; padding-top: 14px; border-top: 1px dashed rgba(241,233,216,.14); }
 .argbox .for .v { margin: 0; }
 /* 2.32.0: the Argue with it page. */
 #argPage .argbody { padding: 0 var(--pad) 16px; }
-#argPage .aw { margin: 4px 0 18px; font-size: 16px; line-height: 1.35; color: var(--plum-muted); font-weight: 500; }
-#argPage .al { margin: 0 0 6px; font-size: 13px; color: var(--plum-muted); }
-#argPage .ab { margin: 0 0 6px; font-size: 18px; line-height: 1.42; font-weight: 500; }
-#argPage .ab.quiet { color: var(--plum-muted); font-size: 16px; font-weight: 400; }
-#argPage .aa { margin: 6px 0 0; font-size: 14px; line-height: 1.4; color: var(--plum-muted); }
-#argPage .aretry { color: var(--pist); font-weight: 600; font-size: 15px; padding: 6px 0; }
-#argPage .yet { display: flex; align-items: center; gap: 12px; margin: 18px 0; font-size: 13px; color: var(--plum-muted); }
+#argPage .aw { margin: 4px 0 18px; font-size: calc(16px * var(--ts)); line-height: 1.35; color: var(--plum-muted); font-weight: 500; }
+#argPage .al { margin: 0 0 6px; font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
+#argPage .ab { margin: 0 0 6px; font-size: calc(18px * var(--ts)); line-height: 1.42; font-weight: 500; }
+#argPage .ab.quiet { color: var(--plum-muted); font-size: calc(16px * var(--ts)); font-weight: 400; }
+#argPage .aa { margin: 6px 0 0; font-size: calc(14px * var(--ts)); line-height: 1.4; color: var(--plum-muted); }
+#argPage .aretry { color: var(--pist); font-weight: 600; font-size: calc(15px * var(--ts)); padding: 6px 0; }
+#argPage .yet { display: flex; align-items: center; gap: 12px; margin: 18px 0; font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
 #argPage .yet::after { content: ""; flex: 1; height: 1px; background: rgba(241,233,216,.12); }
-#argPage .af { margin: 18px 0 0; font-size: 15px; line-height: 1.4; color: var(--pist); }
+#argPage .af { margin: 18px 0 0; font-size: calc(15px * var(--ts)); line-height: 1.4; color: var(--pist); }
 #argPage .af span { color: var(--plum-muted); }
-#argPage .aearly { display: block; margin-top: 26px; font-size: 14px; color: var(--plum-muted); padding: 8px 0; }
-#argPage .aearlylist .ea { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(241,233,216,.05); font-size: 14px; line-height: 1.45; }
+#argPage .aearly { display: block; margin-top: 26px; font-size: calc(14px * var(--ts)); color: var(--plum-muted); padding: 8px 0; }
+#argPage .aearlylist .ea { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(241,233,216,.05); font-size: calc(14px * var(--ts)); line-height: 1.45; }
 #argPage .aearlylist .ea .w { color: var(--plum-muted); text-decoration: line-through; text-decoration-color: rgba(187,167,190,.45); margin: 0 0 8px; }
-#argPage .aearlylist .ea p { margin: 0 0 6px; } #argPage .aearlylist .ea b { font-weight: 600; color: var(--plum-muted); font-size: 12px; display: block; }
+#argPage .aearlylist .ea p { margin: 0 0 6px; } #argPage .aearlylist .ea b { font-weight: 600; color: var(--plum-muted); font-size: calc(12px * var(--ts)); display: block; }
 #argPage .aend { flex: none; border-top: 1px solid rgba(241,233,216,.12); padding: 14px var(--pad) calc(var(--bot) + 18px); }
-#argPage .ask { margin: 0 0 8px; font-size: 16px; font-style: italic; }
-#argPage .lk { display: flex; gap: 24px; } #argPage .lk button { color: var(--pist); font-weight: 600; font-size: 15px; padding: 6px 0; }
+#argPage .ask { margin: 0 0 8px; font-size: calc(16px * var(--ts)); font-style: italic; }
+#argPage .lk { display: flex; gap: 24px; } #argPage .lk button { color: var(--pist); font-weight: 600; font-size: calc(15px * var(--ts)); padding: 6px 0; }
 #argPage .lk button.q { color: var(--plum-muted); font-weight: 500; } #argPage .lk button:disabled { color: var(--plum-muted); }
-#argPage textarea { width: 100%; margin-top: 10px; font: inherit; font-size: 15px; color: var(--plum-ink); background: rgba(241,233,216,.07); border: 0; border-radius: 12px;
+#argPage textarea { width: 100%; margin-top: 10px; font: inherit; font-size: calc(16px * var(--ts)); color: var(--plum-ink); background: rgba(241,233,216,.07); border: 0; border-radius: 12px;
   padding: 10px 12px; outline: none; resize: none; max-height: 30vh; overflow-y: auto; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
-.argbox .for .v.quiet { color: var(--plum-muted); font-size: 15px; }
-.argbox .acts button { font-size: 15px; font-weight: 600; color: var(--pist); padding: 4px 0; }
+.argbox .for .v.quiet { color: var(--plum-muted); font-size: calc(15px * var(--ts)); }
+.argbox .acts button { font-size: calc(15px * var(--ts)); font-weight: 600; color: var(--pist); padding: 4px 0; }
 .argbox .acts button:disabled { color: var(--plum-muted); font-weight: 500; }
 .argbox .acts button.quiet2 { color: var(--plum-muted); font-weight: 500; }
 .argbox a { color: var(--pist); font-weight: 600; text-decoration: none; }
 /* 2.16.0 Tensions: one row in Your thoughts (a dot when a new pair is found), pairs with "and yet" between. */
 .lgrp.dot .gn::after { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--pist); margin-left: 8px; vertical-align: middle; }
-.tpair { display: block; width: 100%; text-align: left; padding: 12px 0 12px 14px; border-bottom: 1px solid rgba(241,233,216,.12); font-size: 16px; }
+.tpair { display: block; width: 100%; text-align: left; padding: 12px 0 12px 14px; border-bottom: 1px solid rgba(241,233,216,.12); font-size: calc(16px * var(--ts)); }
 .tpair .l { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tpair i { display: block; font-style: normal; font-size: 12px; color: var(--plum-muted); margin: 3px 0; }
+.tpair i { display: block; font-style: normal; font-size: calc(12px * var(--ts)); color: var(--plum-muted); margin: 3px 0; }
 .gbody .tpair:last-child { border-bottom: 0; }
 /* The tension itself, on the reading ground over the current thought. Swipe up or tap to go back. */
 #ten { position: absolute; left: 0; right: 0; top: 0; bottom: var(--strip); background: var(--ground); color: var(--ground-ink); z-index: 4; display: flex; flex-direction: column; justify-content: center; padding: 0 var(--pad) 40px; touch-action: none; cursor: pointer; }
 #ten[hidden] { display: none; }
-#ten .w { margin: 0; font-size: 26px; line-height: 1.2; letter-spacing: -0.02em; font-weight: 600; white-space: pre-line; overflow-wrap: anywhere; }
-#ten .w.long { font-size: 21px; line-height: 1.28; }
-#ten .by { margin: 9px 0 0; font-size: 14px; font-weight: 500; color: var(--ground-muted); }
-#ten .yet { margin: 30px 0; display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; color: var(--ground-muted); }
+#ten .w { margin: 0; font-size: calc(26px * var(--ts)); line-height: 1.2; letter-spacing: -0.02em; font-weight: 600; white-space: pre-line; overflow-wrap: anywhere; }
+#ten .w.long { font-size: calc(21px * var(--ts)); line-height: 1.28; }
+#ten .by { margin: 9px 0 0; font-size: calc(14px * var(--ts)); font-weight: 500; color: var(--ground-muted); }
+#ten .yet { margin: 30px 0; display: flex; align-items: center; gap: 12px; font-size: calc(14px * var(--ts)); font-weight: 500; color: var(--ground-muted); }
 #ten .yet::after { content: ""; flex: 1; height: 1px; background: var(--ground-line); }
-#ten .no { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); font-size: 15px; font-weight: 500; color: var(--ground-muted); padding: 12px 20px; white-space: nowrap; }
+#ten .tdone { position: absolute; left: 0; right: 0; top: calc(var(--top) + 76px); margin: 0; text-align: center; font-size: calc(15px * var(--ts)); font-weight: 500; opacity: .55; color: var(--ground-ink); pointer-events: none; }
+#ten .no { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); font-size: calc(15px * var(--ts)); font-weight: 500; color: var(--ground-muted); padding: 12px 20px; white-space: nowrap; }
 #ten.go { transition: transform .28s cubic-bezier(.4,0,.2,1), opacity .28s; transform: translateY(-60px); opacity: 0; }
-.made p { margin: 0; font-size: 12px; line-height: 1.45; color: var(--plum-muted); }
+.made p { margin: 0; font-size: calc(12px * var(--ts)); line-height: 1.45; color: var(--plum-muted); }
 /* Settings, Look (2.8.0): Appearance is three choices in a row, like the library filters. */
 .lookseg { display: flex; gap: 8px; margin: 8px var(--pad) 0; }
+/* 2.33.0: on the Settings card the unselected choice sits on two tints; a touch lighter so it reads at 4.5:1. */
+.lookseg button:not([aria-checked="true"]) { color: color-mix(in srgb, var(--plum-muted) 78%, var(--plum-ink)); }
 .lookseg button[aria-checked="true"] { color: var(--plum); background: var(--plum-ink); font-weight: 600; }
 .icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px var(--pad) 0; }
-.icons button { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; color: var(--plum-muted); }
+.icons button { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0; font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
 .icons img { width: 60px; height: 60px; border-radius: 14px; box-shadow: 0 0 0 1px rgba(241,233,216,.22); outline: 2px solid transparent; outline-offset: 3px; transition: outline-color .15s; }
 .icons button[aria-checked="true"] img { outline-color: var(--pist); }
 .icons button[aria-checked="true"] span { color: var(--plum-ink); font-weight: 600; }
-.help p { margin: 0 var(--pad) 18px; font-size: 17px; line-height: 1.5; }
+.help p { margin: 0 var(--pad) 18px; font-size: calc(17px * var(--ts)); line-height: 1.5; }
 .help strong { font-weight: 700; color: var(--plum-ink); }
-.help h2 { margin: 30px var(--pad) 12px; font-size: 19px; line-height: 1.3; font-weight: 700; }
+.help h2 { margin: 30px var(--pad) 12px; font-size: calc(19px * var(--ts)); line-height: 1.3; font-weight: 700; }
 /* How Scales works (2.4.0): a small card shows each move once when the page opens; tap it to see it again.
    With Reduce Motion on, the cards stay still. */
 .demo { position: relative; height: 92px; margin: 14px var(--pad) 10px; border-radius: 14px; background: rgba(241,233,216,.06); overflow: hidden; cursor: pointer; }
@@ -718,9 +745,9 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
   <div class="aend">
     <p class="ask">Which would you rather be true? Why?</p>
-    <div class="lk"><button type="button" id="apWrite">Write your answer</button></div>
+    <div class="lk" hidden><button type="button" id="apWrite">Write your answer</button></div>
     <label class="sr" for="apNoteText">Your note</label>
-    <textarea id="apNoteText" rows="3" maxlength="1500" placeholder="Which would I rather be true, and why?" hidden></textarea>
+    <textarea id="apNoteText" rows="3" maxlength="1500" placeholder="Which would I rather be true, and why?"></textarea>
   </div>
 </section>
 <section class="page" id="whyPage" aria-label="Why it was put away" aria-hidden="true">
@@ -822,8 +849,11 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 
-<script src="core.js?v=2.32.1"></script>
-<script src="sets.js?v=2.32.1"></script>
+<!-- 2.33.0: a failed save is said in a message of its own that nothing else replaces, and stays until dismissed. -->
+<div id="saveFail" role="alert" hidden><p id="saveFailMsg"></p><div class="sfa"><button type="button" id="saveFailGo">Back up now</button><button type="button" id="saveFailOk">Dismiss</button></div></div>
+
+<script src="core.js?v=2.33.0"></script>
+<script src="sets.js?v=2.33.0"></script>
 <script>
 (function () {
   "use strict";
@@ -867,13 +897,24 @@ textarea::placeholder { color: var(--plum-faint); }
     ui.learnedUp = lg0.some(function (e) { return e.how === "next"; });
     ui.learnedDown = lg0.some(function (e) { return e.how === "away"; });
   }
-  // 2.25.0: a write the phone refuses (storage full) is said out loud, once a session, with the way to keep the thoughts safe.
-  var warned = false;
+  // 2.25.0: a write the phone refuses (storage full) is said out loud, with the way to keep the thoughts safe.
+  // 2.33.0: in its own message at the top that a move's Undo can't replace, until dismissed; the next failure after
+  // that says it again. No tick: it is a failure, not a confirmation.
+  var failOpen = false;
+  function failSay(msg, go, act) {
+    var el = document.getElementById("saveFail"); if (!el) return;
+    document.getElementById("saveFailMsg").textContent = msg;
+    document.getElementById("saveFailGo").textContent = go;
+    failAct = act; el.hidden = false; failOpen = true;
+    if (typeof haptic === "function") haptic("warning");
+    if (typeof track === "function" && EV) track("save_fail_shown", {});
+  }
+  var failAct = "backup";
   // 2.26.0: in the iPhone app, if the app's own copy couldn't be put back whole, say so and point to the backups.
-  if (window.scalesStoreError) setTimeout(function () { if (typeof done === "function") done("Some of your thoughts couldn't be loaded. Settings, Backups, Restore from a backup brings them back.", 10000); }, 1500);
+  if (window.scalesStoreError) setTimeout(function () { failSay("Some of your thoughts couldn't be loaded. Restore from a backup brings them back.", "Restore", "restore"); }, 1500);
   function saveWarn() {
-    if (warned) return; warned = true;
-    if (typeof done === "function") done("Couldn't save to this phone. Settings, Backups, Back up now keeps your thoughts.", 8000);
+    if (failOpen) return;
+    failSay("Couldn't save to this phone. Back up now keeps your thoughts safe.", "Back up now", "backup");
   }
   function save() { if (!lsSet(KEY, store)) saveWarn(); }
   function saveUi() { lsSet(KEY_UI, ui); }
@@ -1617,7 +1658,8 @@ textarea::placeholder { color: var(--plum-faint); }
       // A search is flat: every match, newest first, with the group it sits in on the right.
       var hits = on.slice().sort(function (a, b) { return a.created < b.created ? 1 : -1; });
       h += "<h3>Matches \u00b7 " + hits.length + "</h3>";
-      h += hits.map(function (t) { return '<button type="button" class="lrow one" data-open="' + esc(t.id) + '"><span class="t">' + esc(firstLine(t.text)) + '</span><span class="m">' + mark(t) + esc(C.standingName(C.standing(t))) + "</span></button>"; }).join("") || none("Nothing in rotation matches.");
+      // 2.33.0: search results show two lines, so the words can be recognised.
+      h += hits.map(function (t) { return '<button type="button" class="lrow one hit" data-open="' + esc(t.id) + '"><span class="t">' + esc(firstLine(t.text)) + '</span><span class="m">' + mark(t) + esc(C.standingName(C.standing(t))) + "</span></button>"; }).join("") || none("Nothing in rotation matches.");
       // A search looks at everything, so a put-away thought can still be found.
       if (off.length) { h += '<h3 style="margin-top:28px">Put away \u00b7 ' + off.length + "</h3>"; h += off.map(awayRow).join(""); }
     } else {
@@ -1632,6 +1674,9 @@ textarea::placeholder { color: var(--plum-faint); }
         var tOpen = !!(open.tension && tens.length), fresh = tens.some(function (p) { return !td.viewed || p.at > td.viewed; });
         h += '<div style="margin-top:' + (js.length ? 26 : 8) + 'px"><button type="button" class="lgrp' + (tens.length ? "" : " empty") + (fresh && !tOpen ? " dot" : "") + '" data-group="tension" aria-expanded="' + tOpen + '"' + (tens.length ? "" : " disabled") +
           '><span class="gt"><span class="gn">Tensions</span><span class="gd">' + (tens.length ? "Your thoughts that pull against each other." : "Looking a little each day. None found yet.") + '</span></span><span class="gc">' + tens.length + '</span><span class="gv" aria-hidden="true">\u203a</span></button>' +
+          // 2.33.0: a new pair shows right under the row, so it is one tap from the list, not two.
+          (!tOpen && fresh ? (function () { var nw = tens.filter(function (p) { return !td.viewed || p.at > td.viewed; }).sort(function (x, y) { return x.at < y.at ? 1 : -1; })[0];
+            return '<div class="gbody"><button type="button" class="tpair" data-newest="1" data-tension="' + esc(nw.a + "|" + nw.b) + '"><span class="l">' + esc(firstLine(store[nw.a].text)) + '</span><i>and yet</i><span class="l">' + esc(firstLine(store[nw.b].text)) + "</span></button></div>"; })() : "") +
           (tOpen ? '<div class="gbody">' + tens.map(function (p) { return '<button type="button" class="tpair" data-tension="' + esc(p.a + "|" + p.b) + '"><span class="l">' + esc(firstLine(store[p.a].text)) + '</span><i>and yet</i><span class="l">' + esc(firstLine(store[p.b].text)) + "</span></button>"; }).join("") + "</div>" : "") + "</div>";
         if (tOpen && fresh) { td.viewed = now().toISOString(); lsSet(KEY_TEN, td); }
         tenShown = true;
@@ -1654,7 +1699,11 @@ textarea::placeholder { color: var(--plum-faint); }
     var wy = e.target.closest("[data-why]");
     if (wy && !e.target.closest("[data-back]")) { openWhy(wy.getAttribute("data-why"), "library"); return; }
     var tp = e.target.closest("[data-tension]");
-    if (tp) { var ab = tp.getAttribute("data-tension").split("|"); showTension(ab[0], ab[1]); return; }
+    if (tp) {
+      var ab = tp.getAttribute("data-tension").split("|");
+      if (tp.hasAttribute("data-newest")) { var tdv = tenData(); tdv.viewed = now().toISOString(); lsSet(KEY_TEN, tdv); }
+      showTension(ab[0], ab[1]); return;
+    }
     var grp = e.target.closest("[data-group]");
     if (grp) { var k = grp.getAttribute("data-group"); ui.open = Object.assign({}, ui.open); ui.open[k] = !ui.open[k]; saveUi(); haptic("tick"); track("tap", { id: "group:" + k }); renderLib(); return; }
     var o = e.target.closest("[data-open]"), b = e.target.closest("[data-back]");
@@ -1770,7 +1819,14 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   // In the iPhone app: saved without asking to iCloud Drive, Scales (or Files), each day and whenever you leave.
   function dailySave() { if (NATIVE) post({ type: "save", json: JSON.stringify(backupData()), day: C.dayKey(now()) }); }
-  window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { what: "save" }); ui.saved = { ok: !!(r && r.ok), where: r && r.where, at: now().toISOString() }; saveUi(); };
+    // 2.33.0: the iPhone's text size changed while Scales was open.
+  window.scalesTextScale = function (x) {
+    x = +x; if (!(x > 0)) return;
+    document.documentElement.style.setProperty("--ts", Math.min(1.5, Math.max(0.82, x)));
+    document.documentElement.style.setProperty("--tw", Math.min(1.3, Math.max(0.82, x)));
+    if (typeof growAll === "function" && (mode === "write" || mode === "edit")) growAll();
+  };
+window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { what: "save" }); ui.saved = { ok: !!(r && r.ok), where: r && r.where, at: now().toISOString() }; saveUi(); };
   // ---------- Settings and Help ----------
   var needsRender = false;
   function openPage(id, m) { var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; track("screen", { to: id }); swipeHint(p); }
@@ -1827,6 +1883,16 @@ textarea::placeholder { color: var(--plum-faint); }
     openPage("backups", "backups");
   };
   $("backupsBack").onclick = function () { closePage("backups", "settings"); };
+  // 2.33.0: the failed-save message.
+  $("saveFailOk").onclick = function () { $("saveFail").hidden = true; failOpen = false; haptic("tick"); };
+  // Back up now does exactly that, where you are, so nothing half-written is left behind. Restore needs the page.
+  $("saveFailGo").onclick = function () {
+    $("saveFail").hidden = true; failOpen = false;
+    if (failAct === "backup") { backup(); return; }
+    if (mode !== "meet") return;
+    if (!$("lib").classList.contains("open")) openLib();
+    openSettings(); $("setBackups").onclick();
+  };
   // App icon (iPhone app only; 2.2.0). The shell says which icon is on at start and after every change.
   var ICON_NAMES = { auto: "Automatic", pistachio: "Pistachio", plum: "Plum", bone: "Bone" };
   var icons = document.querySelectorAll("#iconSec [data-icon]");
@@ -2121,7 +2187,8 @@ textarea::placeholder { color: var(--plum-faint); }
     if (C.protectedThought(text)) { showSafe(); track("tap", { id: "argue", safe: "local" }); return; }
     $("argSafe").hidden = true; apId = t.id; proFailed = false;
     $("apThought").textContent = text;
-    $("apNoteText").value = $("editNote").value; $("apNoteText").hidden = !$("editNote").value.trim();
+    // 2.33.0: the answer field is there from the start (no Write your answer tap first).
+    $("apNoteText").value = $("editNote").value; $("apNoteText").hidden = false;
     var a = curArg(), p = curPro();
     if (a) { fillAgainst(a); track("tap", { id: "argue", kept: 1 }); } else { apSet("apAgainst", "Thinking it over…", true); $("apAssumes").textContent = ""; $("apFree").hidden = true; $("apRetry").hidden = true; }
     if (p) fillFor(p); else apSet("apFor", a ? "Finding the case for…" : "", true);
@@ -2188,7 +2255,8 @@ textarea::placeholder { color: var(--plum-faint); }
     var A = store[a], B = store[b]; if (!A || !B) return;
     var w = function (t) { var x = shown(t.text); return '<p class="w' + (x.length > 140 ? " long" : "") + '">' + esc(x) + "</p>" + (t.by ? '<p class="by">' + esc(t.by) + "</p>" : ""); };
     // 2.22.0: "Not a tension" for when the model got it wrong. The pair goes, and never comes back.
-    $("ten").innerHTML = w(A) + '<div class="yet">and yet</div>' + w(B) + '<button type="button" class="no" id="tenNo">Not a tension</button>';
+    // 2.33.0: "↑ Done" at the top says how to leave, the same way "↑ Next" does on the reading screen.
+    $("ten").innerHTML = '<p class="tdone" aria-hidden="true">\u2191 Done</p>' + w(A) + '<div class="yet">and yet</div>' + w(B) + '<button type="button" class="no" id="tenNo">Not a tension</button>';
     $("tenNo").onclick = function (e) { e.stopPropagation(); dropTension(a, b); };
     $("ten").classList.remove("go"); $("ten").hidden = false;
     closeLib(); clockOff(); mode = "tension"; haptic("tick"); track("screen", { to: "tension" });

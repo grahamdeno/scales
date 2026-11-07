@@ -74,6 +74,8 @@ module.exports = [
       w.expect(await w.visible("#toast") && /Put away/.test(await w.text("#toastMsg")), "a message says Put away, with Undo");
       const hp = await w.haptics(t0);
       w.expect(hp.includes("thud") && hp.includes("letgo"), "put away plays thud then let go (" + hp.join(",") + ")");
+      const fw = await w.page.evaluate(() => [getComputedStyle(document.getElementById("toastUndo")).fontWeight, getComputedStyle(document.getElementById("toastWhy")).fontWeight, getComputedStyle(document.getElementById("toastWhy")).backgroundColor]);
+      if (await w.visible("#toastWhy")) w.expect(+fw[0] > +fw[1] && /rgba\(0, 0, 0, 0\)|transparent/.test(fw[2]), "Undo is the strongest word, Say why a plain one (" + fw.join(", ") + ")");
       await w.tap("#toastUndo", "Undo", 700);
       w.expect((await w.text("#words")) === first, "Undo brings back the same thought, in place");
       const st = await w.store();
@@ -217,7 +219,7 @@ module.exports = [
       w.expect(await w.visible("#argPage"), "the argument opens");
       w.expect((await w.text("#apAgainst")).length > 20, "Against it is written");
       w.expect((await w.text("#apFor")).length > 20, "For it is written");
-      await w.tap("#apWrite", "Write your answer", 400);
+      w.expect(await w.visible("#apNoteText"), "the answer field is there without an extra tap");
       await w.fill("#apNoteText", "I'd rather slowing down be true, because rushing has cost me more.", "write the answer");
       await w.tap("#argBack", "back to Edit", 800);
       w.expect(await w.visible("#vEdit"), "back in Edit");
@@ -231,8 +233,10 @@ module.exports = [
       await w.tap("#strip", "open Your thoughts", 1200);
       const g = w.page.locator('#libList [data-group="tension"]');
       w.expect(await g.count() === 1, "Tensions shows in Your thoughts");
-      await w.tap('#libList [data-group="tension"]', "open Tensions", 500);
-      await w.tap("#libList [data-tension]", "open a tension", 900);
+      // A new pair shows under the Tensions row (2.33.0); otherwise open the group first.
+      if (await w.page.locator("#libList [data-newest]").count()) await w.tap("#libList [data-newest]", "open the new tension", 900);
+      else { await w.tap('#libList [data-group="tension"]', "open Tensions", 500); await w.tap("#libList [data-tension]", "open a tension", 900); }
+      w.expect(/Done/.test(await w.text("#ten .tdone")), "the tension says how to leave");
       w.expect(await w.visible("#ten") && /and yet/.test(await w.text("#ten")), "two thoughts are shown with \"and yet\" between them");
       const k0 = await w.page.evaluate(() => (JSON.parse(localStorage.getItem("scales.next.tensions.v1") || "{}").pairs || []).length);
       await w.tap("#tenNo", "Not a tension", 900);
@@ -290,14 +294,15 @@ module.exports = [
     async run(w) {
       await w.page.evaluate(() => { const s = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (/thoughts/.test(k)) { const e = new Error("full"); e.name = "QuotaExceededError"; throw e; } return s.call(this, k, v); }; });
       await w.pullDown("pull down with storage full");
-      const m = await w.text("#toast");
+      const m = (await w.visible("#saveFail")) ? await w.text("#saveFail") : await w.text("#toast");
       w.expect(/Couldn't save/.test(m) && /Back up now/.test(m), "after a swipe or pull, it says it couldn't save and points to Back up now (showing: " + m.slice(0, 40) + ")");
+      w.expect(!/\u2713/.test(m), "the failure is not marked with a tick");
+      if (await w.visible("#saveFail")) await w.free(() => w.tap("#saveFailOk", "Dismiss", 300));
       await w.free(async () => {
         await w.tap("#stripNew", "write one", 600); await w.fill("#writeText", "This one cannot be saved."); await w.tap("#writeKeep", "Keep", 600);
       });
-      const m2 = await w.text("#toastMsg");
-      w.expect(/Couldn't save/.test(m2), "after writing, it says it couldn't save (showing: " + m2.slice(0, 40) + ")");
-      w.expect(!/^✓/.test(m2), "the failure is not marked with a tick (showing: " + m2.slice(0, 12) + ")");
+      const m2 = (await w.visible("#saveFail")) ? await w.text("#saveFail") : await w.text("#toastMsg");
+      w.expect(/Couldn't save/.test(m2), "the next failure after Dismiss says it again (showing: " + m2.slice(0, 40) + ")");
     },
   },
 ];

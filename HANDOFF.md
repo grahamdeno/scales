@@ -59,6 +59,8 @@ read, never written or deleted.
 Start here in a new session: this section, `docs/release-plan.md` (submit, launch day, beta, after launch), and the
 Cleanup log below.
 
+- 2.33.0 (UX audit fixes, Larger Text in the iPhone shell) is on branch `ux-audit`, PR #303, not merged or released;
+  it needs a new iPhone build to reach the phone.
 - App: 2.32.1, iPhone build 55. The web app is bundled into the iPhone app; the browser copy at
   scales.tangomike.app/app/ serves the `release` branch and runs the same code. Version history is in README.md.
 - App Store: version 1.0 is Prepare for Submission with build 55 attached. Listing text updated on 4 November (iOS 26,

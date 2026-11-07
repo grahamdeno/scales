@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.32.1";
+  var VERSION = "2.33.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -177,7 +177,16 @@
     }
     var pool = inRotation(store).filter(function (t) { return !seen[t.id]; }).sort(byUnseen(today));
     if (!pool.length) return { card: null, why: "done", shown: tl.length };
+    // 2.33.0: a skip comes back in 5 days, as How Scales works says, even through Keep going or a top-up. Thoughts
+    // skipped within the last 5 days wait at the back, and come only once nothing else is left today.
+    var rested = pool.filter(function (t) { return !skippedLately(t, today); });
+    if (rested.length) pool = rested;
     return { card: pool[0], pile: more ? "more" : "extra", review: false, shown: tl.length };
+  }
+  // Skipped on its last visit and not yet due again: still inside its 5 days.
+  function skippedLately(t, today) {
+    var v = t.visits && t.visits[t.visits.length - 1];
+    return !!v && v.kind === "skipped" && t.due > today;
   }
   // Which card of the session this is: a gap of more than 5 minutes since the last visit ended starts a new session.
   function sessionPos(log, nowMs, ms) {

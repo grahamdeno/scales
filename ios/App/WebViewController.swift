@@ -61,6 +61,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         applyLook(UserDefaults.standard.string(forKey: Self.lookKey) ?? "")
         NotificationCenter.default.addObserver(forName: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil, queue: .main) { [weak self] _ in self?.sendA11y() }
         NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in self?.store.flush() }
+        NotificationCenter.default.addObserver(forName: UIContentSizeCategory.didChangeNotification, object: nil, queue: .main) { [weak self] _ in self?.sendTextScale() }
         if store.exists && !legacyCheck { start() }
         // Otherwise the web version's data is brought over first, once the view is in a window (viewDidAppear).
     }
@@ -98,7 +99,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
         // 2.6.0: a TestFlight copy says so, so tests meant only for TestFlight can show there and nowhere else.
         let testflight = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
-        content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios', build: '\(build)', testflight: \(testflight), look: true, bundled: true };",
+        // 2.33.0: the iPhone's text size (Settings, Display, Text Size, and Larger Text) as a scale for the page's type.
+        content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios', build: '\(build)', testflight: \(testflight), look: true, bundled: true, textScale: \(Self.textScale()) };",
                                            injectionTime: .atDocumentStart, forMainFrameOnly: true))
         if let url = Bundle.main.url(forResource: "NativeStore", withExtension: "js"), let js = try? String(contentsOf: url, encoding: .utf8) {
             content.addUserScript(WKUserScript(source: store.seedScript() + "\n" + js, injectionTime: .atDocumentStart, forMainFrameOnly: true))
@@ -165,6 +167,30 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     }
 
     /// Whether VoiceOver is on (1.81.0): the quiet fade never dims the screen for someone who isn't looking at it.
+    /// 2.33.0: how much bigger or smaller the iPhone's chosen text size is than the standard one (Large = 1).
+    /// The page multiplies its type by this, and caps it so the layout still holds.
+    static func textScale() -> Double {
+        switch UIApplication.shared.preferredContentSizeCategory {
+        case .extraSmall: return 0.82
+        case .small: return 0.88
+        case .medium: return 0.94
+        case .large: return 1.0
+        case .extraLarge: return 1.12
+        case .extraExtraLarge: return 1.24
+        case .extraExtraExtraLarge: return 1.35
+        case .accessibilityMedium: return 1.6
+        case .accessibilityLarge: return 1.9
+        case .accessibilityExtraLarge: return 2.35
+        case .accessibilityExtraExtraLarge: return 2.75
+        case .accessibilityExtraExtraExtraLarge: return 3.1
+        default: return 1.0
+        }
+    }
+
+    private func sendTextScale() {
+        run("window.scalesTextScale && window.scalesTextScale(\(Self.textScale()))")
+    }
+
     private func sendA11y() {
         run("window.scalesA11y && window.scalesA11y({ voiceOver: \(UIAccessibility.isVoiceOverRunning) })")
     }
