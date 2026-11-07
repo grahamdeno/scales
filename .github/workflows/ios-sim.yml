@@ -60,9 +60,30 @@ jobs:
         env:
           MAESTRO_DRIVER_STARTUP_TIMEOUT: "180000"
         run: |
+          # pipefail: without it the tee hides a failed flow and the run shows green.
+          set -o pipefail
           mkdir -p ios-audit
           cd ios-audit
           maestro --device "${{ steps.sim.outputs.udid }}" test ../tests/audit/maestro --format junit --output results.xml --test-output-dir . 2>&1 | tee maestro.log
+      - name: What the screen held when a flow failed
+        if: failure()
+        run: |
+          # The text iOS exposes on the last screen, so a failed flow can be read from the log.
+          maestro --device "${{ steps.sim.outputs.udid }}" hierarchy > ios-audit/hierarchy.json 2>/dev/null || true
+          python3 -c '
+          import json,sys
+          try: t=json.load(open("ios-audit/hierarchy.json"))
+          except Exception as e: print("no hierarchy:",e); sys.exit(0)
+          seen=[]
+          def walk(n):
+            a=n.get("attributes",{})
+            for k in ("accessibilityText","text","hintText"):
+              v=(a.get(k) or "").strip()
+              if v and v not in seen: seen.append(v)
+            for c in n.get("children",[]): walk(c)
+          walk(t)
+          for v in seen[:80]: print("screen:",v[:160])'
+          grep -E "\[(Failed|Passed)\]" ios-audit/maestro.log | sed 's/^/::warning::/' || true
       - name: Screenshots of the safe areas
         if: always()
         run: xcrun simctl io "${{ steps.sim.outputs.udid }}" screenshot ios-audit/last-screen.png || true

@@ -22,5 +22,5 @@ name: Edit, note, bookmark
 - assertVisible: "Done"
 - tapOn: "Done"
 - waitForAnimationToEnd
-- assertVisible: "Your thoughts"
+- assertVisible: ".*Your thoughts.*"
 - takeScreenshot: 03-back

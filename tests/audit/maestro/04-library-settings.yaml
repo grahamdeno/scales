@@ -17,16 +17,16 @@ name: Library, search, settings, help
 - tapOn: "Search your thoughts"
 - inputText: "the"
 - takeScreenshot: 04-search-keyboard
-- hideKeyboard
+# No hideKeyboard: on iOS it swipes, and a swipe down closes the sheet. The gear sits above the keyboard.
 - tapOn: "Settings"
 - waitForAnimationToEnd
-- assertVisible: "How Scales works"
+- assertVisible: ".*How Scales works.*"
 - takeScreenshot: 04-settings
 - scrollUntilVisible:
-    element: "Version"
+    element: ".*Version.*"
     direction: DOWN
 - takeScreenshot: 04-settings-bottom
-- tapOn: "How Scales works"
+- tapOn: ".*How Scales works.*"
 - waitForAnimationToEnd
-- assertVisible: "Swipe up"
+- assertVisible: ".*Swipe up.*"
 - takeScreenshot: 04-help

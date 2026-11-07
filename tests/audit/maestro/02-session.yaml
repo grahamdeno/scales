@@ -11,20 +11,20 @@ name: Start with five, swipe, put away, undo
     text: ".*start with five.*"
 - waitForAnimationToEnd
 - takeScreenshot: 02-first-thought
-- assertVisible: "Your thoughts"
+- assertVisible: ".*Your thoughts.*"
 - swipe:
     start: 50%, 55%
     end: 50%, 25%
     duration: 400
 - waitForAnimationToEnd
-- assertVisible: "Moved on"
+- assertVisible: ".*Moved on.*"
 - takeScreenshot: 02-moved-on
 - swipe:
     start: 50%, 40%
     end: 50%, 75%
     duration: 400
 - waitForAnimationToEnd
-- assertVisible: "Put away"
+- assertVisible: ".*Put away.*"
 - takeScreenshot: 02-put-away
 - tapOn: "Undo"
 - waitForAnimationToEnd
