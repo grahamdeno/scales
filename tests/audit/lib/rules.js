@@ -33,6 +33,9 @@ function pageRules(opts) {
     let o = 1, n = el;
     while (n && n.nodeType === 1) { o *= parseFloat(getComputedStyle(n).opacity); n = n.parentElement; }
     if (o < 0.1) return false;
+    // Text that ignores touches (pointer-events: none) is invisible to elementFromPoint, so it can't be tested for
+    // being covered that way; it counts as seen when it is on screen and not faded out.
+    if (getComputedStyle(el).pointerEvents === "none") return true;
     // Something on top? Test the middle of the part that is on screen.
     const x = Math.min(Math.max((Math.max(r.left, 0) + Math.min(r.right, vw)) / 2, 1), vw - 1);
     const y = Math.min(Math.max((Math.max(r.top, 0) + Math.min(r.bottom, vh)) / 2, 1), vh - 1);

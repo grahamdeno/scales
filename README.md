@@ -24,7 +24,7 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   putting away, Undo is the strongest word and Say why a plain word; the set offer uses words, not pills. Argue with
   it shows the answer field straight away. A new tension shows under the Tensions row, one tap from the list. Keep
   going keeps the 5-day promise: thoughts skipped in the last 5 days wait until nothing else is left. Search results
-  show two lines. The unselected color choice reads at 4.5:1.
+  show two lines. The unselected color choice reads at 4.5:1, and the resting "↑ Next" and "Put away ↓" at 5.7:1.
 - **2.32.1:** The argument page has one action, "Write your answer". Add to note is gone: every argument is kept with the
   thought, and rewording keeps the earlier ones (up to 8), shown at the bottom as "Earlier arguments".
 - **2.32.0:** Argue with it opens its own page, like a tension: the case against and what it assumes, "and yet", the case
