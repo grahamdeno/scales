@@ -9,3 +9,4 @@ e2e-shots/
 !appstore/listing.json
 # The bundled web app is copied in at build time (scripts/bundle-web.sh).
 ios/web/
+audit-out/

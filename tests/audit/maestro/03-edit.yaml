@@ -1,0 +1,26 @@
+# Tap a thought to edit it, add a note, bookmark, Done. The keyboard must not cover Done.
+appId: com.grahamdeno.scales
+name: Edit, note, bookmark
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "What's on your mind?"
+    timeout: 20000
+- tapOn:
+    text: ".*start with five.*"
+- waitForAnimationToEnd
+- tapOn:
+    point: 50%, 42%
+- extendedWaitUntil:
+    visible: "Done"
+    timeout: 5000
+- takeScreenshot: 03-edit
+- tapOn: "Add a note"
+- inputText: "Tried this on Monday."
+- takeScreenshot: 03-note-keyboard
+- assertVisible: "Done"
+- tapOn: "Done"
+- waitForAnimationToEnd
+- assertVisible: "Your thoughts"
+- takeScreenshot: 03-back

@@ -1,0 +1,26 @@
+# First run on a clean install: the first screen says what to do, a thought is kept, and it survives a restart.
+appId: com.grahamdeno.scales
+name: First run, keep a thought, restart
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "What's on your mind?"
+    timeout: 20000
+- takeScreenshot: 01-first-screen
+- tapOn: "What's on your mind?"
+- inputText: "Patience over speed."
+- takeScreenshot: 01-keyboard-up
+- tapOn: "Keep"
+- extendedWaitUntil:
+    visible: "Kept."
+    timeout: 5000
+- takeScreenshot: 01-kept
+# Close the app completely and open it again: the thought must still be there (NativeStore keeps a file copy).
+- stopApp
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible: "Patience over speed."
+    timeout: 20000
+- takeScreenshot: 01-after-restart
