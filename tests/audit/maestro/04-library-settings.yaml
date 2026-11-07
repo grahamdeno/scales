@@ -20,11 +20,12 @@ name: Library, search, settings, help
 # No hideKeyboard: on iOS it swipes, and a swipe down closes the sheet. The gear sits above the keyboard.
 - tapOn: "Settings"
 - waitForAnimationToEnd
-- assertVisible: ".*How Scales works.*"
 - takeScreenshot: 04-settings
+# How Scales works and Version sit at the bottom of Settings.
 - scrollUntilVisible:
     element: ".*Version.*"
     direction: DOWN
+- assertVisible: ".*How Scales works.*"
 - takeScreenshot: 04-settings-bottom
 - tapOn: ".*How Scales works.*"
 - waitForAnimationToEnd

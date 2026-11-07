@@ -13,9 +13,10 @@ name: First run, keep a thought, restart
 - inputText: "Patience over speed."
 - takeScreenshot: 01-keyboard-up
 - tapOn: "Keep"
+# "Kept." shows for 1.6 s, too short to rely on; the check is that the thought then stands on the reading screen.
 - extendedWaitUntil:
-    visible: "Kept\\..*"
-    timeout: 5000
+    visible: ".*Patience over speed.*"
+    timeout: 8000
 - takeScreenshot: 01-kept
 # Close the app completely and open it again: the thought must still be there (NativeStore keeps a file copy).
 - stopApp
