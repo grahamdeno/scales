@@ -59,9 +59,9 @@ read, never written or deleted.
 Start here in a new session: this section, `docs/release-plan.md` (submit, launch day, beta, after launch), and the
 Cleanup log below.
 
-- 2.33.0 (UX audit fixes, Larger Text in the iPhone shell) is on branch `ux-audit`, PR #303, not merged or released;
-  it needs a new iPhone build to reach the phone.
-- App: 2.32.1, iPhone build 55. The web app is bundled into the iPhone app; the browser copy at
+- Next release: Stone, light look, muted text (#55524B on #C9C6BD) is 4.56:1 by the numbers and measured 4.38:1 in
+  WebKit ("Skipped 3 of the last 3 times"). Darken --ground-muted for Stone light to #4E4B44 (5.1:1).
+- App: 2.33.0 (UX audit fixes, Larger Text in the iPhone shell), iPhone build 57, released to the browser 2026-11-07. The web app is bundled into the iPhone app; the browser copy at
   scales.tangomike.app/app/ serves the `release` branch and runs the same code. Version history is in README.md.
 - App Store: version 1.0 is Prepare for Submission with build 55 attached. Listing text updated on 4 November (iOS 26,
   works without a connection, the case for). The 8 screenshots in `appstore/screenshots/` were uploaded by Grok on
