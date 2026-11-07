@@ -946,3 +946,20 @@ test("Every argument is kept: rewording moves the old one to argsWas (2.32.1)", 
   const r = {}; N.restoreFrom(r, { app: "scales", version: "2.32.1", thoughts: { x: t } }, new Date(), []);
   assert.equal(r.x.argsWas.length, 8, "backups keep them");
 });
+
+test("Keep going keeps the 5-day promise: thoughts skipped lately wait until nothing else is left (2.33.0)", () => {
+  const now = at(2026, 11, 9, 9), today = N.dayKey(now), st = {};
+  // One thought skipped yesterday (due in 4 days), two not due and not skipped.
+  const mk = (id, kind, due) => { const t = N.make(id, at(2026, 10, 1)); t.id = id; t.due = due; t.seen = at(2026, 11, 8).toISOString(); t.visits = [{ at: t.seen, kind, ms: kind === "skipped" ? 4000 : 40000 }]; st[id] = t; };
+  mk("skipped", "skipped", N.addDays(today, 4));
+  mk("a", "thought", N.addDays(today, 3));
+  mk("b", "thought", N.addDays(today, 6));
+  const log = [], order = [];
+  for (let i = 0; i < 3; i++) {
+    const r = N.nextCard(st, log, now, null, true);
+    order.push(r.card.id);
+    log.push({ at: now.toISOString(), id: r.card.id, kind: "seen", pile: r.pile });
+  }
+  assert.deepEqual(order.slice(0, 2).sort(), ["a", "b"], "the two not skipped come first");
+  assert.equal(order[2], "skipped", "the skipped one only once nothing else is left");
+});

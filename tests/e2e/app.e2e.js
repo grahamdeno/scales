@@ -283,8 +283,8 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Backups/.test(await page.textContent("#settings")) && !/Restore from a backup/.test(await page.textContent("#settings")) && !/stay on this phone/.test(await page.textContent("#settings")), tag + "Settings has one Backups row, and the privacy line only once (2.13.0)");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.32\.1/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/^2\.32\.1/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.33\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/^2\.33\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     ok(await page.locator("#settings .made").count() === 1 && (await page.textContent("#settings .made")).trim() === "Your thoughts stay on your phone." && /pistachio\.png$/.test(await page.getAttribute("#settings .made img", "src")), tag + "Settings ends with the one-color icon and one line");
     ok(await page.evaluate(() => { const i = document.querySelector("#settings .made img"); return i.getBoundingClientRect().width <= 28 && i.getBoundingClientRect().width < 60; }), tag + "the footer icon is smaller than the icon choices");
     ok(await page.evaluate(() => { const i = document.querySelector("#settings .made img").getBoundingClientRect(), p = document.querySelector("#settings .made p").getBoundingClientRect(); return Math.abs((i.top + i.bottom) / 2 - (p.top + p.bottom) / 2) < 6 && p.left > i.right; }), tag + "the footer icon and line sit side by side (2.13.0)");
@@ -296,7 +296,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
     ok(Array.isArray(bk.events) && bk.events.length > 0, tag + "Back up carries the event log");
-    ok(bk.app === "scales" && bk.version === "2.32.1" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.33.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -422,7 +422,16 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.evaluate(() => { const o = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (k === "scales.next.thoughts.v1") throw new Error("QuotaExceededError"); return o.call(this, k, v); }; });
     await page.keyboard.press("n"); await page.waitForTimeout(500);
     await page.fill("#writeText", "This one cannot be saved."); await page.click("#writeKeep"); await page.waitForTimeout(500);
-    ok(/Couldn't save to this phone/.test(await page.textContent("#toast")) && /Back up now/.test(await page.textContent("#toast")), tag + "a refused save says so and points to Back up now");
+    ok(await page.locator("#saveFail").isVisible() && /Couldn't save to this phone/.test(await page.textContent("#saveFail")) && /Back up now/.test(await page.textContent("#saveFail")) && !/\u2713/.test(await page.textContent("#saveFail")), tag + "a refused save says so, with Back up now and no tick (2.33.0)");
+    // 2.33.0: a move's message never covers it, and it stays until dismissed; the next failure after that says it again.
+    await page.click("#writeCancel").catch(() => {}); await page.waitForTimeout(400);
+    await page.keyboard.press("ArrowUp"); await page.waitForTimeout(900);
+    ok(await page.locator("#saveFail").isVisible(), tag + "after a swipe the failed-save message is still showing");
+    await page.click("#saveFailOk"); await page.waitForTimeout(200);
+    ok(!(await page.locator("#saveFail").isVisible()), tag + "Dismiss closes it");
+    await page.keyboard.press("n"); await page.waitForTimeout(500);
+    await page.fill("#writeText", "Another that cannot be saved."); await page.click("#writeKeep"); await page.waitForTimeout(500);
+    ok(await page.locator("#saveFail").isVisible(), tag + "the next failed save says it again");
     ok(!errs.length, tag + "no page errors" + (errs.length ? " (" + errs[0] + ")" : ""));
     await ctx.close();
   }
@@ -734,7 +743,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop() || {})).value === "", tag + "the iPhone app hears Automatic at start");
     await page.evaluate(() => document.getElementById("libGear").click()); await page.waitForTimeout(500);
     ok(await page.locator("#lookSec").isVisible() && await page.getAttribute('[data-look="auto"]', "aria-checked") === "true", tag + "Settings offers Appearance with Automatic on");
-    ok(/^2\.32\.1 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
+    ok(/^2\.33\.0 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
     const other = scheme === "dark" ? "light" : "dark";
     await page.click('[data-look="' + other + '"]'); await page.waitForTimeout(300);
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop())).value === other, tag + "choosing " + other + " tells the iPhone app");
@@ -765,7 +774,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const kinds = new Set(ev.map((e) => e.e));
     ok(["session", "boot", "snapshot", "tap", "screen", "session_end"].every((k) => kinds.has(k)), "telemetry: session, boot, snapshot, taps, screens and session end are logged (" + [...kinds].join(",") + ")");
     const boot = ev.find((e) => e.e === "boot"), snap = ev.find((e) => e.e === "snapshot");
-    ok(boot && boot.v === "2.32.1" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
+    ok(boot && boot.v === "2.33.0" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
     ok(ev.some((e) => e.e === "tap" && e.id === "libGear") && ev.some((e) => e.e === "screen" && e.to === "help"), "telemetry: a tap is named by its button, and the screen it opened is logged");
     const sid = ev.find((e) => e.e === "session").s;
     ok(ev.filter((e) => e.e !== "session").every((e) => e.s === sid), "telemetry: every event carries its session");
@@ -829,8 +838,8 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.screenshot({ path: path.join(shots, "argue-390.png") });
     const kept = await page.evaluate((id) => JSON.parse(localStorage.getItem("scales.next.thoughts.v1"))[id].arg, cur);
     ok(kept && /stubbornness/.test(kept.against) && kept.text === (await page.inputValue("#editText")).trim(), "argue: the argument is kept with the thought, for these words");
-    ok(await page.locator("#apNote").count() === 0 && (await page.textContent("#apWrite")) === "Write your answer", "argue: one action, Write your answer (2.32.1)");
-    await page.click("#apWrite"); await page.fill("#apNoteText", "It assumes: I'd rather hold to it."); await page.waitForTimeout(150);
+    ok(await page.locator("#apNote").count() === 0 && await page.locator("#apNoteText").isVisible() && !(await page.locator("#apWrite").isVisible()), "argue: the answer field is there from the start, no extra tap (2.33.0)");
+    await page.fill("#apNoteText", "It assumes: I'd rather hold to it."); await page.waitForTimeout(150);
     ok((await page.inputValue("#editNote")) === "It assumes: I'd rather hold to it.", "argue: the answer is the thought's note");
     await page.click("#argBack"); await page.waitForTimeout(500);
     ok(await page.locator("#argPage.open").count() === 0 && await page.locator("#vEdit").isVisible(), "argue: back returns to Edit");

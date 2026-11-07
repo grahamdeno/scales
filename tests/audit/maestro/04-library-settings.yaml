@@ -1,0 +1,32 @@
+# Open Your thoughts, search, open Settings and How Scales works. Checks the sheet clears the Home indicator.
+appId: com.grahamdeno.scales
+name: Library, search, settings, help
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "What's on your mind?"
+    timeout: 20000
+- tapOn:
+    text: ".*start with five.*"
+- waitForAnimationToEnd
+- tapOn: "Your thoughts. Open the list."
+- waitForAnimationToEnd
+- assertVisible: "Search your thoughts"
+- takeScreenshot: 04-library
+- tapOn: "Search your thoughts"
+- inputText: "the"
+- takeScreenshot: 04-search-keyboard
+- hideKeyboard
+- tapOn: "Settings"
+- waitForAnimationToEnd
+- assertVisible: "How Scales works"
+- takeScreenshot: 04-settings
+- scrollUntilVisible:
+    element: "Version"
+    direction: DOWN
+- takeScreenshot: 04-settings-bottom
+- tapOn: "How Scales works"
+- waitForAnimationToEnd
+- assertVisible: "Swipe up"
+- takeScreenshot: 04-help

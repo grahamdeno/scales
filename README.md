@@ -17,6 +17,14 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.33.0:** From the UX audit (`docs/audit/`). A failed save shows in its own message at the top that a move's Undo
+  can't cover, with Back up now and no tick, until dismissed; the next failure says it again. Every word-action is at
+  least 44 points tall to a finger, with no change in look. Type follows the iPhone's text size (Larger Text), capped
+  at 1.5x (1.3x for the thought) so the layout holds; needs the new iPhone build. A tension says "↑ Done". After
+  putting away, Undo is the strongest word and Say why a plain word; the set offer uses words, not pills. Argue with
+  it shows the answer field straight away. A new tension shows under the Tensions row, one tap from the list. Keep
+  going keeps the 5-day promise: thoughts skipped in the last 5 days wait until nothing else is left. Search results
+  show two lines. The unselected color choice reads at 4.5:1, and the resting "↑ Next" and "Put away ↓" at 5.7:1.
 - **2.32.1:** The argument page has one action, "Write your answer". Add to note is gone: every argument is kept with the
   thought, and rewording keeps the earlier ones (up to 8), shown at the bottom as "Earlier arguments".
 - **2.32.0:** Argue with it opens its own page, like a tension: the case against and what it assumes, "and yet", the case

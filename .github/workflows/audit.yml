@@ -1,0 +1,67 @@
+name: UX audit
+
+# The schedule check runs on every pull request and push to main: 30 simulated days of Scales' real scheduling code
+# (tests/audit/sim.js). It fails if a rule change breaks the feel: thoughts not coming round, skips returning early,
+# avoided thoughts crowding the day, or anything moving that the person did not move.
+#
+# The full walk (every journey on three iPhone sizes, every screen state, the report) runs when started by hand,
+# in Chromium and in WebKit (the engine inside the iPhone app). The report is attached to the run as "ux-audit-*".
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      engines:
+        description: "Engines to walk (chromium, webkit or both)"
+        default: "both"
+        type: choice
+        options: [both, webkit, chromium]
+
+jobs:
+  schedule:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: 30 days of use
+        run: node tests/audit/sim.js --strict
+
+  walk:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - name: Skip engines not asked for
+        id: want
+        run: |
+          want="${{ github.event.inputs.engines }}"
+          if [ "$want" = "both" ] || [ "$want" = "${{ matrix.engine }}" ]; then echo "go=1" >> "$GITHUB_OUTPUT"; else echo "go=0" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/checkout@v7
+        if: steps.want.outputs.go == '1'
+      - uses: actions/setup-node@v6
+        if: steps.want.outputs.go == '1'
+        with:
+          node-version: 24
+      - if: steps.want.outputs.go == '1'
+        run: npm install --no-save --no-package-lock playwright@1.63.0
+      - if: steps.want.outputs.go == '1'
+        run: npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Walk every journey
+        if: steps.want.outputs.go == '1'
+        run: |
+          node tests/audit/run.js --engine ${{ matrix.engine }} --out audit-out 2>&1 | tee audit.log
+          # The headline on the run page.
+          node -e "const s=require('./audit-out/summary.json');console.log('::notice::${{ matrix.engine }}: average '+s.average+'/100; '+s.journeys.filter(j=>j.pass===1).length+' of '+s.journeys.length+' journeys pass on every phone; '+s.issues.filter(i=>i.sev>=3).length+' severity 3+ issues')"
+      - uses: actions/upload-artifact@v5
+        if: steps.want.outputs.go == '1' && always()
+        with:
+          name: ux-audit-${{ matrix.engine }}
+          path: audit-out
+          retention-days: 30

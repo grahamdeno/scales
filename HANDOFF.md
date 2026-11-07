@@ -26,6 +26,10 @@ read, never written or deleted.
   (`scripts/bundle-web.sh`, file list in `scripts/web-files.txt`). `server/ai.mjs` is the dormant Plus AI server.
 - `site/`: the scales.tangomike.app website (Cloudflare Pages, deployed by `.github/workflows/site.yml`; strict CSP, no inline code).
 - Tests: `node --test` (`tests/core.test.js`, `tests/platform.test.js`) and `node tests/e2e/app.e2e.js` (Playwright).
+- UX audit: `node tests/audit/run.js` walks 18 journeys on three iPhone sizes, photographs every screen state, runs 30
+  simulated days of the schedule and writes `audit-out/report.html`. Journeys and scoring: `docs/audit/journeys.md`;
+  people: `docs/audit/human-round.md`. CI: the `UX audit` workflow (schedule check on every PR; full walk in Chromium
+  and WebKit by hand) and `iPhone Simulator audit` (Maestro flows on a real simulator, by hand).
 - Plans: `docs/next-plan.md`, `docs/swap-plan.md`.
 
 ## Shipping
@@ -55,6 +59,8 @@ read, never written or deleted.
 Start here in a new session: this section, `docs/release-plan.md` (submit, launch day, beta, after launch), and the
 Cleanup log below.
 
+- 2.33.0 (UX audit fixes, Larger Text in the iPhone shell) is on branch `ux-audit`, PR #303, not merged or released;
+  it needs a new iPhone build to reach the phone.
 - App: 2.32.1, iPhone build 55. The web app is bundled into the iPhone app; the browser copy at
   scales.tangomike.app/app/ serves the `release` branch and runs the same code. Version history is in README.md.
 - App Store: version 1.0 is Prepare for Submission with build 55 attached. Listing text updated on 4 November (iOS 26,

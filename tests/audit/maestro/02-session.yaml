@@ -1,0 +1,31 @@
+# A short session: start with a set, swipe up to move on, pull down to put away, undo.
+appId: com.grahamdeno.scales
+name: Start with five, swipe, put away, undo
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "What's on your mind?"
+    timeout: 20000
+- tapOn:
+    text: ".*start with five.*"
+- waitForAnimationToEnd
+- takeScreenshot: 02-first-thought
+- assertVisible: "Your thoughts"
+- swipe:
+    start: 50%, 55%
+    end: 50%, 25%
+    duration: 400
+- waitForAnimationToEnd
+- assertVisible: "Moved on"
+- takeScreenshot: 02-moved-on
+- swipe:
+    start: 50%, 40%
+    end: 50%, 75%
+    duration: 400
+- waitForAnimationToEnd
+- assertVisible: "Put away"
+- takeScreenshot: 02-put-away
+- tapOn: "Undo"
+- waitForAnimationToEnd
+- takeScreenshot: 02-after-undo
