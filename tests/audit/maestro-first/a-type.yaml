@@ -1,0 +1,13 @@
+# First run, part 1 of 3: a clean install, the first screen, and the thought typed (not yet kept).
+appId: com.grahamdeno.scales
+name: First run, part 1, type a thought
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "What's on your mind?"
+    timeout: 20000
+- takeScreenshot: 01-first-screen
+- tapOn: "What's on your mind\\?"
+- inputText: "Patience"
+- takeScreenshot: 01-keyboard-up

@@ -65,23 +65,27 @@ jobs:
           mkdir -p ios-audit
           cd ios-audit
           UDID="${{ steps.sim.outputs.udid }}"
-          # The first-run flow goes alone first, so what the app wrote to its save file can be read straight after it.
+          # The first-run flow goes alone first, in three parts, with a look at the screen and the save file between them.
           rc=0
           mkdir -p first
-          maestro --device "$UDID" test ../tests/audit/maestro/01-first-run.yaml --format junit --output first/results.xml --test-output-dir first 2>&1 | tee maestro.log || rc=1
-          echo "::group::The save file after the first-run flow"
+          F=../tests/audit/maestro-first
+          maestro --device "$UDID" test $F/a-type.yaml --test-output-dir first 2>&1 | tee maestro.log || rc=1
+          echo "::group::Screen after typing"; python3 ../tests/audit/screen.py "$UDID" "after typing" || true; echo "::endgroup::"
+          maestro --device "$UDID" test $F/b-keep.yaml --test-output-dir first 2>&1 | tee -a maestro.log || rc=1
+          echo "::group::Screen after tapping Keep"; python3 ../tests/audit/screen.py "$UDID" "after Keep" || true; echo "::endgroup::"
+          echo "::group::The save file after Keep"
           C="$(xcrun simctl get_app_container "$UDID" com.grahamdeno.scales data)"
-          ls -la "$C/Library/Application Support/Scales/" || true
           python3 - "$C/Library/Application Support/Scales/store.json" <<'PY' || true
           import json,sys
           try: d=json.load(open(sys.argv[1]))
           except Exception as e: print("no readable save file:",e); sys.exit(0)
           print("rev",d.get("rev"))
-          for k,v in d.get("data",{}).items(): print("key",k,len(v),"chars", v[:120].replace("\n"," "))
+          for k,v in d.get("data",{}).items(): print("key",k,len(v),"chars", v[:100].replace("\n"," "))
           PY
           echo "::endgroup::"
+          maestro --device "$UDID" test $F/c-restart.yaml --test-output-dir first 2>&1 | tee -a maestro.log || rc=1
           echo "::group::What the app said (SCALESSTORE lines)"
-          xcrun simctl spawn "$UDID" log show --last 30m --style compact --predicate 'eventMessage CONTAINS "SCALESSTORE"' | grep SCALESSTORE | sed 's/^.*SCALESSTORE/SCALESSTORE/' | tail -60 || true
+          xcrun simctl spawn "$UDID" log show --last 30m --style compact --predicate 'eventMessage CONTAINS "SCALESSTORE"' | grep SCALESSTORE | sed 's/^.*SCALESSTORE/SCALESSTORE/' | tail -40 || true
           echo "::endgroup::"
           # Then the other flows.
           mkdir -p rest && cp ../tests/audit/maestro/0[234]*.yaml rest/
