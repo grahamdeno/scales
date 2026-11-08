@@ -54,6 +54,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(m2 && m2.rev === 2 && m2.del.length === 1 && m2.del[0] === "scales.a", "a removal is sent; removing a missing key sends nothing extra");
     await page.evaluate(() => { localStorage.setItem("scales.c", "3"); window.scalesStoreFlush(); });
     ok((await page.evaluate(() => window.__msgs.length)) === 3, "flush sends at once (on going to the background)");
+    // 2.33.1: a change to the thoughts is sent the moment it is made, with anything waiting, not 300 ms later.
+    const t = await page.evaluate(() => { localStorage.setItem("scales.d", "4"); localStorage.setItem("scales.next.thoughts.v1", "{}"); return window.__msgs.slice(3); });
+    ok(t.length === 1 && t[0].set["scales.next.thoughts.v1"] === "{}" && t[0].set["scales.d"] === "4", "a change to the thoughts is sent at once, with anything waiting");
   });
 
   await run({ rev: 5, data: { "scales.t": "file", "scales.u": "u" } }, { "scales.t": "old", "scales.x": "stale", "keep": "k", "scales.native.rev": "3" }, async (page) => {

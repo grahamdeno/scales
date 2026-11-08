@@ -59,6 +59,8 @@ jobs:
           node tests/audit/run.js --engine ${{ matrix.engine }} --out audit-out 2>&1 | tee audit.log
           # The headline on the run page.
           node -e "const s=require('./audit-out/summary.json');console.log('::notice::${{ matrix.engine }}: average '+s.average+'/100; '+s.journeys.filter(j=>j.pass===1).length+' of '+s.journeys.length+' journeys pass on every phone; '+s.issues.filter(i=>i.sev>=3).length+' severity 3+ issues')"
+          # Every severity 2+ issue in the log too, so it can be read without downloading the report.
+          node -e "require('./audit-out/summary.json').issues.filter(i=>i.sev>=2).forEach(i=>console.log('::warning::sev '+i.sev+' '+i.rule+' '+i.sel+' (seen '+i.seenIn+'x): '+String(i.example).slice(0,160)))"
       - uses: actions/upload-artifact@v5
         if: steps.want.outputs.go == '1' && always()
         with:

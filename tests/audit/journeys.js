@@ -10,6 +10,7 @@ module.exports = [
     async run(w) {
       await w.look("first screen");
       w.expect(await w.visible("#writeHead") && /What's on your mind\?/.test(await w.text("#writeHead")), "the first screen says what to do");
+      await w.page.click("#writeHead"); w.expect(await w.page.evaluate(() => document.activeElement && document.activeElement.id === "writeText"), "tapping the question puts the cursor in the field"); await w.page.evaluate(() => document.activeElement.blur());
       w.expect(await w.visible("#startFive"), "a second way in (start with five) is offered");
       const t0 = await w.now();
       await w.fill("#writeText", "Patience over speed.", "write the first thought");

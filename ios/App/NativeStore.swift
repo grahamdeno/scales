@@ -28,11 +28,20 @@ final class NativeStore {
             data = d
             exists = true
         }
+        Self.trace("init file \(url.lastPathComponent) exists \(exists) rev \(rev) keys \(data.mapValues { $0.count })")
+    }
+
+    /// Debug builds only (the Simulator audit prints these): what the store was handed and what reached the disk.
+    static func trace(_ line: @autoclosure () -> String) {
+        #if DEBUG
+        NSLog("%@", "SCALESSTORE " + line())
+        #endif
     }
 
     /// A "store" message from the page: a batch of changes, or (full) everything.
     func apply(_ body: [String: Any]) {
         let newRev = body["rev"] as? Int ?? 0
+        Self.trace("apply rev \(newRev) (file rev \(rev)) full \(body["full"] as? Bool ?? false) set \((body["set"] as? [String: String])?.mapValues { $0.count } ?? [:]) del \(body["del"] as? [String] ?? [])")
         // An older batch (a page from before a reload) never undoes a newer one.
         guard newRev > rev else { return }
         guard let set = body["set"] as? [String: String] else { return }
@@ -48,7 +57,12 @@ final class NativeStore {
         rev = newRev
         exists = true
         // In the background there may be no second chance: write now.
-        if UIApplication.shared.applicationState == .active { scheduleWrite() } else { pending?.cancel(); write(now: true) }
+        // 2.33.1: a change to the thoughts themselves goes to disk at once, so a crash or iOS stopping the app while it
+        // is open can't lose a thought just kept. Anything else is written within half a second.
+        let urgent = set.keys.contains { Self.thoughtKeys.contains($0) } || del.contains { Self.thoughtKeys.contains($0) }
+        if UIApplication.shared.applicationState != .active { pending?.cancel(); write(now: true) }
+        else if urgent { pending?.cancel(); write(now: false) }
+        else { scheduleWrite() }
     }
 
     /// The keys that hold thoughts, in Scales 2 and in Scales 1.
@@ -87,7 +101,9 @@ final class NativeStore {
     }
 
     private func scheduleWrite() {
-        pending?.cancel()
+        // One write at most half a second away. A steady stream of changes used to push it back each time, so nothing
+        // reached the disk until the app went to the background. The write takes the data as it is when it runs.
+        guard pending == nil else { return }
         let item = DispatchWorkItem { [weak self] in self?.write(now: false) }
         pending = item
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: item)
@@ -105,8 +121,13 @@ final class NativeStore {
         let snapshot: [String: Any] = ["rev": rev, "data": data]
         let target = url
         let work = {
-            guard let json = try? JSONSerialization.data(withJSONObject: snapshot) else { return }
-            try? json.write(to: target, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+            guard let json = try? JSONSerialization.data(withJSONObject: snapshot) else { Self.trace("write: could not encode"); return }
+            do {
+                try json.write(to: target, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+                Self.trace("write ok \(json.count) bytes, rev \(snapshot["rev"] ?? "?")")
+            } catch {
+                Self.trace("write FAILED \(error)")
+            }
         }
         if now {
             let app = UIApplication.shared

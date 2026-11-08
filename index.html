@@ -46,7 +46,7 @@ try { var u0 = JSON.parse(localStorage.getItem("scales.next.ui.v1")) || {}, lk =
 :root[data-look="light"] { color-scheme: light; }
 /* 2.22.0 Stone: warm stone to read on, graphite for anything your hand is on; pistachio stays the accent.
    Dark follows the default's rule: the thought on graphite, the sheets a step darker. */
-:root[data-theme="stone"] { --ground: #C9C6BD; --ground-ink: #1F2124; --ground-muted: #55524B; --ground-line: rgba(31,33,36,.14);
+:root[data-theme="stone"] { --ground: #C9C6BD; --ground-ink: #1F2124; --ground-muted: #4E4B44; --ground-line: rgba(31,33,36,.14);
   --plum: #23262B; --plum-ink: #EEEAE2; --plum-muted: #A5A39D; --plum-faint: #7E7C77; --toast-bg: #1F2124; --toast-ink: #C9C6BD; }
 @media (prefers-color-scheme: dark) {
   :root[data-theme="stone"]:not([data-look="light"]) { --ground: #23262B; --ground-ink: #EEEAE2; --ground-muted: #A5A39D; --ground-line: rgba(238,234,226,.14);
@@ -165,7 +165,8 @@ textarea::placeholder { color: var(--plum-faint); }
 .lbl { font-size: calc(13px * var(--ts)); color: var(--plum-muted); margin-bottom: -14px; }
 /* "Add who said it": words, not a button; one line appears under the thought when tapped. */
 /* 2.30.0: onboarding. The first screen asks one thing, and offers a set as an equal second choice. */
-.whead { margin: 0 0 -10px; font-size: calc(15px * var(--ts)); font-weight: 600; color: var(--plum-muted); flex: none; }
+/* 2.33.1: a label for the field, so tapping the question puts the cursor in it. */
+.whead { display: block; margin: 0 0 -10px; font-size: calc(15px * var(--ts)); font-weight: 600; color: var(--plum-muted); flex: none; }
 #writeText.example::placeholder { color: rgba(241,233,216,.38); }
 .startset { align-self: stretch; text-align: left; margin-top: 6px; padding: 14px 16px; border-radius: 14px; background: rgba(185,201,163,.12);
   color: var(--plum-ink); font-size: calc(15px * var(--ts)); line-height: 1.35; flex: none; }
@@ -617,7 +618,7 @@ textarea::placeholder { color: var(--plum-faint); }
 <section class="view" id="vWrite" hidden aria-label="New thought">
   <button class="corner l" id="writeCancel" type="button">Cancel</button>
   <div class="sheetform center" id="writeForm">
-    <p class="whead" id="writeHead" hidden>What's on your mind?</p>
+    <label class="whead" id="writeHead" for="writeText" hidden>What's on your mind?</label>
     <label class="sr" for="writeText">A thought</label>
     <textarea class="big" id="writeText" rows="5" maxlength="1500" placeholder="What's on your mind?"></textarea>
     <button class="bylink" type="button" id="writeByAdd">Add who said it</button>
@@ -852,8 +853,8 @@ textarea::placeholder { color: var(--plum-faint); }
 <!-- 2.33.0: a failed save is said in a message of its own that nothing else replaces, and stays until dismissed. -->
 <div id="saveFail" role="alert" hidden><p id="saveFailMsg"></p><div class="sfa"><button type="button" id="saveFailGo">Back up now</button><button type="button" id="saveFailOk">Dismiss</button></div></div>
 
-<script src="core.js?v=2.33.0"></script>
-<script src="sets.js?v=2.33.0"></script>
+<script src="core.js?v=2.33.1"></script>
+<script src="sets.js?v=2.33.1"></script>
 <script>
 (function () {
   "use strict";

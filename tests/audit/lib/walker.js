@@ -22,8 +22,21 @@ class Walker {
     await this.settle(settle);
     await this.record(label, Date.now() - t);
   }
+  // Wait (up to 2.5 s) for fades and slides to finish, so contrast is measured on the settled screen.
+  // WebKit runs slower than Chromium and was caught measuring text mid-fade. Endless animations (breathing) are ignored.
+  async calm() {
+    for (let i = 0; i < 25; i++) {
+      const busy = await this.page.evaluate(() => (document.getAnimations ? document.getAnimations() : []).some((a) => {
+        const t = a.effect && a.effect.getComputedTiming ? a.effect.getComputedTiming() : null;
+        return a.playState === "running" && t && t.iterations !== Infinity;
+      })).catch(() => false);
+      if (!busy) return;
+      await this.wait(100);
+    }
+  }
   async record(label, ms) {
     this.n++;
+    await this.calm();
     const r = await this.page.evaluate(pageRules, { reducedMotion: !!this.o.reducedMotion }).catch((e) => ({ screens: [], words: 0, controls: 0, issues: [], cls: -1, err: String(e) }));
     const prevCls = this.steps.length ? this.steps[this.steps.length - 1].clsTotal : 0;
     const step = { n: this.n, label, ms: ms || 0, screens: r.screens, words: r.words, userWords: r.userWords, controls: r.controls,
