@@ -10,24 +10,21 @@ name: First run, keep a thought, restart
     visible: "What's on your mind?"
     timeout: 20000
 - takeScreenshot: 01-first-screen
-# On a first run "What's on your mind?" is the heading above the field; since 2.33.1 tapping it puts the cursor in the field.
+# On a first run the question is the heading above the field; tapping it puts the cursor in the field (2.33.1).
 - tapOn: "What's on your mind\\?"
 - inputText: "Patience"
 - takeScreenshot: 01-keyboard-up
+# The keyboard covers the Keep button in the Simulator's accessibility tree, so a tap on Keep lands on a key.
+# Done, on the keyboard's own bar, puts the keyboard away first.
+- tapOn: "Done"
 - tapOn: "Keep"
 - takeScreenshot: 01-after-keep
-# Probes (never fail the flow): the per-step log shows which screen Keep led to.
-- assertVisible:
-    text: "Kept\\..*"
-    optional: true
-- assertVisible:
-    text: "What's on your mind\\?"
-    optional: true
-# "Kept." shows for 1.6 s, too short to rely on; the check is that the thought then stands on the reading screen.
+# The thought is kept: the first-screen question is gone and the thought stands on the reading screen.
+- assertNotVisible:
+    text: "What's on your mind?"
 - extendedWaitUntil:
     visible: ".*Patience.*"
     timeout: 8000
-    label: "The kept thought is on the reading screen"
 - takeScreenshot: 01-kept
 # Close the app completely and open it again: the thought must still be there (NativeStore keeps a file copy).
 - stopApp
@@ -37,8 +34,6 @@ name: First run, keep a thought, restart
 - takeScreenshot: 01-after-restart
 - assertNotVisible:
     text: "What's on your mind?"
-    label: "After a restart the app is not empty again"
 - extendedWaitUntil:
-    visible: "(.*)Patience(.*)"
+    visible: ".*Patience.*"
     timeout: 20000
-    label: "After a restart the thought is still there"

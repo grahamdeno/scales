@@ -54,11 +54,19 @@ jobs:
           xcrun simctl install "${{ steps.sim.outputs.udid }}" "$APP"
       - name: Install Maestro
         run: |
-          # Retry: the install site sometimes answers 504. Fail here, not later, if it never installs.
-          set -o pipefail
-          for i in 1 2 3 4 5; do curl -fsSL --retry 3 "https://get.maestro.mobile.dev" | bash && break; echo "install try $i failed"; sleep 20; done
-          test -x "$HOME/.maestro/bin/maestro"
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+          # The installer's own download sometimes gets a 503 and leaves a corrupt zip. Fetch the release directly,
+          # retry, and check the zip before using it. Stop here, with a clear line, if it never works.
+          ok=0
+          for i in 1 2 3 4 5 6; do
+            rm -f /tmp/maestro.zip
+            if curl -fsSL --retry 3 --retry-all-errors --retry-delay 10 -o /tmp/maestro.zip "https://github.com/mobile-dev-inc/maestro/releases/latest/download/maestro.zip" && unzip -tq /tmp/maestro.zip >/dev/null; then ok=1; break; fi
+            echo "Maestro download try $i failed"; sleep 30
+          done
+          test "$ok" = 1 || { echo "::error::Maestro could not be downloaded after 6 tries"; exit 1; }
+          mkdir -p "$HOME/.maestro" && unzip -qo /tmp/maestro.zip -d "$HOME/.maestro"
+          M="$(find "$HOME/.maestro" -type f -name maestro -path '*/bin/*' | head -1)"
+          test -n "$M" || { echo "::error::no maestro binary in the download"; exit 1; }
+          chmod +x "$M"; dirname "$M" >> "$GITHUB_PATH"
       - name: Walk the flows
         env:
           MAESTRO_DRIVER_STARTUP_TIMEOUT: "180000"
@@ -67,52 +75,24 @@ jobs:
           set -o pipefail
           mkdir -p ios-audit
           cd ios-audit
+          maestro --device "${{ steps.sim.outputs.udid }}" test ../tests/audit/maestro --format junit --output results.xml --test-output-dir . 2>&1 | tee maestro.log
+      - name: What the screen held when a flow failed
+        if: failure()
+        run: |
           UDID="${{ steps.sim.outputs.udid }}"
-          # The first-run flow goes alone first, in three parts, with a look at the screen and the save file between them.
-          rc=0
-          mkdir -p first
-          F=../tests/audit/maestro-first
-          maestro --device "$UDID" test $F/a-type.yaml --test-output-dir first 2>&1 | tee maestro.log || rc=1
-          echo "::group::Screen after typing"; python3 ../tests/audit/screen.py "$UDID" "after typing" || true; echo "::endgroup::"
-          maestro --device "$UDID" test $F/b-keep.yaml --test-output-dir first 2>&1 | tee -a maestro.log || rc=1
-          echo "::group::Screen after tapping Keep"; python3 ../tests/audit/screen.py "$UDID" "after Keep" || true; echo "::endgroup::"
-          echo "::group::The save file after Keep"
+          python3 tests/audit/screen.py "$UDID" "last screen" || true
+          echo "== the app's save file"
           C="$(xcrun simctl get_app_container "$UDID" com.grahamdeno.scales data)"
           python3 - "$C/Library/Application Support/Scales/store.json" <<'PY' || true
           import json,sys
           try: d=json.load(open(sys.argv[1]))
           except Exception as e: print("no readable save file:",e); sys.exit(0)
           print("rev",d.get("rev"))
-          for k,v in d.get("data",{}).items(): print("key",k,len(v),"chars", v[:100].replace("\n"," "))
+          for k,v in d.get("data",{}).items(): print("key",k,len(v),"chars")
           PY
-          echo "::endgroup::"
-          maestro --device "$UDID" test $F/c-restart.yaml --test-output-dir first 2>&1 | tee -a maestro.log || rc=1
-          echo "::group::What the app said (SCALESSTORE lines)"
+          echo "== the app's own log lines (Debug build)"
           xcrun simctl spawn "$UDID" log show --last 30m --style compact --predicate 'eventMessage CONTAINS "SCALESSTORE"' | grep SCALESSTORE | sed 's/^.*SCALESSTORE/SCALESSTORE/' | tail -40 || true
-          echo "::endgroup::"
-          # Then the other flows.
-          mkdir -p rest && cp ../tests/audit/maestro/0[234]*.yaml rest/
-          maestro --device "$UDID" test rest --format junit --output results.xml --test-output-dir . 2>&1 | tee -a maestro.log || rc=1
-          exit $rc
-      - name: What the screen held when a flow failed
-        if: failure()
-        run: |
-          # The text iOS exposes on the last screen, so a failed flow can be read from the log.
-          maestro --device "${{ steps.sim.outputs.udid }}" hierarchy > ios-audit/hierarchy.json 2>/dev/null || true
-          python3 -c '
-          import json,sys
-          try: t=json.load(open("ios-audit/hierarchy.json"))
-          except Exception as e: print("no hierarchy:",e); sys.exit(0)
-          seen=[]
-          def walk(n):
-            a=n.get("attributes",{})
-            for k in ("accessibilityText","text","hintText"):
-              v=(a.get(k) or "").strip()
-              if v and v not in seen: seen.append(v)
-            for c in n.get("children",[]): walk(c)
-          walk(t)
-          for v in seen[:80]: print("screen:",v[:160])'
-          grep -E "\[(Failed|Passed)\]" ios-audit/maestro.log | sed 's/^/::warning::/' || true
+          grep -E "\\[(Failed|Passed)\\]" ios-audit/maestro.log | sed 's/^/::warning::/' || true
       - name: Screenshots of the safe areas
         if: always()
         run: xcrun simctl io "${{ steps.sim.outputs.udid }}" screenshot ios-audit/last-screen.png || true

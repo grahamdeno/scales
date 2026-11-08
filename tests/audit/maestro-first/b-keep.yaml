@@ -1,7 +1,0 @@
-# First run, part 2 of 3: tap Keep. The app is already open from part 1.
-appId: com.grahamdeno.scales
-name: First run, part 2, tap Keep
----
-- tapOn: "Keep"
-- takeScreenshot: 01-after-keep
-- waitForAnimationToEnd
