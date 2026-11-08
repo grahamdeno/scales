@@ -54,11 +54,19 @@ jobs:
           xcrun simctl install "${{ steps.sim.outputs.udid }}" "$APP"
       - name: Install Maestro
         run: |
-          # Retry: the install site sometimes answers 504. Fail here, not later, if it never installs.
-          set -o pipefail
-          for i in 1 2 3 4 5; do curl -fsSL --retry 3 "https://get.maestro.mobile.dev" | bash && break; echo "install try $i failed"; sleep 20; done
-          test -x "$HOME/.maestro/bin/maestro"
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+          # The installer's own download sometimes gets a 503 and leaves a corrupt zip. Fetch the release directly,
+          # retry, and check the zip before using it. Stop here, with a clear line, if it never works.
+          ok=0
+          for i in 1 2 3 4 5 6; do
+            rm -f /tmp/maestro.zip
+            if curl -fsSL --retry 3 --retry-all-errors --retry-delay 10 -o /tmp/maestro.zip "https://github.com/mobile-dev-inc/maestro/releases/latest/download/maestro.zip" && unzip -tq /tmp/maestro.zip >/dev/null; then ok=1; break; fi
+            echo "Maestro download try $i failed"; sleep 30
+          done
+          test "$ok" = 1 || { echo "::error::Maestro could not be downloaded after 6 tries"; exit 1; }
+          mkdir -p "$HOME/.maestro" && unzip -qo /tmp/maestro.zip -d "$HOME/.maestro"
+          M="$(find "$HOME/.maestro" -type f -name maestro -path '*/bin/*' | head -1)"
+          test -n "$M" || { echo "::error::no maestro binary in the download"; exit 1; }
+          chmod +x "$M"; dirname "$M" >> "$GITHUB_PATH"
       - name: Walk the flows
         env:
           MAESTRO_DRIVER_STARTUP_TIMEOUT: "180000"
