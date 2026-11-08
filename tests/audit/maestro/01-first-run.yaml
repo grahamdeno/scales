@@ -10,7 +10,8 @@ name: First run, keep a thought, restart
     visible: "What's on your mind?"
     timeout: 20000
 - takeScreenshot: 01-first-screen
-- tapOn: "What's on your mind?"
+# On a first run "What's on your mind?" is the heading; the field itself shows the example line. Tap the field.
+- tapOn: ".*slow down.*"
 - inputText: "Patience"
 - takeScreenshot: 01-keyboard-up
 - tapOn: "Keep"
