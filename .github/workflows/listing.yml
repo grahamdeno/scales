@@ -4,6 +4,10 @@ name: App Store listing
 on:
   workflow_dispatch:
     inputs:
+      check:
+        description: "Read-only: print the version being prepared, its attached build and its screenshots"
+        type: boolean
+        default: false
       write:
         description: "Put appstore/listing.json on the version being prepared (never submits)"
         type: boolean
@@ -20,5 +24,6 @@ jobs:
           WRITE: ${{ inputs.write && '1' || '0' }}
         run: |
           printf '%s\n' "${{ secrets.ASC_KEY_P8 }}" | sed 's/\r$//' > "$RUNNER_TEMP/asc.p8"
-          ASC_KEY_PATH="$RUNNER_TEMP/asc.p8" ruby scripts/listing.rb
+          if [ "${{ inputs.check }}" = "true" ]; then ASC_KEY_PATH="$RUNNER_TEMP/asc.p8" ruby scripts/version-check.rb; else
+          ASC_KEY_PATH="$RUNNER_TEMP/asc.p8" ruby scripts/listing.rb; fi
           rm -f "$RUNNER_TEMP/asc.p8"
