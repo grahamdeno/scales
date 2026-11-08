@@ -64,7 +64,29 @@ jobs:
           set -o pipefail
           mkdir -p ios-audit
           cd ios-audit
-          maestro --device "${{ steps.sim.outputs.udid }}" test ../tests/audit/maestro --format junit --output results.xml --test-output-dir . 2>&1 | tee maestro.log
+          UDID="${{ steps.sim.outputs.udid }}"
+          # The first-run flow goes alone first, so what the app wrote to its save file can be read straight after it.
+          rc=0
+          mkdir -p first
+          maestro --device "$UDID" test ../tests/audit/maestro/01-first-run.yaml --format junit --output first/results.xml --test-output-dir first 2>&1 | tee maestro.log || rc=1
+          echo "::group::The save file after the first-run flow"
+          C="$(xcrun simctl get_app_container "$UDID" com.grahamdeno.scales data)"
+          ls -la "$C/Library/Application Support/Scales/" || true
+          python3 - "$C/Library/Application Support/Scales/store.json" <<'PY' || true
+          import json,sys
+          try: d=json.load(open(sys.argv[1]))
+          except Exception as e: print("no readable save file:",e); sys.exit(0)
+          print("rev",d.get("rev"))
+          for k,v in d.get("data",{}).items(): print("key",k,len(v),"chars", v[:120].replace("\n"," "))
+          PY
+          echo "::endgroup::"
+          echo "::group::What the app said (SCALESSTORE lines)"
+          xcrun simctl spawn "$UDID" log show --last 30m --style compact --predicate 'eventMessage CONTAINS "SCALESSTORE"' | grep SCALESSTORE | sed 's/^.*SCALESSTORE/SCALESSTORE/' | tail -60 || true
+          echo "::endgroup::"
+          # Then the other flows.
+          mkdir -p rest && cp ../tests/audit/maestro/0[234]*.yaml rest/
+          maestro --device "$UDID" test rest --format junit --output results.xml --test-output-dir . 2>&1 | tee -a maestro.log || rc=1
+          exit $rc
       - name: What the screen held when a flow failed
         if: failure()
         run: |
