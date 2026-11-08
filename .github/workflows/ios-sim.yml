@@ -54,7 +54,10 @@ jobs:
           xcrun simctl install "${{ steps.sim.outputs.udid }}" "$APP"
       - name: Install Maestro
         run: |
-          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          # Retry: the install site sometimes answers 504. Fail here, not later, if it never installs.
+          set -o pipefail
+          for i in 1 2 3 4 5; do curl -fsSL --retry 3 "https://get.maestro.mobile.dev" | bash && break; echo "install try $i failed"; sleep 20; done
+          test -x "$HOME/.maestro/bin/maestro"
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
       - name: Walk the flows
         env:
