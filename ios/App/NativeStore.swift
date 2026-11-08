@@ -48,7 +48,12 @@ final class NativeStore {
         rev = newRev
         exists = true
         // In the background there may be no second chance: write now.
-        if UIApplication.shared.applicationState == .active { scheduleWrite() } else { pending?.cancel(); write(now: true) }
+        // 2.33.1: a change to the thoughts themselves goes to disk at once, so a crash or iOS stopping the app while it
+        // is open can't lose a thought just kept. Anything else is written within half a second.
+        let urgent = set.keys.contains { Self.thoughtKeys.contains($0) } || del.contains { Self.thoughtKeys.contains($0) }
+        if UIApplication.shared.applicationState != .active { pending?.cancel(); write(now: true) }
+        else if urgent { pending?.cancel(); write(now: false) }
+        else { scheduleWrite() }
     }
 
     /// The keys that hold thoughts, in Scales 2 and in Scales 1.
@@ -87,7 +92,9 @@ final class NativeStore {
     }
 
     private func scheduleWrite() {
-        pending?.cancel()
+        // One write at most half a second away. A steady stream of changes used to push it back each time, so nothing
+        // reached the disk until the app went to the background. The write takes the data as it is when it runs.
+        guard pending == nil else { return }
         let item = DispatchWorkItem { [weak self] in self?.write(now: false) }
         pending = item
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: item)
