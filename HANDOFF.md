@@ -59,14 +59,10 @@ read, never written or deleted.
 Start here in a new session: this section, `docs/release-plan.md` (submit, launch day, beta, after launch), and the
 Cleanup log below.
 
-- Next release (on branch `sim-flows`, not merged; bump VERSION, sw.js CACHE and ?v= to 2.33.1 at ship):
-  - A kept thought reaches the iPhone's save file at once (NativeStore.js sends thought changes without the 300 ms
-    wait; NativeStore.swift writes them straight away and no longer lets a stream of changes postpone a write).
-    Found by the Simulator flow that kills the app while it is open and starts it again.
-  - On a first run, tapping the heading "What's on your mind?" puts the cursor in the field (it is a label now).
-  - Stone, light look: muted text #55524B to #4E4B44 (4.56:1, measured 4.38:1 in WebKit, now 5.1:1).
-  - Merging to main starts an iPhone build (TestFlight), so merge only on "ship".
-- App: 2.33.0 (UX audit fixes, Larger Text in the iPhone shell), iPhone build 57, released to the browser 2026-11-07. The web app is bundled into the iPhone app; the browser copy at
+- App: 2.33.1 (instant save of a kept thought in the iPhone app, first-run question focuses the field, Stone light muted
+  text 5.1:1), released 2026-11-08. The iPhone Simulator first-run flow still fails in the test (Keep tap not landing);
+  Keep and restart were checked by hand on a real iPhone. The other three flows pass.
+- Before: 2.33.0 (UX audit fixes, Larger Text in the iPhone shell), iPhone build 57, released to the browser 2026-11-07. The web app is bundled into the iPhone app; the browser copy at
   scales.tangomike.app/app/ serves the `release` branch and runs the same code. Version history is in README.md.
 - App Store: version 1.0 is Prepare for Submission with build 55 attached. Listing text updated on 4 November (iOS 26,
   works without a connection, the case for). The 8 screenshots in `appstore/screenshots/` were uploaded by Grok on

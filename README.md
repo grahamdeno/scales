@@ -17,6 +17,10 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.33.1:** In the iPhone app a kept thought goes to the phone's own save file at once, not after up to a second,
+  so a crash or iOS stopping the app can't lose a thought just kept. On a first run, tapping the question "What's on
+  your mind?" puts the cursor in the field. In Stone's light look, muted text is darker (5.1:1). The iPhone Simulator
+  audit now fails the run when a flow fails, and prints the screen and the save file.
 - **2.33.0:** From the UX audit (`docs/audit/`). A failed save shows in its own message at the top that a move's Undo
   can't cover, with Back up now and no tick, until dismissed; the next failure says it again. Every word-action is at
   least 44 points tall to a finger, with no change in look. Type follows the iPhone's text size (Larger Text), capped
