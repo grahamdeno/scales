@@ -15,6 +15,13 @@ name: First run, keep a thought, restart
 - takeScreenshot: 01-keyboard-up
 - tapOn: "Keep"
 - takeScreenshot: 01-after-keep
+# Probes (never fail the flow): the per-step log shows which screen Keep led to.
+- assertVisible:
+    text: "Kept\\..*"
+    optional: true
+- assertVisible:
+    text: "What's on your mind\\?"
+    optional: true
 # "Kept." shows for 1.6 s, too short to rely on; the check is that the thought then stands on the reading screen.
 - extendedWaitUntil:
     visible: ".*Patience.*"
@@ -31,6 +38,6 @@ name: First run, keep a thought, restart
     text: "What's on your mind?"
     label: "After a restart the app is not empty again"
 - extendedWaitUntil:
-    visible: ".*Patience.*"
+    visible: "(.*)Patience(.*)"
     timeout: 20000
     label: "After a restart the thought is still there"

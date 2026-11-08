@@ -83,6 +83,14 @@ jobs:
             for c in n.get("children",[]): walk(c)
           walk(t)
           for v in seen[:80]: print("screen:",v[:160])'
+          # Every step of every flow with its result (Maestro writes commands-*.json into the output folder).
+          python3 -c '
+          import json,glob
+          for f in sorted(glob.glob("ios-audit/**/commands-*.json",recursive=True)):
+            print("== "+f)
+            for c in json.load(open(f)):
+              cmd=c.get("command",{}); name=next(iter(cmd),"?"); arg=json.dumps(cmd.get(name,""))[:110]
+              print("step:",c.get("metadata",{}).get("status","?"),name,arg)'
           grep -E "\[(Failed|Passed)\]" ios-audit/maestro.log | sed 's/^/::warning::/' || true
       - name: Screenshots of the safe areas
         if: always()
