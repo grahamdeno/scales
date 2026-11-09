@@ -1,7 +1,7 @@
 // Serves the repo on a local port, the same way the browser tests do.
 const http = require("http"), fs = require("fs"), path = require("path");
 const root = path.join(__dirname, "..", "..", "..");
-const types = { ".html": "text/html", ".js": "text/javascript", ".webmanifest": "application/manifest+json", ".png": "image/png",
+const types = { ".html": "text/html", ".js": "text/javascript", ".webmanifest": "application/manifest+json", ".png": "image/png", ".webp": "image/webp",
   ".woff2": "font/woff2", ".json": "application/json", ".svg": "image/svg+xml", ".ico": "image/x-icon", ".css": "text/css" };
 
 function serve() {

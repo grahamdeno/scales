@@ -2393,7 +2393,7 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
   $("aiWeek").onclick = function () { aiWeek(); };
 
   if (NATIVE) {
-    // Tell the iPhone app the page is up, clear the reminders Scales 1 scheduled, and save today's copy.
+    // Tell the iPhone app the page is up and save today's copy.
     post({ type: "ready" });
     post({ type: "look", value: LOOKS[ui.look] && ui.look !== "auto" ? ui.look : "" });
     post({ type: "aiStatus" });
