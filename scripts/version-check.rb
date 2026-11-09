@@ -43,3 +43,13 @@ get.("/v1/apps/#{app["id"]}/appStoreVersions?filter[platform]=IOS&limit=5")["dat
     end
   end
 end
+# Subscriptions and in-app purchases: name, product ID, state. Read-only.
+puts "SUBSCRIPTIONS"
+(get.("/v1/apps/#{app["id"]}/subscriptionGroups")["data"] rescue []).each do |g|
+  puts "  group #{g["attributes"]["referenceName"]} (#{g["id"]})"
+  (get.("/v1/subscriptionGroups/#{g["id"]}/subscriptions")["data"] rescue []).each do |s|
+    a = s["attributes"]; puts "    #{a["name"]} #{a["productId"]} state #{a["state"]} period #{a["subscriptionPeriod"]}"
+  end
+end
+puts "IN-APP PURCHASES"
+(get.("/v1/apps/#{app["id"]}/inAppPurchasesV2")["data"] rescue []).each { |i| a = i["attributes"]; puts "  #{a["name"]} #{a["productId"]} #{a["inAppPurchaseType"]} state #{a["state"]}" }
