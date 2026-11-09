@@ -149,12 +149,7 @@ test("version is MAJOR.MINOR.PATCH and matches the worker's cache and the page's
   assert.match(sw, new RegExp('"core\\.js\\?v=' + N.VERSION.replace(/\./g, "\\.") + '"'));
   assert.match(read("index.html"), new RegExp('<script src="core\\.js\\?v=' + N.VERSION.replace(/\./g, "\\.") + '"></script>'));
   assert.match(sw, /ks\.filter\(k => k !== CACHE\)/, "every older copy is cleared, Scales 1's and the trial's included");
-});
-
-test("the trial address forwards home, keeping ?native=1, and its worker retires itself", () => {
-  assert.match(read("next/index.html"), /location\.replace\("\.\.\/" \+ location\.search\)/);
-  assert.match(read("next/sw.js"), /self\.registration\.unregister\(\)/);
-  assert.ok(!fs.existsSync(path.join(root, "next", "core.js")));
+  assert.ok(!fs.existsSync(path.join(root, "next")), "the trial address is gone (2.34.0)");
 });
 
 test("the iPhone app paints pistachio (plum in Dark) while Scales loads, so nothing flashes", () => {

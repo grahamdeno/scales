@@ -215,7 +215,6 @@ crossing a swipe threshold is a light tick.
 
 - `index.html`: the page (CSS and one script). `core.js`: the logic (visit reading, schedule, import, labels), tested
   in Node. `sw.js`: offline copy, network first. `manifest.webmanifest`, `icons/`, `fonts/`.
-- `next/`: the trial address; it forwards to `/app/` keeping `?native=1`, and its worker removes itself.
 - `ios/`: the iPhone app, a WKWebView shell loading `https://scales.tangomike.app/app/?native=1`; `Haptics.swift`.
 - `site/`: the scales.tangomike.app website.
 - `docs/`: `next-plan.md` (how Scales 2 was built) and `swap-plan.md` (how it replaced Scales 1).

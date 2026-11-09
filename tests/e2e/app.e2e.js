@@ -1032,14 +1032,6 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     if (await page.locator("#words").count() && (await page.textContent("#words")).trim()) { await page.click("#words"); await page.waitForTimeout(600); ok(!(await page.locator("#argBtn").isVisible()), "no Apple Intelligence: no Argue with it"); }
     await ctx.close();
   }
-  // the trial address forwards home and keeps ?native=1
-  {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
-    const page = await ctx.newPage();
-    await page.goto(base + "/next/?native=1"); await page.waitForTimeout(800);
-    ok(new URL(page.url()).pathname === "/" && new URL(page.url()).search === "?native=1", "/next/ forwards to / with ?native=1 (" + page.url() + ")");
-    await ctx.close();
-  }
   await browser.close(); server.close();
   console.log(fails ? fails + " FAILED" : "ALL PASSED");
   process.exit(fails ? 1 : 0);

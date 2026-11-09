@@ -17,7 +17,6 @@ read, never written or deleted.
 
 - `index.html` (page), `core.js` (logic, `VERSION`), `sw.js` (offline). Every release bumps `VERSION`, the `CACHE`
   name and both `core.js?v=` addresses together; a test checks they match.
-- `next/`: the trial address. It forwards to `/app/` with the query (so `?native=1` survives) and its worker unregisters.
 - `ios/`: WKWebView shell loading `https://scales.tangomike.app/app/?native=1`. The page talks to it with
   `window.webkit.messageHandlers.scales.postMessage`: `ready`, `haptic` (tick, medium, success, thud, letgo,
   signature), `save` (daily backup file), `unschedule` and `badge` (sent on open to clear Scales 1's reminders).
@@ -30,7 +29,7 @@ read, never written or deleted.
   simulated days of the schedule and writes `audit-out/report.html`. Journeys and scoring: `docs/audit/journeys.md`;
   people: `docs/audit/human-round.md`. CI: the `UX audit` workflow (schedule check on every PR; full walk in Chromium
   and WebKit by hand) and `iPhone Simulator audit` (Maestro flows on a real simulator, by hand).
-- Plans: `docs/next-plan.md`, `docs/swap-plan.md`.
+- Plans: `docs/release-plan.md`, `docs/evaluation-plan.md`. Finished plans are in `docs/archive/`.
 
 ## Shipping
 
@@ -123,7 +122,7 @@ Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold t
 - Unit tests were red on main for about 20 minutes on 2 November: build 39 merged without `node --test`, and the
   stale Plus test stopped one Website deploy. Add branch protection that requires the `test` workflow before merge.
 - RE-1: add a check that `release` only moves to a main commit whose tests passed.
-- GitHub Pages is unused since 2.26.0; turn it off in repo settings (Grok), and remove `next/` if no old links need it.
+- GitHub Pages is unused since 2.26.0; turn it off in repo settings (Grok). `next/` and `.nojekyll` removed in 2.34.0.
 - iPhone builds bundle the web app from main, not `release`. At each ship, merge, build, then move `release` to the
   same commit so the browser and the iPhone run the same version.
 - Remote branches: dozens of merged feature branches remain on GitHub. Prune the merged ones.
