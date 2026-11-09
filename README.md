@@ -17,6 +17,11 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.34.0:** Cleanup, nothing you see changes. Removed the Scales Plus AI server and its tests, the Scales 1 reminder
+  clearing in the iPhone app, code nothing called (the old next-card picker, library grouping and Add to note helpers),
+  unused styles, the old trial address `/app/next/`, old screenshots and Scales 1 pictures. ARCHITECTURE.md is rewritten
+  for Scales 2 and finished plans are in `docs/archive/`. The paid unlock ("Scales Full", $10, Argue with it and
+  Tensions) is planned and not built.
 - **2.33.1:** In the iPhone app a kept thought goes to the phone's own save file at once, not after up to a second,
   so a crash or iOS stopping the app can't lose a thought just kept. On a first run, tapping the question "What's on
   your mind?" puts the cursor in the field. In Stone's light look, muted text is darker (5.1:1). The iPhone Simulator

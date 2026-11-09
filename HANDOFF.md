@@ -58,7 +58,7 @@ read, never written or deleted.
 Start here in a new session: this section, `docs/release-plan.md` (submit, launch day, beta, after launch), and the
 Cleanup log below.
 
-- App: 2.33.1 (instant save of a kept thought in the iPhone app, first-run question focuses the field, Stone light muted
+- App: 2.34.0 (cleanup, released 2026-11-08). Before: 2.33.1 (instant save of a kept thought in the iPhone app, first-run question focuses the field, Stone light muted
   text 5.1:1), released 2026-11-08. The iPhone Simulator first-run flow still fails in the test (Keep tap not landing);
   Keep and restart were checked by hand on a real iPhone. The other three flows pass.
 - Before: 2.33.0 (UX audit fixes, Larger Text in the iPhone shell), iPhone build 57, released to the browser 2026-11-07. The web app is bundled into the iPhone app; the browser copy at
