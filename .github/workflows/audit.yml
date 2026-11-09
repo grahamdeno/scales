@@ -66,4 +66,4 @@ jobs:
         with:
           name: ux-audit-${{ matrix.engine }}
           path: audit-out
-          retention-days: 30
+          retention-days: 7

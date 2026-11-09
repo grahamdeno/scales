@@ -10,17 +10,18 @@ each visit by time (20 s or less skipped, 30 s or more thought about; the 12 Nov
 unless the person puts it away. Plum is for when their hand is on it: Write, Edit, the library.
 
 Scales 1 (Skip, Reflect, Lived, the Ledger, voices, AI with Scales Plus) ended at 1.88.0. Its code and release notes are
-on the branch `scales-1.88.0` and the tag `v1.88.0`. Its data on the phone (`scales.thoughts.v1` and friends) is only
-read, never written or deleted.
+on the branch `scales-1.88.0` and the tag `v1.88.0`. Its data on the phone (`scales.thoughts.v1` and friends) was
+copied in on first open until 2.34.0; since 2.35.0 it is not read (Graham was its only user). Never written or deleted.
 
 ## Where things live
 
-- `index.html` (page), `core.js` (logic, `VERSION`), `sw.js` (offline). Every release bumps `VERSION`, the `CACHE`
-  name and both `core.js?v=` addresses together; a test checks they match.
-- `ios/`: WKWebView shell loading `https://scales.tangomike.app/app/?native=1`. The page talks to it with
-  `window.webkit.messageHandlers.scales.postMessage`: `ready`, `haptic` (tick, medium, success, thud, letgo,
-  signature), `save` (daily backup file), `unschedule` and `badge` (sent on open to clear Scales 1's reminders).
-  No StoreKit or reminder code (build 39 removed them); the icon code is used by the Look setting.
+- `index.html` (page), `core.js` (logic, `VERSION`), `sets.js`, `sw.js` (offline). Every release bumps `VERSION`, the
+  `CACHE` name, the `core.js?v=` and `sets.js?v=` addresses in index.html and sw.js, and the version strings in
+  tests/e2e/app.e2e.js (search for the old number, including its escaped form `2\.34\.0`); a test checks they match.
+- `ios/`: WKWebView shell that bundles the web app and serves it at `scales-app://local/`. The page talks to it with
+  `window.webkit.messageHandlers.scales.postMessage`: `ready`, `store` (NativeStore), `haptic` (tick, medium, success,
+  thud, letgo, signature), `icon`, `look`, `save` (daily backup file), `backup`, `aiStatus` and `ai` (Apple
+  Intelligence). No StoreKit or reminder code (build 39 and 2.34.0 removed them).
 - The browser app at `/app/` is copied from the `release` branch into the Cloudflare site by the Website workflow
   (`scripts/bundle-web.sh`, file list in `scripts/web-files.txt`).
 - `site/`: the scales.tangomike.app website (Cloudflare Pages, deployed by `.github/workflows/site.yml`; strict CSP, no inline code).
@@ -46,27 +47,28 @@ read, never written or deleted.
 - Browser app: scales.tangomike.app/app/ serves the `release` branch (Website workflow, Cloudflare). Merging to main
   changes nothing for browser users. To release: run the unit and browser tests on main, then
   `git push origin main:release` (fast-forward only); the Website workflow deploys it; check VERSION at /app/core.js.
-  GitHub Pages is no longer used by the site (it still builds `release`; can be turned off).
+  GitHub Pages is not used by the site; turning it off is a Grok step (8 November).
 - The marketing site (`site/`: home, Support, Privacy) deploys to Cloudflare from main with the same workflow.
 - Secrets live only in GitHub and Cloudflare. Claude cannot set them; the owner's Grok assistant does, from exact
   prompts Claude writes. Never paste tokens.
 - Choosing a model: Opus for feel, data safety and judgment calls; Sonnet for well-specified building, tests and
   shipping; Haiku for mechanical edits.
 
-## Where things stand (4 November 2026)
+## Where things stand (8 November 2026)
 
 Start here in a new session: this section, `docs/release-plan.md` (submit, launch day, beta, after launch), and the
 Cleanup log below.
 
-- App: 2.35.0 (Scales 1 import removed, website images; not yet released). Before: 2.34.0 (cleanup, released 2026-11-08). Before that: 2.33.1 (instant save of a kept thought in the iPhone app, first-run question focuses the field, Stone light muted
-  text 5.1:1), released 2026-11-08. The iPhone Simulator first-run flow still fails in the test (Keep tap not landing);
-  Keep and restart were checked by hand on a real iPhone. The other three flows pass.
-- Before: 2.33.0 (UX audit fixes, Larger Text in the iPhone shell), iPhone build 57, released to the browser 2026-11-07. The web app is bundled into the iPhone app; the browser copy at
-  scales.tangomike.app/app/ serves the `release` branch and runs the same code. Version history is in README.md.
-- App Store: version 1.0 is Prepare for Submission with build 55 attached. Listing text updated on 4 November (iOS 26,
-  works without a connection, the case for). The 8 screenshots in `appstore/screenshots/` were uploaded by Grok on
-  4 November (6.9" set, en-US). Release is manual. Graham has not submitted and will decide when; only he presses Submit for Review and
-  Release.
+- App: 2.35.0 (Scales 1 import removed, website images, final docs pass; PR #309, not yet shipped). Before: 2.34.0
+  (cleanup) and 2.33.1 (instant save of a kept thought in the iPhone app, first-run question focuses the field), both
+  released 2026-11-08. All four iPhone Simulator flows pass. Version history is in README.md.
+- The web app is bundled into the iPhone app; the browser copy at scales.tangomike.app/app/ serves the `release` branch
+  and runs the same code.
+- App Store: version 1.0 is Prepare for Submission with build 58 (2.33.1) attached and 8 screenshots remade from 2.33.1
+  (uploaded by Grok 8 November). No subscriptions or in-app purchases (Plus deleted 8 November). Release is manual.
+  Graham has not submitted and will decide when; only he presses Submit for Review and Release.
+- Read-only App Store check: run the `App Store listing` workflow with `check: true` (version, build, screenshots,
+  subscriptions, in-app purchases).
 - Public beta: deferred (4 November). Graham tunes the timing on his own data for a few weeks first; plan kept in
   `docs/release-plan.md`.
 - Held branch `launch-day`: App Store as the main button on the landing page and an iPhone-app card in the browser app;
@@ -86,8 +88,7 @@ Cleanup log below.
 
 ## Before the App Store submission
 
-- Done (29 October): Plus was never approved, so it was never on sale; `ScalesPlusPreview: false` in `ios/project.yml`;
-  `PLUS_PREVIEW=off` in Cloudflare. The App Store name is "Scales: One Thought at a Time" ("Scales" is taken by another
+- Done: Plus was never approved or sold, and its subscription was deleted (8 November). The App Store name is "Scales: One Thought at a Time" ("Scales" is taken by another
   account); version 1.0, iPhone only. Listing text, URLs, App Privacy (Data Not Collected) and 4+ are set.
 
 ## Design rules
@@ -110,11 +111,10 @@ Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold t
   Graham was the only Scales 1 user and confirmed his thoughts are in Scales 2 with a Scales 2 backup made since.
   Website screenshots now WebP (scripts/site-images.py); scripts/site-shots.js and the Plus review screenshot removed.
 - Done in 2.34.0: `server/ai.mjs`, its tests and certificates removed; site.yml header updated.
-- Done in 2.34.0 (on branch `cleanup`, not shipped): unused code swept from core.js and index.html, each item checked
+- Done in 2.34.0: unused code swept from core.js and index.html, each item checked
   by search and the tests: pickNext (replaced by nextCard), groupByAdded, addedGroup and ADDED_GROUPS (replaced by
   libraryGroups), withArgNote, argNoteBlock and argNoteLine (Add to note is gone), the TESTFLIGHT variable, and seven
-  style rules nothing uses (.acts, .quiet2, .hbtns, .lbl, .plus). Their tests went with them. Bump VERSION to 2.34.0
-  at ship; merging starts an iPhone build.
+  style rules nothing uses (.acts, .quiet2, .hbtns, .lbl, .plus). Their tests went with them.
 - Paid unlock decided (8 November): "Scales Full", $10 one-time (non-consumable), unlocks Argue with it and Tensions.
   1.0 launches all free; people who downloaded before the unlock keep everything (check the AppTransaction's original
   purchase date). Insights and the iCloud backup stay free. Not built; needs new StoreKit code in the shell.
@@ -125,11 +125,16 @@ Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold t
 - Unit tests were red on main for about 20 minutes on 2 November: build 39 merged without `node --test`, and the
   stale Plus test stopped one Website deploy. Add branch protection that requires the `test` workflow before merge.
 - RE-1: add a check that `release` only moves to a main commit whose tests passed.
-- GitHub Pages is unused since 2.26.0; turn it off in repo settings (Grok). `next/` and `.nojekyll` removed in 2.34.0.
+- GitHub Pages is unused since 2.26.0; turning it off is a Grok step (prompt given 8 November). `next/` and `.nojekyll`
+  removed in 2.34.0.
+- Private repo (decided 8 November): on GitHub Free, private repos get 2,000 Actions minutes a month and Mac minutes
+  count 10x. An iPhone build is about 40 of those, a Simulator audit about 150; run the Simulator audit only before a
+  release and keep releases bundled. Audit artifacts are kept 7 days (500 MB cap). Branch protection needs a paid plan
+  on private repos.
 - iPhone builds bundle the web app from main, not `release`. At each ship, merge, build, then move `release` to the
   same commit so the browser and the iPhone run the same version.
 - Remote branches: dozens of merged feature branches remain on GitHub. Prune the merged ones.
-- `docs/ARCHITECTURE.md` (RE-3) predates Scales 2 and the release pin. Update it.
+- Done in 2.34.0: `docs/ARCHITECTURE.md` rewritten for Scales 2.
 - EU is off (148 countries). To sell there later: set DSA trader status in App Store Connect, then turn the EU back on.
 - Cloudflare Web Analytics is off. Decide after launch whether the marketing site gets it; if yes, update Privacy.
 - 12 November evaluation: visits before 2.25.0 never recorded idle, so treat any visit over 5 minutes as seen only.

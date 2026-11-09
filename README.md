@@ -4,7 +4,7 @@ Scales shows you one of your own thoughts at a time. There are no buttons to jud
 pull it down to put it away, tap it to edit it. Scales reads how long you stayed and brings each thought back
 on its own schedule. Nothing leaves unless you put it away, and anything put away can be brought back.
 
-Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the same page).
+Live at `scales.tangomike.app/app/`, and in the iPhone app (the same page, bundled inside the app).
 
 ## How it works
 
@@ -87,7 +87,7 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   and tries again. Quiet text no longer fades below 4.5:1 (the quiet line, the history line, the Who said it hint,
   empty library groups, a zero in Insights). Help says a put-away thought waits under Put away; the Sets message says
   "bookmarked"; Insights' "Coming" tags use the findings' own names. The website no longer says beta. The Plus AI server
-  (`server/ai.mjs`) is no longer deployed; its code and tests stay.
+  (`server/ai.mjs`) is no longer deployed (removed entirely in 2.34.0).
 - **2.24.1:** After Jung reworded further from the translations (darkness, inside, accept, light, fate, roots, irritate,
   shadow), and two sources corrected: "someone in me" is Civilization in Transition (CW 10); "children learn" is The
   Psychology of the Child Archetype (CW 9i, par. 293). Lines already on a phone keep their old words.
@@ -232,14 +232,19 @@ crossing a swipe threshold is a light tick.
 node --test                      # logic and wiring; no dependencies
 node tests/e2e/app.e2e.js        # Playwright at 390, 375 and 430 wide, plus the iPhone bridge
 node tests/e2e/native-store.e2e.js  # the iPhone app's store script, with the shell faked
+node tests/e2e/onboarding.e2e.js    # first run
+node tests/e2e/refine.e2e.js        # refining a thought
+node tests/audit/run.js          # the UX audit (18 journeys, 30 simulated days)
 ```
 
-CI runs both on every push and pull request.
+CI (`test` workflow) runs the unit and browser tests on every push to main and every pull request; the UX audit runs
+its schedule check in its own workflow on every pull request. The iPhone Simulator audit runs only by hand.
 
 ## Versioning
 
-`MAJOR.MINOR.PATCH`. Each release changes `VERSION` in core.js, the `CACHE` name in sw.js (`scales-v2.0.0`) and the
-`core.js?v=` address in index.html and sw.js together; a test checks they match. CI tags `v2.0.0` after tests pass.
+`MAJOR.MINOR.PATCH`. Each release changes `VERSION` in core.js, the `CACHE` name in sw.js (`scales-v2.0.0`), the
+`core.js?v=` and `sets.js?v=` addresses in index.html and sw.js, and the version strings in tests/e2e/app.e2e.js
+together; a test checks the first three match. CI tags `v2.0.0` after tests pass on main.
 
 ## Paid unlock (planned, not built)
 

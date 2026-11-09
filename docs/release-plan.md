@@ -3,18 +3,18 @@
 Kept here so the steps survive any one session. Graham presses every irreversible button (Submit for Review, Release);
 agents stop before them. Steps Claude can't do go to Grok as prompts, with the irreversible steps first.
 
-## Where things stand (4 November 2026)
+## Where things stand (8 November 2026)
 
-- Version 1.0 in App Store Connect: build 55 (2.32.1) attached, Prepare for Submission, not submitted.
-- Listing text updated on the draft (iOS 26 for Apple Intelligence; works without a connection; the case for).
-- New screenshots (8, 6.9-inch) made from 2.32.1: `appstore/screenshots/`, on branch `store-update`; Grok uploads them.
-- Browser app at scales.tangomike.app/app/ runs the same code as the iPhone build (the `release` branch).
-- EU storefronts are off (no trader status); Plus Yearly stays unattached.
+- Version 1.0 in App Store Connect: build 58 (2.33.1) attached, Prepare for Submission, not submitted.
+- Listing text set (iOS 26 for Apple Intelligence; works without a connection; the case for).
+- 8 screenshots (6.9-inch) remade from 2.33.1 and uploaded by Grok (8 November): `appstore/screenshots/`.
+- Browser app at scales.tangomike.app/app/ runs the `release` branch.
+- EU storefronts are off (no trader status). No subscriptions or in-app purchases (Plus deleted 8 November).
 
 ## Before Submit for Review
 
-1. Grok uploads the 8 screenshots (prompt in the conversation of 4 November; files on branch `store-update`).
-2. Graham checks the version page: no red banners, build 55, screenshots in order.
+1. Graham checks Larger Text on his phone with the TestFlight build.
+2. Graham checks the version page: no red banners, build 58 (or a newer one he chooses), screenshots in order.
 3. Graham presses Submit for Review. Claude freezes main and `release` until Apple decides.
 
 ## Public beta (deferred)
@@ -55,5 +55,5 @@ What `launch-day` changes:
 - The Scales Full unlock: $10 one-time (non-consumable), Argue with it and Tensions; earlier downloads keep
   everything; paid features stay iPhone-only, the browser stays a demo (decided 8 November).
 - Tension log analysis (Graham's private doc "Scales Tensions Log"), then prompt tuning.
-- Cleanup log in HANDOFF.md (runner retry, GitHub Pages off, PLUS_PREVIEW, old branches).
+- Cleanup log in HANDOFF.md (runner retry, GitHub Pages off, old branches).
 - Optional: cookieless page counts for the browser app (needs a line in Privacy).

@@ -54,7 +54,7 @@ iPhone app (ios/App, Swift)                      Browser (scales.tangomike.app/a
 | Thinking or working on it | takes off one skip | Avoidance can be worked off |
 | Type weight (`weight`) | 600 + 50 per skip, to 800 | Avoidance shows in the words |
 | A day | 30 cards (`DAY_SIZE`), at most 5 avoided (`AVOID_PER_DAY`), from 4 am (`DAY_START_HOUR`) | Enough, not a backlog |
-| New and imported thoughts | 5 a day (`NEW_PER_DAY`, `IMPORT_PER_DAY`); sets 2 a day (`SET_PER_DAY`) | Arrivals don't swamp the day |
+| New and imported thoughts | imports 5 a day (`IMPORT_PER_DAY`); sets 2 a day (`SET_PER_DAY`) | Arrivals don't swamp the day |
 | Order within the day | `nextCard`: avoided, new, due, then extra; spread evenly; seeded by day so it is stable all day | Same order if you reopen |
 | Standing (`standing`) | Avoiding, Sitting with, Seen not sat with, Not met yet | The library groups |
 
