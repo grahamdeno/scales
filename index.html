@@ -846,8 +846,8 @@ textarea::placeholder { color: var(--plum-faint); }
 <!-- 2.33.0: a failed save is said in a message of its own that nothing else replaces, and stays until dismissed. -->
 <div id="saveFail" role="alert" hidden><p id="saveFailMsg"></p><div class="sfa"><button type="button" id="saveFailGo">Back up now</button><button type="button" id="saveFailOk">Dismiss</button></div></div>
 
-<script src="core.js?v=2.34.0"></script>
-<script src="sets.js?v=2.34.0"></script>
+<script src="core.js?v=2.35.0"></script>
+<script src="sets.js?v=2.35.0"></script>
 <script>
 (function () {
   "use strict";
@@ -861,7 +861,7 @@ textarea::placeholder { color: var(--plum-faint); }
     return "Next one back " + label + ".";
   }
   // The keys keep the "next" name from the trial, so nothing written then has to move.
-  var KEY = "scales.next.thoughts.v1", KEY_UI = "scales.next.ui.v1", KEY_GONE = "scales.next.gone.v1", KEY_LOG = "scales.next.log.v1", OLD = "scales.thoughts.v1";
+  var KEY = "scales.next.thoughts.v1", KEY_UI = "scales.next.ui.v1", KEY_GONE = "scales.next.gone.v1", KEY_LOG = "scales.next.log.v1";
 
   function lsGet(k, d) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { if (typeof track === "function" && EV) track("storage_fail", { k: k }); return false; } }
@@ -879,11 +879,9 @@ textarea::placeholder { color: var(--plum-faint); }
   function now() { return new Date(); }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
-  // First open: your thoughts from Scales 1 are copied in once. Its data is only read, never changed.
+  // 2.35.0: Scales 1's data is no longer read; thoughts copied from it earlier stay as they are.
   var store = lsGet(KEY, null);
-  if (!store) { store = C.importOld(lsGet(OLD, {}), now()); lsSet(KEY, store); }
-  // Every open: anything still in Scales 1 that is not here yet joins. Nothing here is overwritten.
-  else if (C.mergeOld(store, lsGet(OLD, {}), now(), lsGet(KEY_GONE, []))) lsSet(KEY, store);
+  if (!store || typeof store !== "object") { store = {}; lsSet(KEY, store); }
   var ui = Object.assign({ cur: null, ms: 0, worked: false, argued: false, nudged: false, view: "all", saved: null, review: null }, lsGet(KEY_UI, {}));
   // 2.24.0: which moves the person has made at least once. Older phones learn it from their visit log.
   if (ui.learnedUp === undefined || ui.learnedDown === undefined) {
@@ -1488,7 +1486,7 @@ textarea::placeholder { color: var(--plum-faint); }
     var id = ui.cur;
     // 2.29.0: Undo for 5 seconds puts it back exactly as it was.
     var keptCopy = store[id] ? JSON.parse(JSON.stringify(store[id])) : null, wasGone = lsGet(KEY_GONE, []).indexOf(id) >= 0;
-    // A thought that came from Scales 1 is remembered as deleted, so the catch-up never brings it back.
+    // A thought that came from somewhere else (a set, an import, Scales 1) is remembered as deleted.
     if (store[id] && store[id].from) { var g = lsGet(KEY_GONE, []); g.push(id); lsSet(KEY_GONE, g); }
     delete store[id]; ui.cur = null; ui.ms = 0; ui.worked = false; ui.argued = false; save(); saveUi(); disarm();
     buzz("remove");
@@ -1805,11 +1803,9 @@ textarea::placeholder { color: var(--plum-faint); }
     if (L) $("libInsText").innerHTML = esc(L.lead) + (L.n != null ? "<b>" + esc(String(L.n)) + "</b>" : "") + esc(L.tail);
   }
 
-  // Everything, including Scales 1's data exactly as it is, so a backup never loses anything.
+  // Everything Scales keeps, so a backup never loses anything.
   function backupData() {
-    var raw = {};
-    ["scales.thoughts.v1", "scales.prefs.v1", "scales.activity.v1", "scales.quotes.v1"].forEach(function (k) { var v = lsGet(k, null); if (v != null) raw[k] = v; });
-    return { app: "scales", version: C.VERSION, exported_at: now().toISOString(), thoughts: store, gone: lsGet(KEY_GONE, []), visits: lsGet(KEY_LOG, []), events: EV, scales1: raw, tensions: lsGet("scales.next.tensions.v1", null) };
+    return { app: "scales", version: C.VERSION, exported_at: now().toISOString(), thoughts: store, gone: lsGet(KEY_GONE, []), visits: lsGet(KEY_LOG, []), events: EV, tensions: lsGet("scales.next.tensions.v1", null) };
   }
   // In the iPhone app: saved without asking to iCloud Drive, Scales (or Files), each day and whenever you leave.
   function dailySave() { if (NATIVE) post({ type: "save", json: JSON.stringify(backupData()), day: C.dayKey(now()) }); }
@@ -2013,7 +2009,7 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
     rd.onload = function () {
       var data = null; try { data = JSON.parse(String(rd.result)); } catch (e) {}
       var r = C.restoreFrom(store, data, now(), lsGet(KEY_GONE, []));
-      if (!r.ok) { restoreMsg(r.kind === "newer" ? "That backup is from a newer Scales. Update Scales, then try again." : "That file isn't a Scales backup.", false); return; }
+      if (!r.ok) { restoreMsg(r.kind === "newer" ? "That backup is from a newer Scales. Update Scales, then try again." : r.kind === "scales1" ? "That's a Scales 1 backup, which this Scales no longer opens." : "That file isn't a Scales backup.", false); return; }
       // Thoughts first. If they can't be stored, take them back out and change nothing else.
       if (r.added && !lsSet(KEY, store)) {
         r.ids.forEach(function (id) { delete store[id]; });
@@ -2393,7 +2389,7 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
   $("aiWeek").onclick = function () { aiWeek(); };
 
   if (NATIVE) {
-    // Tell the iPhone app the page is up, clear the reminders Scales 1 scheduled, and save today's copy.
+    // Tell the iPhone app the page is up and save today's copy.
     post({ type: "ready" });
     post({ type: "look", value: LOOKS[ui.look] && ui.look !== "auto" ? ui.look : "" });
     post({ type: "aiStatus" });

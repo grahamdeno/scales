@@ -101,4 +101,4 @@ jobs:
         with:
           name: ios-sim-audit
           path: ios-audit
-          retention-days: 30
+          retention-days: 7

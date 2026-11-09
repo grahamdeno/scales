@@ -1,6 +1,6 @@
 # Scales 2: how it is built
 
-Current as of 2.34.0 (November 2026). Scales 1 (the Deck, the Ledger, Skip/Reflect/Lived, AI with Scales Plus) ended at
+Current as of 2.35.0 (November 2026). Scales 1 (the Deck, the Ledger, Skip/Reflect/Lived, AI with Scales Plus) ended at
 1.88.0; its code is on the branch `scales-1.88.0` and tag `v1.88.0`. Finished plans are in `docs/archive/`.
 
 ## The pieces
@@ -54,7 +54,7 @@ iPhone app (ios/App, Swift)                      Browser (scales.tangomike.app/a
 | Thinking or working on it | takes off one skip | Avoidance can be worked off |
 | Type weight (`weight`) | 600 + 50 per skip, to 800 | Avoidance shows in the words |
 | A day | 30 cards (`DAY_SIZE`), at most 5 avoided (`AVOID_PER_DAY`), from 4 am (`DAY_START_HOUR`) | Enough, not a backlog |
-| New and imported thoughts | 5 a day (`NEW_PER_DAY`, `IMPORT_PER_DAY`); sets 2 a day (`SET_PER_DAY`) | Arrivals don't swamp the day |
+| New and imported thoughts | imports 5 a day (`IMPORT_PER_DAY`); sets 2 a day (`SET_PER_DAY`) | Arrivals don't swamp the day |
 | Order within the day | `nextCard`: avoided, new, due, then extra; spread evenly; seeded by day so it is stable all day | Same order if you reopen |
 | Standing (`standing`) | Avoiding, Sitting with, Seen not sat with, Not met yet | The library groups |
 
@@ -71,7 +71,7 @@ Nothing is ever removed by the schedule. Put away and delete are the person's ow
 | `scales.next.gone.v1` | Ids of deleted thoughts, so a restore does not bring them back |
 | `scales.next.tensions.v1` | Found pairs and pairs marked "Not a tension" |
 | `scales.next.ai.v1` | Whether Apple Intelligence is available, and the last argument requests |
-| `scales.thoughts.v1`, `scales.prefs.v1`, `scales.activity.v1`, `scales.quotes.v1` | Scales 1 data, read once to import and carried in backups untouched |
+| `scales.thoughts.v1`, `scales.prefs.v1`, `scales.activity.v1`, `scales.quotes.v1` | Scales 1 data. Not read since 2.35.0 (it was copied in on first open before that) and not carried in backups |
 
 On iPhone, `NativeStore.js` sends every change to `NativeStore.swift`, which writes `Application Support/Scales/store.json`
 (a change to the thoughts at once, anything else within half a second, everything on going to the background) and

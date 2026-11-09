@@ -37,7 +37,9 @@ test("the Scales 2 website: four pages, strict CSP, no inline code, no Scales 1 
   assert.match(read("site/privacy.html"), /Effective November 2, 2026\./); assert.doesNotMatch(read("site/privacy.html"), /no AI/); assert.match(read("site/privacy.html"), /on-device model/);
   const sup = read("site/support.html");
   assert.match(sup, /choose Backups, then Back up now/); assert.match(sup, /in five days/); assert.match(sup, /Apple Intelligence/); assert.match(sup, /Restoring adds what's missing and never\s+overwrites|Restoring adds what's missing and never overwrites/);
-  for (const f of ["meet-light.png", "meet-dark.png", "meet-own.png", "pull.png", "library.png", "sets.png", "write.png", "icon.png", "argue.png", "tension.png", "insights.png"]) assert.ok(fs.existsSync(path.join(__dirname, "..", "site", "img", f)), f);
+  for (const f of ["meet-light.webp", "meet-dark.webp", "meet-own.webp", "pull.webp", "library.webp", "sets.webp", "write.webp", "icon.png", "argue.webp", "tension.webp", "insights.webp"]) { assert.ok(fs.existsSync(path.join(__dirname, "..", "site", "img", f)), f); if (f.endsWith(".webp")) assert.ok(idx.includes("/img/" + f), "landing uses " + f); }
+  // Website screenshots stay small: 640 wide WebP, no full-size PNGs.
+  for (const f of fs.readdirSync(path.join(__dirname, "..", "site", "img"))) assert.ok(!/\.png$/.test(f) || ["icon.png", "og.png"].includes(f), "no PNG screenshot: " + f);
   const wf = read(".github/workflows/site.yml");
   assert.match(wf, /check \/ "One thought at a time"/); assert.match(wf, /check "\/site\.css\?v=2\.3\.0" "--pist"/);
 });

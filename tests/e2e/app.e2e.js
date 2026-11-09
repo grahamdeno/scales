@@ -17,6 +17,21 @@ const old = {};
 for (let i = 1; i <= 8; i++) old["a" + i] = { id: "a" + i, text: "Active thought number " + i, status: "active", skip_count: i === 3 ? 4 : 0, created_at: "2026-09-0" + i + "T00:00:00Z" };
 old.s1 = { id: "s1", text: "A thought I lived", status: "shed", shed_at: "2026-09-20T00:00:00Z" };
 old.l1 = { id: "l1", text: "A thought I let go", status: "letgo", letgo_at: "2026-09-21T00:00:00Z" };
+// 2.35.0: the app no longer reads Scales 1's key, so the same ten thoughts are seeded straight into Scales 2's store,
+// laid out the way the old first-open copy laid them out: active ones 5 a day, most skipped first; the rest put away.
+const N = require(path.join(root, "core.js"));
+const seed = (() => {
+  const now = new Date(), today = N.dayKey(now), out = {}, active = [];
+  Object.keys(old).forEach((k) => {
+    const o = old[k];
+    const t = { id: "o" + o.id, text: o.text, note: "", created: o.created_at || now.toISOString(), due: today, away: null,
+      skips: Math.min(4, o.skip_count || 0), thinks: 0, works: 0, seen: null, visits: [], from: "scales-1" };
+    if (o.status === "active") active.push(t); else { t.away = o.shed_at || o.letgo_at; out[t.id] = t; }
+  });
+  active.sort((a, b) => b.skips - a.skips || (a.created < b.created ? -1 : 1));
+  active.forEach((t, i) => { t.due = N.addDays(today, Math.floor(i / 5)); out[t.id] = t; });
+  return out;
+})();
 
 let fails = 0;
 const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console.log("ok  ", m); };
@@ -31,7 +46,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const errs = [];
     page.on("pageerror", (e) => errs.push(String(e)));
     page.on("console", (m) => { if (m.type() === "error") errs.push(m.text()); });
-    await page.addInitScript((o) => { if (!localStorage.getItem("scales.thoughts.v1") && !sessionStorage.getItem("seeded")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("seeded", "1"); } }, old);
+    await page.addInitScript((o) => { if (!sessionStorage.getItem("seeded")) { localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("seeded", "1"); } }, seed);
     const tag = "[" + w + "] ";
     await page.goto(base + "/");
     await page.waitForSelector("#words:not(:empty)");
@@ -283,8 +298,8 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(/Backups/.test(await page.textContent("#settings")) && !/Restore from a backup/.test(await page.textContent("#settings")) && !/stay on this phone/.test(await page.textContent("#settings")), tag + "Settings has one Backups row, and the privacy line only once (2.13.0)");
     ok((await page.getAttribute("#setPrivacy", "href")) === "https://scales.tangomike.app/privacy", tag + "Privacy links to the site");
     ok((await page.getAttribute("#setSupport", "href")) === "https://scales.tangomike.app/support", tag + "Support links to the site");
-    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.34\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
-    ok(/^2\.34\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
+    ok(/^mailto:support@tangomike\.app/.test(await page.getAttribute("#setFeedback", "href")) && /Scales%202\.35\.0/.test(await page.getAttribute("#setFeedback", "href")), tag + "Feedback is an email with the version");
+    ok(/^2\.35\.0/.test(await page.textContent("#setVersion")), tag + "Settings shows the version");
     ok(await page.locator("#settings .made").count() === 1 && (await page.textContent("#settings .made")).trim() === "Your thoughts stay on your phone." && /pistachio\.png$/.test(await page.getAttribute("#settings .made img", "src")), tag + "Settings ends with the one-color icon and one line");
     ok(await page.evaluate(() => { const i = document.querySelector("#settings .made img"); return i.getBoundingClientRect().width <= 28 && i.getBoundingClientRect().width < 60; }), tag + "the footer icon is smaller than the icon choices");
     ok(await page.evaluate(() => { const i = document.querySelector("#settings .made img").getBoundingClientRect(), p = document.querySelector("#settings .made p").getBoundingClientRect(); return Math.abs((i.top + i.bottom) / 2 - (p.top + p.bottom) / 2) < 6 && p.left > i.right; }), tag + "the footer icon and line sit side by side (2.13.0)");
@@ -296,7 +311,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#setBackup"); const d = await dl;
     const bk = JSON.parse(fs.readFileSync(await d.path(), "utf8"));
     ok(Array.isArray(bk.events) && bk.events.length > 0, tag + "Back up carries the event log");
-    ok(bk.app === "scales" && bk.version === "2.34.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
+    ok(bk.app === "scales" && bk.version === "2.35.0" && Object.keys(bk.thoughts).length >= 10 && Array.isArray(bk.visits), tag + "Back up saves a file with the thoughts and the visit log");
     // Restore: a Scales 2 file adds what is missing, a repeat adds nothing, a bad file is refused
     const mk = (id, text) => ({ id, text, note: "", created: "2026-10-01T00:00:00.000Z", due: "2026-11-01", away: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] });
     const f2 = path.join(shots, "restore2.json"), f1 = path.join(shots, "restore1.json"), fb = path.join(shots, "bad.json");
@@ -309,7 +324,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.setInputFiles("#restoreFile", f2); await page.waitForTimeout(400);
     ok((await page.textContent("#restoreMsg")).trim() === "Nothing new in that backup.", tag + "Restoring the same file again adds nothing");
     await page.setInputFiles("#restoreFile", f1); await page.waitForTimeout(400);
-    ok((await page.textContent("#restoreMsg")).trim() === "Added 1 thought.", tag + "A Scales 1 backup restores too");
+    ok(/Scales 1 backup, which this Scales no longer opens/.test(await page.textContent("#restoreMsg")), tag + "A Scales 1 backup is refused with its own words (2.35.0)");
     await page.setInputFiles("#restoreFile", fb); await page.waitForTimeout(400);
     ok(/isn't a Scales backup/.test(await page.textContent("#restoreMsg")), tag + "A file that is not a backup is refused");
     // Restore review: a file from a later Scales is refused with its own words
@@ -371,8 +386,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok(!(await page.locator('#lib .lrow.away .back').count()), tag + "Bring back moves it into rotation");
     await page.screenshot({ path: path.join(shots, w + "-7-library-search.png") });
     // old data untouched
-    const after = await page.evaluate(() => localStorage.getItem("scales.thoughts.v1"));
-    ok(JSON.stringify(JSON.parse(after)) === JSON.stringify(old), tag + "Scales 1's data unchanged");
+    ok(await page.evaluate(() => localStorage.getItem("scales.thoughts.v1")) === null, tag + "nothing written under Scales 1's key");
     ok(errs.length === 0, tag + "no console errors" + (errs.length ? ": " + errs.join(" | ") : ""));
     await ctx.close();
   }
@@ -563,8 +577,8 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
           setTimeout(() => window.scalesAIResult(m.id, a, ""), 5);
         }
       } } } };
-      if (!sessionStorage.getItem("s")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("s", "1"); }
-    }, old);
+      if (!sessionStorage.getItem("s")) { localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("s", "1"); }
+    }, seed);
     await page.goto(base + "/?native=1"); await page.waitForTimeout(1500);
     // a little history so the week has something to say
     await page.evaluate(() => {
@@ -597,7 +611,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const page = await ctx.newPage();
     const errs = []; page.on("pageerror", (e) => errs.push(String(e)));
     const tag = "[" + w + " import] ";
-    await page.addInitScript((o) => { if (!sessionStorage.getItem("i")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("i", "1"); } }, old);
+    await page.addInitScript((o) => { if (!sessionStorage.getItem("i")) { localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("i", "1"); } }, seed);
     await page.goto(base + "/"); await page.waitForSelector("#words:not(:empty)");
     const n0 = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem("scales.next.thoughts.v1"))).length);
     await page.click("#strip"); await page.waitForTimeout(700); await page.click("#libGear"); await page.waitForTimeout(500);
@@ -628,7 +642,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
   {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: "dark", deviceScaleFactor: 2, hasTouch: true });
     const page = await ctx.newPage();
-    await page.addInitScript((o) => { if (!sessionStorage.getItem("d")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("d", "1"); } }, old);
+    await page.addInitScript((o) => { if (!sessionStorage.getItem("d")) { localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("d", "1"); } }, seed);
     await page.goto(base + "/"); await page.waitForSelector("#words:not(:empty)"); await page.waitForTimeout(600);
     const meet = await page.evaluate(() => ({ bg: getComputedStyle(document.body).backgroundColor, ink: getComputedStyle(document.getElementById("words")).color, theme: document.getElementById("themeColor").content }));
     ok(meet.bg === "rgb(59, 34, 64)" && meet.ink === "rgb(241, 233, 216)", "dark: Meet is plum with bone words (" + JSON.stringify(meet) + ")");
@@ -664,7 +678,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
   {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: "light" });
     const page = await ctx.newPage();
-    await page.addInitScript((o) => { if (!sessionStorage.getItem("l")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("l", "1"); } }, old);
+    await page.addInitScript((o) => { if (!sessionStorage.getItem("l")) { localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("l", "1"); } }, seed);
     await page.goto(base + "/"); await page.waitForSelector("#words:not(:empty)");
     ok((await page.evaluate(() => getComputedStyle(document.body).backgroundColor)) === "rgb(185, 201, 163)", "light: Meet is still pistachio");
     await ctx.close();
@@ -676,13 +690,13 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.addInitScript((o) => {
       window.__posts = [];
       window.webkit = { messageHandlers: { scales: { postMessage: (m) => window.__posts.push(m) } } };
-      if (!sessionStorage.getItem("s")) { localStorage.setItem("scales.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("s", "1"); }
-    }, old);
+      if (!sessionStorage.getItem("s")) { localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(o)); sessionStorage.setItem("s", "1"); }
+    }, seed);
     await page.goto(base + "/?native=1"); await page.waitForTimeout(2000);
     const types = await page.evaluate(() => window.__posts.map((m) => m.type));
-    ok(["ready", "save"].every((t) => types.includes(t)) && !types.includes("unschedule") && !types.includes("badge"), "native: ready and save sent, no Scales 1 reminder messages (" + types.join(",") + ")");
+    ok(["ready", "save"].every((t) => types.includes(t)) && !types.includes("unschedule") && !types.includes("badge"), "native: ready and save sent, no reminder messages (" + types.join(",") + ")");
     const saved = await page.evaluate(() => JSON.parse(window.__posts.find((m) => m.type === "save").json));
-    ok(saved.scales1 && saved.scales1["scales.thoughts.v1"] && Object.keys(saved.thoughts).length === 10, "native: daily save carries both apps' thoughts");
+    ok(!("scales1" in saved) && Object.keys(saved.thoughts).length === 10, "native: daily save carries the thoughts and no Scales 1 copy");
     await page.keyboard.press("ArrowUp"); await page.waitForTimeout(500);
     const lg = await page.evaluate(() => JSON.parse(localStorage.getItem("scales.next.log.v1") || "[]"));
     ok(lg.length === 1 && lg[0].how === "next" && typeof lg[0].ms === "number" && lg[0].lines.length === 2, "visit log records the move with its raw time");
@@ -743,7 +757,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop() || {})).value === "", tag + "the iPhone app hears Automatic at start");
     await page.evaluate(() => document.getElementById("libGear").click()); await page.waitForTimeout(500);
     ok(await page.locator("#lookSec").isVisible() && await page.getAttribute('[data-look="auto"]', "aria-checked") === "true", tag + "Settings offers Appearance with Automatic on");
-    ok(/^2\.34\.0 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
+    ok(/^2\.35\.0 \(38\)$/.test(await page.textContent("#setVersion")), tag + "About shows the version and build (" + await page.textContent("#setVersion") + ")");
     const other = scheme === "dark" ? "light" : "dark";
     await page.click('[data-look="' + other + '"]'); await page.waitForTimeout(300);
     ok((await page.evaluate(() => window.__posts.filter((m) => m.type === "look").pop())).value === other, tag + "choosing " + other + " tells the iPhone app");
@@ -774,7 +788,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     const kinds = new Set(ev.map((e) => e.e));
     ok(["session", "boot", "snapshot", "tap", "screen", "session_end"].every((k) => kinds.has(k)), "telemetry: session, boot, snapshot, taps, screens and session end are logged (" + [...kinds].join(",") + ")");
     const boot = ev.find((e) => e.e === "boot"), snap = ev.find((e) => e.e === "snapshot");
-    ok(boot && boot.v === "2.34.0" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
+    ok(boot && boot.v === "2.35.0" && typeof boot.ms === "number" && typeof boot.tz === "number" && snap && typeof snap.total === "number", "telemetry: boot has version, load time and time zone; the snapshot counts the collection");
     ok(ev.some((e) => e.e === "tap" && e.id === "libGear") && ev.some((e) => e.e === "screen" && e.to === "help"), "telemetry: a tap is named by its button, and the screen it opened is logged");
     const sid = ev.find((e) => e.e === "session").s;
     ok(ev.filter((e) => e.e !== "session").every((e) => e.s === sid), "telemetry: every event carries its session");
