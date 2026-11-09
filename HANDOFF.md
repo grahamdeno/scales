@@ -21,9 +21,9 @@ read, never written or deleted.
 - `ios/`: WKWebView shell loading `https://scales.tangomike.app/app/?native=1`. The page talks to it with
   `window.webkit.messageHandlers.scales.postMessage`: `ready`, `haptic` (tick, medium, success, thud, letgo,
   signature), `save` (daily backup file), `unschedule` and `badge` (sent on open to clear Scales 1's reminders).
-  StoreKit, icon and reminder code stays in the shell, unused (the owner's choice).
+  No StoreKit or reminder code (build 39 removed them); the icon code is used by the Look setting.
 - The browser app at `/app/` is copied from the `release` branch into the Cloudflare site by the Website workflow
-  (`scripts/bundle-web.sh`, file list in `scripts/web-files.txt`). `server/ai.mjs` is the dormant Plus AI server.
+  (`scripts/bundle-web.sh`, file list in `scripts/web-files.txt`).
 - `site/`: the scales.tangomike.app website (Cloudflare Pages, deployed by `.github/workflows/site.yml`; strict CSP, no inline code).
 - Tests: `node --test` (`tests/core.test.js`, `tests/platform.test.js`) and `node tests/e2e/app.e2e.js` (Playwright).
 - UX audit: `node tests/audit/run.js` walks 18 journeys on three iPhone sizes, photographs every screen state, runs 30
@@ -105,13 +105,12 @@ Cleanup log below.
 
 Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold them into the 30-day plan.
 
-- Cloudflare `PLUS_PREVIEW` variable (Production and Preview) does nothing now that /api/ai is gone. Remove it (Grok).
-  The `ANTHROPIC_API_KEY` secret was removed 2 November; confirm the next Website deploy is the live one.
-- `server/ai.mjs` and its tests (verifyPlus, verifyPreview, the AI server) are no longer deployed. Delete them, or keep
-  them only if a server-side feature is planned. Update the header comment in `.github/workflows/site.yml`, which still
-  describes the AI server.
-- App Store Connect: the Plus Yearly subscription is unattached and Ready to Submit. Delete it, or leave it, when the
-  $9.99 lifetime Supporter unlock (non-consumable, NV-4) is built. Never attach it to 1.0.
+- Cloudflare `PLUS_PREVIEW` variable and the App Store Connect "Plus Yearly" subscription: Graham approved removing
+  both (8 November); Grok prompt given. Mark done when Grok reports.
+- Done in 2.34.0: `server/ai.mjs`, its tests and certificates removed; site.yml header updated.
+- Paid unlock decided (8 November): "Scales Full", $10 one-time (non-consumable), unlocks Argue with it and Tensions.
+  1.0 launches all free; people who downloaded before the unlock keep everything (check the AppTransaction's original
+  purchase date). Insights and the iCloud backup stay free. Not built; needs new StoreKit code in the shell.
 - iPhone shell: `clearReminders` and `setBadge` (the "unschedule" and "badge" messages) exist only to clear old
   Scales 1 reminders. Remove them in a later build. The NWPathMonitor offline screen stays until the web app is bundled.
 - iOS workflow: `runs-on: macos-26` waits for GitHub's arm64 Mac runners; on 2 November two runs were cancelled

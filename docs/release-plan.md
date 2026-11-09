@@ -52,7 +52,8 @@ What `launch-day` changes:
 
 ## After launch (first 30 days)
 
-- The $9.99 lifetime Supporter unlock (non-consumable); paid features stay iPhone-only, the browser stays a demo.
+- The Scales Full unlock: $10 one-time (non-consumable), Argue with it and Tensions; earlier downloads keep
+  everything; paid features stay iPhone-only, the browser stays a demo (decided 8 November).
 - Tension log analysis (Graham's private doc "Scales Tensions Log"), then prompt tuning.
 - Cleanup log in HANDOFF.md (runner retry, GitHub Pages off, PLUS_PREVIEW, old branches).
 - Optional: cookieless page counts for the browser app (needs a line in Privacy).

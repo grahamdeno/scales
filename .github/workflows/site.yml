@@ -2,13 +2,12 @@
 # every deploy is the whole site: the pages in site/ (from main) and the browser copy of the app at /app/ (from the
 # release branch, the files in scripts/web-files.txt). It runs when the site changes on main, or when release moves.
 # 2.26.0: the app is served here directly; the old pass-through to GitHub Pages (server/app-proxy.js) is gone.
-# The Scales Plus AI server (server/ai.mjs) is no longer deployed (2.25.0): nothing in the app calls it.
 # If any of those files, or the Cloudflare secrets, is missing, it stops before uploading, so a partial site can never replace the live one.
 name: Website
 on:
   push:
     branches: [main, release]
-    paths: ["site/**", "server/**", ".github/workflows/site.yml", "scripts/web-files.txt", "scripts/bundle-web.sh", "index.html", "core.js", "sets.js", "sw.js", "fonts/**", "icons/**"]
+    paths: ["site/**", ".github/workflows/site.yml", "scripts/web-files.txt", "scripts/bundle-web.sh", "index.html", "core.js", "sets.js", "sw.js", "fonts/**", "icons/**"]
   workflow_dispatch:
 concurrency:
   group: site

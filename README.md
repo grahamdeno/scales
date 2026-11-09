@@ -217,7 +217,7 @@ crossing a swipe threshold is a light tick.
   in Node. `sw.js`: offline copy, network first. `manifest.webmanifest`, `icons/`, `fonts/`.
 - `next/`: the trial address; it forwards to `/app/` keeping `?native=1`, and its worker removes itself.
 - `ios/`: the iPhone app, a WKWebView shell loading `https://scales.tangomike.app/app/?native=1`; `Haptics.swift`.
-- `site/`: the scales.tangomike.app website. `server/`: the `/app/` proxy and the Scales Plus AI server (dormant).
+- `site/`: the scales.tangomike.app website.
 - `docs/`: `next-plan.md` (how Scales 2 was built) and `swap-plan.md` (how it replaced Scales 1).
 - Scales 1 (1.88.0 and earlier) is on the branch `scales-1.88.0` and the tag `v1.88.0`, release notes included.
 
@@ -236,10 +236,13 @@ CI runs both on every push and pull request.
 `MAJOR.MINOR.PATCH`. Each release changes `VERSION` in core.js, the `CACHE` name in sw.js (`scales-v2.0.0`) and the
 `core.js?v=` address in index.html and sw.js together; a test checks they match. CI tags `v2.0.0` after tests pass.
 
-## Scales Plus (dormant)
+## Paid unlock (planned, not built)
 
-Scales 2 has no AI and Plus is not offered. The iPhone app's StoreKit, icon and reminder code and `server/ai.mjs` stay
-in place, unused, in case AI comes back. `tests/platform.test.js` keeps the server's checks.
+Scales 1.0 launches with everything free. Later a one-time purchase, **Scales Full** ($10), unlocks Argue with it and
+Tensions for people who download after it arrives; anyone who downloaded before keeps every current feature. The daily
+loop (write, swipe, put away), Insights and the iCloud backup stay free. The browser copy stays a free demo. The iPhone
+app has no purchase code today (build 39 removed StoreKit); the unlock needs it written new. The old Scales Plus AI
+server was removed in 2.34.0.
 
 ## License
 
