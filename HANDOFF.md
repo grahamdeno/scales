@@ -108,6 +108,11 @@ Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold t
 - Cloudflare `PLUS_PREVIEW` variable and the App Store Connect "Plus Yearly" subscription: Graham approved removing
   both (8 November); Grok prompt given. Mark done when Grok reports.
 - Done in 2.34.0: `server/ai.mjs`, its tests and certificates removed; site.yml header updated.
+- Done in 2.34.0 (on branch `cleanup`, not shipped): unused code swept from core.js and index.html, each item checked
+  by search and the tests: pickNext (replaced by nextCard), groupByAdded, addedGroup and ADDED_GROUPS (replaced by
+  libraryGroups), withArgNote, argNoteBlock and argNoteLine (Add to note is gone), the TESTFLIGHT variable, and seven
+  style rules nothing uses (.acts, .quiet2, .hbtns, .lbl, .plus). Their tests went with them. Bump VERSION to 2.34.0
+  at ship; merging starts an iPhone build.
 - Paid unlock decided (8 November): "Scales Full", $10 one-time (non-consumable), unlocks Argue with it and Tensions.
   1.0 launches all free; people who downloaded before the unlock keep everything (check the AppTransaction's original
   purchase date). Insights and the iCloud backup stay free. Not built; needs new StoreKit code in the shell.

@@ -97,10 +97,6 @@
       return (b.skips || 0) - (a.skips || 0) || (a.due < b.due ? -1 : a.due > b.due ? 1 : 0) || (a.created < b.created ? -1 : 1);
     });
   }
-  function pickNext(store, now, notId) {
-    var d = dueToday(store, now).filter(function (t) { return t.id !== notId; });
-    return d.length ? d[0] : null;
-  }
 
   // ---- Today's pile (2.12.0; first built 2.9.0) ----
   // Up to DAY_SIZE cards a day, chosen so the whole collection comes round instead of the same cards every day:
@@ -636,16 +632,6 @@
     if (d < 365) return Math.floor(d / 30) + "mo";
     return Math.floor(d / 365) + "y";
   }
-  // Which group a thought sits in, by when it was added: the order people remember their own notes in.
-  var ADDED_GROUPS = ["This week", "This month", "Earlier"];
-  function addedGroup(created, now) { var d = ageDays(created, now); return d < 7 ? ADDED_GROUPS[0] : d < 30 ? ADDED_GROUPS[1] : ADDED_GROUPS[2]; }
-  // Newest first, split into the groups above; empty groups left out. Returns [{ name, items }].
-  function groupByAdded(thoughts, now) {
-    var by = {};
-    thoughts.slice().sort(function (a, b) { return a.created < b.created ? 1 : a.created > b.created ? -1 : 0; })
-      .forEach(function (t) { var g = addedGroup(t.created, now); (by[g] = by[g] || []).push(t); });
-    return ADDED_GROUPS.filter(function (g) { return by[g]; }).map(function (g) { return { name: g, items: by[g] }; });
-  }
   // One quiet line for Edit: how old it is and how it has gone lately.
   // "Added 41 days ago · skipped 6 of the last 8 times". Lately is the last 10 real visits.
   function historyLine(t, now) {
@@ -811,25 +797,6 @@
   }
   // The kept argument, only if it was made for the words as they are now.
   function argFor(t) { return t && t.arg && t.arg.text === t.text && t.arg.against && t.arg.assumes ? t.arg : null; }
-  // What "Add to note" puts in the note: the whole argument, the case against and what it assumes (2.30.3; before, only
-  // the "It assumes" line went in). A note that already holds only that line gets the case against added above it.
-  function argNoteLine(arg) { return "It assumes: " + arg.assumes.charAt(0).toLowerCase() + arg.assumes.slice(1); }
-  // 2.31.0: the block also carries what the argument would let you off, and the case for when it was asked for.
-  function argNoteBlock(arg, pro) {
-    return "Against it: " + String(arg.against || "").trim() + "\n" + argNoteLine(arg) +
-      (arg.free ? "\nIf this wins, I'd be free to: " + arg.free + "." : "") + (pro && pro.pro ? "\nFor it: " + pro.pro : "");
-  }
-  function withArgNote(note, arg, pro) {
-    var line = argNoteLine(arg), block = argNoteBlock(arg, pro), n = String(note || "").trim();
-    // A block added earlier without the newer lines is replaced by the full one.
-    var noPro = argNoteBlock(arg), older = argNoteBlock({ against: arg.against, assumes: arg.assumes });
-    if (n.indexOf(block) >= 0) return n;
-    if (noPro !== block && n.indexOf(noPro) >= 0) return n.replace(noPro, block);
-    if (n.indexOf(older) >= 0) return n.replace(older, block);
-    if (n.indexOf(block) >= 0) return n;
-    if (n.indexOf(line) >= 0) return n.replace(line, block);
-    return n ? n + "\n\n" + block : block;
-  }
 
   // 2.29.0: tuned on real misses (pairs that agreed, that were about different things, or that held a question).
   // Small on-device models follow examples better than rules, so the prompt shows what is and isn't a tension, and makes
@@ -1017,11 +984,10 @@
     return out;
   }
 
-  var api = { VERSION: VERSION, reword: reword, insights: insights, WAS_KEEP: WAS_KEEP, argRequest: argRequest, parseArg: parseArg, argFor: argFor, argNoteLine: argNoteLine, withArgNote: withArgNote,
-    insightLine: insightLine, argForRequest: argForRequest, parseFor: parseFor, proFor: proFor, argNoteBlock: argNoteBlock, keepArg: keepArg, earlierArgs: earlierArgs, tensionBatches: tensionBatches, tensionRequest: tensionRequest, tensionPool: tensionPool, tensionCheck: tensionCheck, checkSaysTension: checkSaysTension, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
-    standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, addedGroup: addedGroup, groupByAdded: groupByAdded, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
+  var api = { VERSION: VERSION, reword: reword, insights: insights, WAS_KEEP: WAS_KEEP, argRequest: argRequest, parseArg: parseArg, argFor: argFor, insightLine: insightLine, argForRequest: argForRequest, parseFor: parseFor, proFor: proFor, keepArg: keepArg, earlierArgs: earlierArgs, tensionBatches: tensionBatches, tensionRequest: tensionRequest, tensionPool: tensionPool, tensionCheck: tensionCheck, checkSaysTension: checkSaysTension, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
+    standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
-    make: make, protectedThought: protectedThought, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, pickNext: pickNext, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
+    make: make, protectedThought: protectedThought, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
     nextDue: nextDue, importOld: importOld, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, mergeOld: mergeOld, whenLabel: whenLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);
