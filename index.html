@@ -150,7 +150,6 @@ body.plum #strip, body.plum #stripNew { opacity: 0; pointer-events: none; }
 #saveFail .sfa { display: flex; justify-content: flex-end; gap: 4px; }
 #saveFail button { min-height: 44px; padding: 0 12px; font-weight: 700; color: inherit; }
 #saveFail #saveFailOk { font-weight: 500; opacity: .8; }
-.plus { font-weight: 400; margin-right: 3px; }
 
 /* ---- Write and Edit (plum) ---- */
 .sheetform { position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--top) + 76px); bottom: calc(var(--bot) + 100px); display: flex; flex-direction: column; gap: 22px;
@@ -162,7 +161,6 @@ textarea { font: inherit; color: var(--plum-ink); background: transparent; borde
 textarea::placeholder { color: var(--plum-faint); }
 .big { font-size: calc(32px * var(--ts)); line-height: 1.15; letter-spacing: -0.02em; font-weight: 700; }
 .small { font-size: calc(17px * var(--ts)); line-height: 1.45; border-top: 1px solid rgba(241,233,216,.2); padding-top: 14px; }
-.lbl { font-size: calc(13px * var(--ts)); color: var(--plum-muted); margin-bottom: -14px; }
 /* "Add who said it": words, not a button; one line appears under the thought when tapped. */
 /* 2.30.0: onboarding. The first screen asks one thing, and offers a set as an equal second choice. */
 /* 2.33.1: a label for the field, so tapping the question puts the cursor in it. */
@@ -291,7 +289,6 @@ textarea::placeholder { color: var(--plum-faint); }
 #libList { padding-bottom: calc(var(--bot) + 40px); }
 #lib header .top { display: flex; justify-content: space-between; align-items: center; }
 /* 2.28.1: with + New gone from the sheet, the gear lines up with the search field and the list (its 24 px icon sits in a 48 px tap area). */
-#lib .hbtns { display: flex; align-items: center; margin-right: -12px; }
 /* 2.29.0: search and the gear on one row; the gear's icon lines up with the list's right edge. */
 #lib .qrow { display: flex; align-items: center; gap: 4px; }
 #lib .qrow #q { flex: 1 1 auto; min-width: 0; }
@@ -488,7 +485,6 @@ textarea::placeholder { color: var(--plum-faint); }
 @keyframes argIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .argbox .k { margin: 0 0 5px; font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
 .argbox .v { margin: 0 0 16px; font-size: calc(16px * var(--ts)); line-height: 1.45; }
-.argbox .acts { display: flex; flex-wrap: wrap; gap: 6px 24px; }
 /* 2.31.0: what the case against would let you off, one question, and the case for on request. */
 .argbox .free { margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; background: rgba(185,201,163,.10); }
 .argbox .free .k { color: var(--pist); } .argbox .free .v { margin: 0; }
@@ -518,9 +514,6 @@ textarea::placeholder { color: var(--plum-faint); }
 #argPage textarea { width: 100%; margin-top: 10px; font: inherit; font-size: calc(16px * var(--ts)); color: var(--plum-ink); background: rgba(241,233,216,.07); border: 0; border-radius: 12px;
   padding: 10px 12px; outline: none; resize: none; max-height: 30vh; overflow-y: auto; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
 .argbox .for .v.quiet { color: var(--plum-muted); font-size: calc(15px * var(--ts)); }
-.argbox .acts button { font-size: calc(15px * var(--ts)); font-weight: 600; color: var(--pist); padding: 4px 0; }
-.argbox .acts button:disabled { color: var(--plum-muted); font-weight: 500; }
-.argbox .acts button.quiet2 { color: var(--plum-muted); font-weight: 500; }
 .argbox a { color: var(--pist); font-weight: 600; text-decoration: none; }
 /* 2.16.0 Tensions: one row in Your thoughts (a dot when a new pair is found), pairs with "and yet" between. */
 .lgrp.dot .gn::after { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--pist); margin-left: 8px; vertical-align: middle; }
@@ -853,8 +846,8 @@ textarea::placeholder { color: var(--plum-faint); }
 <!-- 2.33.0: a failed save is said in a message of its own that nothing else replaces, and stays until dismissed. -->
 <div id="saveFail" role="alert" hidden><p id="saveFailMsg"></p><div class="sfa"><button type="button" id="saveFailGo">Back up now</button><button type="button" id="saveFailOk">Dismiss</button></div></div>
 
-<script src="core.js?v=2.33.1"></script>
-<script src="sets.js?v=2.33.1"></script>
+<script src="core.js?v=2.34.0"></script>
+<script src="sets.js?v=2.34.0"></script>
 <script>
 (function () {
   "use strict";
@@ -2089,7 +2082,6 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
   // ---------- Apple Intelligence (2.6.0; a regular feature in the iPhone app from 2.16.0) ----------
   // The shell runs Apple's on-device model one request at a time. Scales picks what to ask and counts everything itself.
   var KEY_AI = "scales.next.ai.v1", aiOk = false, aiSeq = 0, aiWait = {}, aiBusy = false, aiStop = false;
-  var TESTFLIGHT = NATIVE && !!(window.scalesNative && window.scalesNative.testflight);
   window.scalesAI = function (status) {
     aiOk = status === "available";
     // 2.26.0: the message says why, so a phone that only needs a setting or an update is told so.
@@ -2402,7 +2394,7 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
 
   if (NATIVE) {
     // Tell the iPhone app the page is up, clear the reminders Scales 1 scheduled, and save today's copy.
-    post({ type: "ready" }); post({ type: "unschedule" }); post({ type: "badge", count: 0 });
+    post({ type: "ready" });
     post({ type: "look", value: LOOKS[ui.look] && ui.look !== "auto" ? ui.look : "" });
     post({ type: "aiStatus" });
     setTimeout(dailySave, 1500);

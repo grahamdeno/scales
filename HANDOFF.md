@@ -17,20 +17,19 @@ read, never written or deleted.
 
 - `index.html` (page), `core.js` (logic, `VERSION`), `sw.js` (offline). Every release bumps `VERSION`, the `CACHE`
   name and both `core.js?v=` addresses together; a test checks they match.
-- `next/`: the trial address. It forwards to `/app/` with the query (so `?native=1` survives) and its worker unregisters.
 - `ios/`: WKWebView shell loading `https://scales.tangomike.app/app/?native=1`. The page talks to it with
   `window.webkit.messageHandlers.scales.postMessage`: `ready`, `haptic` (tick, medium, success, thud, letgo,
   signature), `save` (daily backup file), `unschedule` and `badge` (sent on open to clear Scales 1's reminders).
-  StoreKit, icon and reminder code stays in the shell, unused (the owner's choice).
+  No StoreKit or reminder code (build 39 removed them); the icon code is used by the Look setting.
 - The browser app at `/app/` is copied from the `release` branch into the Cloudflare site by the Website workflow
-  (`scripts/bundle-web.sh`, file list in `scripts/web-files.txt`). `server/ai.mjs` is the dormant Plus AI server.
+  (`scripts/bundle-web.sh`, file list in `scripts/web-files.txt`).
 - `site/`: the scales.tangomike.app website (Cloudflare Pages, deployed by `.github/workflows/site.yml`; strict CSP, no inline code).
 - Tests: `node --test` (`tests/core.test.js`, `tests/platform.test.js`) and `node tests/e2e/app.e2e.js` (Playwright).
 - UX audit: `node tests/audit/run.js` walks 18 journeys on three iPhone sizes, photographs every screen state, runs 30
   simulated days of the schedule and writes `audit-out/report.html`. Journeys and scoring: `docs/audit/journeys.md`;
   people: `docs/audit/human-round.md`. CI: the `UX audit` workflow (schedule check on every PR; full walk in Chromium
   and WebKit by hand) and `iPhone Simulator audit` (Maestro flows on a real simulator, by hand).
-- Plans: `docs/next-plan.md`, `docs/swap-plan.md`.
+- Plans: `docs/release-plan.md`, `docs/evaluation-plan.md`. Finished plans are in `docs/archive/`.
 
 ## Shipping
 
@@ -59,7 +58,7 @@ read, never written or deleted.
 Start here in a new session: this section, `docs/release-plan.md` (submit, launch day, beta, after launch), and the
 Cleanup log below.
 
-- App: 2.33.1 (instant save of a kept thought in the iPhone app, first-run question focuses the field, Stone light muted
+- App: 2.34.0 (cleanup, released 2026-11-08). Before: 2.33.1 (instant save of a kept thought in the iPhone app, first-run question focuses the field, Stone light muted
   text 5.1:1), released 2026-11-08. The iPhone Simulator first-run flow still fails in the test (Keep tap not landing);
   Keep and restart were checked by hand on a real iPhone. The other three flows pass.
 - Before: 2.33.0 (UX audit fixes, Larger Text in the iPhone shell), iPhone build 57, released to the browser 2026-11-07. The web app is bundled into the iPhone app; the browser copy at
@@ -105,21 +104,25 @@ Cleanup log below.
 
 Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold them into the 30-day plan.
 
-- Cloudflare `PLUS_PREVIEW` variable (Production and Preview) does nothing now that /api/ai is gone. Remove it (Grok).
-  The `ANTHROPIC_API_KEY` secret was removed 2 November; confirm the next Website deploy is the live one.
-- `server/ai.mjs` and its tests (verifyPlus, verifyPreview, the AI server) are no longer deployed. Delete them, or keep
-  them only if a server-side feature is planned. Update the header comment in `.github/workflows/site.yml`, which still
-  describes the AI server.
-- App Store Connect: the Plus Yearly subscription is unattached and Ready to Submit. Delete it, or leave it, when the
-  $9.99 lifetime Supporter unlock (non-consumable, NV-4) is built. Never attach it to 1.0.
-- iPhone shell: `clearReminders` and `setBadge` (the "unschedule" and "badge" messages) exist only to clear old
-  Scales 1 reminders. Remove them in a later build. The NWPathMonitor offline screen stays until the web app is bundled.
+- Cloudflare `PLUS_PREVIEW` variable and the App Store Connect "Plus Yearly" subscription: Graham approved removing
+  both (8 November); Grok prompt given. Mark done when Grok reports.
+- Done in 2.34.0: `server/ai.mjs`, its tests and certificates removed; site.yml header updated.
+- Done in 2.34.0 (on branch `cleanup`, not shipped): unused code swept from core.js and index.html, each item checked
+  by search and the tests: pickNext (replaced by nextCard), groupByAdded, addedGroup and ADDED_GROUPS (replaced by
+  libraryGroups), withArgNote, argNoteBlock and argNoteLine (Add to note is gone), the TESTFLIGHT variable, and seven
+  style rules nothing uses (.acts, .quiet2, .hbtns, .lbl, .plus). Their tests went with them. Bump VERSION to 2.34.0
+  at ship; merging starts an iPhone build.
+- Paid unlock decided (8 November): "Scales Full", $10 one-time (non-consumable), unlocks Argue with it and Tensions.
+  1.0 launches all free; people who downloaded before the unlock keep everything (check the AppTransaction's original
+  purchase date). Insights and the iCloud backup stay free. Not built; needs new StoreKit code in the shell.
+- Done in 2.34.0: the Scales 1 reminder clearing (`unschedule`, `badge`, `clearReminders`, `setBadge`, the notification
+  delegate in ScalesApp.swift) removed.
 - iOS workflow: `runs-on: macos-26` waits for GitHub's arm64 Mac runners; on 2 November two runs were cancelled
   unbuilt ("not acquired ... capacity constraints"). Consider a fallback runner label, or retry on cancel.
 - Unit tests were red on main for about 20 minutes on 2 November: build 39 merged without `node --test`, and the
   stale Plus test stopped one Website deploy. Add branch protection that requires the `test` workflow before merge.
 - RE-1: add a check that `release` only moves to a main commit whose tests passed.
-- GitHub Pages is unused since 2.26.0; turn it off in repo settings (Grok), and remove `next/` if no old links need it.
+- GitHub Pages is unused since 2.26.0; turn it off in repo settings (Grok). `next/` and `.nojekyll` removed in 2.34.0.
 - iPhone builds bundle the web app from main, not `release`. At each ship, merge, build, then move `release` to the
   same commit so the browser and the iPhone run the same version.
 - Remote branches: dozens of merged feature branches remain on GitHub. Prune the merged ones.

@@ -1,6 +1,5 @@
 import UIKit
 import WebKit
-import UserNotifications
 #if canImport(FoundationModels)
 import FoundationModels
 #endif
@@ -129,10 +128,6 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             queued.forEach { web.evaluateJavaScript($0, completionHandler: nil) }
             queued.removeAll()
             sendIcon(); sendA11y()
-        case "unschedule":
-            clearReminders()
-        case "badge":
-            setBadge(body["count"] as? Int ?? 0)
         case "haptic":
             // 1.84.1: a named style (Haptics.swift); older pages send none and get a tick.
             haptics.play(body["style"] as? String ?? "tick")
@@ -328,22 +323,6 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
                 }
             }
             DispatchQueue.main.async { self.run("window.scalesSaved && window.scalesSaved({ ok: \(ok), where: '\(place)' })") }
-        }
-    }
-
-    /// Clears any reminders and the badge an earlier version (Scales 1) left on this phone. Nothing is scheduled any more.
-    private func clearReminders() {
-        let center = UNUserNotificationCenter.current()
-        center.getPendingNotificationRequests { pending in
-            center.removePendingNotificationRequests(withIdentifiers: pending.map(\.identifier).filter { $0.hasPrefix("scales-") })
-        }
-        setBadge(0)
-    }
-
-    private func setBadge(_ count: Int) {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            guard settings.authorizationStatus == .authorized else { return }
-            UNUserNotificationCenter.current().setBadgeCount(max(0, count)) { _ in }
         }
     }
 

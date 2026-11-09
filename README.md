@@ -17,6 +17,11 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.34.0:** Cleanup, nothing you see changes. Removed the Scales Plus AI server and its tests, the Scales 1 reminder
+  clearing in the iPhone app, code nothing called (the old next-card picker, library grouping and Add to note helpers),
+  unused styles, the old trial address `/app/next/`, old screenshots and Scales 1 pictures. ARCHITECTURE.md is rewritten
+  for Scales 2 and finished plans are in `docs/archive/`. The paid unlock ("Scales Full", $10, Argue with it and
+  Tensions) is planned and not built.
 - **2.33.1:** In the iPhone app a kept thought goes to the phone's own save file at once, not after up to a second,
   so a crash or iOS stopping the app can't lose a thought just kept. On a first run, tapping the question "What's on
   your mind?" puts the cursor in the field. In Stone's light look, muted text is darker (5.1:1). The iPhone Simulator
@@ -215,9 +220,8 @@ crossing a swipe threshold is a light tick.
 
 - `index.html`: the page (CSS and one script). `core.js`: the logic (visit reading, schedule, import, labels), tested
   in Node. `sw.js`: offline copy, network first. `manifest.webmanifest`, `icons/`, `fonts/`.
-- `next/`: the trial address; it forwards to `/app/` keeping `?native=1`, and its worker removes itself.
 - `ios/`: the iPhone app, a WKWebView shell loading `https://scales.tangomike.app/app/?native=1`; `Haptics.swift`.
-- `site/`: the scales.tangomike.app website. `server/`: the `/app/` proxy and the Scales Plus AI server (dormant).
+- `site/`: the scales.tangomike.app website.
 - `docs/`: `next-plan.md` (how Scales 2 was built) and `swap-plan.md` (how it replaced Scales 1).
 - Scales 1 (1.88.0 and earlier) is on the branch `scales-1.88.0` and the tag `v1.88.0`, release notes included.
 
@@ -236,10 +240,13 @@ CI runs both on every push and pull request.
 `MAJOR.MINOR.PATCH`. Each release changes `VERSION` in core.js, the `CACHE` name in sw.js (`scales-v2.0.0`) and the
 `core.js?v=` address in index.html and sw.js together; a test checks they match. CI tags `v2.0.0` after tests pass.
 
-## Scales Plus (dormant)
+## Paid unlock (planned, not built)
 
-Scales 2 has no AI and Plus is not offered. The iPhone app's StoreKit, icon and reminder code and `server/ai.mjs` stay
-in place, unused, in case AI comes back. `tests/platform.test.js` keeps the server's checks.
+Scales 1.0 launches with everything free. Later a one-time purchase, **Scales Full** ($10), unlocks Argue with it and
+Tensions for people who download after it arrives; anyone who downloaded before keeps every current feature. The daily
+loop (write, swipe, put away), Insights and the iCloud backup stay free. The browser copy stays a free demo. The iPhone
+app has no purchase code today (build 39 removed StoreKit); the unlock needs it written new. The old Scales Plus AI
+server was removed in 2.34.0.
 
 ## License
 

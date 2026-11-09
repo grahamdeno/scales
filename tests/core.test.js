@@ -86,7 +86,7 @@ test("day starts at 4 AM", () => {
   assert.equal(N.addDays("2026-12-31", 1), "2027-01-01");
 });
 
-test("pickNext: most skipped first, then oldest due; skips the current; ignores put away and not yet due", () => {
+test("dueToday: most skipped first, then oldest due; ignores put away and not yet due", () => {
   const now = at(2026, 10, 29);
   const mk = (id, o) => Object.assign({ id, text: id, created: "2026-01-01T00:00:00Z", due: "2026-10-29", away: null, skips: 0 }, o);
   const store = {
@@ -97,9 +97,6 @@ test("pickNext: most skipped first, then oldest due; skips the current; ignores 
     e: mk("e", { skips: 9, due: "2026-10-30" })
   };
   assert.deepEqual(N.dueToday(store, now).map((t) => t.id), ["c", "b", "a"]);
-  assert.equal(N.pickNext(store, now).id, "c");
-  assert.equal(N.pickNext(store, now, "c").id, "b");
-  assert.equal(N.pickNext({ e: store.e }, now), null);
   assert.equal(N.nextDue({ e: store.e, d: store.d }), "2026-10-30");
   assert.equal(N.nextDue({ d: store.d }), null);
   // soonest: who comes back first when nothing is due (ignores put away and the one named)
@@ -152,12 +149,7 @@ test("version is MAJOR.MINOR.PATCH and matches the worker's cache and the page's
   assert.match(sw, new RegExp('"core\\.js\\?v=' + N.VERSION.replace(/\./g, "\\.") + '"'));
   assert.match(read("index.html"), new RegExp('<script src="core\\.js\\?v=' + N.VERSION.replace(/\./g, "\\.") + '"></script>'));
   assert.match(sw, /ks\.filter\(k => k !== CACHE\)/, "every older copy is cleared, Scales 1's and the trial's included");
-});
-
-test("the trial address forwards home, keeping ?native=1, and its worker retires itself", () => {
-  assert.match(read("next/index.html"), /location\.replace\("\.\.\/" \+ location\.search\)/);
-  assert.match(read("next/sw.js"), /self\.registration\.unregister\(\)/);
-  assert.ok(!fs.existsSync(path.join(root, "next", "core.js")));
+  assert.ok(!fs.existsSync(path.join(root, "next")), "the trial address is gone (2.34.0)");
 });
 
 test("the iPhone app paints pistachio (plum in Dark) while Scales loads, so nothing flashes", () => {
@@ -213,7 +205,7 @@ test("mergeOld: adds thoughts written in the current app later, never overwrites
 test("Scales saves daily through the iPhone app and quiets Scales 1's reminders", () => {
   const nx = read("index.html");
   assert.match(nx, /post\(\{ type: "save", json: JSON\.stringify\(backupData\(\)\), day: C\.dayKey\(now\(\)\) \}\)/);
-  assert.match(nx, /post\(\{ type: "ready" \}\); post\(\{ type: "unschedule" \}\); post\(\{ type: "badge", count: 0 \}\);/);
+  assert.match(nx, /post\(\{ type: "ready" \}\);/);
   assert.match(nx, /"scales\.thoughts\.v1", "scales\.prefs\.v1", "scales\.activity\.v1", "scales\.quotes\.v1"/, "backups carry the current app's data as it is");
   assert.ok(!/scales\.apikey\.v1/.test(nx), "never copies the API key");
   const swift = read("ios/App/Haptics.swift");
@@ -774,14 +766,6 @@ test("ageLabel: Today, days, weeks, months, years (2.13.0)", () => {
   assert.equal(N.ageLabel("not a date", n), "Today");
 });
 
-test("groupByAdded: This week, This month, Earlier, newest first, empty groups left out (2.13.0)", () => {
-  const n = new Date("2026-11-01T12:00:00"), ago = (d) => new Date(n.getTime() - d * 86400000).toISOString();
-  const g = N.groupByAdded([{ id: "a", created: ago(40) }, { id: "b", created: ago(2) }, { id: "c", created: ago(1) }, { id: "d", created: ago(90) }], n);
-  assert.deepEqual(g.map((x) => x.name), ["This week", "Earlier"]);
-  assert.deepEqual(g[0].items.map((t) => t.id), ["c", "b"]);
-  assert.deepEqual(g[1].items.map((t) => t.id), ["a", "d"]);
-});
-
 test("historyLine: age and how it has gone over the last 10 real visits (2.13.0)", () => {
   const n = new Date("2026-11-01T12:00:00"), ago = (d) => new Date(n.getTime() - d * 86400000).toISOString();
   const v = (k) => ({ kind: k });
@@ -908,16 +892,7 @@ test("The day's insight (2.29.0): a true sentence chosen by the day, or nothing"
   assert.equal(N.insightLine(d, "2026-11-03").lead, N.insightLine(d, "2026-11-03").lead, "the same all day");
 });
 
-test("Add to note keeps the whole argument (2.30.3)", () => {
-  const a = { against: "Holding to every decision can be stubbornness.", assumes: "That what you decided was right." };
-  const full = "Against it: Holding to every decision can be stubbornness.\nIt assumes: that what you decided was right.";
-  assert.equal(N.withArgNote("", a), full);
-  assert.equal(N.withArgNote("My note.", a), "My note.\n\n" + full);
-  assert.equal(N.withArgNote("My note.\n\n" + full, a), "My note.\n\n" + full, "never twice");
-  assert.equal(N.withArgNote("My note.\n\nIt assumes: that what you decided was right.", a), "My note.\n\n" + full, "an old note with only the assumption gets the case against");
-});
-
-test("Argue with it 2.31.0: what it would let you off, the case for, and both in the note and the backup", () => {
+test("Argue with it 2.31.0: what it would let you off, the case for, and both in the backup", () => {
   const a = N.parseArg("AGAINST: Discomfort today doesn't promise a better tomorrow at all.\nASSUMES: that pleasure is wasted.\nFREE: Keep the evening scroll and skip the early night.");
   assert.equal(a.free, "keep the evening scroll and skip the early night");
   assert.equal(N.parseArg("AGAINST: Discomfort today doesn't promise a better tomorrow at all.\nASSUMES: that pleasure is wasted.").free, undefined, "older answers have no FREE line");
@@ -925,9 +900,6 @@ test("Argue with it 2.31.0: what it would let you off, the case for, and both in
   assert.deepEqual(N.parseFor("SKIP"), { skip: true }); assert.doesNotMatch(N.argForRequest("x", "").instructions, /SKIP|argu/i, "2.31.1: no SKIP rule, no arguing words");
   assert.match(N.argForRequest("Rest is work.", "").instructions, /what the thought gets right/);
   const pro = { pro: "Small choices compound over time, quietly." };
-  let n = N.withArgNote("", a); assert.match(n, /If this wins, I'd be free to: keep the evening scroll/);
-  n = N.withArgNote(n, a, pro); assert.match(n, /\nFor it: Small choices/); assert.equal((n.match(/Against it:/g) || []).length, 1);
-  assert.equal(N.withArgNote(n, a, pro), n, "never twice");
   const t = { id: "x", text: "Rest is work.", arg: Object.assign({ text: "Rest is work.", at: "2026-11-03T00:00:00Z" }, a), pro: { text: "Rest is work.", pro: pro.pro, at: "2026-11-03T00:00:00Z" } };
   const r = N.restoreFrom({}, { app: "scales", version: "2.31.0", thoughts: { x: t } }, new Date("2026-11-03T12:00:00Z"), []);
   assert.equal(r.added, 1);

@@ -1,11 +1,9 @@
 import SwiftUI
-import UserNotifications
 
 /// Scales for iPhone. The app is the Scales web app (bundled inside from build 40) in a native shell that adds what a
 /// web app can't do well on iPhone: haptics, the daily backup file, the app icon, and Apple Intelligence.
 @main
 struct ScalesApp: App {
-    @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @Environment(\.scenePhase) private var phase
 
     var body: some Scene {
@@ -24,25 +22,12 @@ struct ScalesView: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: WebViewController, context: Context) {}
 }
 
-final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
-    func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-        UNUserNotificationCenter.current().delegate = self
-        return true
-    }
-
-    /// A reminder that arrives while Scales is open shows as a banner.
-    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
-        [.banner, .sound, .list]
-    }
-}
-
 /// The one web view, and the way in when Scales comes to the front.
 @MainActor
 final class Bridge {
     static let shared = Bridge()
     let controller = WebViewController()
 
-    /// Scales recounts the badge and reschedules reminders whenever it comes to the front.
+    /// Tells the page each time Scales comes to the front.
     func becameActive() { controller.run("window.scalesActive && window.scalesActive()") }
 }
