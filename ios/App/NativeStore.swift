@@ -65,8 +65,8 @@ final class NativeStore {
         else { scheduleWrite() }
     }
 
-    /// The keys that hold thoughts, in Scales 2 and in Scales 1.
-    static let thoughtKeys = ["scales.next.thoughts.v1", "scales.thoughts.v1"]
+    /// The key that holds thoughts.
+    static let thoughtKeys = ["scales.next.thoughts.v1"]
 
     /// Brings in what the web version saved, adding only what is missing: thoughts the file doesn't have, and keys
     /// it doesn't have. Nothing already here is overwritten. Returns whether anything was added.

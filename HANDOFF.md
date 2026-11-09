@@ -58,7 +58,7 @@ read, never written or deleted.
 Start here in a new session: this section, `docs/release-plan.md` (submit, launch day, beta, after launch), and the
 Cleanup log below.
 
-- App: 2.34.0 (cleanup, released 2026-11-08). Before: 2.33.1 (instant save of a kept thought in the iPhone app, first-run question focuses the field, Stone light muted
+- App: 2.35.0 (Scales 1 import removed, website images; not yet released). Before: 2.34.0 (cleanup, released 2026-11-08). Before that: 2.33.1 (instant save of a kept thought in the iPhone app, first-run question focuses the field, Stone light muted
   text 5.1:1), released 2026-11-08. The iPhone Simulator first-run flow still fails in the test (Keep tap not landing);
   Keep and restart were checked by hand on a real iPhone. The other three flows pass.
 - Before: 2.33.0 (UX audit fixes, Larger Text in the iPhone shell), iPhone build 57, released to the browser 2026-11-07. The web app is bundled into the iPhone app; the browser copy at
@@ -104,8 +104,11 @@ Cleanup log below.
 
 Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold them into the 30-day plan.
 
-- Cloudflare `PLUS_PREVIEW` variable and the App Store Connect "Plus Yearly" subscription: Graham approved removing
-  both (8 November); Grok prompt given. Mark done when Grok reports.
+- Done 8 November: the App Store Connect "Scales Plus Yearly" subscription and its group deleted (Grok; confirmed by
+  the read-only check). The Cloudflare `PLUS_PREVIEW` variable may still exist; it does nothing, delete it any time.
+- Done in 2.35.0: the Scales 1 import removed (importOld, mergeOld, Scales 1 backups, the Scales 1 copy in backups).
+  Graham was the only Scales 1 user and confirmed his thoughts are in Scales 2 with a Scales 2 backup made since.
+  Website screenshots now WebP (scripts/site-images.py); scripts/site-shots.js and the Plus review screenshot removed.
 - Done in 2.34.0: `server/ai.mjs`, its tests and certificates removed; site.yml header updated.
 - Done in 2.34.0 (on branch `cleanup`, not shipped): unused code swept from core.js and index.html, each item checked
   by search and the tests: pickNext (replaced by nextCard), groupByAdded, addedGroup and ADDED_GROUPS (replaced by

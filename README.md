@@ -17,6 +17,9 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (a web view of the sa
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.35.0:** Scales 1's data is no longer read. The first-open copy, the catch-up on every open and opening a
+  Scales 1 backup are gone (a Scales 1 backup now says it can't be opened); thoughts already copied in stay exactly as
+  they are, and backups no longer carry a Scales 1 copy. The website's screenshots are WebP, 2.7 MB down to 0.28 MB.
 - **2.34.0:** Cleanup, nothing you see changes. Removed the Scales Plus AI server and its tests, the Scales 1 reminder
   clearing in the iPhone app, code nothing called (the old next-card picker, library grouping and Add to note helpers),
   unused styles, the old trial address `/app/next/`, old screenshots and Scales 1 pictures. ARCHITECTURE.md is rewritten
@@ -198,14 +201,12 @@ On anything wider than 520 px (the iPhone Duo's inner screen, an iPad-sized wind
 
 - Everything stays on the phone (`localStorage`): `scales.next.thoughts.v1`, `scales.next.ui.v1`,
   `scales.next.gone.v1`. The "next" in the names is from the trial and stays, so nothing has to move.
-- **Scales 1's data is read, never written.** On the first open its thoughts were copied in (5 a day, most skipped
-  first; lived and let-go ones arrive put away). Every open still adds any Scales 1 thought not yet here; a thought
-  deleted here is never brought back.
+- **Scales 1's data** was copied in on first open up to 2.34.0. Since 2.35.0 it is not read; thoughts copied then
+  keep `from: "scales-1"`.
 - **Daily save (iPhone app):** at each open and whenever the app goes to the background, everything is saved as
   "Scales backup.json" plus a dated copy (the last 14 kept) in iCloud Drive > Scales, or Files > On My iPhone > Scales.
-  The file includes Scales 1's thoughts, settings, activity and quotes exactly as they are (never its API key).
-- **Back up** (Settings) saves the same file wherever you choose. **Restore from a backup** (Settings) merges a Scales 2,
-  trial or Scales 1 backup file: it adds thoughts this phone does not have and never changes or removes one that is here.
+- **Back up** (Settings) saves the same file wherever you choose. **Restore from a backup** (Settings) merges a Scales 2
+  or trial backup file (a Scales 1 backup is refused since 2.35.0): it adds thoughts this phone does not have and never changes or removes one that is here.
 - **Visit log (2.0.1):** every visit is logged with its raw time and the skip and thought lines in force
   (`scales.next.log.v1`, newest 5000; also in the daily backup as `visits`). It is for judging the 20 s and 30 s lines
   from real use.
@@ -220,9 +221,9 @@ crossing a swipe threshold is a light tick.
 
 - `index.html`: the page (CSS and one script). `core.js`: the logic (visit reading, schedule, import, labels), tested
   in Node. `sw.js`: offline copy, network first. `manifest.webmanifest`, `icons/`, `fonts/`.
-- `ios/`: the iPhone app, a WKWebView shell loading `https://scales.tangomike.app/app/?native=1`; `Haptics.swift`.
+- `ios/`: the iPhone app, a WKWebView shell that bundles the web app and loads it from `scales-app://local/`.
 - `site/`: the scales.tangomike.app website.
-- `docs/`: `next-plan.md` (how Scales 2 was built) and `swap-plan.md` (how it replaced Scales 1).
+- `docs/`: ARCHITECTURE.md, the release and evaluation plans, audits; finished plans are in `docs/archive/`.
 - Scales 1 (1.88.0 and earlier) is on the branch `scales-1.88.0` and the tag `v1.88.0`, release notes included.
 
 ## Tests

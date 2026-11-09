@@ -15,7 +15,7 @@
   var ls; try { ls = window.localStorage; } catch (e) { return; }
   var P = "scales", REV = "scales.native.rev";
   // 2.33.1: a change to the thoughts is sent at once, not after 300 ms, so it reaches the file straight away.
-  var THOUGHTS = { "scales.next.thoughts.v1": 1, "scales.thoughts.v1": 1 };
+  var THOUGHTS = { "scales.next.thoughts.v1": 1 };
   var S = Storage.prototype, setItem = S.setItem, removeItem = S.removeItem, clear = S.clear;
   function ours(k) { return typeof k === "string" && k.indexOf(P) === 0 && k !== REV; }
   function keys() { var out = []; for (var i = 0; i < ls.length; i++) { var k = ls.key(i); if (ours(k)) out.push(k); } return out; }

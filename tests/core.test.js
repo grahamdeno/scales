@@ -107,30 +107,6 @@ test("dueToday: most skipped first, then oldest due; ignores put away and not ye
   assert.equal(N.putAway(store).length, 1);
 });
 
-test("importOld: status mapping, 5 a day most skipped first, skips capped, old data untouched", () => {
-  const now = at(2026, 10, 29);
-  const old = {};
-  for (let i = 0; i < 12; i++) old["k" + i] = { id: "k" + i, text: "Thought " + i, status: "active", skip_count: i === 7 ? 9 : 0, created_at: "2026-01-" + String(i + 1).padStart(2, "0") + "T00:00:00Z" };
-  old.lived = { id: "lived", text: "Lived one", status: "shed", shed_at: "2026-09-01T00:00:00Z" };
-  old.gone = { id: "gone", text: "Let go", status: "letgo", letgo_at: "2026-09-02T00:00:00Z" };
-  old.blank = { id: "blank", text: "   ", status: "active" };
-  const before = JSON.stringify(old);
-  const out = N.importOld(old, now);
-  assert.equal(JSON.stringify(old), before, "the old data is never changed");
-  assert.equal(Object.keys(out).length, 14, "blank text is dropped");
-  const active = N.inRotation(out);
-  assert.equal(active.length, 12);
-  assert.equal(N.putAway(out).length, 2);
-  assert.ok(out.olived.away && out.ogone.away);
-  const byDay = {};
-  active.forEach((t) => { byDay[t.due] = (byDay[t.due] || 0) + 1; });
-  assert.deepEqual(byDay, { "2026-10-29": 5, "2026-10-30": 5, "2026-10-31": 2 });
-  assert.equal(out.ok7.due, "2026-10-29", "most skipped arrives first");
-  assert.equal(out.ok7.skips, 4, "skips capped at 4");
-  assert.equal(N.dueToday(out, now).length, 5);
-  assert.equal(N.importOld(null, now) && Object.keys(N.importOld(null, now)).length, 0);
-});
-
 test("whenLabel", () => {
   const now = at(2026, 10, 29);
   assert.equal(N.whenLabel(null, now), "Today");
@@ -174,39 +150,18 @@ test("the manifest points at icons that exist", () => {
   assert.equal(m.theme_color, "#B9C9A3");
 });
 
-test("Scales reads Scales 1's data and never writes to it", () => {
-  const nx = read("index.html");
-  assert.match(nx, /scales\.thoughts\.v1/);
-  assert.ok(!/setItem\(\s*["']scales\.thoughts\.v1["']/.test(nx), "no write to the old key");
-  assert.ok(!/removeItem\(\s*["']scales\.thoughts\.v1["']/.test(nx), "no delete of the old key");
+test("Scales 1's data is no longer read, written or carried in backups (2.35.0)", () => {
+  const nx = read("index.html"), core = read("core.js");
+  assert.ok(!/scales\.thoughts\.v1|scales\.prefs\.v1|scales1:/.test(nx), "no Scales 1 keys in the app");
+  assert.ok(!/importOld|mergeOld/.test(nx + core), "the Scales 1 import is gone");
+  assert.equal(N.importOld, undefined); assert.equal(N.mergeOld, undefined);
   assert.match(nx, /scales\.next\.thoughts\.v1/);
 });
 
-test("mergeOld: adds thoughts written in the current app later, never overwrites, never revives a deleted one", () => {
-  const now = at(2026, 10, 29);
-  const store = N.importOld({ a: { id: "a", text: "First", status: "active" } }, now);
-  store.oa.text = "Edited here";
-  const old = {
-    a: { id: "a", text: "First, edited there", status: "active" },
-    b: { id: "b", text: "Written there later", status: "active" },
-    c: { id: "c", text: "Deleted here", status: "active" },
-    d: { id: "d", text: "Lived there", status: "shed", shed_at: "2026-10-28T00:00:00Z" }
-  };
-  const before = JSON.stringify(old);
-  assert.equal(N.mergeOld(store, old, now, ["oc"]), 2);
-  assert.equal(store.oa.text, "Edited here", "this app's copy wins");
-  assert.equal(store.ob.due, "2026-10-29", "a new one is due today");
-  assert.equal(store.oc, undefined, "a deleted one stays deleted");
-  assert.ok(store.od.away, "a lived one arrives put away");
-  assert.equal(JSON.stringify(old), before, "the old data is never changed");
-  assert.equal(N.mergeOld(store, old, now, ["oc"]), 0, "running it again adds nothing");
-});
-
-test("Scales saves daily through the iPhone app and quiets Scales 1's reminders", () => {
+test("Scales saves daily through the iPhone app", () => {
   const nx = read("index.html");
   assert.match(nx, /post\(\{ type: "save", json: JSON\.stringify\(backupData\(\)\), day: C\.dayKey\(now\(\)\) \}\)/);
   assert.match(nx, /post\(\{ type: "ready" \}\);/);
-  assert.match(nx, /"scales\.thoughts\.v1", "scales\.prefs\.v1", "scales\.activity\.v1", "scales\.quotes\.v1"/, "backups carry the current app's data as it is");
   assert.ok(!/scales\.apikey\.v1/.test(nx), "never copies the API key");
   const swift = read("ios/App/Haptics.swift");
   for (const s of ["thud", "letgo", "signature", "medium", "success"]) assert.match(swift, new RegExp('case "' + s + '"'), s);
@@ -248,24 +203,13 @@ test("restore: the same file twice adds nothing the second time", () => {
   assert.equal(JSON.stringify(store), snap);
 });
 
-test("restore: a Scales 1 backup arrives like the first import: 5 a day, lived and let-go put away", () => {
-  const thoughts = {};
-  for (let i = 0; i < 7; i++) thoughts["k" + i] = { id: "k" + i, text: "Old " + i, status: "active", skip_count: 0, created_at: "2026-01-0" + (i + 1) + "T00:00:00Z" };
-  thoughts.s = { id: "s", text: "Lived", status: "shed", shed_at: "2026-09-01T00:00:00Z" };
-  const store = {};
-  const r = N.restoreFrom(store, { app: "scales", version: 1, thoughts, activity: {}, prefs: {} }, NOW, []);
-  assert.equal(r.ok, true); assert.equal(r.kind, "scales1"); assert.equal(r.added, 8);
-  assert.equal(N.dueToday(store, NOW).length, 5);
-  assert.ok(store.os.away);
-  assert.equal(N.restoreFrom(store, { app: "scales", version: 1, thoughts, activity: {}, prefs: {} }, NOW, []).added, 0, "again adds nothing");
-});
-
-test("restore: Scales 1's thoughts inside a Scales 2 backup join too, once", () => {
-  const store = {};
-  const file = scales2File({ a: mk2("a") }, { scales1: { "scales.thoughts.v1": { x: { id: "x", text: "From Scales 1", status: "active" } } } });
-  assert.equal(N.restoreFrom(store, file, NOW, []).added, 2);
-  assert.ok(store.ox);
-  assert.equal(N.restoreFrom(store, file, NOW, []).added, 0);
+test("restore (2.35.0): a Scales 1 backup, or one carrying Scales 1 data, adds no Scales 1 thoughts", () => {
+  const store = { a: mk2("a") }, snap = JSON.stringify(store);
+  const r = N.restoreFrom(store, { app: "scales", version: 1, thoughts: { k: { id: "k", text: "Old", status: "active" } }, activity: {}, prefs: {} }, NOW, []);
+  assert.equal(r.ok, false); assert.equal(r.kind, "scales1"); assert.equal(JSON.stringify(store), snap, "nothing added");
+  const s2 = {};
+  assert.equal(N.restoreFrom(s2, scales2File({ b: mk2("b") }, { scales1: { "scales.thoughts.v1": { x: { id: "x", text: "From Scales 1", status: "active" } } } }), NOW, []).added, 1);
+  assert.ok(s2.b && !s2.ox, "the Scales 2 thoughts come in, the Scales 1 copy inside the file does not");
 });
 
 test("restore: a trial (scales-next) backup is accepted; other files are refused and change nothing", () => {
@@ -378,13 +322,11 @@ test("restore (2.2.0): bookmarks come across, bad ones are cleaned, and an exist
   assert.equal(store.e.bookmarked, null);
 });
 
-test("restore review (2.2.0): a bookmark in an odd form is kept as now, and Scales 1 thoughts arrive unbookmarked", () => {
+test("restore review (2.2.0): a bookmark in an odd form is kept as now", () => {
   const store = {};
-  N.restoreFrom(store, scales2File({ a: mk2("a", { bookmarked: "yesterday" }), b: mk2("b", { bookmarked: "" }), c: mk2("c", { bookmarked: 0 }) },
-    { scales1: { "scales.thoughts.v1": { x: { id: "x", text: "Old", status: "active" } } } }), NOW, []);
+  N.restoreFrom(store, scales2File({ a: mk2("a", { bookmarked: "yesterday" }), b: mk2("b", { bookmarked: "" }), c: mk2("c", { bookmarked: 0 }) }), NOW, []);
   assert.equal(store.a.bookmarked, NOW.toISOString());
   assert.equal(store.b.bookmarked, null); assert.equal(store.c.bookmarked, null);
-  assert.ok(!store.ox.bookmarked);
   assert.deepEqual(N.bookmarked(store).map((t) => t.id), ["a"]);
 });
 
