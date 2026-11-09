@@ -680,7 +680,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     }, old);
     await page.goto(base + "/?native=1"); await page.waitForTimeout(2000);
     const types = await page.evaluate(() => window.__posts.map((m) => m.type));
-    ok(["ready", "unschedule", "badge", "save"].every((t) => types.includes(t)), "native: ready, unschedule, badge and save sent (" + types.join(",") + ")");
+    ok(["ready", "save"].every((t) => types.includes(t)) && !types.includes("unschedule") && !types.includes("badge"), "native: ready and save sent, no Scales 1 reminder messages (" + types.join(",") + ")");
     const saved = await page.evaluate(() => JSON.parse(window.__posts.find((m) => m.type === "save").json));
     ok(saved.scales1 && saved.scales1["scales.thoughts.v1"] && Object.keys(saved.thoughts).length === 10, "native: daily save carries both apps' thoughts");
     await page.keyboard.press("ArrowUp"); await page.waitForTimeout(500);

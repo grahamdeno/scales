@@ -210,7 +210,7 @@ test("mergeOld: adds thoughts written in the current app later, never overwrites
 test("Scales saves daily through the iPhone app and quiets Scales 1's reminders", () => {
   const nx = read("index.html");
   assert.match(nx, /post\(\{ type: "save", json: JSON\.stringify\(backupData\(\)\), day: C\.dayKey\(now\(\)\) \}\)/);
-  assert.match(nx, /post\(\{ type: "ready" \}\); post\(\{ type: "unschedule" \}\); post\(\{ type: "badge", count: 0 \}\);/);
+  assert.match(nx, /post\(\{ type: "ready" \}\);/);
   assert.match(nx, /"scales\.thoughts\.v1", "scales\.prefs\.v1", "scales\.activity\.v1", "scales\.quotes\.v1"/, "backups carry the current app's data as it is");
   assert.ok(!/scales\.apikey\.v1/.test(nx), "never copies the API key");
   const swift = read("ios/App/Haptics.swift");
