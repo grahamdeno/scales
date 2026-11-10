@@ -849,6 +849,10 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.click("#argBtn"); await page.waitForTimeout(700);
     ok(await page.locator("#argPage.open").count() === 1 && /stubbornness/.test(await page.textContent("#apAgainst")) && /^It assumes that what you decided/.test((await page.textContent("#apAssumes")).trim()), "argue: its own page, with the case against and what it assumes (2.32.0)");
     ok(/and yet/.test(await page.textContent("#argPage")) && /Which would you rather be true\? Why\?/.test(await page.textContent("#argPage")), "argue: and yet between the two cases, and the question at the end");
+    const selOf = (q) => page.evaluate((q) => { const c = getComputedStyle(document.querySelector(q)); return c.userSelect || c.webkitUserSelect; }, q);
+    ok(await selOf("#apThought") === "text" && await selOf("#apAgainst") === "text" && await selOf("#apFor") === "text" && await selOf("#argPage .ask") === "text" && await selOf("#apRetry") === "none" && await selOf("body") === "none", "argue: the words can be selected and copied; buttons and the rest of the app cannot");
+    const copied = await page.evaluate(() => { const r = document.createRange(); r.selectNodeContents(document.querySelector("#argPage .argbody")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); const t = s.toString(); s.removeAllRanges(); return t; });
+    ok(/stubbornness/.test(copied) && /and yet/.test(copied), "argue: a selection across the page holds both cases");
     await page.screenshot({ path: path.join(shots, "argue-390.png") });
     const kept = await page.evaluate((id) => JSON.parse(localStorage.getItem("scales.next.thoughts.v1"))[id].arg, cur);
     ok(kept && /stubbornness/.test(kept.against) && kept.text === (await page.inputValue("#editText")).trim(), "argue: the argument is kept with the thought, for these words");
