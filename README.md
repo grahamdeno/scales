@@ -17,6 +17,7 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (the same page, bundl
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.35.1:** On the Argue with it page the words (the thought, both cases, what it assumes, the question) can be selected and copied. Buttons stay unselectable.
 - **2.35.0:** Scales 1's data is no longer read. The first-open copy, the catch-up on every open and opening a
   Scales 1 backup are gone (a Scales 1 backup now says it can't be opened); thoughts already copied in stay exactly as
   they are, and backups no longer carry a Scales 1 copy. The website's screenshots are WebP, 2.7 MB down to 0.28 MB.
