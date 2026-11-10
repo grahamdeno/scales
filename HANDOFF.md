@@ -59,7 +59,7 @@ copied in on first open until 2.34.0; since 2.35.0 it is not read (Graham was it
 Start here in a new session: this section, `docs/release-plan.md` (submit, launch day, beta, after launch), and the
 Cleanup log below.
 
-- App: 2.35.0 (Scales 1 import removed, website images, final docs pass; PR #309, not yet shipped). Before: 2.34.0
+- App: 2.35.1 (Argue page text can be selected and copied; PR #311). Before: 2.35.0 (Scales 1 import removed, website images, final docs pass; build 60, the build attached to 1.0 on 9 November). Before: 2.34.0
   (cleanup) and 2.33.1 (instant save of a kept thought in the iPhone app, first-run question focuses the field), both
   released 2026-11-08. All four iPhone Simulator flows pass. Version history is in README.md.
 - The web app is bundled into the iPhone app; the browser copy at scales.tangomike.app/app/ serves the `release` branch

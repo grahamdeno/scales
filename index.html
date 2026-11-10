@@ -493,6 +493,9 @@ textarea::placeholder { color: var(--plum-faint); }
 .argbox .for .v { margin: 0; }
 /* 2.32.0: the Argue with it page. */
 #argPage .argbody { padding: 0 var(--pad) 16px; }
+/* The words on the Argue page can be selected and copied (long-press). Buttons stay unselectable. */
+#argPage .argbody, #argPage .ask { user-select: text; -webkit-user-select: text; }
+#argPage .argbody button { user-select: none; -webkit-user-select: none; }
 #argPage .aw { margin: 4px 0 18px; font-size: calc(16px * var(--ts)); line-height: 1.35; color: var(--plum-muted); font-weight: 500; }
 #argPage .al { margin: 0 0 6px; font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
 #argPage .ab { margin: 0 0 6px; font-size: calc(18px * var(--ts)); line-height: 1.42; font-weight: 500; }
@@ -846,8 +849,8 @@ textarea::placeholder { color: var(--plum-faint); }
 <!-- 2.33.0: a failed save is said in a message of its own that nothing else replaces, and stays until dismissed. -->
 <div id="saveFail" role="alert" hidden><p id="saveFailMsg"></p><div class="sfa"><button type="button" id="saveFailGo">Back up now</button><button type="button" id="saveFailOk">Dismiss</button></div></div>
 
-<script src="core.js?v=2.35.0"></script>
-<script src="sets.js?v=2.35.0"></script>
+<script src="core.js?v=2.35.1"></script>
+<script src="sets.js?v=2.35.1"></script>
 <script>
 (function () {
   "use strict";
@@ -1835,6 +1838,8 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
       if (!sw || sw.off) return;
       var dx = e.clientX - sw.x, dy = e.clientY - sw.y;
       if (!sw.on) {
+        // While words are selected, a sideways drag adjusts the selection; it never slides the page away.
+        var sel = window.getSelection && window.getSelection(); if (sel && !sel.isCollapsed) { sw.off = true; return; }
         if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { sw.off = true; return; }
         if (dx > 10 && dx > Math.abs(dy) * 1.5) { sw.on = true; sw.pg.style.transition = "none"; } else return;
       }
