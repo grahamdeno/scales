@@ -9,7 +9,9 @@ agents stop before them. Steps Claude can't do go to Grok as prompts, with the i
 - Listing text set (iOS 26 for Apple Intelligence; works without a connection; the case for).
 - 8 screenshots (6.9-inch) remade from 2.33.1 and uploaded by Grok (8 November): `appstore/screenshots/`.
 - Browser app at scales.tangomike.app/app/ runs the `release` branch.
-- EU storefronts are off (no trader status). No subscriptions or in-app purchases (Plus deleted 8 November).
+- EU storefronts are off (no trader status). No subscriptions (Plus deleted 8 November). From 2.36.0 the one in-app
+  purchase, Scales Full, is created in App Store Connect and submitted with the version (see "Scales Full in App
+  Store Connect" below).
 
 ## Before Submit for Review
 
@@ -52,8 +54,26 @@ What `launch-day` changes:
 
 ## After launch (first 30 days)
 
-- The Scales Full unlock: $10 one-time (non-consumable), Argue with it and Tensions; earlier downloads keep
-  everything; paid features stay iPhone-only, the browser stays a demo (decided 8 November).
+- (Done in 2.36.0, decided 15 November) Scales Full ships with 1.0: $6.99 once (non-consumable
+  `com.grahamdeno.scales.full`), Argue with it, Tensions, and Themes and your week, 14 days of all of it from the
+  first download, Family Sharing off, browser stays a demo. No one downloaded before it, so no grandfathering.
 - Tension log analysis (Graham's private doc "Scales Tensions Log"), then prompt tuning.
 - Cleanup log in HANDOFF.md (runner retry, GitHub Pages off, old branches).
 - Optional: cookieless page counts for the browser app (needs a line in Privacy).
+
+## Scales Full in App Store Connect (new, 15 November 2026; Grok steps, Graham presses Submit for Review)
+
+Order: the build first, then the purchase, then the listing, then stop.
+
+1. Agreements, Tax and Banking: the Paid Apps agreement must be active (Graham, with his bank and tax details).
+2. Monetization, In-App Purchases, create a Non-Consumable: Reference name "Scales Full", Product ID
+   `com.grahamdeno.scales.full` (cannot be changed later), price $6.99, Family Sharing off, all storefronts the app uses.
+3. Localization (English U.S.): display name "Scales Full"; description "Argue with it, Tensions, and Themes and your
+   week. One payment, yours for good. Nothing renews." Review screenshot: Settings, Scales Full.
+4. Review notes on the version: "The app is free to use. Scales Full is a one-time purchase (Settings, Scales Full).
+   Every download has all features free for 14 days from the first download; the purchase and Restore purchase work
+   at any time, also during the 14 days. Argue with it, Tensions and Themes need Apple Intelligence (iPhone 15 Pro or
+   later, iOS 26); on other devices they do not appear."
+5. Attach the new build (2.36.0) to version 1.0 and attach the in-app purchase to the version.
+6. Update the listing from `appstore/listing.json` (the `App Store listing` workflow with write: true).
+7. STOP. Graham reviews and presses Submit for Review himself.

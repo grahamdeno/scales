@@ -80,5 +80,8 @@ schemes:
     build:
       targets:
         Scales: all
+    # 2.36.0: Scales Full is tried in the simulator and from Xcode against this file (no App Store needed).
+    run:
+      storeKitConfiguration: Scales.storekit
     archive:
       config: Release

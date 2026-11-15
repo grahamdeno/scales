@@ -877,3 +877,46 @@ test("Keep going keeps the 5-day promise: thoughts skipped lately wait until not
   assert.deepEqual(order.slice(0, 2).sort(), ["a", "b"], "the two not skipped come first");
   assert.equal(order[2], "skipped", "the skipped one only once nothing else is left");
 });
+
+// ---------- Scales Full (2.36.0) ----------
+test("Scales Full: 14 days from the first download, then locked; owned always open; a missing answer never locks", () => {
+  const now = new Date("2026-12-10T12:00:00Z"), since = (d) => new Date(now.getTime() - d * 86400000).toISOString();
+  assert.equal(N.FULL_TRIAL_DAYS, 14);
+  assert.equal(N.FULL_PRICE, "$6.99");
+  assert.deepEqual(N.fullState({ owned: true, since: since(90) }, now), { state: "owned", daysLeft: null });
+  assert.deepEqual(N.fullState({ owned: false, since: since(0.1) }, now), { state: "trial", daysLeft: 14 });
+  assert.deepEqual(N.fullState({ owned: false, since: since(13.5) }, now), { state: "trial", daysLeft: 1 });
+  assert.deepEqual(N.fullState({ owned: false, since: since(14.1) }, now), { state: "locked", daysLeft: 0 });
+  assert.equal(N.fullState({ owned: false, since: since(-3) }, now).state, "trial", "a clock set back is the trial, not locked");
+  for (const bad of [null, undefined, {}, { owned: false }, { since: "not a date" }, "x"]) assert.equal(N.fullState(bad, now).state, "unknown");
+  assert.equal(N.fullOpen(N.fullState(null, now)), true);
+  assert.equal(N.fullOpen(N.fullState({ since: since(30) }, now)), false);
+  assert.equal(N.fullOpen(N.fullState({ owned: true }, now)), true);
+  assert.equal(N.fullLine({ state: "trial", daysLeft: 1 }), "Trial: last day");
+  assert.equal(N.fullLine({ state: "trial", daysLeft: 9 }), "Trial: 9 days left");
+  assert.equal(N.fullLine({ state: "locked" }), "Trial ended");
+  assert.equal(N.fullLine({ state: "owned" }), "Yours for good");
+  assert.equal(N.fullLine({ state: "unknown" }), "");
+});
+
+test("Scales Full: the page and the app speak the same messages and the same product", () => {
+  const page = read("index.html"), shell = read("ios/App/WebViewController.swift"), store = read("ios/App/FullStore.swift");
+  for (const m of ["full", "fullBuy", "fullRestore"]) {
+    assert.ok(page.includes('type: "' + m + '"'), "the page sends " + m);
+    assert.ok(shell.includes('case "' + m + '"'), "the app answers " + m);
+  }
+  assert.ok(page.includes("window.scalesFull") && shell.includes('"scalesFull"'), "the app calls scalesFull");
+  assert.ok(/productID = "com\.grahamdeno\.scales\.full"/.test(store), "one product: com.grahamdeno.scales.full");
+  assert.ok(/ios\/StoreKit|Scales\.storekit/.test(read("ios/project.yml")), "the simulator scheme uses the StoreKit file");
+  assert.ok(fs.existsSync(path.join(root, "ios/Scales.storekit")), "the StoreKit test file exists");
+  const sk = JSON.parse(read("ios/Scales.storekit")), p = sk.products[0];
+  assert.equal(p.productID, "com.grahamdeno.scales.full"); assert.equal(p.type, "NonConsumable"); assert.equal(p.displayPrice, "6.99"); assert.equal(p.familyShareable, false);
+});
+
+test("Scales Full: only new work is gated; what is made stays readable", () => {
+  const page = read("index.html");
+  assert.ok(/function findTensions\(\) \{[^]*?!fullOk\(\)/.test(page), "Tensions are not found when locked");
+  assert.ok(/async function aiRun\(\) \{[^]*?!fullOk\(\)/.test(page) && /async function aiWeek\(\) \{[^]*?!fullOk\(\)/.test(page), "themes and the week are gated");
+  assert.ok(/!fullOk\(\) && !curArg\(\)/.test(page), "a kept argument opens even when locked");
+  assert.ok(!/fullOk\(\)[^;]*renderLib|fullOk\(\)[^;]*delete store/.test(page), "the library and thoughts are never gated");
+});

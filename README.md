@@ -17,6 +17,14 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (the same page, bundl
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.36.0:** Scales Full. Scales is free to use; Argue with it, Tensions, and Themes and your week are Scales Full:
+  all of it free for 14 days from the first download (Apple's own date, so a reinstall does not restart it), then
+  $6.99 paid once. Nothing renews and there is no account. Only making something new is locked afterwards; thoughts,
+  backups, Insights, and every argument, tension and theme already made stay free and readable. A missing or doubtful
+  answer from Apple never locks anything. New in the iPhone app: `FullStore.swift` (StoreKit 2: buy, restore, refunds,
+  the product `com.grahamdeno.scales.full`), and `ios/Scales.storekit` for the simulator and Xcode. The page gets
+  Settings, Scales Full (status, Buy, Restore purchase), a card where a Full feature is tapped, and one notice with two
+  days left. The browser app is unchanged (a free demo). Listing, website, Support and Privacy say the same line.
 - **2.35.1:** On the Argue with it page the words (the thought, both cases, what it assumes, the question) can be selected and copied. Buttons stay unselectable.
 - **2.35.0:** Scales 1's data is no longer read. The first-open copy, the catch-up on every open and opening a
   Scales 1 backup are gone (a Scales 1 backup now says it can't be opened); thoughts already copied in stay exactly as
@@ -247,13 +255,19 @@ its schedule check in its own workflow on every pull request. The iPhone Simulat
 `core.js?v=` and `sets.js?v=` addresses in index.html and sw.js, and the version strings in tests/e2e/app.e2e.js
 together; a test checks the first three match. CI tags `v2.0.0` after tests pass on main.
 
-## Paid unlock (planned, not built)
+## Scales Full (2.36.0)
 
-Scales 1.0 launches with everything free. Later a one-time purchase, **Scales Full** ($10), unlocks Argue with it and
-Tensions for people who download after it arrives; anyone who downloaded before keeps every current feature. The daily
-loop (write, swipe, put away), Insights and the iCloud backup stay free. The browser copy stays a free demo. The iPhone
-app has no purchase code today (build 39 removed StoreKit); the unlock needs it written new. The old Scales Plus AI
-server was removed in 2.34.0.
+One line, used everywhere: **Free to use. Scales Full is $6.99, once. Nothing renews.**
+
+- Free: write, swipe, put away, edit, sets, import, Insights, backup and restore, themes (colors and icons).
+- Scales Full: Argue with it, Tensions, and Themes and your week. Every download has all of it for 14 days from the
+  first download; then making new ones needs the purchase. Anything already made stays readable.
+- A non-consumable in-app purchase, product `com.grahamdeno.scales.full`, $6.99, Family Sharing off at launch. No
+  subscription, no account, no server. The browser copy stays a free demo and shows none of it.
+- The rule lives in `core.js` (`fullState`, `fullOpen`, `fullLine`); the app only reports facts (`FullStore.swift`).
+  Unknown never locks. Ownership, once seen, is kept until Apple reports a refund.
+- Try it without the App Store: run the app from Xcode with `ios/Scales.storekit` (the scheme uses it), or in
+  TestFlight, where purchases are free test purchases.
 
 ## License
 

@@ -673,13 +673,20 @@ textarea::placeholder { color: var(--plum-faint); }
   <button class="pback" type="button" id="setBack">&#8249; Your thoughts</button>
   <h1>Settings</h1>
   <div class="body">
+    <div id="fullSec" hidden>
+      <p class="sh">Scales Full</p>
+      <div class="grp">
+        <button class="srow" type="button" id="setFull"><span>Scales Full</span><span class="v" id="setFullV"></span><span class="chev" aria-hidden="true">&#8250;</span></button>
+      </div>
+      <p class="snote">Free to use. Scales Full is $6.99, once. Nothing renews.</p>
+    </div>
     <p class="sh">Insights</p>
     <div class="grp">
       <button class="srow" type="button" id="setIns"><span>Insights</span><span class="chev" aria-hidden="true">&#8250;</span></button>
       <button class="srow" type="button" id="setAI" hidden><span>Themes and your week</span><span class="chev" aria-hidden="true">&#8250;</span></button>
     </div>
     <p class="snote" id="aiState" hidden></p>
-    <p class="snote" id="aiUses" hidden>Apple Intelligence on this iPhone writes Themes and your week, Argue with it in Edit, and Tensions in Your thoughts. Nothing leaves your phone.</p>
+    <p class="snote" id="aiUses" hidden>Apple Intelligence on this iPhone writes Themes and your week, Argue with it in Edit, and Tensions in Your thoughts. They are Scales Full: free for your first 14 days, then $6.99, once. Nothing leaves your phone.</p>
     <p class="sh">Look</p>
     <div class="grp">
       <div id="themeSec">
@@ -842,15 +849,34 @@ textarea::placeholder { color: var(--plum-faint); }
     <h2>How long you stay decides when it comes back.</h2>
     <p><strong>20 seconds or less:</strong> back in five days, a little bolder.<br><strong>30 seconds or more:</strong> it rests longer each time.<br><strong>An edit or a note:</strong> it rests longest.</p>
     <p>Each day leads with the ones you've gone longest without seeing, so all of them come round. Nothing leaves unless you put it away.</p>
+    <p id="helpFull" hidden><strong>Scales Full</strong> adds Argue with it, Tensions, and Themes and your week. Free for your first 14 days, then $6.99, once. Nothing renews. Find it in Settings.</p>
     <button class="srow" type="button" id="tipsAgain"><span>Show the tips again</span><span class="v" id="tipsAgainV"></span></button>
+  </div>
+</section>
+
+<!-- 2.36.0: Scales Full. The one purchase; $6.99, once. Opened from Settings or where a Full feature is tapped. -->
+<section class="page" id="fullPage" aria-label="Scales Full" aria-hidden="true">
+  <button class="pback" type="button" id="fullBack">&#8249; Back</button>
+  <h1>Scales Full</h1>
+  <div class="body">
+    <p class="snote" id="fullLead"></p>
+    <p class="sh">What it adds</p>
+    <p class="snote"><strong>Argue with it:</strong> the strongest honest case against a thought, and the belief it rests on.</p>
+    <p class="snote"><strong>Tensions:</strong> pairs of your own thoughts that pull against each other.</p>
+    <p class="snote"><strong>Themes and your week:</strong> what you keep coming back to, counted by Scales and put into words.</p>
+    <p class="snote">All of it runs on your iPhone with Apple Intelligence. Nothing leaves your phone.</p>
+    <button class="srow" type="button" id="fullBuy"><span id="fullBuyL">Unlock Scales Full</span><span class="v" id="fullBuyV"></span></button>
+    <button class="srow" type="button" id="fullRestore"><span>Restore purchase</span></button>
+    <p class="snote" id="fullNote" role="status" aria-live="polite"></p>
+    <p class="snote">Free to use. Scales Full is $6.99, once. Nothing renews. No account. Your thoughts, backups and Insights stay free, and nothing you have written is ever locked.</p>
   </div>
 </section>
 
 <!-- 2.33.0: a failed save is said in a message of its own that nothing else replaces, and stays until dismissed. -->
 <div id="saveFail" role="alert" hidden><p id="saveFailMsg"></p><div class="sfa"><button type="button" id="saveFailGo">Back up now</button><button type="button" id="saveFailOk">Dismiss</button></div></div>
 
-<script src="core.js?v=2.35.1"></script>
-<script src="sets.js?v=2.35.1"></script>
+<script src="core.js?v=2.36.0"></script>
+<script src="sets.js?v=2.36.0"></script>
 <script>
 (function () {
   "use strict";
@@ -2142,6 +2168,7 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
   function fillFor(p) { proFailed = false; apSet("apFor", p.pro); }
 
   function askAgainst(text, id) {
+    if (!fullOk()) { if (apOpen()) $("argBack").click(); openFull("argue"); return; }
     argBusy = true; showArgBtn(); track("tap", { id: "argue", kept: 0 });
     var r = C.argRequest(text, $("editBy").value);
     aiAsk(r.instructions, r.prompt).then(function (res) {
@@ -2158,6 +2185,7 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
     });
   }
   function askFor(text, id) {
+    if (!fullOk()) { proFailed = true; apSet("apFor", "The case for this one is part of Scales Full.", true); return; }
     apSet("apFor", "Finding the case for…", true); track("tap", { id: "argue_for", kept: 0 });
     var r = C.argForRequest(text, $("editBy").value);
     aiAsk(r.instructions, r.prompt).then(function (res) {
@@ -2176,6 +2204,8 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
   $("argBtn").onclick = function () {
     var t = store[ui.cur]; if (!t || argBusy) return;
     var text = argText(); if (!text) return;
+    // 2.36.0: an argument already made stays readable; making a new one is Scales Full once the 14 days are over.
+    if (!fullOk() && !curArg()) { openFull("argue"); return; }
     ui.argued = true; saveUi();
     // 2.24.0: a thought that protects someone is never sent to be argued with.
     if (C.protectedThought(text)) { showSafe(); track("tap", { id: "argue", safe: "local" }); return; }
@@ -2221,7 +2251,7 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
   function tenData() { var d = lsGet(KEY_TEN, null); return d && typeof d === "object" ? d : { pairs: [], gone: [], ran: null, viewed: null }; }
   function findTensions() {
     var d = tenData(), day = C.dayKey(now());
-    if (!aiOk || tenBusy || aiBusy || d.ran === day) return;
+    if (!aiOk || !fullOk() || tenBusy || aiBusy || d.ran === day) return;
     // 2.29.0: batches lean on themes (when sorted), the pairs this person dismissed become examples of a miss, and every
     // pair the model offers gets a second look (agree, different things, or opposite) before it is kept.
     var batches = C.tensionBatches(C.inRotation(store), day, aiData().tags || null); if (!batches.length) return;
@@ -2297,6 +2327,7 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
   }
   async function aiRun() {
     if (aiBusy) { aiStop = true; return; }
+    if (!fullOk()) { openFull("themes"); return; }
     aiBusy = true; aiStop = false; renderAI();
     var msg = function (t) { $("aiProgress").textContent = t; };
     msg("Naming themes\u2026");
@@ -2318,6 +2349,7 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
     aiBusy = false; renderAI();
   }
   async function aiWeek() {
+    if (!fullOk()) { openFull("week"); return; }
     var d = aiData();
     if (!d.themes.length) { $("aiNote").innerHTML = '<p class="snote">Find themes first.</p>'; return; }
     var log = lsGet(KEY_LOG, []), days = 7, rows = C.themeWeek(store, log, d.tags, now(), 7);
@@ -2337,6 +2369,50 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
     rows.forEach(function (x) { var tr = document.createElement("tr"); [x.theme, x.visits, x.avgSec, x.skipped, x.putAway].forEach(function (v) { var td = document.createElement("td"); td.textContent = v; tr.appendChild(td); }); tb.appendChild(tr); });
     box.appendChild(tb);
   }
+  // ---------- Scales Full (2.36.0) ----------
+  // Free to use; Argue with it, Tensions, Themes and Your week are Scales Full ($6.99, once), with 14 days of all of it
+  // first. The iPhone app reports what Apple holds (FullStore.swift); core.js turns that into a state, and the state
+  // never locks on a missing answer. Only making something new is gated: what is already written stays readable.
+  var KEY_FULL = "scales.next.full.v1", fullInfo = lsGet(KEY_FULL, null), fullBusy = false, fullBack = "settings";
+  function fullSt() { return NATIVE ? C.fullState(fullInfo, now()) : { state: "unknown", daysLeft: null }; }
+  function fullOk() { return C.fullOpen(fullSt()); }
+  function renderFull(note) {
+    var st = fullSt(), price = (fullInfo && fullInfo.price) || C.FULL_PRICE, found = !!(fullInfo && fullInfo.found);
+    $("fullSec").hidden = !NATIVE; $("helpFull").hidden = !NATIVE; $("setFullV").textContent = C.fullLine(st);
+    var lead = st.state === "owned" ? "Scales Full is yours, for good. Thank you."
+      : st.state === "locked" ? "Your 14 free days are over. Everything you wrote is still here, and the arguments, tensions and themes already made stay readable. Making new ones is Scales Full: " + price + ", once."
+      : st.state === "trial" ? "You have " + st.daysLeft + (st.daysLeft === 1 ? " day" : " days") + " of everything. Scales Full is " + price + ", once. Nothing renews and nothing is charged when the days run out."
+      : "Scales Full is " + price + ", once. Nothing renews.";
+    $("fullLead").textContent = lead;
+    $("fullBuy").hidden = st.state === "owned"; $("fullBuy").disabled = fullBusy || !found;
+    $("fullBuyL").textContent = fullBusy ? "Working…" : found ? "Unlock Scales Full" : "Not available right now";
+    $("fullBuyV").textContent = found && !fullBusy ? price : "";
+    $("fullRestore").hidden = st.state === "owned"; $("fullRestore").disabled = fullBusy;
+    $("fullNote").textContent = note || "";
+  }
+  window.scalesFull = function (json) {
+    var d = null; try { d = JSON.parse(json); } catch (e) { return; }
+    if (!d || typeof d !== "object") return;
+    var was = fullSt().state, note = d.note || ""; delete d.note;
+    fullInfo = d; lsSet(KEY_FULL, d); fullBusy = false; renderFull(note);
+    if (was !== "owned" && fullSt().state === "owned") { track("full", { did: "owned" }); if (!note) renderFull("Scales Full is on. Thank you."); }
+    if (fullOk() && aiOk) setTimeout(findTensions, 1500);
+    noticeFull();
+  };
+  function openFull(at) {
+    fullBack = mode; renderFull(""); track("full", { at: at, st: fullSt().state });
+    $("fullPage").querySelector(".body").scrollTop = 0; openPage("fullPage", "full");
+  }
+  $("fullBack").onclick = function () { closePage("fullPage", fullBack); };
+  $("setFull").onclick = function () { openFull("settings"); };
+  $("fullBuy").onclick = function () { if (fullBusy) return; fullBusy = true; renderFull(""); track("full", { did: "buy" }); post({ type: "fullBuy" }); };
+  $("fullRestore").onclick = function () { if (fullBusy) return; fullBusy = true; renderFull(""); track("full", { did: "restore" }); post({ type: "fullRestore" }); };
+  // Once, when two days or fewer of the trial are left: the page opens on its own, in plain words, and goes away with Back.
+  function noticeFull() {
+    var st = fullSt(); if (st.state !== "trial" || st.daysLeft > 2 || ui.fullNoted) return;
+    setTimeout(function () { if (mode === "meet" && !ui.fullNoted && fullSt().state === "trial") { ui.fullNoted = 1; saveUi(); openFull("notice"); } }, 2500);
+  }
+
   // ---------- Import (2.7.0) ----------
   var impMode = "auto", impItems = [], impOff = {};
   function impParse() {
@@ -2398,6 +2474,8 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
     post({ type: "ready" });
     post({ type: "look", value: LOOKS[ui.look] && ui.look !== "auto" ? ui.look : "" });
     post({ type: "aiStatus" });
+    post({ type: "full" });
+    renderFull("");
     setTimeout(dailySave, 1500);
     document.addEventListener("visibilitychange", function () { if (document.hidden) dailySave(); });
   }
