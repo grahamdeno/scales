@@ -146,6 +146,12 @@ Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold t
 
 ## Open items
 
+- Listing reconciled 16 November 2026: name "Scales: Question Your Thoughts", subtitle "One thought at a time", promotional
+  text "Your own thoughts, one at a time, weighed both ways. Free to use; Scales Full is $6.99, once." ("weighed" on the
+  store, true on every iPhone; "argued both ways" for Product Hunt, Hacker News and Reddit). Privacy line "Nothing you
+  write is sent to us" (the backup goes to the person's own iCloud Drive; purchases go through the App Store).
+  appstore/listing.json is the source; scripts/listing.rb sets the name too.
+
 - Subtitle idea, not adopted (2 November 2026): "Question your own thoughts" (26 characters) in place of "Write it down.
   Let it return." It matches the Think it through direction (Argue with it, Tensions, Insights). Graham kept the
   current subtitle for now and may come back to it; to change it, set "subtitle" in appstore/listing.json and run the
