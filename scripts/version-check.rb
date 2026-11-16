@@ -52,4 +52,23 @@ puts "SUBSCRIPTIONS"
   end
 end
 puts "IN-APP PURCHASES"
-(get.("/v1/apps/#{app["id"]}/inAppPurchasesV2")["data"] rescue []).each { |i| a = i["attributes"]; puts "  #{a["name"]} #{a["productId"]} #{a["inAppPurchaseType"]} state #{a["state"]}" }
+(get.("/v1/apps/#{app["id"]}/inAppPurchasesV2")["data"] rescue []).each do |i|
+  a = i["attributes"]; puts "  #{a["name"]} #{a["productId"]} #{a["inAppPurchaseType"]} state #{a["state"]}"
+  # Read-only detail: everything Apple needs before a purchase counts as ready to go with a version.
+  puts "    attributes #{a.reject { |k, _| %w[name productId].include?(k) }.to_json}"
+  { "localizations" => "inAppPurchaseLocalizations", "review screenshot" => "appStoreReviewScreenshot",
+    "availability" => "inAppPurchaseAvailability", "price schedule" => "iapPriceSchedule", "content" => "content",
+    "images" => "images" }.each do |label, rel|
+    begin
+      d = get.("/v2/inAppPurchases/#{i["id"]}/#{rel}")["data"]
+      (d.is_a?(Hash) ? [d] : Array(d)).each { |x| puts "    #{label}: #{(x || {})["attributes"].to_json}" }
+      puts "    #{label}: none" if d.nil? || (d.respond_to?(:empty?) && d.empty?)
+      if rel == "inAppPurchaseAvailability" && d
+        t = get.("/v1/inAppPurchaseAvailabilities/#{d["id"]}/availableTerritories?limit=200")["data"] rescue []
+        puts "    territories: #{t.size} #{t.map { |x| x["id"] }.first(8).join(",")}"
+      end
+    rescue => e
+      puts "    #{label}: error #{e.message[0, 160]}"
+    end
+  end
+end
