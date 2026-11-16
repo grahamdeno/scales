@@ -12,6 +12,6 @@ Files App Store Connect asks for, kept here so they can be downloaded when setti
 - The website's screenshots (`site/img/*.webp`, 640 wide) come from the same raw screens: put the PNGs in
   `site/img`, then `python3 scripts/site-images.py` converts them and deletes the PNGs.
 
-Listing (Scales 2): name "Scales: One Thought at a Time", subtitle "Write it down. Let it return." (2.18.0: eight
+Listing (Scales 2): name "Scales: Question Your Thoughts", subtitle "One thought at a time" (as live in App Store Connect; confirmed 16 November) (2.18.0: eight
 screenshots, with Argue with it, Tensions and Insights.) Scales Plus was never offered; its
 subscription was deleted from App Store Connect on 8 November 2026.
