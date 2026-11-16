@@ -68,9 +68,8 @@ Order: the build first, then the purchase, then the listing, then stop.
 1. Agreements, Tax and Banking: the Paid Apps agreement must be active (Graham, with his bank and tax details).
 2. Monetization, In-App Purchases, create a Non-Consumable: Reference name "Scales Full", Product ID
    `com.grahamdeno.scales.full` (cannot be changed later), price $6.99, Family Sharing off, all storefronts the app uses.
-3. Localization (English U.S.): display name "Scales Full"; description "Argue with it, Tensions, and Themes and your
-   week. One payment, yours for good. Nothing renews." Review screenshot: Settings, Scales Full.
-4. Review notes on the version: "The app is free to use. Scales Full is a one-time purchase (Settings, Scales Full).
+3. Localization (English U.S.): display name "Scales Full"; description (Apple allows 45 characters) "Argue, Tensions, Themes. Pay once, keep it." Review screenshot: Settings, Scales Full.
+4. Review notes on the version (Graham's final text, 16 November, also keeps the 988 safety note and says "it makes no network requests of its own; purchases go through the App Store"): "The app is free to use. Scales Full is a one-time purchase (Settings, Scales Full).
    Every download has all features free for 14 days from the first download; the purchase and Restore purchase work
    at any time, also during the 14 days. Argue with it, Tensions and Themes need Apple Intelligence (iPhone 15 Pro or
    later, iOS 26); on other devices they do not appear."

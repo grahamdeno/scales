@@ -88,7 +88,7 @@ Cleanup log below.
 
 ## Before the App Store submission
 
-- Done: Plus was never approved or sold, and its subscription was deleted (8 November). The App Store name is "Scales: One Thought at a Time" ("Scales" is taken by another
+- Done: Plus was never approved or sold, and its subscription was deleted (8 November). The App Store name is "Scales: Question Your Thoughts" (subtitle "One thought at a time"; confirmed by Graham 16 November) ("Scales" is taken by another
   account); version 1.0, iPhone only. Listing text, URLs, App Privacy (Data Not Collected) and 4+ are set.
 
 ## Design rules
