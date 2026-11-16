@@ -1,6 +1,6 @@
 # Reads the App Store listing text (app name, subtitle, description, keywords, promotional text, URLs) for the
 # version being prepared, with the App Store Connect API key, and prints it.
-# With WRITE=1 it then puts appstore/listing.json (description, keywords, promotional text, subtitle) on the version
+# With WRITE=1 it then puts appstore/listing.json (name, subtitle, description, keywords, promotional text) on the version
 # that is still being prepared, and nothing else: it never submits anything. Run by .github/workflows/listing.yml.
 require "openssl"; require "json"; require "net/http"; require "base64"
 key_id, issuer, path = ENV.fetch("ASC_KEY_ID"), ENV.fetch("ASC_ISSUER_ID"), ENV.fetch("ASC_KEY_PATH")
@@ -49,9 +49,13 @@ if ENV["WRITE"] == "1"
   if want["subtitle"]
     info = get.("/v1/apps/#{app["id"]}/appInfos")["data"].find { |i| (i.dig("attributes", "appStoreState") || i.dig("attributes", "state")).to_s =~ /PREPARE|WAITING|DEVELOPER/ } || get.("/v1/apps/#{app["id"]}/appInfos")["data"].first
     il = get.("/v1/appInfos/#{info["id"]}/appInfoLocalizations")["data"].find { |l| l.dig("attributes", "locale") == want["locale"] }
-    if il && il.dig("attributes", "subtitle") != want["subtitle"]
-      api.(:patch, "/v1/appInfoLocalizations/#{il["id"]}", { data: { type: "appInfoLocalizations", id: il["id"], attributes: { subtitle: want["subtitle"] } } })
-      puts "::notice::subtitle updated"
+    # The app name and subtitle live on the app info, not the version. Both lock when the version is submitted.
+    change = {}
+    change["subtitle"] = want["subtitle"] if il && il.dig("attributes", "subtitle") != want["subtitle"]
+    change["name"] = want["name"] if want["name"] && il && il.dig("attributes", "name") != want["name"]
+    unless change.empty?
+      api.(:patch, "/v1/appInfoLocalizations/#{il["id"]}", { data: { type: "appInfoLocalizations", id: il["id"], attributes: change } })
+      puts "::notice::#{change.keys.join(" and ")} updated"
     end
   end
 end
