@@ -16,6 +16,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     private var web: WKWebView!
     private var ready = false          // Scales has started and can take scripts
     private let haptics = Haptics()
+    // 2.36.0: Scales Full, the one purchase (FullStore.swift). The page asks; this answers with facts.
+    private let full = FullStore()
     private var queued: [String] = []  // scripts waiting for that
     // If the page can't start (it should never happen now that it is inside the app), a plain screen says so and
     // offers Try again.
@@ -26,6 +28,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         config.websiteDataStore = .default()
         content = WKUserContentController()
         content.add(WeakHandler(self), name: "scales")
+        full.onChange = { [weak self] in self?.sendFull() }
         config.userContentController = content
         config.setURLSchemeHandler(scheme, forURLScheme: WebScheme.scheme)
 
@@ -154,6 +157,12 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             backupNow(json: body["json"] as? String ?? "", stamp: body["stamp"] as? String ?? "")
         case "aiStatus":
             sendAIStatus()
+        case "full":
+            sendFull()
+        case "fullBuy":
+            Task { let note = await full.buy(); sendFull(note: note) }
+        case "fullRestore":
+            Task { let note = await full.restore(); sendFull(note: note) }
         case "ai":
             generate(id: body["id"] as? String ?? "", instructions: body["instructions"] as? String ?? "", prompt: body["prompt"] as? String ?? "")
         default:
@@ -193,6 +202,14 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     // MARK: Apple Intelligence (2.6.0, a TestFlight test)
     // The page asks for one short piece of writing at a time and does all the counting itself. Apple's on-device
     // model writes it; nothing leaves the phone. On a phone without Apple Intelligence the page is told so.
+
+    /// 2.36.0: tell the page what Apple holds about Scales Full: { owned, since, price, found, note }.
+    private func sendFull(note: String = "") {
+        Task {
+            await full.refresh()
+            runJSON("scalesFull", [full.snapshot(note: note)])
+        }
+    }
 
     private func sendAIStatus() {
         var status = "unsupported"

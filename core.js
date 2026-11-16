@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.35.1";
+  var VERSION = "2.36.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -942,10 +942,33 @@
     return out;
   }
 
+  // 2.36.0: Scales Full. Free to use; Argue with it, Tensions, Themes and Your week are Scales Full ($6.99, once).
+  // Everyone has 14 days of all of it from the day the app was first downloaded (Apple's own record, so a reinstall does
+  // not restart it). The iPhone app reports { owned, since }; this turns that into a state. It never locks on a missing
+  // or doubtful answer: no date, no answer or an odd clock reads as "unknown" or as the trial, never as locked.
+  var FULL_TRIAL_DAYS = 14, FULL_PRICE = "$6.99";
+  function fullState(info, now) {
+    if (!info || typeof info !== "object") return { state: "unknown", daysLeft: null };
+    if (info.owned) return { state: "owned", daysLeft: null };
+    var since = info.since ? Date.parse(info.since) : NaN, t = now instanceof Date ? now.getTime() : NaN;
+    if (isNaN(since) || isNaN(t)) return { state: "unknown", daysLeft: null };
+    if (t < since) return { state: "trial", daysLeft: FULL_TRIAL_DAYS };
+    var left = Math.ceil((since + FULL_TRIAL_DAYS * 86400000 - t) / 86400000);
+    return left > 0 ? { state: "trial", daysLeft: Math.min(left, FULL_TRIAL_DAYS) } : { state: "locked", daysLeft: 0 };
+  }
+  function fullOpen(st) { return !st || st.state !== "locked"; }
+  function fullLine(st) {
+    if (!st || st.state === "unknown") return "";
+    if (st.state === "owned") return "Yours for good";
+    if (st.state === "trial") return st.daysLeft === 1 ? "Trial: last day" : "Trial: " + st.daysLeft + " days left";
+    return "Trial ended";
+  }
+
   var api = { VERSION: VERSION, reword: reword, insights: insights, WAS_KEEP: WAS_KEEP, argRequest: argRequest, parseArg: parseArg, argFor: argFor, insightLine: insightLine, argForRequest: argForRequest, parseFor: parseFor, proFor: proFor, keepArg: keepArg, earlierArgs: earlierArgs, tensionBatches: tensionBatches, tensionRequest: tensionRequest, tensionPool: tensionPool, tensionCheck: tensionCheck, checkSaysTension: checkSaysTension, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
     standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
     make: make, protectedThought: protectedThought, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
-    nextDue: nextDue, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, whenLabel: whenLabel };
+    nextDue: nextDue, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, whenLabel: whenLabel,
+    FULL_TRIAL_DAYS: FULL_TRIAL_DAYS, FULL_PRICE: FULL_PRICE, fullState: fullState, fullOpen: fullOpen, fullLine: fullLine };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;
 })(this);

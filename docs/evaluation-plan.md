@@ -1,6 +1,6 @@
-# Scales evaluation plan: 12 November 2026
+# Scales evaluation plan: 26 November 2026 (moved from 12 November on 12 November, to collect more use)
 
-**When:** on or after 12 November 2026. A scheduled reminder fires that morning.
+**When:** 26 November 2026. A scheduled task fires that morning (it was moved from 12 November because use was lighter than usual).
 **Who:** Graham sends the backup; Claude (Opus) runs the analysis and recommends; Graham decides.
 **After it:** Graham decides whether to press Submit for Review on version 1.0 (build 38 attached, manual release).
 

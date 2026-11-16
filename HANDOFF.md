@@ -115,9 +115,13 @@ Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold t
   by search and the tests: pickNext (replaced by nextCard), groupByAdded, addedGroup and ADDED_GROUPS (replaced by
   libraryGroups), withArgNote, argNoteBlock and argNoteLine (Add to note is gone), the TESTFLIGHT variable, and seven
   style rules nothing uses (.acts, .quiet2, .hbtns, .lbl, .plus). Their tests went with them.
-- Paid unlock decided (8 November): "Scales Full", $10 one-time (non-consumable), unlocks Argue with it and Tensions.
-  1.0 launches all free; people who downloaded before the unlock keep everything (check the AppTransaction's original
-  purchase date). Insights and the iCloud backup stay free. Not built; needs new StoreKit code in the shell.
+- Scales Full (decided 15 November, built in 2.36.0 on branch `scales-full`, not yet merged): free to use; Argue with it,
+  Tensions, and Themes and your week are Scales Full, $6.99 once (non-consumable `com.grahamdeno.scales.full`), with 14
+  days of everything from the first download (AppTransaction original purchase date). Family Sharing off at launch.
+  Insights, backup and everything already made stay free and readable. Rule in `core.js` (`fullState`); StoreKit in
+  `ios/App/FullStore.swift`; `ios/Scales.storekit` for Xcode and the simulator; test `tests/e2e/full.e2e.js`. Steps for
+  App Store Connect are in `docs/release-plan.md`. It has NOT been run against StoreKit: Graham tests buy, restore and
+  the end of the trial in TestFlight before submitting. The old "launch all free" plan is replaced.
 - Done in 2.34.0: the Scales 1 reminder clearing (`unschedule`, `badge`, `clearReminders`, `setBadge`, the notification
   delegate in ScalesApp.swift) removed.
 - iOS workflow: `runs-on: macos-26` waits for GitHub's arm64 Mac runners; on 2 November two runs were cancelled
