@@ -61,7 +61,7 @@ puts "IN-APP PURCHASES"
     "images" => "images" }.each do |label, rel|
     begin
       d = get.("/v2/inAppPurchases/#{i["id"]}/#{rel}")["data"]
-      Array(d).each { |x| puts "    #{label}: #{(x || {})["attributes"].to_json}" }
+      (d.is_a?(Hash) ? [d] : Array(d)).each { |x| puts "    #{label}: #{(x || {})["attributes"].to_json}" }
       puts "    #{label}: none" if d.nil? || (d.respond_to?(:empty?) && d.empty?)
       if rel == "inAppPurchaseAvailability" && d
         t = get.("/v1/inAppPurchaseAvailabilities/#{d["id"]}/availableTerritories?limit=200")["data"] rescue []
