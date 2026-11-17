@@ -6,7 +6,7 @@ For a new working session. Read this, then README.md.
 
 Scales 2 (from 2.0.0, October 2026): "One thought at a time." One of the person's own thoughts on a pistachio ground.
 Swipe up to move on, pull down to put it away, tap to edit; both moves undo for 5 s. No verdict buttons: the app reads
-each visit by time (20 s or less skipped, 30 s or more thought about; the 12 November evaluation may move these) and edits, and schedules the return. A skip comes back in 5 days. The day's pile (2.12.0) takes up to 5 most-skipped, spreads new ones through, and fills the rest longest-unseen first, so the whole collection comes round in about a week. Nothing leaves
+each visit by time (20 s or less skipped, 30 s or more thought about; the 26 November evaluation may move these) and edits, and schedules the return. A skip comes back in 5 days. The day's pile (2.12.0) takes up to 5 most-skipped, spreads new ones through, and fills the rest longest-unseen first, so the whole collection comes round in about a week. Nothing leaves
 unless the person puts it away. Plum is for when their hand is on it: Write, Edit, the library.
 
 Scales 1 (Skip, Reflect, Lived, the Ledger, voices, AI with Scales Plus) ended at 1.88.0. Its code and release notes are
@@ -54,39 +54,42 @@ copied in on first open until 2.34.0; since 2.35.0 it is not read (Graham was it
 - Choosing a model: Opus for feel, data safety and judgment calls; Sonnet for well-specified building, tests and
   shipping; Haiku for mechanical edits.
 
-## Where things stand (8 November 2026)
+## Where things stand (16 November 2026)
 
-Start here in a new session: this section, `docs/release-plan.md` (submit, launch day, beta, after launch), and the
-Cleanup log below.
+Start here in a new session: this section, `docs/release-plan.md` (after launch) and the Cleanup log below.
 
-- App: 2.35.1 (Argue page text can be selected and copied; PR #311). Before: 2.35.0 (Scales 1 import removed, website images, final docs pass; build 60, the build attached to 1.0 on 9 November). Before: 2.34.0
-  (cleanup) and 2.33.1 (instant save of a kept thought in the iPhone app, first-run question focuses the field), both
-  released 2026-11-08. All four iPhone Simulator flows pass. Version history is in README.md.
-- The web app is bundled into the iPhone app; the browser copy at scales.tangomike.app/app/ serves the `release` branch
-  and runs the same code.
-- App Store: version 1.0 is Prepare for Submission with build 58 (2.33.1) attached and 8 screenshots remade from 2.33.1
-  (uploaded by Grok 8 November). No subscriptions or in-app purchases (Plus deleted 8 November). Release is manual.
-  Graham has not submitted and will decide when; only he presses Submit for Review and Release.
+- Shipped: Scales 1.0 is live on the US App Store as "Scales: Question Your Thoughts" (Apple ID 6827552145), released
+  16 November 2026 at 9:22 PM ET. Build 62, app 2.36.0, commit 6336079 (PR #313). Free; Scales Full $6.99 once
+  (`com.grahamdeno.scales.full`, approved with the version). Phased release off. iPhone only, 148 storefronts (EU off).
+- Website and browser app: 2.36.1 (launch day, PR #316, commit f377c3a); `release` is on the same commit. The site's
+  main button is Download on the App Store; the browser app shows a Scales for iPhone card in Settings and keeps Scales
+  Full hidden. Campaign links use provider token 126294308 with `ct=website` and `ct=browser-app`.
+- tangomike.app lists Scales as "On the App Store" with an App Store link (`ct=tangomike`; grahamdeno/tangomike PR #7).
+- The iPhone app runs 2.36.0 and the browser runs 2.36.1. The difference is browser and website only (the iPhone card
+  and the App Store button); the next iPhone build brings both to the same version.
+- Tag: `v1.0` for commit 6336079 is not yet created (sessions can't push tags; a Grok step once Graham confirms the name).
+- Now (Stage 9 of the playbook): first-week ratings, reviews and crash checks on 17, 19 and 23 November (Grok);
+  evaluation and Tensions log analysis on 26 November (scheduled task); then the move onto the playbook
+  (grahamdeno/playbook, reports/rollout-plan.md).
+- Branches: `launch-day` (the first draft of the launch changes) and `launch-day-1.0` (merged as PR #316) remain;
+  neither is deleted without Graham's go. Rollback points: `before-argue-v2`, `before-argue-page`.
+- Every TestFlight build from main goes to the external "Beta testers" group and Beta App Review
+  (`scripts/testflight.rb`, step "Send to beta testers" in `ios.yml`).
 - Read-only App Store check: run the `App Store listing` workflow with `check: true` (version, build, screenshots,
   subscriptions, in-app purchases).
-- Public beta: deferred (4 November). Graham tunes the timing on his own data for a few weeks first; plan kept in
-  `docs/release-plan.md`.
-- Held branch `launch-day`: App Store as the main button on the landing page and an iPhone-app card in the browser app;
-  links are placeholders until launch (see the release plan).
-- Rollback points (branches): `before-argue-v2` (before 2.31.0) and `before-argue-page` (before 2.32.0). Feature branches
-  as shipped: `argue-v2`, `refine-v1`, `breathe-test`, `argue-page`, `argue-keep`.
+- Public beta: deferred (4 November); plan kept in `docs/release-plan.md`.
 - Tensions log: Graham sends screenshots of Tensions as they appear; each is judged and logged, with tuning ideas, in his
-  private Claude doc "Scales Tensions Log" (https://claude.ai/artifact/LUNmkyw1gpvgBEyFaTn9Fx), never in this public
-  repo. No prompt changes until he asks for the full analysis. Pairs from before 4 November came from the old prompt.
-- 12 November, 8:40 am ET: a scheduled task starts a fresh session that asks for "Scales backup.json" and runs
-  `docs/evaluation-plan.md`. Rule changes now need a new build to reach the iPhone.
+  private Claude doc "Scales Tensions Log" (https://claude.ai/artifact/LUNmkyw1gpvgBEyFaTn9Fx), never in this repo.
+  No prompt changes until the analysis on 26 November is approved. Pairs from before 4 November came from the old prompt.
+- Rule and prompt changes are compiled into the iPhone app: they reach users only through a new build and release.
 - Shipping: open a PR, wait for the `test` and `browser` checks, merge, move `release` to the merge commit
   (`git push origin <sha>:refs/heads/release`), then run the `iPhone app` workflow on main; a run GitHub cancels for want of a
-  Mac ("not acquired") is re-run. Build number = run number. Tags can't be pushed from Claude sessions; use branches.
-- Working agreements: Graham says "ship" before anything merges; prompts for Grok put the irreversible steps first and
-  ask for a report; plain words, no em-dashes; Opus for judgment and data safety, Sonnet for building.
+  Mac ("not acquired") is re-run. Build number = run number. Each step needs its own go from Graham (merge, test build,
+  ship).
+- Working agreements: prompts for Grok put the irreversible steps first and ask for a report; plain words, no em-dashes;
+  Opus for judgment and data safety, Sonnet for building.
 
-## Before the App Store submission
+## Before the App Store submission (done; 1.0 released 16 November 2026)
 
 - Done: Plus was never approved or sold, and its subscription was deleted (8 November). The App Store name is "Scales: Question Your Thoughts" (subtitle "One thought at a time"; confirmed by Graham 16 November) ("Scales" is taken by another
   account); version 1.0, iPhone only. Listing text, URLs, App Privacy (Data Not Collected) and 4+ are set.
@@ -115,13 +118,12 @@ Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold t
   by search and the tests: pickNext (replaced by nextCard), groupByAdded, addedGroup and ADDED_GROUPS (replaced by
   libraryGroups), withArgNote, argNoteBlock and argNoteLine (Add to note is gone), the TESTFLIGHT variable, and seven
   style rules nothing uses (.acts, .quiet2, .hbtns, .lbl, .plus). Their tests went with them.
-- Scales Full (decided 15 November, built in 2.36.0 on branch `scales-full`, not yet merged): free to use; Argue with it,
+- Scales Full (decided 15 November, shipped in 2.36.0 with 1.0, build 62; tested in TestFlight and approved by Apple): free to use; Argue with it,
   Tensions, and Themes and your week are Scales Full, $6.99 once (non-consumable `com.grahamdeno.scales.full`), with 14
   days of everything from the first download (AppTransaction original purchase date). Family Sharing off at launch.
   Insights, backup and everything already made stay free and readable. Rule in `core.js` (`fullState`); StoreKit in
-  `ios/App/FullStore.swift`; `ios/Scales.storekit` for Xcode and the simulator; test `tests/e2e/full.e2e.js`. Steps for
-  App Store Connect are in `docs/release-plan.md`. It has NOT been run against StoreKit: Graham tests buy, restore and
-  the end of the trial in TestFlight before submitting. The old "launch all free" plan is replaced.
+  `ios/App/FullStore.swift`; `ios/Scales.storekit` for Xcode and the simulator; test `tests/e2e/full.e2e.js`. App Store Connect
+  steps (done) are in `docs/release-plan.md`.
 - Done in 2.34.0: the Scales 1 reminder clearing (`unschedule`, `badge`, `clearReminders`, `setBadge`, the notification
   delegate in ScalesApp.swift) removed.
 - iOS workflow: `runs-on: macos-26` waits for GitHub's arm64 Mac runners; on 2 November two runs were cancelled
@@ -141,7 +143,7 @@ Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold t
 - Done in 2.34.0: `docs/ARCHITECTURE.md` rewritten for Scales 2.
 - EU is off (148 countries). To sell there later: set DSA trader status in App Store Connect, then turn the EU back on.
 - Cloudflare Web Analytics is off. Decide after launch whether the marketing site gets it; if yes, update Privacy.
-- 12 November evaluation: visits before 2.25.0 never recorded idle, so treat any visit over 5 minutes as seen only.
+- 26 November evaluation: visits before 2.25.0 never recorded idle, so treat any visit over 5 minutes as seen only.
 - Support page promises "a person answers, usually within two days." Keep it only if that holds.
 
 ## Open items
@@ -159,7 +161,7 @@ Loose ends from the 2 November 2026 pre-submission work. None blocks 1.0. Fold t
 
 - A bespoke put-away haptic would need an iPhone build (today it is thud plus letgo, sent from the page).
 - A reminder may come back later; for now Scales is something you open on your own.
-- 12 November evaluation: follow `docs/evaluation-plan.md` and run `scripts/evaluate.js` on the backup (timing lines,
+- 26 November evaluation: follow `docs/evaluation-plan.md` and run `scripts/evaluate.js` on the backup (timing lines,
   day size, drip, top-up and Keep going attention, feature use, outcomes, health). Leave out visits with
   `kind: "review"` and `undone: true`.
 - Possible later additions (not built): a one-tap weekly check-in, how the app was opened (needs a build), Apple

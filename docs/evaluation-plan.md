@@ -2,14 +2,16 @@
 
 **When:** 26 November 2026. A scheduled task fires that morning (it was moved from 12 November because use was lighter than usual).
 **Who:** Graham sends the backup; Claude (Opus) runs the analysis and recommends; Graham decides.
-**After it:** Graham decides whether to press Submit for Review on version 1.0 (build 38 attached, manual release).
+**After it:** Graham decides which rule changes go into the next release. Scales 1.0 (build 62, app 2.36.0) has been
+live on the App Store since 16 November 2026; visits from the App Store build start that day.
 
 ## How to run it
 
 1. Graham: Scales, Settings, Your data, Back up. Send "Scales backup.json".
 2. Claude: `node scripts/evaluate.js "Scales backup.json"` (add `--since 2026-10-30` to start at the day-size change).
 3. Claude: read the six sections against the decision rules below, and write the recommendations as one short list.
-4. Graham decides. Rule changes are web-only and reach every build, including the one submitted.
+4. Graham decides. Rule changes are compiled into the iPhone app: they reach users only through a new build and
+   release (1.1), and the browser app when `release` moves.
 
 ## Privacy
 
@@ -97,7 +99,7 @@ away, or let it go).
 
 **7. Health.**
 Measure: page errors, storage and native failures, load time to first card, versions in use, Appearance in use.
-Decide: any error is a bug to fix before Submit for Review. Load time over about 1.5 s at the 90th percentile is
+Decide: any error is a bug to fix in the next release. Load time over about 1.5 s at the 90th percentile is
 worth looking at.
 
 ## Limits to keep in mind
