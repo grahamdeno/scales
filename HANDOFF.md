@@ -73,8 +73,9 @@ Start here in a new session: this section, `docs/release-plan.md` (after launch)
   (grahamdeno/playbook, reports/rollout-plan.md).
 - Branches: `launch-day` (the first draft of the launch changes) and `launch-day-1.0` (merged as PR #316) remain;
   neither is deleted without Graham's go. Rollback points: `before-argue-v2`, `before-argue-page`.
-- Every TestFlight build from main goes to the external "Beta testers" group and Beta App Review
-  (`scripts/testflight.rb`, step "Send to beta testers" in `ios.yml`).
+- TestFlight builds go to internal testing only (Graham). `scripts/testflight.rb` sets What to Test and never adds a
+  build to an external group or submits it for Beta App Review (decided 16 November 2026). The `ios.yml` step is still
+  named "Send to beta testers"; rename it with the next change that uploads a build anyway.
 - Read-only App Store check: run the `App Store listing` workflow with `check: true` (version, build, screenshots,
   subscriptions, in-app purchases).
 - Public beta: deferred (4 November); plan kept in `docs/release-plan.md`.
