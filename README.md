@@ -17,6 +17,8 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (the same page, bundl
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.36.1:** Launch. The website's main button is Download on the App Store (Scales 1.0, released 16 November 2026);
+  the browser app shows a card in Settings offering the iPhone app. Campaign links: `ct=website` and `ct=browser-app`.
 - **2.36.0:** Scales Full. Scales is free to use; Argue with it, Tensions, and Themes and your week are Scales Full:
   all of it free for 14 days from the first download (Apple's own date, so a reinstall does not restart it), then
   $6.99 paid once. Nothing renews and there is no account. Only making something new is locked afterwards; thoughts,

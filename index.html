@@ -470,6 +470,8 @@ textarea::placeholder { color: var(--plum-faint); }
 #toast #toastWhy { font-weight: 500; padding: 10px 12px; margin-left: 2px; opacity: .85; }
 #toast:not(.done) #toastMsg { padding-right: 12px; margin-right: 2px; border-right: 1px solid currentColor; border-right-color: color-mix(in srgb, currentColor 30%, transparent); }
 /* 2.31.0: refining a thought. */
+.getapp { display: block; margin: 6px var(--pad) 4px; padding: 14px 16px; border-radius: 14px; background: rgba(185,201,163,.12); color: var(--plum-ink); text-decoration: none; font-size: calc(14px * var(--ts)); line-height: 1.4; }
+.getapp b { display: block; font-size: calc(15px * var(--ts)); margin-bottom: 2px; } .getapp span { display: block; margin-top: 6px; color: var(--pist); font-weight: 600; }
 .whynext { align-self: flex-start; color: var(--pist); font-weight: 600; font-size: calc(15px * var(--ts)); padding: 12px 0; }
 #vEdit .grew { margin: 12px 0 0; padding: 12px 14px; border-radius: 12px; background: rgba(241,233,216,.06); font-size: calc(13px * var(--ts)); line-height: 1.45; color: var(--plum-muted); }
 #vEdit .grew b { display: block; margin-top: 3px; color: var(--plum-ink); font-weight: 600; font-size: calc(14px * var(--ts)); }
@@ -673,6 +675,7 @@ textarea::placeholder { color: var(--plum-faint); }
   <button class="pback" type="button" id="setBack">&#8249; Your thoughts</button>
   <h1>Settings</h1>
   <div class="body">
+    <a class="getapp" id="getApp" hidden target="_blank" rel="noopener"><b>Scales for iPhone</b>Argue with it, Tensions and an automatic iCloud backup are in the iPhone app.<span>Get it on the App Store &#8250;</span></a>
     <div id="fullSec" hidden>
       <p class="sh">Scales Full</p>
       <div class="grp">
@@ -875,8 +878,8 @@ textarea::placeholder { color: var(--plum-faint); }
 <!-- 2.33.0: a failed save is said in a message of its own that nothing else replaces, and stays until dismissed. -->
 <div id="saveFail" role="alert" hidden><p id="saveFailMsg"></p><div class="sfa"><button type="button" id="saveFailGo">Back up now</button><button type="button" id="saveFailOk">Dismiss</button></div></div>
 
-<script src="core.js?v=2.36.0"></script>
-<script src="sets.js?v=2.36.0"></script>
+<script src="core.js?v=2.36.1"></script>
+<script src="sets.js?v=2.36.1"></script>
 <script>
 (function () {
   "use strict";
@@ -1281,6 +1284,11 @@ textarea::placeholder { color: var(--plum-faint); }
     var lg = lsGet(KEY_LOG, []); if (lg.length) { lg[lg.length - 1].undone = true; lsSet(KEY_LOG, lg); }
     save(); saveUi(); $("toast").classList.remove("on"); buzz("undo"); renderMeet(true);
   };
+
+  // ---------- The iPhone app, offered in the browser (launch) ----------
+  // Only in a browser, and only once the App Store address is filled in (it stays hidden while it holds a placeholder).
+  var APP_STORE_URL = "https://apps.apple.com/app/apple-store/id6827552145?pt=126294308&ct=browser-app&mt=8";
+  if (!NATIVE && APP_STORE_URL.indexOf("{") < 0) { $("getApp").href = APP_STORE_URL; $("getApp").hidden = false; }
 
   // ---------- Onboarding (2.30.0) ----------
   // Teach one thing at the moment it's needed, never a tour. Each hint shows once, at most one spotlight a session,

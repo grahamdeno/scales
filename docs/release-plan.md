@@ -36,6 +36,10 @@ Telemetry never leaves a phone by itself; testers choose to send it.
 
 ## Launch day (after Apple approves)
 
+**Status (16 November 2026):** Apple approved 1.0 (build 62, Scales Full approved). Released 9:22 PM ET. Apple ID
+6827552145, provider token 126294308. The launch-day changes are in 2.36.1 on branch `launch-day-1.0`, waiting for
+Graham's ship go for the site change.
+
 Branch `launch-day` holds the website and browser changes; it is safe to merge early (placeholders keep the links hidden
 or inert), but it should ship with the App Store address filled in.
 
