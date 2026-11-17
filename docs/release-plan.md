@@ -3,21 +3,19 @@
 Kept here so the steps survive any one session. Graham presses every irreversible button (Submit for Review, Release);
 agents stop before them. Steps Claude can't do go to Grok as prompts, with the irreversible steps first.
 
-## Where things stand (8 November 2026)
+## Where things stand (16 November 2026)
 
-- Version 1.0 in App Store Connect: build 58 (2.33.1) attached, Prepare for Submission, not submitted.
-- Listing text set (iOS 26 for Apple Intelligence; works without a connection; the case for).
-- 8 screenshots (6.9-inch) remade from 2.33.1 and uploaded by Grok (8 November): `appstore/screenshots/`.
-- Browser app at scales.tangomike.app/app/ runs the `release` branch.
-- EU storefronts are off (no trader status). No subscriptions (Plus deleted 8 November). From 2.36.0 the one in-app
-  purchase, Scales Full, is created in App Store Connect and submitted with the version (see "Scales Full in App
-  Store Connect" below).
+- Shipped: version 1.0 is live on the US App Store, released 16 November 2026 at 9:22 PM ET. Build 62 (app 2.36.0,
+  commit 6336079). Apple ID 6827552145. Scales Full ($6.99) approved with the version. Phased release off.
+- Website and browser app: 2.36.1 (commit f377c3a, PR #316); `release` is on the same commit.
+- EU storefronts are off (no trader status). No subscriptions. One in-app purchase, Scales Full.
+- The launch steps below are done and kept as the record. What's next is "After launch".
 
-## Before Submit for Review
+## Before Submit for Review (done)
 
-1. Graham checks Larger Text on his phone with the TestFlight build.
-2. Graham checks the version page: no red banners, build 58 (or a newer one he chooses), screenshots in order.
-3. Graham presses Submit for Review. Claude freezes main and `release` until Apple decides.
+1. Done: Graham checked Larger Text on his phone with the TestFlight build.
+2. Done: version page checked; build 62 attached, screenshots in order.
+3. Done: Graham pressed Submit for Review; Apple approved.
 
 ## Public beta (deferred)
 
@@ -36,20 +34,16 @@ Telemetry never leaves a phone by itself; testers choose to send it.
 
 ## Launch day (after Apple approves)
 
-**Status (16 November 2026):** Apple approved 1.0 (build 62, Scales Full approved). Released 9:22 PM ET. Apple ID
-6827552145, provider token 126294308. The launch-day changes are in 2.36.1 on branch `launch-day-1.0`, waiting for
-Graham's ship go for the site change.
+**Status (16 November 2026): done.** Apple approved 1.0 (build 62, Scales Full approved). Released 9:22 PM ET. Apple ID
+6827552145, provider token 126294308. The launch-day changes shipped as 2.36.1 (branch `launch-day-1.0`, PR #316,
+commit f377c3a) and `release` moved to the same commit. The first draft, branch `launch-day`, was not merged and is kept.
 
-Branch `launch-day` holds the website and browser changes; it is safe to merge early (placeholders keep the links hidden
-or inert), but it should ship with the App Store address filled in.
-
-1. Grok: from App Store Connect, report the app's Apple ID (the number in the App Store link) and the provider token
-   for campaign links (App Analytics, Campaigns).
-2. Claude: replace `{APP_ID}` and `{PROVIDER_TOKEN}` in `site/index.html` (campaign `ct=website`) and `index.html`
-   (`APP_STORE_URL`, campaign `ct=browser-app`); merge `launch-day`; move `release`; check the live site.
-3. Graham presses Release this version (release is set to manual).
-4. Graham posts on LinkedIn with the website link. App Store Connect, App Analytics, Sources shows downloads that came
-   from the website and from the browser app.
+1. Done: Grok reported the Apple ID and the provider token.
+2. Done: the App Store address and campaign links (`ct=website`, `ct=browser-app`) filled in; merged as PR #316;
+   `release` moved; live site checked. tangomike.app updated (grahamdeno/tangomike PR #7, `ct=tangomike`).
+3. Done: Graham released the version.
+4. Graham's LinkedIn post: his step. App Store Connect, App Analytics, Sources shows downloads from the website, the
+   browser app and tangomike.app.
 
 What `launch-day` changes:
 - Landing: "Download on the App Store" becomes the main button; "Try it in your browser" is the second.
@@ -58,6 +52,11 @@ What `launch-day` changes:
 
 ## After launch (first 30 days)
 
+- First week: ratings, reviews and crash reports pulled by Grok on 17, 19 and 23 November; real problems become
+  Stage 1 items; review replies are drafted for Graham's approval and posted by Grok only with his exact text.
+- 26 November: evaluation (`docs/evaluation-plan.md`) and the Tensions log analysis (scheduled task).
+- After launch week: move Scales onto the playbook (grahamdeno/playbook, reports/rollout-plan.md).
+
 - (Done in 2.36.0, decided 15 November) Scales Full ships with 1.0: $6.99 once (non-consumable
   `com.grahamdeno.scales.full`), Argue with it, Tensions, and Themes and your week, 14 days of all of it from the
   first download, Family Sharing off, browser stays a demo. No one downloaded before it, so no grandfathering.
@@ -65,7 +64,7 @@ What `launch-day` changes:
 - Cleanup log in HANDOFF.md (runner retry, GitHub Pages off, old branches).
 - Optional: cookieless page counts for the browser app (needs a line in Privacy).
 
-## Scales Full in App Store Connect (new, 15 November 2026; Grok steps, Graham presses Submit for Review)
+## Scales Full in App Store Connect (done 15 to 16 November 2026; kept as the record)
 
 Order: the build first, then the purchase, then the listing, then stop.
 
@@ -77,6 +76,6 @@ Order: the build first, then the purchase, then the listing, then stop.
    Every download has all features free for 14 days from the first download; the purchase and Restore purchase work
    at any time, also during the 14 days. Argue with it, Tensions and Themes need Apple Intelligence (iPhone 15 Pro or
    later, iOS 26); on other devices they do not appear."
-5. Attach the new build (2.36.0) to version 1.0 and attach the in-app purchase to the version.
+5. Attach the new build (2.36.0, build 62) to version 1.0 and attach the in-app purchase to the version.
 6. Update the listing from `appstore/listing.json` (the `App Store listing` workflow with write: true).
 7. STOP. Graham reviews and presses Submit for Review himself.
