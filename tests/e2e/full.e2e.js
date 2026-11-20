@@ -26,15 +26,16 @@ async function open(browser, base, full, opts) {
     window.scalesNative = { build: "70" }; window.__ai = []; window.__sent = [];
     window.webkit = { messageHandlers: { scales: { postMessage: (m) => {
       window.__sent.push(m.type);
-      if (m.type === "aiStatus") setTimeout(() => window.scalesAI("available"), 20);
-      if (m.type === "full" && o.full) setTimeout(() => window.scalesFull(JSON.stringify(o.full)), 20);
+      if (m.type === "aiStatus") setTimeout(() => window.scalesAI(o.ai || "available"), 20);
+      // 2.37.0: o.fullLater answers only the second ask (a launch without a connection, then the page asks again).
+      if (m.type === "full") { window.__fullAsks = (window.__fullAsks || 0) + 1; const f = o.fullLater ? (window.__fullAsks > 1 ? o.fullLater : null) : o.full; if (f) setTimeout(() => window.scalesFull(JSON.stringify(f)), 20); }
       if ((m.type === "fullBuy" || m.type === "fullRestore") && o.reply) setTimeout(() => window.scalesFull(JSON.stringify(o.reply[m.type])), 40);
       if (m.type === "ai") { window.__ai.push(m.instructions.slice(0, 30));
         const ans = /^You compare two thoughts/.test(m.instructions) ? "C" : /test a thought/.test(m.instructions) ? "AGAINST: Holding to every decision can be stubbornness, not resolve.\nASSUMES: that what you decided then is still true." : "2 | 4 | work against rest";
         setTimeout(() => window.scalesAIResult(m.id, ans, ""), 40); }
     } } } };
     if (!sessionStorage.getItem("s")) { localStorage.clear(); localStorage.setItem("scales.next.thoughts.v1", JSON.stringify(o.st)); localStorage.setItem("scales.next.ui.v1", JSON.stringify({ nudged: true, fullNoted: o.noted ? 1 : 0, cur: "k0" })); sessionStorage.setItem("s", "1"); }
-  }, { st: thoughts, full, reply: opts && opts.reply, noted: !(opts && opts.notice) });
+  }, { st: thoughts, full, reply: opts && opts.reply, noted: !(opts && opts.notice), ai: opts && opts.ai, fullLater: opts && opts.fullLater });
   await page.goto(base + "/?native=1"); await page.waitForTimeout(300);
   return { page, errs, ctx };
 }
@@ -50,6 +51,7 @@ async function open(browser, base, full, opts) {
     await page.waitForTimeout(5200);
     ok((await page.evaluate(() => window.__ai.length)) === 0, "locked: Tensions makes no request to the model");
     await page.click("#words"); await page.waitForTimeout(600);
+    ok(/Argue with it \u00b7 Scales Full/.test(await page.textContent("#argBtn")), "locked: the word says Scales Full before it is tapped (G-36)");
     await page.click("#argBtn"); await page.waitForTimeout(500);
     ok(await page.locator("#fullPage.open").count() === 1 && (await page.evaluate(() => window.__ai.length)) === 0, "locked: Argue with it opens the Scales Full card and asks the model nothing");
     ok(/14 free days are over/.test(await page.textContent("#fullLead")) && /still here/.test(await page.textContent("#fullLead")) && /\$6\.99, once/.test(await page.textContent("#fullLead")), "locked: the card says the days are over, nothing is lost, and $6.99 once");
@@ -65,11 +67,14 @@ async function open(browser, base, full, opts) {
     // themes and the week
     await page.evaluate(() => { document.querySelectorAll(".page.open").forEach((p) => p.classList.remove("open")); });
     await page.goto(base + "/?native=1"); await page.waitForTimeout(500);
-    await page.evaluate(() => { document.getElementById("setAI").click(); });
-    await page.waitForTimeout(400);
+    // 2.37.0: Themes and Tensions are rows in Your thoughts.
+    await page.click("#stripOpen"); await page.waitForTimeout(500);
+    ok(/Part of Scales Full/.test(await page.textContent('#libList [data-group="tension"]')), "locked: the Tensions row says Part of Scales Full, not Looking a little each day (G-18)");
+    await page.click('#libList [data-page="themes"]'); await page.waitForTimeout(500);
     await page.evaluate(() => document.getElementById("aiRun").click()); await page.waitForTimeout(400);
     ok(await page.locator("#fullPage.open").count() === 1 && (await page.evaluate(() => window.__ai.length)) === 0, "locked: Find themes opens the card and asks the model nothing");
     await page.click("#fullBack"); await page.waitForTimeout(300);
+    await page.click("#aiBack"); await page.waitForTimeout(400); await page.click("#libGear"); await page.waitForTimeout(400);
     ok(/Trial ended/.test(await page.textContent("#setFullV")), "Settings says the trial ended");
     ok(errs.length === 0, "locked: no page errors" + (errs[0] ? ": " + errs[0] : "")); await ctx.close();
   }
@@ -118,14 +123,44 @@ async function open(browser, base, full, opts) {
     ok(errs.length === 0, "buy: no page errors" + (errs[0] ? ": " + errs[0] : "")); await ctx.close();
   }
 
-  // 5. Two days left: the card opens once, by itself
+  // 5. Two days left (2.37.0): the card never opens by itself; Settings says how many days are left
   {
     const { page, errs, ctx } = await open(browser, base, { owned: false, since: ago(12.5), price: "$6.99", found: true }, { notice: true });
     await page.waitForTimeout(3500);
-    ok(await page.locator("#fullPage.open").count() === 1 && /days? of everything/.test(await page.textContent("#fullLead")) && /Nothing renews/.test(await page.textContent("#fullLead")), "two days left: the card opens once and says nothing renews");
-    await page.click("#fullBack"); await page.waitForTimeout(300); await page.reload(); await page.waitForTimeout(3500);
-    ok(await page.locator("#fullPage.open").count() === 0, "and not again on the next open");
+    ok(await page.locator("#fullPage.open").count() === 0, "two days left: the Scales Full card does not open by itself (G-19)");
+    ok(/Trial: 2 days left/.test(await page.textContent("#setFullV")), "two days left: the Settings row says Trial: 2 days left");
     ok(errs.length === 0, "notice: no page errors"); await ctx.close();
+  }
+
+  // 7. An iPhone without Apple Intelligence (2.37.0, G-1): nothing to buy, and it says what it needs
+  {
+    const { page, errs, ctx } = await open(browser, base, { owned: false, since: ago(3), price: "$6.99", found: true }, { ai: "unsupported" });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => document.getElementById("setFull").click()); await page.waitForTimeout(400);
+    ok(await page.evaluate(() => document.getElementById("fullBuy").hidden), "unsupported: no Buy");
+    ok(/iPhone 15 Pro or later/.test(await page.textContent("#fullNeeds")) && /isn't for sale here/.test(await page.textContent("#fullNeeds")), "unsupported: says what it needs, in place of Buy");
+    ok(/Needs Apple Intelligence/.test(await page.textContent("#setFullV")), "unsupported: the Settings row says Needs Apple Intelligence");
+    ok(errs.length === 0, "unsupported: no page errors" + (errs[0] ? ": " + errs[0] : "")); await ctx.close();
+  }
+  // 8. Apple Intelligence turned off: Buy stays, with what to turn on above it
+  {
+    const { page, errs, ctx } = await open(browser, base, { owned: false, since: ago(3), price: "$6.99", found: true }, { ai: "unavailable: appleIntelligenceNotEnabled" });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => document.getElementById("setFull").click()); await page.waitForTimeout(400);
+    ok(!(await page.evaluate(() => document.getElementById("fullBuy").hidden)) && /turned on/.test(await page.textContent("#fullNeeds")), "not turned on: Buy stays, and it says what to turn on");
+    const needsTop = await page.evaluate(() => document.getElementById("fullNeeds").getBoundingClientRect().top < document.getElementById("fullBuy").getBoundingClientRect().top);
+    ok(needsTop, "the requirement sits above Buy");
+    ok(errs.length === 0, "off: no page errors"); await ctx.close();
+  }
+  // 9. Launched without a connection (G-20): the page asks again when opened; the price is the App Store's (G-21)
+  {
+    const { page, errs, ctx } = await open(browser, base, null, { fullLater: { owned: false, since: ago(3), price: "\u20ac7,99", found: true } });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => document.getElementById("setFull").click()); await page.waitForTimeout(400);
+    ok(/Unlock Scales Full/.test(await page.textContent("#fullBuyL")) && (await page.evaluate(() => window.__fullAsks)) >= 2, "offline launch: opening the page asks the App Store again and Buy comes back");
+    const all = await page.evaluate(() => ["fullLead", "fullBuyV", "fullFoot"].map((id) => document.getElementById(id).textContent).join(" ") + document.getElementById("fullSecNote").textContent + document.getElementById("helpFull").textContent);
+    ok(/\u20ac7,99/.test(all) && !/\$6\.99/.test(all), "every price on the page is the App Store's local price: " + all.slice(0, 80));
+    ok(errs.length === 0, "offline: no page errors"); await ctx.close();
   }
 
   // 6. The browser app has none of it

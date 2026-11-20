@@ -5,13 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Scales</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Scales">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#B9C9A3" id="themeColor">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/favicon-32.png">
-<script>try { var ts0 = window.scalesNative && +window.scalesNative.textScale; if (ts0 > 0) { document.documentElement.style.setProperty("--ts", Math.min(1.5, Math.max(0.82, ts0))); document.documentElement.style.setProperty("--tw", Math.min(1.3, Math.max(0.82, ts0))); } } catch (e) {}
+<script>try { var ts0 = window.scalesNative && +window.scalesNative.textScale; if (ts0 > 0) { document.documentElement.style.setProperty("--ts", Math.min(2, Math.max(0.82, ts0))); document.documentElement.style.setProperty("--tw", Math.min(1.3, Math.max(0.82, ts0))); } } catch (e) {}
 try { var u0 = JSON.parse(localStorage.getItem("scales.next.ui.v1")) || {}, lk = u0.look; if (lk === "light" || lk === "dark") document.documentElement.setAttribute("data-look", lk); if (u0.theme === "stone") document.documentElement.setAttribute("data-theme", "stone"); } catch (e) {}</script>
 <style>
 @font-face { font-family:"Geist"; font-style:normal; font-weight:100 900; font-display:swap; src:url("fonts/geist-latin.woff2") format("woff2"); }
@@ -23,7 +24,11 @@ try { var u0 = JSON.parse(localStorage.getItem("scales.next.ui.v1")) || {}, lk =
      --tw scales the thought itself, capped lower (1.3) so a long thought still fits on one screen. */
   --ts: 1; --tw: 1;
   --pist: #B9C9A3; --pist-ink: #2A1E2E; --pist-muted: #3E4830;
-  --plum: #3B2240; --plum-ink: #F1E9D8; --plum-muted: #BBA7BE; --plum-faint: #8E7A92;
+  /* 2.37.0: --plum-faint raised to 4.5:1 for placeholders (was #8E7A92, 3.6:1). */
+  --plum: #3B2240; --plum-ink: #F1E9D8; --plum-muted: #BBA7BE; --plum-faint: #A895AC;
+  /* 2.37.0: the lines, tints and the one warning color as tokens, so Stone and Dark need no duplicate rules. */
+  --line: rgba(241,233,216,.12); --line-soft: rgba(241,233,216,.08); --tint: rgba(241,233,216,.08); --pist-tint: rgba(185,201,163,.12);
+  --grab: rgba(241,233,216,.45); --danger: #F2A69B;
   /* The reading ground (Meet). Pistachio in Light; in Dark (2.5.0) it turns plum with bone words, like the Plum icon,
      and the plum screens go a step deeper so moving between them still changes ground. Pistachio stays the accent. */
   --ground: var(--pist); --ground-ink: var(--pist-ink); --ground-muted: var(--pist-muted); --ground-line: rgba(42,30,46,.14);
@@ -31,29 +36,29 @@ try { var u0 = JSON.parse(localStorage.getItem("scales.next.ui.v1")) || {}, lk =
   --pad: 28px;
   --top: max(env(safe-area-inset-top), 20px);
   --bot: env(safe-area-inset-bottom);
-  --strip: calc(76px + var(--bot));
+  --strip: calc(56px + 20px * var(--ts) + var(--bot)); /* 2.37.0: grows with the text (76 px at standard size) */
   --ease-back: cubic-bezier(.34,1.56,.64,1);
 }
 /* Dark follows the phone, unless Settings, Appearance says Light or Dark (2.8.0; data-look on <html>). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-look="light"]) { --ground: #3B2240; --ground-ink: #F1E9D8; --ground-muted: #BBA7BE; --ground-line: rgba(241,233,216,.14);
-    --plum: #23132A; --plum-muted: #B09CB4; --plum-faint: #85718A;
+    --plum: #23132A; --plum-muted: #B09CB4; --plum-faint: #9A86A0;
     --toast-bg: var(--pist); --toast-ink: #2A1E2E; color-scheme: dark; }
 }
 :root[data-look="dark"] { --ground: #3B2240; --ground-ink: #F1E9D8; --ground-muted: #BBA7BE; --ground-line: rgba(241,233,216,.14);
-  --plum: #23132A; --plum-muted: #B09CB4; --plum-faint: #85718A;
+  --plum: #23132A; --plum-muted: #B09CB4; --plum-faint: #9A86A0;
   --toast-bg: var(--pist); --toast-ink: #2A1E2E; color-scheme: dark; }
 :root[data-look="light"] { color-scheme: light; }
 /* 2.22.0 Stone: warm stone to read on, graphite for anything your hand is on; pistachio stays the accent.
    Dark follows the default's rule: the thought on graphite, the sheets a step darker. */
 :root[data-theme="stone"] { --ground: #C9C6BD; --ground-ink: #1F2124; --ground-muted: #4E4B44; --ground-line: rgba(31,33,36,.14);
-  --plum: #23262B; --plum-ink: #EEEAE2; --plum-muted: #A5A39D; --plum-faint: #7E7C77; --toast-bg: #1F2124; --toast-ink: #C9C6BD; }
+  --plum: #23262B; --plum-ink: #EEEAE2; --plum-muted: #A5A39D; --plum-faint: #9A9893; --toast-bg: #1F2124; --toast-ink: #C9C6BD; }
 @media (prefers-color-scheme: dark) {
   :root[data-theme="stone"]:not([data-look="light"]) { --ground: #23262B; --ground-ink: #EEEAE2; --ground-muted: #A5A39D; --ground-line: rgba(238,234,226,.14);
-    --plum: #16181B; --plum-muted: #98968F; --plum-faint: #75736E; --toast-bg: var(--pist); --toast-ink: #1F2124; }
+    --plum: #16181B; --plum-muted: #98968F; --plum-faint: #8E8C86; --toast-bg: var(--pist); --toast-ink: #1F2124; }
 }
 :root[data-theme="stone"][data-look="dark"] { --ground: #23262B; --ground-ink: #EEEAE2; --ground-muted: #A5A39D; --ground-line: rgba(238,234,226,.14);
-  --plum: #16181B; --plum-muted: #98968F; --plum-faint: #75736E; --toast-bg: var(--pist); --toast-ink: #1F2124; }
+  --plum: #16181B; --plum-muted: #98968F; --plum-faint: #8E8C86; --toast-bg: var(--pist); --toast-ink: #1F2124; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
 body {
@@ -74,11 +79,12 @@ a { color: inherit; text-decoration: none; }
 [hidden] { display: none !important; }
 
 /* The corner buttons reach well past their words (2.0.1), so a thumb slightly off still lands on them. */
-.corner { position: absolute; top: calc(var(--top) + 4px); font-size: calc(16px * var(--ts)); font-weight: 500; padding: 20px 28px 20px var(--pad); min-width: 150px; text-align: left; z-index: 3; }
+.corner { position: absolute; top: calc(var(--top) + 4px); font-size: calc(16px * var(--ts)); font-weight: 500; padding: 20px 28px 20px var(--pad); min-width: calc(8em + 28px); text-align: left; z-index: 3; }
 .corner.l { left: 0; } .corner.r { right: var(--pad); }
 /* Keep and Done are words, like every other action here: pistachio, bold, with a wide tap area. */
 .act { color: var(--pist); font-weight: 700; font-size: calc(18px * var(--ts)); padding: 16px 0 16px 36px; margin-right: 0; }
-.act:disabled { opacity: 0; pointer-events: none; }
+/* 2.37.0: a word that can't be used yet shows dimmed (it used to be hidden), so you can see where Keep will be. */
+.act:disabled, .act[aria-disabled="true"] { opacity: .35; pointer-events: none; }
 
 /* ---- Meet ---- */
 /* The stage starts below the corner, so a near miss on + New never opens Edit. */
@@ -117,16 +123,15 @@ a { color: inherit; text-decoration: none; }
 .arrive { animation: arrive .45s ease-out 1; }
 
 #strip { position: absolute; left: 0; right: 0; bottom: 0; height: var(--strip); background: var(--plum); color: var(--plum-ink);
-  border-radius: 22px 22px 0 0; display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 12px; transition: height .25s ease; z-index: 2; width: 100%; }
-#strip .grab { width: 36px; height: 4px; border-radius: 2px; background: rgba(241,233,216,.35); }
-#strip .row { display: flex; justify-content: space-between; width: 100%; padding: 0 var(--pad); font-size: calc(15px * var(--ts)); }
-#strip .row b { font-weight: 600; } #strip .row span { color: var(--plum-muted); }
-/* 2.28.0: the count sits beside the words, and + New has the right end of the strip (its own button, laid over it). */
-#strip .row { justify-content: flex-start; gap: 10px; }
-#stripNew { position: absolute; right: 0; bottom: 0; height: var(--strip); z-index: 3; display: flex; align-items: flex-start;
-  padding: calc(10px + 4px + 12px - 14px) var(--pad) 0 28px; color: var(--pist); font-weight: 600; font-size: calc(16px * var(--ts)); }
-#stripNew span { display: block; padding: 14px 0; line-height: calc(18px * var(--ts)); margin-top: 1px; }
-body.plum #strip, body.plum #stripNew { opacity: 0; pointer-events: none; }
+  border-radius: 22px 22px 0 0; display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 2px; transition: height .25s ease; z-index: 2; width: 100%; cursor: pointer; }
+#strip .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--grab); }
+/* 2.37.0: one row, laid out by flex: Your thoughts and the count on the left, + New on the right, both 44 pt tall.
+   (Before, + New was a separate button lined up with the row by a hand-tuned number.) */
+#strip .row { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 0 0 var(--pad); font-size: calc(15px * var(--ts)); }
+#stripOpen { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 44px; text-align: left; }
+#stripOpen b { font-weight: 600; } #stripOpen span { color: var(--plum-muted); }
+#stripNew { flex: none; min-height: 44px; padding: 0 var(--pad) 0 28px; color: var(--pist); font-weight: 600; font-size: calc(16px * var(--ts)); }
+body.plum #strip { opacity: 0; pointer-events: none; }
 /* 2.28.0: while the sheet is shut or shutting it lies under the strip, so it slides in behind the strip and its header
    never shows in the strip's place; its contents fade as it goes. Open or being pulled up, it is on top (z-index 6). */
 #lib:not(.open):not(.drag) { z-index: 1; }
@@ -139,8 +144,7 @@ body.plum #strip, body.plum #stripNew { opacity: 0; pointer-events: none; }
   opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; pointer-events: none; }
 #toast.on { opacity: 1; transform: none; pointer-events: auto; }
 #toast span { opacity: .75; }
-#toast button { padding: 10px 14px; font-weight: 700; }
-#toast #toastDel { padding-left: 4px; }
+#toast button { padding: 10px 14px; font-weight: 700; min-height: 44px; }
 #toast.done { padding: 12px 18px; }
 #toast.done span { opacity: 1; font-weight: 600; }
 /* 2.33.0: a failed save. Its own place at the top, above every sheet, so a move's Undo can never cover it. */
@@ -165,10 +169,15 @@ textarea::placeholder { color: var(--plum-faint); }
 /* 2.30.0: onboarding. The first screen asks one thing, and offers a set as an equal second choice. */
 /* 2.33.1: a label for the field, so tapping the question puts the cursor in it. */
 .whead { display: block; margin: 0 0 -10px; font-size: calc(15px * var(--ts)); font-weight: 600; color: var(--plum-muted); flex: none; }
-#writeText.example::placeholder { color: rgba(241,233,216,.38); }
-.startset { align-self: stretch; text-align: left; margin-top: 6px; padding: 14px 16px; border-radius: 14px; background: rgba(185,201,163,.12);
+/* 2.37.0: the example is plainly an example: regular weight, half strength, so it never looks already typed. */
+#writeText.example:placeholder-shown { font-weight: 400; }
+#writeText.example::placeholder { color: rgba(241,233,216,.5); font-weight: 400; }
+.startset { align-self: stretch; text-align: left; margin-top: 6px; padding: 14px 16px; border-radius: 14px; background: rgba(185,201,163,.2);
   color: var(--plum-ink); font-size: calc(15px * var(--ts)); line-height: 1.35; flex: none; }
-.startset b { display: block; color: var(--pist); font-weight: 600; margin-bottom: 2px; }
+.startset b { display: block; color: var(--plum-ink); font-weight: 600; margin-bottom: 2px; }
+/* 2.37.0: the card says what tapping it does, in the action color. */
+.startset .go { display: block; margin-top: 8px; color: var(--pist); font-weight: 700; }
+.addfrom { align-self: flex-start; color: var(--pist); font-weight: 600; font-size: calc(15px * var(--ts)); padding: 12px 0; min-height: 44px; flex: none; }
 /* The set offer: on the reading screen after the first thought, and on the end screen while there are few thoughts. */
 #setOffer { position: absolute; left: 16px; right: 16px; bottom: calc(var(--strip) + 14px); z-index: 4; background: var(--plum); color: var(--plum-ink);
   border-radius: 18px; padding: 16px 18px 10px; box-shadow: 0 10px 30px rgba(20,10,24,.25); }
@@ -185,7 +194,7 @@ textarea::placeholder { color: var(--plum-faint); }
 #tip .hole { position: absolute; border-radius: 16px; box-shadow: 0 0 0 200vmax rgba(18,9,22,.66); pointer-events: none; transition: opacity .2s; }
 #tip .tt { position: absolute; left: var(--pad); right: var(--pad); color: #F1E9D8; font-size: calc(17px * var(--ts)); font-weight: 600; line-height: 1.35; }
 #tip .tt span { display: block; margin-top: 8px; font-size: calc(14px * var(--ts)); font-weight: 400; color: #BBA7BE; }
-#tipsAgain { margin-top: 18px; border-top: 1px solid rgba(241,233,216,.12); padding-left: 0; padding-right: 0; }
+#tipsAgain { margin-top: 18px; border-top: 1px solid var(--line); padding-left: 0; padding-right: 0; }
 #tipsAgain .v { font-size: calc(14px * var(--ts)); color: var(--plum-muted); }
 .swipehint { position: absolute; left: 50%; bottom: calc(var(--bot) + 18px); transform: translateX(-50%); white-space: nowrap;
   background: var(--plum-ink); color: var(--plum); font-size: calc(15px * var(--ts)); font-weight: 600; padding: 11px 18px; border-radius: 999px;
@@ -205,12 +214,14 @@ textarea::placeholder { color: var(--plum-faint); }
 .byfield::placeholder { color: var(--plum-faint); }
 .formfoot { position: absolute; left: var(--pad); right: var(--pad); bottom: calc(var(--bot) + 28px); display: flex; align-items: center; justify-content: space-between; }
 .quiet { color: var(--plum-muted); font-size: calc(15px * var(--ts)); padding: 12px 0; }
+/* 2.37.0: Choose a file is an action, so it is an action word. */
+#impFileBtn { color: var(--pist); font-weight: 600; }
 .quiet.armed { color: var(--plum-ink); font-weight: 700; }
 /* 2.29.0: Delete, armed, turns a soft coral, and a thin line shows the 4 seconds before it resets. */
 #editDelete { position: relative; }
-#editDelete.armed { color: #F2A69B; }
-#editDelete .dbar { position: absolute; left: 0; bottom: 6px; height: 3px; border-radius: 2px; background: rgba(242,166,155,.25); width: 100%; overflow: hidden; }
-#editDelete .dbar i { display: block; height: 100%; background: #F2A69B; width: 100%; transform-origin: left; animation: dbar 4s linear forwards; }
+#editDelete.armed { color: var(--danger); }
+#editDelete .dbar { position: absolute; left: 0; bottom: 6px; height: 3px; border-radius: 2px; background: color-mix(in srgb, var(--danger) 25%, transparent); width: 100%; overflow: hidden; }
+#editDelete .dbar i { display: block; height: 100%; background: var(--danger); width: 100%; transform-origin: left; animation: dbar 4s linear forwards; }
 @keyframes dbar { to { transform: scaleX(0); } }
 @media (prefers-reduced-motion: reduce) { #editDelete .dbar i { animation: none; } }
 .kept { position: absolute; left: var(--pad); right: var(--pad); top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
@@ -229,7 +240,7 @@ textarea::placeholder { color: var(--plum-faint); }
 #libShade { position: absolute; inset: 0; z-index: 5; display: none; }
 #libShade.on { display: block; }
 #lib .grabbtn { align-self: center; padding: 10px 40px 14px; touch-action: none; }
-#lib .grabbtn i { display: block; width: 36px; height: 4px; border-radius: 2px; background: rgba(241,233,216,.35); }
+#lib .grabbtn i { display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--grab); }
 #lib header { padding: 0 var(--pad) 14px; display: flex; flex-direction: column; gap: 14px; touch-action: none; }
 #lib header div { display: flex; justify-content: space-between; align-items: baseline; }
 #lib h2 { margin: 0; font-size: calc(28px * var(--ts)); font-weight: 700; letter-spacing: -0.02em; }
@@ -243,22 +254,25 @@ textarea::placeholder { color: var(--plum-faint); }
 /* 2.33.0: every word-action is at least 44 points tall to a finger (Apple's minimum), without changing how it looks:
    an invisible ::before widens the touch area around the word. The filter row gets room above and below so its
    sideways scroll doesn't clip that area. */
-.lrow .back, .seg button, .bylink, .ewords button, #setOffer .so button, #setOffer .no, #impFileBtn, #argPage .lk button, .whynext, #toast button, #lib .grabbtn { position: relative; }
-.lrow .back::before, .seg button::before, .bylink::before, .ewords button::before, #editDelete::before, #ten .no::before, #setOffer .so button::before, #setOffer .no::before,
+.lrow .back, .lrow .del, .seg button, .bylink, .ewords button, .addfrom, #setOffer .so button, #setOffer .no, #impFileBtn, #argPage .lk button, .whynext, #toast button, #lib .grabbtn { position: relative; }
+.lrow .back::before, .lrow .del::before, .addfrom::before, .seg button::before, .bylink::before, .ewords button::before, #editDelete::before, #ten .no::before, #setOffer .so button::before, #setOffer .no::before,
 #impFileBtn::before, #argPage .lk button::before, .whynext::before, #toast button::before, #lib .grabbtn::before, #saveFail button::before {
   content: ""; position: absolute; left: -6px; right: -6px; top: 50%; height: max(44px, 100%); transform: translateY(-50%); }
 #lib .seg { padding-top: 6px; padding-bottom: 6px; margin-top: -6px; margin-bottom: -6px; }
-.seg button { font-size: calc(14px * var(--ts)); padding: 7px 13px; border-radius: 999px; color: var(--plum-muted); background: rgba(241,233,216,.06); white-space: nowrap; flex: none; }
-.seg button[aria-pressed="true"] { color: var(--plum); background: var(--plum-ink); font-weight: 600; }
-#q { width: 100%; font: inherit; font-size: calc(16px * var(--ts)); color: var(--plum-ink); background: rgba(241,233,216,.08); border: 0; border-radius: 12px; padding: 12px 14px; outline: none; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
-#q::placeholder { color: var(--plum-faint); }
+/* 2.37.0: filters are words, not pills: the chosen one in ink, a little bolder, with a 2 px line under it. */
+.seg button { font-size: calc(15px * var(--ts)); padding: 0 2px; min-height: 44px; color: var(--plum-muted); background: none; white-space: nowrap; flex: none;
+  border-bottom: 2px solid transparent; border-radius: 0; }
+.seg button[aria-pressed="true"], .seg button[aria-checked="true"] { color: var(--plum-ink); font-weight: 600; border-bottom-color: var(--plum-ink); }
+#lib .seg { gap: 20px; }
+#q { width: 100%; font: inherit; font-size: calc(16px * var(--ts)); color: var(--plum-ink); background: var(--tint); border: 0; border-radius: 12px; padding: 12px 14px; outline: none; caret-color: var(--pist); user-select: text; -webkit-user-select: text; }
+#q::placeholder { color: var(--plum-muted); }
 #libList { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 0 var(--pad) calc(var(--bot) + 32px); }
 #libList h3 { margin: 18px 0 2px; font-size: calc(13px * var(--ts)); font-weight: 500; color: var(--plum-muted); }
-.lrow { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid rgba(241,233,216,.12); width: 100%; text-align: left; }
+.lrow { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); width: 100%; text-align: left; }
 .lrow .t { font-size: calc(17px * var(--ts)); line-height: 1.3; }
 .lrow .m { font-size: calc(13px * var(--ts)); color: var(--plum-muted); white-space: nowrap; }
 /* 2.15.0: the list by where you stand. Each group is one row (name, a short line, count); tap to open it. */
-.lgrp { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 15px 0; border-bottom: 1px solid rgba(241,233,216,.12); min-height: 64px; }
+.lgrp { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 15px 0; border-bottom: 1px solid var(--line); min-height: 64px; }
 .lgrp .gt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .lgrp .gn { font-size: calc(17px * var(--ts)); font-weight: 600; }
 .lgrp .gd { font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
@@ -266,7 +280,7 @@ textarea::placeholder { color: var(--plum-faint); }
 .lgrp .gv { display: inline-block; font-size: calc(18px * var(--ts)); color: var(--plum-muted); transition: transform .2s; width: 12px; text-align: center; }
 .lgrp[aria-expanded="true"] .gv { transform: rotate(90deg); }
 .lgrp + .gbody .lrow.one { padding-left: 14px; }
-.gbody { border-bottom: 1px solid rgba(241,233,216,.12); }
+.gbody { border-bottom: 1px solid var(--line); }
 .gbody .lrow.one:last-child { border-bottom: 0; }
 #libList h3.js { margin-top: 10px; }
 /* 2.13.0: one calm line per thought, cut with an ellipsis, so the list can be scanned. */
@@ -276,6 +290,11 @@ textarea::placeholder { color: var(--plum-faint); }
 .lrow.one .m { display: inline-flex; align-items: center; gap: 6px; flex: none; }
 .lrow.one .m .bk { width: 10px; height: 13px; margin: 0; }
 .lrow.away .t { color: var(--plum-muted); }
+.lrow .t { text-align: left; }
+#libToast { position: absolute; left: 16px; right: 16px; bottom: calc(var(--bot) + 16px); z-index: 3; display: flex; align-items: center; justify-content: space-between;
+  background: var(--plum-ink); color: var(--plum); border-radius: 16px; padding: 4px 4px 4px 18px; font-size: calc(15px * var(--ts)); }
+#libToast[hidden] { display: none; }
+#libToast button { min-height: 44px; padding: 0 16px; font-weight: 700; }
 /* The archive row: quiet, at the foot of All; and the way back at the top of Put away. */
 .lrow.arch { align-items: center; margin-top: 20px; min-height: 52px; }
 .lrow.arch .t { color: var(--plum-muted); font-size: calc(16px * var(--ts)); }
@@ -285,7 +304,8 @@ textarea::placeholder { color: var(--plum-faint); }
 #editMark { right: 0; min-width: 0; padding: 20px var(--pad) 20px 28px; display: flex; align-items: center; gap: 8px; color: var(--plum-muted); }
 #editMark svg { width: 16px; height: 20px; }
 #editMark[aria-pressed="true"] { color: var(--pist); font-weight: 600; }
-.lrow .back { font-size: calc(13px * var(--ts)); font-weight: 600; color: var(--pist); white-space: nowrap; padding: 4px 0; }
+.lrow .back, .lrow .del { font-size: calc(13px * var(--ts)); font-weight: 600; color: var(--pist); white-space: nowrap; padding: 4px 0; }
+.lrow .del { color: var(--plum-muted); font-weight: 500; margin-left: 14px; } .lrow .del.armed { color: var(--danger); font-weight: 700; }
 #libList { padding-bottom: calc(var(--bot) + 40px); }
 #lib header .top { display: flex; justify-content: space-between; align-items: center; }
 /* 2.28.1: with + New gone from the sheet, the gear lines up with the search field and the list (its 24 px icon sits in a 48 px tap area). */
@@ -295,7 +315,7 @@ textarea::placeholder { color: var(--plum-faint); }
 #lib .qrow .gear { flex: none; margin-right: -12px; }
 /* 2.29.0: one finding from Insights, a sentence a day; tap for the page. */
 #lib .daily { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; align-items: center; width: 100%; text-align: left;
-  background: rgba(185,201,163,.12); border-radius: 14px; padding: 12px 14px; color: var(--plum-ink); }
+  background: var(--pist-tint); border-radius: 14px; padding: 12px 14px; color: var(--plum-ink); }
 #lib .daily .k { grid-column: 1; font-size: calc(12px * var(--ts)); color: var(--plum-muted); margin-bottom: 2px; }
 #lib .daily .s { grid-column: 1; font-size: calc(15px * var(--ts)); line-height: 1.35; }
 #lib .daily .s b { color: var(--pist); font-weight: 700; }
@@ -317,7 +337,7 @@ textarea::placeholder { color: var(--plum-faint); }
 .page .body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 0 0 calc(var(--bot) + 40px); }
 .page .sh { margin: 26px var(--pad) 4px; font-size: calc(13px * var(--ts)); font-weight: 500; color: var(--plum-muted); }
 .srow { display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%; min-height: 52px; padding: 0 var(--pad); font-size: calc(17px * var(--ts)); text-align: left;
-  border-bottom: 1px solid rgba(241,233,216,.12); }
+  border-bottom: 1px solid var(--line); }
 .srow .v { font-size: calc(15px * var(--ts)); color: var(--plum-muted); white-space: nowrap; }
 .srow .chev { color: var(--plum-muted); font-size: calc(20px * var(--ts)); }
 .srow .v .chev { margin-left: 6px; vertical-align: -1px; }
@@ -331,10 +351,10 @@ textarea::placeholder { color: var(--plum-faint); }
 .imptext { display: block; margin: 14px var(--pad) 0; width: calc(100% - 2 * var(--pad)); min-height: 150px; font-size: calc(16px * var(--ts)); line-height: 1.45;
   background: rgba(241,233,216,.06); border-radius: 12px; padding: 12px 14px; }
 .improw { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px var(--pad) 0; flex-wrap: wrap; }
-.improw .seg { display: flex; gap: 6px; }
+.improw .seg { display: flex; gap: 18px; }
 .improw .seg[hidden] { display: none; }
 #impList { margin-top: 6px; }
-#impList .ir { display: block; width: 100%; text-align: left; padding: 12px var(--pad); border-bottom: 1px solid rgba(241,233,216,.12); }
+#impList .ir { display: block; width: 100%; text-align: left; padding: 12px var(--pad); border-bottom: 1px solid var(--line); }
 #impList .ir .t { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: calc(16px * var(--ts)); line-height: 1.35; white-space: pre-line; }
 #impList .ir .b { display: block; margin-top: 4px; font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
 #impList .ir.off .t, #impList .ir.off .b { text-decoration: line-through; opacity: .45; }
@@ -346,24 +366,24 @@ textarea::placeholder { color: var(--plum-faint); }
 #aiNote .note { margin: 14px var(--pad) 6px; font-size: calc(18px * var(--ts)); line-height: 1.5; }
 #aiNote .facts { margin: 6px var(--pad) 0; padding: 0 0 0 18px; font-size: calc(14px * var(--ts)); line-height: 1.5; color: var(--plum-muted); }
 #aiNote table { margin: 10px var(--pad) 0; width: calc(100% - 2 * var(--pad)); border-collapse: collapse; font-size: calc(13px * var(--ts)); color: var(--plum-muted); font-variant-numeric: tabular-nums; }
-#aiNote th, #aiNote td { text-align: right; padding: 4px 0 4px 8px; border-bottom: 1px solid rgba(241,233,216,.08); }
+#aiNote th, #aiNote td { text-align: right; padding: 4px 0 4px 8px; border-bottom: 1px solid var(--line-soft); }
 #aiNote th:first-child, #aiNote td:first-child { text-align: left; padding-left: 0; }
 .srow.clr { min-height: 44px; font-size: calc(15px * var(--ts)); color: var(--plum-muted); padding-left: calc(var(--pad) + 14px); }
 .srow.clr.armed { color: var(--plum-ink); font-weight: 700; }
 .snote { margin: 10px var(--pad) 0; font-size: calc(14px * var(--ts)); line-height: 1.45; color: var(--plum-muted); }
 .snote.ok { color: var(--pist); }
 /* Settings (2.11.0): each group is a card one step lighter than the page, with its label above. */
-.grp { margin: 0 16px; background: rgba(241,233,216,.08); border-radius: 16px; overflow: hidden; }
+.grp { margin: 0 16px; background: var(--tint); border-radius: 16px; overflow: hidden; }
 #settings .sh { margin: 28px calc(16px + 18px) 8px; font-size: calc(13px * var(--ts)); font-weight: 500; letter-spacing: .02em; color: var(--plum-muted); }
 #settings .snote, #sets .snote, #imp .snote { margin-left: calc(16px + 18px); margin-right: calc(16px + 18px); }
 /* Sets and Import take the same cards. */
-#setList:not(:empty) { margin: 14px 16px 0; background: rgba(241,233,216,.08); border-radius: 16px; overflow: hidden; }
+#setList:not(:empty) { margin: 14px 16px 0; background: var(--tint); border-radius: 16px; overflow: hidden; }
 #setList .srow { padding-left: 18px; padding-right: 18px; }
 #setList .srow:last-child { border-bottom: 0; }
 #setList .srow.clr { padding-left: 32px; }
-#imp .imptext { margin: 14px 16px 0; width: calc(100% - 32px); background: rgba(241,233,216,.08); border-radius: 16px; padding: 14px 18px; }
+#imp .imptext { margin: 14px 16px 0; width: calc(100% - 32px); background: var(--tint); border-radius: 16px; padding: 14px 18px; }
 #imp .improw { margin: 4px 34px 0; }
-#impList:not(:empty) { margin: 10px 16px 0; background: rgba(241,233,216,.08); border-radius: 16px; overflow: hidden; }
+#impList:not(:empty) { margin: 10px 16px 0; background: var(--tint); border-radius: 16px; overflow: hidden; }
 #impList .ir { padding: 12px 18px; }
 #impList .ir:last-child { border-bottom: 0; }
 #impList .more { margin: 10px 18px; }
@@ -372,9 +392,9 @@ textarea::placeholder { color: var(--plum-faint); }
 .grp > .srow:last-child, .grp > :last-child { border-bottom: 0; }
 .grp .lookrow { display: flex; align-items: center; min-height: 52px; padding: 0 18px; font-size: calc(17px * var(--ts)); }
 .grp .lookseg { margin: 0; padding: 0 18px 14px; }
-.grp #lookSec:not([hidden]) + .srow { border-top: 1px solid rgba(241,233,216,.12); }
-.grp #themeSec + #lookSec:not([hidden]) { border-top: 1px solid rgba(241,233,216,.12); }
-.grp #themeSec + #lookSec[hidden] + .srow:not([hidden]) { border-top: 1px solid rgba(241,233,216,.12); }
+.grp #lookSec:not([hidden]) + .srow { border-top: 1px solid var(--line); }
+.grp #themeSec + #lookSec:not([hidden]) { border-top: 1px solid var(--line); }
+.grp #themeSec + #lookSec[hidden] + .srow:not([hidden]) { border-top: 1px solid var(--line); }
 .lookseg .tdot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
 /* The mark, small and last: the icon in one color, and where your thoughts live. */
 /* 2.13.0: the icon and the line side by side. */
@@ -391,8 +411,8 @@ textarea::placeholder { color: var(--plum-faint); }
 #vEdit { top: calc(var(--top) + 36px); left: 0; right: 0; bottom: 0; background: var(--plum); color: var(--plum-ink); border-radius: 22px 22px 0 0;
   z-index: 7; transform: translateY(100%); transition: transform .32s cubic-bezier(.2,.8,.2,1); box-shadow: 0 -10px 34px rgba(20,10,24,.22); }
 #vEdit.up { transform: none; }
-#vEdit .egrab { position: absolute; top: 0; left: 50%; margin-left: -58px; width: 116px; padding: 10px 40px 14px; z-index: 4; }
-#vEdit .egrab i { display: block; width: 36px; height: 4px; border-radius: 2px; background: rgba(241,233,216,.35); }
+#vEdit .egrab { position: absolute; top: 0; left: 50%; margin-left: -40px; width: 80px; padding: 10px 22px 14px; z-index: 4; }
+#vEdit .egrab i { display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--grab); }
 #vEdit .corner { top: 12px; }
 #vEdit .sheetform { top: 72px; }
 #editShade { position: absolute; inset: 0; z-index: 6; background: rgba(20,10,24,.26); opacity: 0; pointer-events: none; transition: opacity .32s; }
@@ -407,7 +427,8 @@ textarea::placeholder { color: var(--plum-faint); }
 #vEdit .hist { margin: 6px 0 0; color: var(--plum-muted); }
 .ewords { display: flex; gap: 28px; margin-top: 22px; flex: none; }
 .ewords[hidden] { display: none; }
-.ewords button { font-size: calc(16px * var(--ts)); font-weight: 600; color: var(--pist); padding: 6px 0; }
+.ewords { flex-wrap: wrap; row-gap: 0; }
+.ewords button { font-size: calc(16px * var(--ts)); font-weight: 600; color: var(--pist); padding: 6px 0; min-height: 44px; }
 .ewords button.on { color: var(--plum-muted); font-weight: 500; }
 .ewords button[hidden] { display: none; }
 .enote { margin-top: 16px; font-size: calc(17px * var(--ts)); line-height: 1.45; min-height: 52px; }
@@ -415,7 +436,8 @@ textarea::placeholder { color: var(--plum-faint); }
 #vEdit .argbox { margin-top: 18px; }
 /* 2.19.0 Insights as findings: one sentence each, the evidence a tap away. */
 #insBody { padding: 4px var(--pad) 0 !important; }
-.fd { display: grid; grid-template-columns: 92px 1fr 14px; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 16px 0; border-bottom: 1px solid rgba(241,233,216,.12); }
+/* 2.37.0: the number column grows with its number (at larger text "75%" no longer clips). */
+.fd { display: grid; grid-template-columns: minmax(calc(92px + (var(--ts) - 1) * 40px), max-content) minmax(0, 1fr) 14px; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 16px 0; border-bottom: 1px solid var(--line); }
 /* 2.23.0: the number column */
 .fd .n { font-size: calc(40px * var(--ts)); font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: var(--pist); font-variant-numeric: tabular-nums; }
 .fd .n.word { font-size: calc(24px * var(--ts)); letter-spacing: -0.01em; }
@@ -423,16 +445,16 @@ textarea::placeholder { color: var(--plum-faint); }
 .fd .n.zero { color: var(--plum-muted); }
 .fd .tx { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .fd .s { font-size: calc(17px * var(--ts)); line-height: 1.2; font-weight: 600; color: var(--plum-ink); }
-.fd .d { font-size: calc(13.5px * var(--ts)); line-height: 1.35; color: var(--plum-muted); }
+.fd .d { font-size: calc(13px * var(--ts)); line-height: 1.35; color: var(--plum-muted); }
 #insBody .soon { margin-top: 28px; }
 #insBody .soon p { margin: 0 0 10px; font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
-#insBody .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-#insBody .chips i { font-style: normal; font-size: calc(13px * var(--ts)); color: var(--plum-muted); opacity: .85; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(241,233,216,.12); }
+/* 2.37.0: what's still to come is a plain line of words, not chips that look tappable. */
+#insBody .chips { margin: 0; font-size: calc(14px * var(--ts)); line-height: 1.45; color: var(--plum-muted); }
 .fd .c { font-size: calc(20px * var(--ts)); color: var(--plum-muted); transition: transform .2s; display: inline-block; width: 12px; text-align: center; margin-top: 1px; }
 .fd.open .c { transform: rotate(90deg); }
 .fd.plain { cursor: default; } .fd.plain .c { visibility: hidden; }
-.ev { padding: 0 0 8px 102px; border-bottom: 1px solid rgba(241,233,216,.12); animation: argIn .35s ease both; }
-.ir { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(241,233,216,.08); font-size: calc(15px * var(--ts)); }
+.ev { padding: 0 0 8px calc(102px + (var(--ts) - 1) * 40px); border-bottom: 1px solid var(--line); animation: argIn .35s ease both; }
+.ir { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line-soft); font-size: calc(15px * var(--ts)); }
 .ir:last-child { border-bottom: 0; }
 .ir .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ir .t .w, .ir .t .w2 { display: block; white-space: normal; font-size: calc(13px * var(--ts)); margin-top: 3px; }
@@ -448,7 +470,7 @@ textarea::placeholder { color: var(--plum-faint); }
 #insBody { padding-top: 4px; }
 #insBody .lead { margin: 6px var(--pad) 4px; font-size: calc(14px * var(--ts)); line-height: 1.45; color: var(--plum-muted); }
 #insBody .sh { margin-top: 30px; }
-.ins { margin: 0 var(--pad); padding: 12px 0; border-bottom: 1px solid rgba(241,233,216,.12); }
+.ins { margin: 0 var(--pad); padding: 12px 0; border-bottom: 1px solid var(--line); }
 .ins:last-of-type { border-bottom: 0; }
 .ins .q { margin: 0; font-size: calc(17px * var(--ts)); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .ins .was { margin: 0 0 6px; font-size: calc(15px * var(--ts)); line-height: 1.35; color: var(--plum-muted); text-decoration: line-through; text-decoration-color: rgba(187,167,190,.5); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -459,7 +481,7 @@ textarea::placeholder { color: var(--plum-faint); }
 .bars { display: flex; align-items: flex-end; gap: 8px; height: 46px; margin: 14px 0 6px; }
 .bars i { flex: 1; background: rgba(241,233,216,.16); border-radius: 3px 3px 0 0; min-height: 3px; }
 .bars i.top { background: var(--pist); }
-.barl { display: flex; gap: 8px; font-size: calc(11px * var(--ts)); color: var(--plum-muted); }
+.barl { display: flex; gap: 8px; font-size: calc(12px * var(--ts)); color: var(--plum-muted); }
 .barl span { flex: 1; text-align: center; }
 /* Say why */
 .whybody { display: flex; flex-direction: column; gap: 18px; padding: 8px var(--pad) 0 !important; }
@@ -470,7 +492,7 @@ textarea::placeholder { color: var(--plum-faint); }
 #toast #toastWhy { font-weight: 500; padding: 10px 12px; margin-left: 2px; opacity: .85; }
 #toast:not(.done) #toastMsg { padding-right: 12px; margin-right: 2px; border-right: 1px solid currentColor; border-right-color: color-mix(in srgb, currentColor 30%, transparent); }
 /* 2.31.0: refining a thought. */
-.getapp { display: block; margin: 6px var(--pad) 4px; padding: 14px 16px; border-radius: 14px; background: rgba(185,201,163,.12); color: var(--plum-ink); text-decoration: none; font-size: calc(14px * var(--ts)); line-height: 1.4; }
+.getapp { display: block; margin: 6px var(--pad) 4px; padding: 14px 16px; border-radius: 14px; background: var(--pist-tint); color: var(--plum-ink); text-decoration: none; font-size: calc(14px * var(--ts)); line-height: 1.4; }
 .getapp b { display: block; font-size: calc(15px * var(--ts)); margin-bottom: 2px; } .getapp span { display: block; margin-top: 6px; color: var(--pist); font-weight: 600; }
 .whynext { align-self: flex-start; color: var(--pist); font-weight: 600; font-size: calc(15px * var(--ts)); padding: 12px 0; }
 #vEdit .grew { margin: 12px 0 0; padding: 12px 14px; border-radius: 12px; background: rgba(241,233,216,.06); font-size: calc(13px * var(--ts)); line-height: 1.45; color: var(--plum-muted); }
@@ -483,7 +505,7 @@ textarea::placeholder { color: var(--plum-faint); }
 .lrow.one.away.has-why .t .tt { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* 2.16.0 Argue with it: a word, then plain text under a thin rule. No box, no badge. */
 .ewords button:disabled { color: var(--plum-muted); font-weight: 500; }
-.argbox { margin-top: -6px; padding-top: 16px; border-top: 1px solid rgba(241,233,216,.12); animation: argIn .45s ease both; }
+.argbox { margin-top: -6px; padding-top: 16px; border-top: 1px solid var(--line); animation: argIn .45s ease both; }
 @keyframes argIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .argbox .k { margin: 0 0 5px; font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
 .argbox .v { margin: 0 0 16px; font-size: calc(16px * var(--ts)); line-height: 1.45; }
@@ -512,7 +534,7 @@ textarea::placeholder { color: var(--plum-faint); }
 #argPage .aearlylist .ea { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(241,233,216,.05); font-size: calc(14px * var(--ts)); line-height: 1.45; }
 #argPage .aearlylist .ea .w { color: var(--plum-muted); text-decoration: line-through; text-decoration-color: rgba(187,167,190,.45); margin: 0 0 8px; }
 #argPage .aearlylist .ea p { margin: 0 0 6px; } #argPage .aearlylist .ea b { font-weight: 600; color: var(--plum-muted); font-size: calc(12px * var(--ts)); display: block; }
-#argPage .aend { flex: none; border-top: 1px solid rgba(241,233,216,.12); padding: 14px var(--pad) calc(var(--bot) + 18px); }
+#argPage .aend { flex: none; border-top: 1px solid var(--line); padding: 14px var(--pad) calc(var(--bot) + 18px); }
 #argPage .ask { margin: 0 0 8px; font-size: calc(16px * var(--ts)); font-style: italic; }
 #argPage .lk { display: flex; gap: 24px; } #argPage .lk button { color: var(--pist); font-weight: 600; font-size: calc(15px * var(--ts)); padding: 6px 0; }
 #argPage .lk button.q { color: var(--plum-muted); font-weight: 500; } #argPage .lk button:disabled { color: var(--plum-muted); }
@@ -522,7 +544,7 @@ textarea::placeholder { color: var(--plum-faint); }
 .argbox a { color: var(--pist); font-weight: 600; text-decoration: none; }
 /* 2.16.0 Tensions: one row in Your thoughts (a dot when a new pair is found), pairs with "and yet" between. */
 .lgrp.dot .gn::after { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--pist); margin-left: 8px; vertical-align: middle; }
-.tpair { display: block; width: 100%; text-align: left; padding: 12px 0 12px 14px; border-bottom: 1px solid rgba(241,233,216,.12); font-size: calc(16px * var(--ts)); }
+.tpair { display: block; width: 100%; text-align: left; padding: 12px 0 12px 14px; border-bottom: 1px solid var(--line); font-size: calc(16px * var(--ts)); }
 .tpair .l { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tpair i { display: block; font-style: normal; font-size: calc(12px * var(--ts)); color: var(--plum-muted); margin: 3px 0; }
 .gbody .tpair:last-child { border-bottom: 0; }
@@ -534,15 +556,16 @@ textarea::placeholder { color: var(--plum-faint); }
 #ten .by { margin: 9px 0 0; font-size: calc(14px * var(--ts)); font-weight: 500; color: var(--ground-muted); }
 #ten .yet { margin: 30px 0; display: flex; align-items: center; gap: 12px; font-size: calc(14px * var(--ts)); font-weight: 500; color: var(--ground-muted); }
 #ten .yet::after { content: ""; flex: 1; height: 1px; background: var(--ground-line); }
-#ten .tdone { position: absolute; left: 0; right: 0; top: calc(var(--top) + 76px); margin: 0; text-align: center; font-size: calc(15px * var(--ts)); font-weight: 500; opacity: .8; color: var(--ground-ink); pointer-events: none; }
+/* 2.37.0: Done is a real button (VoiceOver can find the way out), centred where "↑ Done" always sat. */
+#ten .tdone { position: absolute; left: 50%; transform: translateX(-50%); top: calc(var(--top) + 64px); margin: 0; padding: 12px 24px; min-height: 44px; text-align: center; font-size: calc(15px * var(--ts)); font-weight: 500; opacity: .8; color: var(--ground-ink); white-space: nowrap; }
 #ten .no { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); font-size: calc(15px * var(--ts)); font-weight: 500; color: var(--ground-muted); padding: 12px 20px; white-space: nowrap; }
 #ten.go { transition: transform .28s cubic-bezier(.4,0,.2,1), opacity .28s; transform: translateY(-60px); opacity: 0; }
 .made p { margin: 0; font-size: calc(12px * var(--ts)); line-height: 1.45; color: var(--plum-muted); }
 /* Settings, Look (2.8.0): Appearance is three choices in a row, like the library filters. */
-.lookseg { display: flex; gap: 8px; margin: 8px var(--pad) 0; }
+.lookseg { display: flex; gap: 20px; margin: 8px var(--pad) 0; }
 /* 2.33.0: on the Settings card the unselected choice sits on two tints; a touch lighter so it reads at 4.5:1. */
 .lookseg button:not([aria-checked="true"]) { color: color-mix(in srgb, var(--plum-muted) 78%, var(--plum-ink)); }
-.lookseg button[aria-checked="true"] { color: var(--plum); background: var(--plum-ink); font-weight: 600; }
+.lookseg button[aria-checked="true"] { color: var(--plum-ink); font-weight: 600; border-bottom-color: var(--plum-ink); }
 .icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px var(--pad) 0; }
 .icons button { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0; font-size: calc(13px * var(--ts)); color: var(--plum-muted); }
 .icons img { width: 60px; height: 60px; border-radius: 14px; box-shadow: 0 0 0 1px rgba(241,233,216,.22); outline: 2px solid transparent; outline-offset: 3px; transition: outline-color .15s; }
@@ -575,7 +598,8 @@ textarea::placeholder { color: var(--plum-faint); }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; }
-  #carry, #lib, body, .page { transition-duration: 0s !important; }
+  /* 2.37.0: Edit, a tension leaving and the strip's stretch are included. */
+  #carry, #lib, body, .page, #vEdit, #vEdit.settle, #vEdit.closing, #ten.go, #strip, #editShade, #toast { transition-duration: 0s !important; }
 }
 </style>
 </head>
@@ -594,22 +618,20 @@ textarea::placeholder { color: var(--plum-faint); }
     </div>
   </div>
   <div id="empty" hidden><h1 id="emptyHead">That's all for today.</h1><p id="emptySub"></p>
-    <div id="emptyActs"><button type="button" id="earlyBtn">Keep going</button><button type="button" id="earlyWrite">Write one</button><button type="button" id="earlyMarked" hidden>Bookmarked</button></div></div>
+    <div id="emptyActs"><button type="button" id="earlyBtn">Keep going</button><button type="button" id="earlyWrite">Write one</button><button type="button" id="earlyMarked" hidden>Bookmarked</button><button type="button" id="earlyFull" hidden>Scales Full</button></div></div>
   <p class="hint" id="hintDown" aria-hidden="true">Put away</p>
   <div class="sr" id="srActs">
     <button type="button" id="srNext">Next thought</button>
     <button type="button" id="srAway">Put away</button>
     <button type="button" id="srEdit">Edit this thought</button>
   </div>
-  <button id="strip" type="button" aria-label="Your thoughts. Open the list.">
+  <!-- 2.37.0: the strip holds two real buttons side by side (Your thoughts, + New); pull it up to open the list. -->
+  <div id="strip">
     <i class="grab" aria-hidden="true"></i>
-    <span class="row"><b>Your thoughts</b><span id="stripN">0</span></span>
-  </button>
-  <button id="stripNew" type="button" aria-label="New thought"><span>+ New</span></button>
+    <div class="row"><button type="button" id="stripOpen" aria-label="Your thoughts, 0. Open the list."><b>Your thoughts</b><span id="stripN" aria-hidden="true">0</span></button><button id="stripNew" type="button" aria-label="New thought">+ New</button></div>
+  </div>
   <div id="setOffer" role="region" aria-label="Add a set" hidden><p id="setOfferText">Scales works best with 20 or more thoughts. Add a set?</p><div class="so" id="setOfferSets"></div><button type="button" class="no" id="setOfferNo">Not now</button></div>
-  <div id="tip" hidden><div class="hole"></div><p class="tt" id="tipText"></p></div>
-  <p class="sr" id="tipSay" aria-live="polite"></p>
-  <div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastWhy" hidden>Say why</button><button type="button" id="toastUndo">Undo</button><button type="button" id="toastDel" hidden>Delete</button></div>
+  <div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastWhy" hidden>Say why</button><button type="button" id="toastUndo">Undo</button></div>
 </section>
 
 <!-- Write: plum. One field. -->
@@ -622,7 +644,8 @@ textarea::placeholder { color: var(--plum-faint); }
     <button class="bylink" type="button" id="writeByAdd">Add who said it</button>
     <label class="sr" for="writeBy">Who said it</label>
     <input class="byfield" id="writeBy" type="text" maxlength="200" placeholder="Who said it?" autocomplete="off" hidden>
-    <button class="startset" type="button" id="startFive" hidden><b>Or start with five lines worth keeping</b>From the Stoics, Franklin and more. Add your own any time.</button>
+    <button class="startset" type="button" id="startFive" hidden><b>Or start with five lines worth keeping</b>From the Stoics, Franklin and more. Add your own any time.<span class="go" aria-hidden="true">Start with five &#8250;</span></button>
+    <button class="addfrom" type="button" id="writeAddFrom" hidden>Or add a set, or import a list &#8250;</button>
   </div>
   <div class="formfoot"><span></span><button class="act" type="button" id="writeKeep" disabled>Keep</button></div>
   <div class="kept" id="writeKept" hidden><p class="k1">Kept.</p><p class="k2" id="writeKeptSub">It comes back tomorrow.</p></div>
@@ -641,7 +664,7 @@ textarea::placeholder { color: var(--plum-faint); }
     <input class="byline" id="editBy" type="text" maxlength="200" placeholder="Add who said it" autocomplete="off">
     <p class="hist" id="editHist"></p>
     <div class="grew" id="editGrew" hidden></div>
-    <div class="ewords" id="eWords"><button type="button" id="noteBtn">Add a note</button><button type="button" id="argBtn" hidden>Argue with it</button></div>
+    <div class="ewords" id="eWords"><button type="button" id="noteBtn">Add a note</button><button type="button" id="argBtn" hidden>Argue with it</button><button type="button" id="editBring" hidden>Bring back</button><button type="button" id="editWhy" hidden>Say why</button></div>
     <label class="sr" for="editNote">A note</label>
     <textarea class="enote" id="editNote" rows="2" maxlength="1500" placeholder="Anything that came up" hidden></textarea>
     <div class="argbox" id="argSafe" hidden>
@@ -665,9 +688,10 @@ textarea::placeholder { color: var(--plum-faint); }
       <button class="gear" type="button" id="libGear" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     </div>
     <button type="button" class="daily" id="libIns" hidden><span class="k">Insight</span><span class="s" id="libInsText"></span><span class="v" aria-hidden="true">&#8250;</span></button>
-    <div class="seg" id="seg" aria-label="Show"><button type="button" data-view="all">All</button><button type="button" data-view="new">New</button><button type="button" data-view="marked" id="segMarked">Bookmarked</button></div>
+    <div class="seg" id="seg" aria-label="Show"><button type="button" data-view="all">All</button><button type="button" data-view="new">New</button><button type="button" data-view="marked" id="segMarked">Bookmarked</button><button type="button" data-view="away" id="segAway">Put away</button></div>
   </header>
   <div id="libList"></div>
+  <div id="libToast" role="status" aria-live="polite" hidden><span></span><button type="button" id="libToastUndo">Undo</button></div>
 </section>
 
 <!-- Settings: your data, help, privacy. Reached from the gear in the library. -->
@@ -676,20 +700,6 @@ textarea::placeholder { color: var(--plum-faint); }
   <h1>Settings</h1>
   <div class="body">
     <a class="getapp" id="getApp" hidden target="_blank" rel="noopener"><b>Scales for iPhone</b>Argue with it, Tensions and an automatic iCloud backup are in the iPhone app.<span>Get it on the App Store &#8250;</span></a>
-    <div id="fullSec" hidden>
-      <p class="sh">Scales Full</p>
-      <div class="grp">
-        <button class="srow" type="button" id="setFull"><span>Scales Full</span><span class="v" id="setFullV"></span><span class="chev" aria-hidden="true">&#8250;</span></button>
-      </div>
-      <p class="snote">Free to use. Scales Full is $6.99, once. Nothing renews.</p>
-    </div>
-    <p class="sh">Insights</p>
-    <div class="grp">
-      <button class="srow" type="button" id="setIns"><span>Insights</span><span class="chev" aria-hidden="true">&#8250;</span></button>
-      <button class="srow" type="button" id="setAI" hidden><span>Themes and your week</span><span class="chev" aria-hidden="true">&#8250;</span></button>
-    </div>
-    <p class="snote" id="aiState" hidden></p>
-    <p class="snote" id="aiUses" hidden>Apple Intelligence on this iPhone writes Themes and your week, Argue with it in Edit, and Tensions in Your thoughts. They are Scales Full: free for your first 14 days, then $6.99, once. Nothing leaves your phone.</p>
     <p class="sh">Look</p>
     <div class="grp">
       <div id="themeSec">
@@ -711,6 +721,15 @@ textarea::placeholder { color: var(--plum-faint); }
       <button class="srow" type="button" id="setIcon" hidden><span>App icon</span><span class="v"><span id="setIconV">Automatic</span> <span class="chev" aria-hidden="true">&#8250;</span></span></button>
     </div>
     <p class="snote" id="lookMsg">Automatic follows your iPhone.</p>
+    <!-- 2.37.0: Scales Full sits under Look (it opened Settings before), and moves to the end once it is yours. -->
+    <div id="fullSec" hidden>
+      <p class="sh">Scales Full</p>
+      <div class="grp">
+        <button class="srow" type="button" id="setFull"><span>Scales Full</span><span class="v" id="setFullV"></span><span class="chev" aria-hidden="true">&#8250;</span></button>
+      </div>
+      <p class="snote" id="fullSecNote"></p>
+      <p class="snote" id="aiState" hidden></p>
+    </div>
     <p class="sh">Add and back up</p>
     <div class="grp">
       <button class="srow" type="button" id="setSets"><span>Sets</span><span class="v"><span id="setSetsV"></span><span class="chev" aria-hidden="true">&#8250;</span></span></button>
@@ -720,17 +739,18 @@ textarea::placeholder { color: var(--plum-faint); }
     <p class="sh">Help and about</p>
     <div class="grp">
       <button class="srow" type="button" id="setHelp"><span>How Scales works</span><span class="chev" aria-hidden="true">&#8250;</span></button>
-      <a class="srow" id="setFeedback" href="mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback"><span>Send feedback</span><span class="chev" aria-hidden="true">&#8250;</span></a>
+      <!--email_off--><a class="srow" id="setFeedback" href="mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback"><span>Send feedback</span><span class="chev" aria-hidden="true">&#8250;</span></a><!--/email_off-->
       <a class="srow" id="setSupport" href="https://scales.tangomike.app/support" target="_blank" rel="noopener"><span>Support</span><span class="chev" aria-hidden="true">&#8250;</span></a>
       <a class="srow" id="setPrivacy" href="https://scales.tangomike.app/privacy" target="_blank" rel="noopener"><span>Privacy</span><span class="chev" aria-hidden="true">&#8250;</span></a>
       <div class="srow" id="setVersionRow" role="text"><span>Version</span><span class="v" id="setVersion"></span></div>
     </div>
+    <div id="fullSecEnd"></div>
     <footer class="made"><img src="icons/pick/pistachio.png" alt="" width="24" height="24"><p>Your thoughts stay on your phone.</p></footer>
   </div>
 </section>
 <!-- Insights (2.17.0): counted on the phone from what you did. Only the parts with something true to say are shown. -->
 <section class="page" id="insPage" aria-label="Insights" aria-hidden="true">
-  <button class="pback" type="button" id="insBack">&#8249; Settings</button>
+  <button class="pback" type="button" id="insBack">&#8249; Your thoughts</button>
   <h1>Insights</h1>
   <div class="body" id="insBody"></div>
 </section>
@@ -798,16 +818,17 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 <section class="page" id="sets" aria-label="Sets" aria-hidden="true">
-  <button class="pback" type="button" id="setsBack">&#8249; Settings</button>
+  <button class="pback" type="button" id="setsBack">&#8249; Back</button>
   <h1>Sets</h1>
   <div class="body">
     <p class="snote" id="setsIntro">Lines to think about. Add a set and two of its lines join you each day.</p>
     <div id="setList"></div>
     <p class="snote" id="setsMsg" role="status" aria-live="polite"></p>
+    <p class="snote"><button type="button" class="addfrom" id="setsImport">Or import a list of your own &#8250;</button></p>
   </div>
 </section>
 <section class="page" id="ai" aria-label="Themes and your week" aria-hidden="true">
-  <button class="pback" type="button" id="aiBack">&#8249; Settings</button>
+  <button class="pback" type="button" id="aiBack">&#8249; Your thoughts</button>
   <h1>Themes and your week</h1>
   <div class="body">
     <p class="snote">Apple Intelligence runs on this iPhone, and nothing leaves it. Scales does all the counting; the model only names themes, sorts each thought and puts the counted facts into words.</p>
@@ -821,7 +842,7 @@ textarea::placeholder { color: var(--plum-faint); }
   </div>
 </section>
 <section class="page" id="imp" aria-label="Import thoughts" aria-hidden="true">
-  <button class="pback" type="button" id="impBack">&#8249; Settings</button>
+  <button class="pback" type="button" id="impBack">&#8249; Back</button>
   <h1>Import thoughts</h1>
   <div class="body">
     <p class="snote">Paste a note or a list of quotes, or choose a file (text, a CSV export, or a Kindle "My Clippings.txt"). A name after a dash, or under a quote, becomes who said it.</p>
@@ -852,7 +873,7 @@ textarea::placeholder { color: var(--plum-faint); }
     <h2>How long you stay decides when it comes back.</h2>
     <p><strong>20 seconds or less:</strong> back in five days, a little bolder.<br><strong>30 seconds or more:</strong> it rests longer each time.<br><strong>An edit or a note:</strong> it rests longest.</p>
     <p>Each day leads with the ones you've gone longest without seeing, so all of them come round. Nothing leaves unless you put it away.</p>
-    <p id="helpFull" hidden><strong>Scales Full</strong> adds Argue with it, Tensions, and Themes and your week. Free for your first 14 days, then $6.99, once. Nothing renews. Find it in Settings.</p>
+    <p id="helpFull" hidden></p>
     <button class="srow" type="button" id="tipsAgain"><span>Show the tips again</span><span class="v" id="tipsAgainV"></span></button>
   </div>
 </section>
@@ -868,18 +889,23 @@ textarea::placeholder { color: var(--plum-faint); }
     <p class="snote"><strong>Tensions:</strong> pairs of your own thoughts that pull against each other.</p>
     <p class="snote"><strong>Themes and your week:</strong> what you keep coming back to, counted by Scales and put into words.</p>
     <p class="snote">All of it runs on your iPhone with Apple Intelligence. Nothing leaves your phone.</p>
+    <!-- 2.37.0: what it needs, above Buy; on a phone that can't run it, this replaces Buy. -->
+    <p class="snote" id="fullNeeds"><strong>Needs Apple Intelligence:</strong> iPhone 15 Pro or later, on iOS 26.</p>
     <button class="srow" type="button" id="fullBuy"><span id="fullBuyL">Unlock Scales Full</span><span class="v" id="fullBuyV"></span></button>
     <button class="srow" type="button" id="fullRestore"><span>Restore purchase</span></button>
     <p class="snote" id="fullNote" role="status" aria-live="polite"></p>
-    <p class="snote">Free to use. Scales Full is $6.99, once. Nothing renews. No account. Your thoughts, backups and Insights stay free, and nothing you have written is ever locked.</p>
+    <p class="snote" id="fullFoot"></p>
   </div>
 </section>
 
 <!-- 2.33.0: a failed save is said in a message of its own that nothing else replaces, and stays until dismissed. -->
+<!-- 2.37.0: the hints sit above every screen (outside the reading screen, which goes inert while Edit is open). -->
+<div id="tip" hidden><div class="hole"></div><p class="tt" id="tipText"></p></div>
+<p class="sr" id="tipSay" aria-live="polite"></p>
 <div id="saveFail" role="alert" hidden><p id="saveFailMsg"></p><div class="sfa"><button type="button" id="saveFailGo">Back up now</button><button type="button" id="saveFailOk">Dismiss</button></div></div>
 
-<script src="core.js?v=2.36.1"></script>
-<script src="sets.js?v=2.36.1"></script>
+<script src="core.js?v=2.37.0"></script>
+<script src="sets.js?v=2.37.0"></script>
 <script>
 (function () {
   "use strict";
@@ -1065,6 +1091,18 @@ textarea::placeholder { color: var(--plum-faint); }
     $("themeColor").setAttribute("content", v || "#B9C9A3");
   }
   if (darkMq && darkMq.addEventListener) darkMq.addEventListener("change", themeColor);
+  // 2.37.0: the iPhone status bar follows the ground under it: light words on plum or graphite, dark words on
+  // pistachio or stone. The top of the screen is plum on Write and on every page; elsewhere it is the reading ground.
+  var lastBar = "";
+  function lum(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(String(hex).trim()); if (!m) return 1; var c = [0, 2, 4].map(function (i) { var x = parseInt(m[1].substr(i, 2), 16) / 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
+  function barStyle() {
+    var plumTop = mode === "write" || pageStack.length > 0;
+    var cs = getComputedStyle(document.documentElement), v = cs.getPropertyValue(plumTop ? "--plum" : "--ground").trim();
+    if (v.indexOf("var(") === 0) v = cs.getPropertyValue("--pist").trim();
+    var want = lum(v) < 0.25 ? "light" : "dark";
+    if (want !== lastBar) { lastBar = want; post({ type: "bar", style: want }); }
+  }
+  if (darkMq && darkMq.addEventListener) darkMq.addEventListener("change", function () { lastBar = ""; barStyle(); });
   var editHideT = 0;
   function setMode(m) {
     if (m !== mode) track("screen", { to: m });
@@ -1084,9 +1122,9 @@ textarea::placeholder { color: var(--plum-faint); }
       else ev.hidden = true;
     }
     $("vMeet").style.visibility = m === "write" ? "hidden" : "visible";
-    $("vMeet").setAttribute("aria-hidden", m === "edit" || m === "write" ? "true" : "false");
+    // 2.37.0: inert, not aria-hidden, so the focus can never be left inside what is hidden.
     document.body.classList.toggle("plum", m === "write");
-    themeColor();
+    themeColor(); layers();
     if (m === "meet") clockOn();
     if (m === "write" || m === "edit") growAll();
   }
@@ -1106,10 +1144,12 @@ textarea::placeholder { color: var(--plum-faint); }
     ui.review = r.card && r.review ? r.card.id : null; ui.pile = r.card ? r.pile : null; ui.why = r.why || null;
     saveUi(); return r;
   }
+  // 2.37.0: the count, and the name VoiceOver reads for it ("Your thoughts, 5. Open the list.").
+  function stripCount() { var n = C.list(store).length; $("stripN").textContent = n; $("stripOpen").setAttribute("aria-label", "Your thoughts, " + n + ". Open the list."); }
   function renderMeet(arrive) {
     var t = store[ui.cur];
     if (!t || (t.away && ui.review !== ui.cur)) { pick(); t = store[ui.cur]; }
-    $("stripN").textContent = C.list(store).length;
+    stripCount();
     if (!C.list(store).length) { openWrite(true); return; }
     $("carry").style.transition = "none"; $("carry").style.transform = ""; $("carry").style.opacity = "";
     $("hintUp").style.opacity = 0; $("hintDown").style.opacity = 0;
@@ -1123,6 +1163,9 @@ textarea::placeholder { color: var(--plum-faint); }
       var bm = C.bookmarked(store).length;
       $("earlyBtn").hidden = !probe.card;
       $("earlyMarked").hidden = !bm; $("earlyMarked").textContent = "Bookmarked \u00b7 " + bm;
+      // 2.37.0: near the end of the free days, one quiet row here (it used to open the Scales Full page by itself).
+      var fs = fullSt(), fullRow = fs.state === "trial" && fs.daysLeft <= 2 && aiOk;
+      $("earlyFull").hidden = !fullRow; if (fullRow) $("earlyFull").textContent = "Scales Full \u00b7 " + (fs.daysLeft === 1 ? "last free day" : fs.daysLeft + " free days left");
       offerSets("end");
       return;
     }
@@ -1211,7 +1254,8 @@ textarea::placeholder { color: var(--plum-faint); }
   var undoPoint = null;
   function snapshot() { clockOff(); return { id: ui.cur, t: JSON.parse(JSON.stringify(store[ui.cur])), ms: ui.ms, review: ui.review || null, pile: ui.pile || null }; }
   // A waiting Say why goes when the next move is made.
-  function dropWaitingToast() { if (!$("toastWhy").hidden && $("toast").classList.contains("on")) { $("toast").classList.remove("on"); undoPoint = null; } }
+  // 2.37.0: with VoiceOver on, every Undo waits for the next move too, so it can be found (G-5).
+  function dropWaitingToast() { if ((!$("toastWhy").hidden || voiceOverOn) && $("toast").classList.contains("on")) { $("toast").classList.remove("on"); undoPoint = null; tenUndo = null; delUndo = null; draftUndo = null; } }
   function goNext() {
     if (!store[ui.cur]) return;
     dropWaitingToast();
@@ -1228,39 +1272,41 @@ textarea::placeholder { color: var(--plum-faint); }
     if (!store[id].away) store[id].away = now().toISOString(); save();
     buzz("putAway");
     undoPoint = snap;
-    fly(1, function () { pick(id); renderMeet(true); whyId = trial ? null : id; toast("Put away", trial ? id : null); whyId = null; });
+    // 2.37.0: a set line not yet kept no longer gets Delete beside Undo (a mis-tap lost it for good); it can be deleted
+    // from Put away instead, where Delete asks twice and can be undone.
+    fly(1, function () { pick(id); renderMeet(true); whyId = trial ? null : id; toast("Put away"); whyId = null; });
   }
   $("srNext").onclick = goNext; $("srAway").onclick = goAway; $("srEdit").onclick = function () { openEdit(); };
 
   var toastT = 0;
-  var dropId = null, whyId = null, whyFor = null;
-  function toast(msg, canDrop) {
-    dropId = canDrop || null; $("toastDel").hidden = !dropId; $("toastUndo").hidden = false; $("toast").classList.remove("done");
+  var whyId = null, whyFor = null, draftUndo = null;
+  function toast(msg) {
+    $("toastUndo").hidden = false; $("toast").classList.remove("done");
     $("toastWhy").hidden = !whyId; if (whyId) $("toastWhy").setAttribute("data-id", whyId);
     $("toastMsg").textContent = msg; $("toast").classList.add("on");
     // 2.31.0: after putting a thought away, Say why and Undo wait until the next move instead of fading after 5 seconds.
-    clearTimeout(toastT); if (!whyId) toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; tenUndo = null; delUndo = null; }, 5000);
-    tenUndo = null; delUndo = null;
+    // 2.37.0: with VoiceOver on, every Undo waits until the next move (5 seconds is too short to find it by swiping).
+    clearTimeout(toastT); if (!whyId && !voiceOverOn) toastT = setTimeout(function () { $("toast").classList.remove("on"); undoPoint = null; tenUndo = null; delUndo = null; draftUndo = null; }, 5000);
+    tenUndo = null; delUndo = null; draftUndo = null;
   }
-  // Delete: the set line is gone for good, with its visits, so it never counts toward anything.
-  $("toastDel").onclick = function () {
-    var id = dropId; if (!id || !store[id]) return;
-    track("delete", { id: id, where: "toast", from: store[id].from || (store[id].set ? "set" : "own") });
-    delete store[id]; save();
-    var g = lsGet(KEY_GONE, []); if (g.indexOf(id) < 0) { g.push(id); lsSet(KEY_GONE, g); }
-    lsSet(KEY_LOG, lsGet(KEY_LOG, []).filter(function (e) { return e.id !== id; }));
-    undoPoint = null; dropId = null;
-    buzz("remove"); $("stripN").textContent = C.list(store).length;
-    done("Deleted. It won't come back.");
-  };
   // A clear confirmation that something is gone for good (2.5.0): the message in full strength with a check, held long enough to read.
   function done(msg, ms) {
     clearTimeout(toastT);
-    $("toastMsg").textContent = "\u2713 " + msg; $("toastUndo").hidden = true; $("toastDel").hidden = true; $("toastWhy").hidden = true;
+    $("toastMsg").textContent = "\u2713 " + msg; $("toastUndo").hidden = true; $("toastWhy").hidden = true;
     $("toast").classList.add("on", "done");
     toastT = setTimeout(function () { $("toast").classList.remove("on"); setTimeout(function () { $("toast").classList.remove("done"); $("toastUndo").hidden = false; }, 250); }, ms || 2600);
   }
   $("toastUndo").onclick = function () {
+    // 2.37.0: undoing Cancel puts the words back where they were being written.
+    if (draftUndo) {
+      var dr = draftUndo; draftUndo = null; $("toast").classList.remove("on"); buzz("undo"); track("undo", { what: "cancel", where: dr.kind });
+      if (dr.kind === "write") { openWrite(false); writeFrom = dr.from; $("writeText").value = dr.text; if (dr.by) { $("writeBy").value = dr.by; showBy(false); } setKeep(); grow($("writeText")); }
+      else if (store[dr.id]) {
+        if (ui.cur !== dr.id) { if (ui.cur) endVisit("list"); ui.cur = dr.id; ui.ms = 0; ui.worked = false; ui.argued = false; ui.review = null; ui.pile = "picked"; saveUi(); renderMeet(false); }
+        openEdit(); $("editText").value = dr.text; $("editNote").value = dr.note; $("editBy").value = dr.by; setMark(dr.mark); $("editNote").hidden = !dr.note; noteWords(); growAll();
+      }
+      return;
+    }
     // 2.22.0: undoing "Not a tension" puts the pair back.
     if (tenUndo) {
       var d = tenData(); d.gone = (d.gone || []).filter(function (x) { return x !== tenUndo.k; });
@@ -1358,7 +1404,7 @@ textarea::placeholder { color: var(--plum-faint); }
     var r = C.addSet(store, s, now(), lsGet(KEY_GONE, []));
     if (!lsSet(KEY, store)) { store = lsGet(KEY, store); hideOffer(); done("There isn't room on this phone to add that set."); return; }
     lsSet(KEY_GONE, r.gone); ui.setTaken = true; saveUi(); buzz("keep"); track("offer_take", { set: s.id, added: r.added });
-    $("stripN").textContent = C.list(store).length; var was = setOfferWhere; hideOffer();
+    stripCount(); var was = setOfferWhere; hideOffer();
     done(s.name + ": " + r.added + " lines added. Two arrive each day, starting today.", 4000);
     if (was === "end") { pick(); renderMeet(true); }
   });
@@ -1377,7 +1423,7 @@ textarea::placeholder { color: var(--plum-faint); }
   var writeFrom = null;
   function openWrite(home) {
     writeHome = !!home; writeFrom = null; $("writeHead").textContent = "What's on your mind?";
-    $("writeText").value = ""; $("writeKeep").disabled = true;
+    $("writeText").value = ""; setKeep();
     $("writeBy").value = ""; $("writeBy").hidden = true; $("writeByAdd").hidden = false;
     $("writeKept").hidden = true; $("writeForm").hidden = false; $("writeKeep").parentNode.hidden = false;
     // With nothing to go back to (an empty Scales), there is no Cancel.
@@ -1388,10 +1434,16 @@ textarea::placeholder { color: var(--plum-faint); }
     // 2.30.0: the first time, a heading says what to do, the example is lighter, and the set is a clear second choice.
     $("writeText").classList.toggle("example", first); $("writeHead").hidden = !first;
     $("startFive").hidden = !(first && window.ScalesSets);
+    // 2.37.0: while there are few thoughts, sets and import are offered here too, where people look for them.
+    fewOffer = !first && !home && C.list(store).length < 10; $("writeAddFrom").hidden = !fewOffer;
     closeLib(); setMode("write");
     if (!first) setTimeout(function () { $("writeText").focus(); }, 60);
   }
-  var EXAMPLE = "Most things go better when I slow down.";
+  // 2.37.0: said to be an example, so nobody tries to keep it as it is.
+  var EXAMPLE = "For example: Most things go better when I slow down.", fewOffer = false;
+  // Keep shows from the start, dimmed until there is something to keep (it used to be hidden).
+  function setKeep() { var on = !!$("writeText").value.trim(); $("writeKeep").disabled = false; $("writeKeep").setAttribute("aria-disabled", String(!on)); }
+  $("writeAddFrom").onclick = function () { setMode("meet"); renderMeet(false); openSets("meet"); };
   $("writeText").addEventListener("focus", function () { if (this.placeholder === EXAMPLE) this.placeholder = ""; });
   function showBy(focus) { $("writeByAdd").hidden = true; $("writeBy").hidden = false; if (focus) $("writeBy").focus(); }
   $("writeByAdd").onclick = function () { showBy(true); };
@@ -1408,14 +1460,20 @@ textarea::placeholder { color: var(--plum-faint); }
   };
   $("earlyWrite").onclick = function () { openWrite(false); };
   $("earlyMarked").onclick = function () { ui.view = "marked"; saveUi(); openLib(); };
+  $("earlyFull").onclick = function () { openFull("endday"); };
   // 2.28.0: + New lives on the strip, outside the sheet.
-  $("stripNew").onclick = function () { if (mode === "meet") openWrite(false); };
+  $("stripNew").onclick = function (e) { e.stopPropagation(); if (mode === "meet") openWrite(false); };
   $("writeText").addEventListener("input", function () {
-    $("writeKeep").disabled = !this.value.trim();
+    setKeep(); if (fewOffer) $("writeAddFrom").hidden = !!this.value.trim();
     // Typed with an opening quotation mark: it is probably a quote, so the "Who said it?" line opens (without the keyboard moving).
     if ($("writeBy").hidden && C.looksQuoted(this.value)) showBy(false);
   });
-  $("writeCancel").onclick = function () { setMode("meet"); renderMeet(false); };
+  // 2.37.0: Cancel with words typed keeps them for 5 seconds: "Not kept" with Undo (G-4).
+  $("writeCancel").onclick = function () {
+    var text = $("writeText").value, by = $("writeBy").hidden ? "" : $("writeBy").value, from = writeFrom;
+    $("writeText").blur(); setMode("meet"); renderMeet(false);
+    if (text.trim()) { toast("Not kept"); undoPoint = null; draftUndo = { kind: "write", text: text, by: by, from: from }; }
+  };
   $("writeKeep").onclick = function () {
     var text = $("writeText").value.trim(); if (!text) return;
     var t = C.make(text, now(), $("writeBy").hidden ? "" : $("writeBy").value);
@@ -1450,6 +1508,7 @@ textarea::placeholder { color: var(--plum-faint); }
     argPending = null; proPending = null; $("argSafe").hidden = true; $("editNote").placeholder = "Anything that came up";
     // 2.19.0: a note shows as plain text when there is one; otherwise "Add a note" opens a place to write it.
     $("editNote").hidden = !t.note; noteWords(); showArgBtn();
+    $("editBring").hidden = !t.away; $("editWhy").hidden = !t.away; $("editWhy").textContent = t.awayWhy ? "Change why" : "Say why"; wordsRow();
     disarm();
     setMode("edit"); used("edit"); spotDone("edit"); if (setOfferWhere) hideOffer();
     // 2.30.0: the first time Edit opens where Argue with it is available, it is pointed out once.
@@ -1457,9 +1516,23 @@ textarea::placeholder { color: var(--plum-faint); }
   }
   // The bookmark is set here and applied with Done, like the words; Cancel leaves it as it was.
   var editMarked = false;
-  function setMark(on) { editMarked = on; $("editMark").setAttribute("aria-pressed", String(on)); $("editMark").querySelector("path").setAttribute("fill", on ? "currentColor" : "none"); }
+  // 2.37.0: the word says the state too ("Bookmarked"), not only the icon's fill.
+  function setMark(on) { editMarked = on; $("editMark").setAttribute("aria-pressed", String(on)); $("editMark").querySelector("path").setAttribute("fill", on ? "currentColor" : "none"); $("editMark").querySelector("span").textContent = on ? "Bookmarked" : "Bookmark"; }
   $("editMark").onclick = function () { setMark(!editMarked); haptic("tick"); };
-  $("editCancel").onclick = function () { setMode("meet"); renderMeet(false); };
+  $("editCancel").onclick = function () {
+    var t = store[ui.cur], d = { kind: "edit", id: ui.cur, text: $("editText").value, note: $("editNote").value, by: $("editBy").value, mark: editMarked };
+    var changed = t && (d.text.trim() !== t.text || d.note.trim() !== (t.note || "") || d.by.trim() !== (t.by || "") || d.mark !== !!t.bookmarked);
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    setMode("meet"); renderMeet(false);
+    if (changed) { toast("Not kept"); undoPoint = null; draftUndo = d; }
+  };
+  // 2.37.0: a put-away thought opened from the list can be brought back, or given a reason, from here.
+  $("editBring").onclick = function () {
+    var t = store[ui.cur]; if (!t || !t.away) return;
+    t.away = null; delete t.awayWhy; t.due = C.addDays(C.dayKey(now()), 1); ui.review = null; saveUi(); save(); buzz("bringBack"); track("tap", { id: "bring:edit" });
+    $("editBring").hidden = true; $("editWhy").hidden = true; wordsRow(); stripCount(); done("Back in rotation. It comes back tomorrow.");
+  };
+  $("editWhy").onclick = function () { var id = ui.cur; if (store[id]) openWhy(id, "edit"); };
   $("editDone").onclick = function () {
     var t = store[ui.cur]; if (!t) return setMode("meet");
     var text = $("editText").value.trim(), note = $("editNote").value.trim();
@@ -1538,7 +1611,7 @@ textarea::placeholder { color: var(--plum-faint); }
     if (!$("ten").hidden) { $("ten").hidden = true; mode = "meet"; }
     clockOff(); $("q").value = ""; renderLib();
     $("lib").classList.add("open"); $("lib").setAttribute("aria-hidden", "false"); $("libShade").classList.add("on");
-    mode = "library"; used("sheet"); if (setOfferWhere === "first") hideOffer();
+    mode = "library"; used("sheet"); if (setOfferWhere === "first") hideOffer(); layers();
     // 2.30.0: the first time there are tensions, the row is pointed out once.
     setTimeout(function () { var tr = document.querySelector('#libList [data-group="tension"]:not([disabled])'); if (mode === "library" && tr) spot(tr, "ten", "Tensions", "Pairs of your own thoughts that pull against each other. Open one to see both side by side."); }, 500);
   }
@@ -1546,6 +1619,7 @@ textarea::placeholder { color: var(--plum-faint); }
     if (!$("lib").classList.contains("open")) return;
     $("lib").classList.remove("open"); $("lib").setAttribute("aria-hidden", "true"); $("libShade").classList.remove("on"); $("q").blur();
     if (mode === "library") { mode = "meet"; if (needsRender) { needsRender = false; renderMeet(false); } else clockOn(); }
+    layers();
   }
   var libCloseBlock = 0;
   $("libClose").onclick = function () { if (Date.now() - libCloseBlock > 400) closeLib(); };
@@ -1576,7 +1650,7 @@ textarea::placeholder { color: var(--plum-faint); }
   document.body.appendChild(botProbe);
   function homeBarZone() { return Math.max(botProbe.offsetHeight + 10, 30); }
   $("strip").addEventListener("pointerdown", function (e) {
-    if (mode !== "meet") return;
+    if (mode !== "meet" || e.target.closest("#stripNew")) return;
     if (e.clientY > window.innerHeight - homeBarZone()) { stripTap = true; return; }
     try { $("strip").setPointerCapture(e.pointerId); } catch (_) {}
     sheet = { y: e.clientY, t: Date.now(), dy: 0, from: "strip", moved: false }; stripTap = true;
@@ -1596,7 +1670,7 @@ textarea::placeholder { color: var(--plum-faint); }
     else { lib.classList.remove("drag"); lib.style.transform = ""; $("libShade").classList.remove("on"); }
   }
   $("strip").addEventListener("pointerup", stripUp); $("strip").addEventListener("pointercancel", stripUp);
-  $("strip").addEventListener("click", function () { if (stripTap) openLib(); stripTap = true; });
+  $("strip").addEventListener("click", function (e) { if (e.target.closest("#stripNew")) return; if (stripTap) openLib(); stripTap = true; });
   // Shutting, from the grabber or the header
   // 2.30.2: the whole header drags, search field, insight and chips included (with the title gone, leaving those out
   // left only thin gaps to grab, which made closing flaky). A tap still taps; a drag down never also taps.
@@ -1657,14 +1731,20 @@ textarea::placeholder { color: var(--plum-faint); }
     var view = ["away", "new", "marked"].indexOf(ui.view) >= 0 ? ui.view : "all", h = "";
     Array.prototype.forEach.call($("seg").children, function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-view") === view)); });
     renderLibCount();
+    // 2.37.0: "3d" is read aloud as "3 days".
+    var age = function (iso) { var a = C.ageLabel(iso, n), m = /^(\d+)(d|w|mo|y)$/.exec(a), u = { d: "day", w: "week", mo: "month", y: "year" };
+      return m ? '<span aria-label="' + m[1] + " " + u[m[2]] + (m[1] === "1" ? "" : "s") + '">' + a + "</span>" : esc(a); };
     var mark = function (t) { return t.bookmarked ? '<svg class="bk" viewBox="0 0 16 20" aria-label="Bookmarked"><path d="M2 1.5h12v17l-6-4.5-6 4.5z" fill="currentColor"/></svg>' : ""; };
     // 2.13.0: every row is one line in regular weight, with how long ago it was added on the right.
     var rotRow = function (t, review) {
-      return '<button type="button" class="lrow one" data-open="' + esc(t.id) + '"' + (review ? ' data-review="1"' : "") + '><span class="t">' + esc(firstLine(t.text)) + '</span><span class="m">' + mark(t) + esc(C.ageLabel(t.created, n)) + "</span></button>";
+      return '<button type="button" class="lrow one" data-open="' + esc(t.id) + '"' + (review ? ' data-review="1"' : "") + '><span class="t">' + esc(firstLine(t.text)) + '</span><span class="m">' + mark(t) + age(t.created) + "</span></button>";
     };
     var awayRow = function (t) {
-      // 2.17.0: the reason, if one was given, under the words; tap the words to say or change why.
-      return '<div class="lrow one away' + (t.awayWhy ? " has-why" : "") + '"><span class="t" data-why="' + esc(t.id) + '"><span class="tt">' + esc(firstLine(t.text)) + "</span>" + (t.awayWhy ? '<span class="whyl">' + esc(t.awayWhy) + "</span>" : "") + (t.ledTo && store[t.ledTo] ? '<span class="ledl">Led to: ' + esc(firstLine(store[t.ledTo].text)) + "</span>" : "") + '</span><span class="m">' + mark(t) + '<button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button></span></div>';
+      // 2.17.0: the reason, if one was given, under the words.
+      // 2.37.0: tapping the words opens the thought (read it in full; Bring back and Say why are in its Edit). A set line
+      // not yet kept also offers Delete here, which asks twice and can be undone (it used to sit beside Undo).
+      var del = C.onTrial(t) ? '<button type="button" class="del' + (awayDelArmed === t.id ? " armed" : "") + '" data-del="' + esc(t.id) + '">' + (awayDelArmed === t.id ? "Tap again to delete" : "Delete") + "</button>" : "";
+      return '<div class="lrow one away' + (t.awayWhy ? " has-why" : "") + '"><button type="button" class="t" data-open="' + esc(t.id) + '" data-review="1"><span class="tt">' + esc(firstLine(t.text)) + "</span>" + (t.awayWhy ? '<span class="whyl">' + esc(t.awayWhy) + "</span>" : "") + (t.ledTo && store[t.ledTo] ? '<span class="ledl">Led to: ' + esc(firstLine(store[t.ledTo].text)) + "</span>" : "") + '</button><span class="m">' + mark(t) + '<button type="button" class="back" data-back="' + esc(t.id) + '">Bring back</button>' + del + "</span></div>";
     };
     var none = function (msg) { return '<p class="lrow"><span class="m">' + msg + "</span></p>"; };
     if (view === "marked") {
@@ -1686,11 +1766,15 @@ textarea::placeholder { color: var(--plum-faint); }
     } else if (q) {
       // A search is flat: every match, newest first, with the group it sits in on the right.
       var hits = on.slice().sort(function (a, b) { return a.created < b.created ? 1 : -1; });
-      h += "<h3>Matches \u00b7 " + hits.length + "</h3>";
-      // 2.33.0: search results show two lines, so the words can be recognised.
-      h += hits.map(function (t) { return '<button type="button" class="lrow one hit" data-open="' + esc(t.id) + '"><span class="t">' + esc(firstLine(t.text)) + '</span><span class="m">' + mark(t) + esc(C.standingName(C.standing(t))) + "</span></button>"; }).join("") || none("Nothing in rotation matches.");
+      // 2.37.0: each section says what it is; "Nothing matches" only when neither has anything.
+      if (hits.length) {
+        h += "<h3>In rotation \u00b7 " + hits.length + "</h3>";
+        // 2.33.0: search results show two lines, so the words can be recognised.
+        h += hits.map(function (t) { return '<button type="button" class="lrow one hit" data-open="' + esc(t.id) + '"><span class="t">' + esc(firstLine(t.text)) + '</span><span class="m">' + mark(t) + esc(C.standingName(C.standing(t))) + "</span></button>"; }).join("");
+      }
       // A search looks at everything, so a put-away thought can still be found.
-      if (off.length) { h += '<h3 style="margin-top:28px">Put away \u00b7 ' + off.length + "</h3>"; h += off.map(awayRow).join(""); }
+      if (off.length) { h += '<h3' + (hits.length ? ' style="margin-top:28px"' : "") + '>Put away \u00b7 ' + off.length + "</h3>"; h += off.map(awayRow).join(""); }
+      if (!hits.length && !off.length) h += none("Nothing matches.");
     } else {
       // 2.15.0: where you stand. First the last few you saw, then one row per group, opened with a tap.
       var row = function (x) { return '<button type="button" class="lrow one" data-open="' + esc(x.t.id) + '"' + (x.t.away ? ' data-review="1"' : "") + '><span class="t">' + esc(firstLine(x.t.text)) + '</span><span class="m">' + mark(x.t) + esc(x.meta) + "</span></button>"; };
@@ -1700,9 +1784,11 @@ textarea::placeholder { color: var(--plum-faint); }
       // 2.16.0: Tensions, above the groups. Shown wherever Apple Intelligence is on, or once pairs have been found.
       var tens = C.liveTensions(tenData(), store), td = tenData(), tenShown = false;
       if (aiOk || tens.length) {
-        var tOpen = !!(open.tension && tens.length), fresh = tens.some(function (p) { return !td.viewed || p.at > td.viewed; });
-        h += '<div style="margin-top:' + (js.length ? 26 : 8) + 'px"><button type="button" class="lgrp' + (tens.length ? "" : " empty") + (fresh && !tOpen ? " dot" : "") + '" data-group="tension" aria-expanded="' + tOpen + '"' + (tens.length ? "" : " disabled") +
-          '><span class="gt"><span class="gn">Tensions</span><span class="gd">' + (tens.length ? "Your thoughts that pull against each other." : "Looking a little each day. None found yet.") + '</span></span><span class="gc">' + tens.length + '</span><span class="gv" aria-hidden="true">\u203a</span></button>' +
+        // 2.37.0: after the free days no new pairs are looked for, so the row says so instead of "Looking a little each day".
+        var tLocked = !fullOk(), tOpen = !!(open.tension && tens.length), fresh = tens.some(function (p) { return !td.viewed || p.at > td.viewed; });
+        var tNote = tens.length ? (tLocked ? "Pairs already found. New ones are part of Scales Full." : "Your thoughts that pull against each other.") : tLocked ? "Part of Scales Full \u203a" : "Looking a little each day. None found yet.";
+        h += '<div style="margin-top:' + (js.length ? 26 : 8) + 'px"><button type="button" class="lgrp' + (tens.length || tLocked ? "" : " empty") + (fresh && !tOpen ? " dot" : "") + '" data-group="tension"' + (tens.length ? ' aria-expanded="' + tOpen + '"' : "") + (tLocked && !tens.length ? ' data-full="tensions"' : "") + (tens.length || tLocked ? "" : " disabled") +
+          '><span class="gt"><span class="gn">Tensions</span><span class="gd">' + tNote + '</span></span><span class="gc">' + tens.length + '</span><span class="gv" aria-hidden="true">\u203a</span></button>' +
           // 2.33.0: a new pair shows right under the row, so it is one tap from the list, not two.
           (!tOpen && fresh ? (function () { var nw = tens.filter(function (p) { return !td.viewed || p.at > td.viewed; }).sort(function (x, y) { return x.at < y.at ? 1 : -1; })[0];
             return '<div class="gbody"><button type="button" class="tpair" data-newest="1" data-tension="' + esc(nw.a + "|" + nw.b) + '"><span class="l">' + esc(firstLine(store[nw.a].text)) + '</span><i>and yet</i><span class="l">' + esc(firstLine(store[nw.b].text)) + "</span></button></div>"; })() : "") +
@@ -1710,9 +1796,13 @@ textarea::placeholder { color: var(--plum-faint); }
         if (tOpen && fresh) { td.viewed = now().toISOString(); lsSet(KEY_TEN, td); }
         tenShown = true;
       }
+      // 2.37.0: Insights and Themes are content, so they sit here with Tensions rather than in Settings.
+      h += '<div' + (tenShown ? "" : ' style="margin-top:' + (js.length ? 26 : 8) + 'px"') + '><button type="button" class="lgrp" data-page="insights"><span class="gt"><span class="gn">Insights</span><span class="gd">What your visits show, counted on your phone.</span></span><span class="gv" aria-hidden="true">\u203a</span></button>' +
+        (aiOk ? '<button type="button" class="lgrp" data-page="themes"><span class="gt"><span class="gn">Themes and your week</span><span class="gd">' + (fullOk() || aiData().themes.length ? "What you keep coming back to." : "Part of Scales Full \u203a") + '</span></span><span class="gv" aria-hidden="true">\u203a</span></button>' : "") + "</div>";
+      tenShown = true;
       h += '<div style="margin-top:' + (tenShown ? 0 : js.length ? 26 : 8) + 'px">' + C.libraryGroups(on, n).map(function (g) {
         var isOpen = !!(open[g.key] && g.items.length);
-        return '<button type="button" class="lgrp' + (g.items.length ? "" : " empty") + '" data-group="' + g.key + '" aria-expanded="' + isOpen + '"' + (g.items.length ? "" : " disabled") + '><span class="gt"><span class="gn">' + g.name + '</span><span class="gd">' + g.note + '</span></span><span class="gc">' + g.items.length + '</span><span class="gv" aria-hidden="true">\u203a</span></button>' +
+        return '<button type="button" class="lgrp' + (g.items.length ? "" : " empty") + '" data-group="' + g.key + '"' + (g.items.length ? ' aria-expanded="' + isOpen + '"' : " disabled") + '><span class="gt"><span class="gn">' + g.name + '</span><span class="gd">' + g.note + '</span></span><span class="gc">' + g.items.length + '</span><span class="gv" aria-hidden="true">\u203a</span></button>' +
           (isOpen ? '<div class="gbody">' + g.items.map(row).join("") + "</div>" : "");
       }).join("") + "</div>";
       if (!on.length) h += none("Nothing here yet.");
@@ -1722,11 +1812,41 @@ textarea::placeholder { color: var(--plum-faint); }
     }
     $("libList").innerHTML = h;
   }
+  // 2.37.0: Delete for a set line not yet kept, from Put away: a second tap deletes, and Undo puts it back.
+  var awayDelArmed = null, awayDelT = 0;
+  function awayDelete(id) {
+    var t = store[id]; if (!t) return;
+    if (awayDelArmed !== id) { awayDelArmed = id; haptic("warning"); clearTimeout(awayDelT); awayDelT = setTimeout(function () { awayDelArmed = null; if (mode === "library") renderLib(); }, 4000); renderLib(); return; }
+    awayDelArmed = null; clearTimeout(awayDelT);
+    track("delete", { id: id, where: "away", from: t.from || (t.set ? "set" : "own") });
+    // Its visits go too, so a line never kept counts toward nothing; Undo puts both back.
+    var keptCopy = JSON.parse(JSON.stringify(t)), wasGone = lsGet(KEY_GONE, []).indexOf(id) >= 0, lg = lsGet(KEY_LOG, []);
+    var visits = lg.filter(function (e) { return e.id === id; });
+    if (t.from || t.set) { var g = lsGet(KEY_GONE, []); if (g.indexOf(id) < 0) { g.push(id); lsSet(KEY_GONE, g); } }
+    delete store[id]; save(); if (visits.length) lsSet(KEY_LOG, lg.filter(function (e) { return e.id !== id; }));
+    buzz("remove"); stripCount(); renderLib();
+    libToast("Deleted.", { id: id, t: keptCopy, wasGone: wasGone, visits: visits });
+  }
+  // A small Undo line inside Your thoughts (the reading screen's Undo sits under the sheet).
+  function libToast(msg, undo) {
+    var el = $("libToast"); el.querySelector("span").textContent = msg; el.hidden = false; libUndo = undo;
+    clearTimeout(libToastT); if (!voiceOverOn) libToastT = setTimeout(function () { el.hidden = true; libUndo = null; }, 5000);
+  }
+  var libUndo = null, libToastT = 0;
+  $("libToastUndo").onclick = function () {
+    var u = libUndo; libUndo = null; $("libToast").hidden = true; if (!u) return;
+    if (!u.wasGone) lsSet(KEY_GONE, lsGet(KEY_GONE, []).filter(function (x) { return x !== u.id; }));
+    store[u.id] = u.t; save(); if (u.visits && u.visits.length) { var lg = lsGet(KEY_LOG, []); C.mergeLog(lg, u.visits); lsSet(KEY_LOG, lg); } buzz("undo"); track("undo", { id: u.id, what: "delete" }); stripCount(); renderLib();
+  };
   function renderLibCount() { var c = C.bookmarked(store).length; $("segMarked").textContent = c ? "Bookmarked · " + c : "Bookmarked"; }
   $("libList").addEventListener("click", function (e) {
     if (e.target.closest(".arch")) { pickView(e); $("libList").scrollTop = 0; return; }
-    var wy = e.target.closest("[data-why]");
-    if (wy && !e.target.closest("[data-back]")) { openWhy(wy.getAttribute("data-why"), "library"); return; }
+    var pg = e.target.closest("[data-page]");
+    if (pg) { var which = pg.getAttribute("data-page"); haptic("tick"); if (which === "insights") openInsights("library"); else { renderAI(); openPage("ai", "ai"); } return; }
+    var fl = e.target.closest("[data-full]");
+    if (fl) { openFull(fl.getAttribute("data-full")); return; }
+    var dl = e.target.closest("[data-del]");
+    if (dl) { awayDelete(dl.getAttribute("data-del")); return; }
     var tp = e.target.closest("[data-tension]");
     if (tp) {
       var ab = tp.getAttribute("data-tension").split("|");
@@ -1757,9 +1877,14 @@ textarea::placeholder { color: var(--plum-faint); }
     clearTimeout(toastT); $("toast").classList.remove("on"); undoPoint = null;
     $("whyThought").textContent = t.text; $("whyText").value = t.awayWhy || ""; $("whyClear").hidden = !t.awayWhy;
     if (whyBackTo === "meet") clockOff();
-    openPage("whyPage", "why"); setTimeout(function () { $("whyText").focus(); }, 380);
+    openPage("whyPage", "why", true); setTimeout(function () { $("whyText").focus(); }, 380);
   }
-  function closeWhy() { $("whyText").blur(); closePage("whyPage", whyBackTo); if (whyBackTo === "library") renderLib(); else if (whyBackTo === "meet") clockOn(); whyFor = null; }
+  function closeWhy() {
+    $("whyText").blur(); closePage("whyPage", whyBackTo);
+    if (whyBackTo === "library") renderLib(); else if (whyBackTo === "meet") clockOn();
+    else if (whyBackTo === "edit" && store[whyFor]) $("editWhy").textContent = store[whyFor].awayWhy ? "Change why" : "Say why";
+    whyFor = null;
+  }
   $("toastWhy").onclick = function () { var id = $("toastWhy").getAttribute("data-id"); if (id) openWhy(id, "meet"); };
   $("whyBack").onclick = closeWhy;
   $("whyKeep").onclick = function () {
@@ -1778,7 +1903,7 @@ textarea::placeholder { color: var(--plum-faint); }
     if (qs) { seed = qs[qs.length - 1]; if (seed.indexOf(":") >= 0) seed = seed.slice(seed.lastIndexOf(":") + 1); seed = seed.replace(/^[\s;,\-]+/, "").trim(); }
     closeWhy(); openWrite(false);
     writeFrom = from; $("writeHead").textContent = "From your reason"; $("writeHead").hidden = false;
-    $("writeText").value = seed; $("writeKeep").disabled = !seed; grow($("writeText"));
+    $("writeText").value = seed; setKeep(); grow($("writeText"));
     setTimeout(function () { var w = $("writeText"); w.focus(); if (!qs) w.select(); else w.setSelectionRange(w.value.length, w.value.length); }, 80);
   };
   $("whyClear").onclick = function () { var t = store[whyFor]; if (t) { delete t.awayWhy; save(); } closeWhy(); };
@@ -1792,7 +1917,7 @@ textarea::placeholder { color: var(--plum-faint); }
     var row = function (t, meta, extra) { return '<div class="ir"><span class="t">' + esc(firstLine(t.text)) + (extra || "") + '</span><span class="m">' + esc(meta || "") + "</span></div>"; };
     var F = function (key, n, label, sub, body, cls) {
       var isO = open === key && body;
-      return '<button type="button" class="fd' + (body ? "" : " plain") + (isO ? " open" : "") + '"' + (body ? ' data-f="' + key + '"' : " disabled") + '><span class="n ' + (cls || "") + '">' + esc(String(n)) + '</span><span class="tx"><span class="s">' + esc(label) + '</span><span class="d">' + esc(sub) + '</span></span><span class="c" aria-hidden="true">\u203a</span></button>' +
+      return '<button type="button" class="fd' + (body ? "" : " plain") + (isO ? " open" : "") + '"' + (body ? ' data-f="' + key + '" aria-expanded="' + !!isO + '"' : " disabled") + '><span class="n ' + (cls || "") + '">' + esc(String(n)) + '</span><span class="tx"><span class="s">' + esc(label) + '</span><span class="d">' + esc(sub) + '</span></span><span class="c" aria-hidden="true">\u203a</span></button>' +
         (isO ? '<div class="ev">' + body + "</div>" : "");
     };
     var word = function (w) { return w.length > 5 ? "word long" : "word"; };
@@ -1817,7 +1942,7 @@ textarea::placeholder { color: var(--plum-faint); }
       h += F("voice", top.pct + "%", who, top.who ? "holds you longest" : "hold you longest",
         d.voiceTop.map(function (v) { return '<div class="ir"><span class="t">' + esc(v.who || "Your own thoughts") + '</span><span class="m">' + v.pct + "% of visits</span></div>"; }).join(""), "word");
     } else soon.push("Whose words");
-    if (soon.length) h += '<div class="soon"><p>Coming as you use Scales</p><div class="chips">' + soon.map(function (x) { return "<i>" + esc(x) + "</i>"; }).join("") + "</div></div>";
+    if (soon.length) h += '<div class="soon"><p>Coming as you use Scales</p><p class="chips">' + esc(soon.join(", ")) + ".</p></div>";
     $("insBody").innerHTML = h;
   }
   $("insBody").addEventListener("click", function (e) {
@@ -1830,7 +1955,6 @@ textarea::placeholder { color: var(--plum-faint); }
     insFrom = from; $("insBack").innerHTML = "&#8249; " + (from === "library" ? "Your thoughts" : "Settings");
     renderInsights(); $("insBody").scrollTop = 0; openPage("insPage", "insights");
   }
-  $("setIns").onclick = function () { openInsights("settings"); };
   $("libIns").onclick = function () { haptic("tick"); track("tap", { id: "libIns" }); openInsights("library"); };
   $("insBack").onclick = function () { closePage("insPage", insFrom); if (insFrom === "library") renderLib(); };
   // The day's insight: one true finding, chosen by the day, or nothing when there isn't enough to say yet.
@@ -1849,15 +1973,41 @@ textarea::placeholder { color: var(--plum-faint); }
     // 2.33.0: the iPhone's text size changed while Scales was open.
   window.scalesTextScale = function (x) {
     x = +x; if (!(x > 0)) return;
-    document.documentElement.style.setProperty("--ts", Math.min(1.5, Math.max(0.82, x)));
+    // 2.37.0: interface text follows the iPhone up to twice the standard size (was 1.5); the thought itself stops at 1.3.
+    document.documentElement.style.setProperty("--ts", Math.min(2, Math.max(0.82, x)));
     document.documentElement.style.setProperty("--tw", Math.min(1.3, Math.max(0.82, x)));
     if (typeof growAll === "function" && (mode === "write" || mode === "edit")) growAll();
   };
-window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { what: "save" }); ui.saved = { ok: !!(r && r.ok), where: r && r.where, at: now().toISOString() }; saveUi(); };
+window.scalesSaved = function (r) {
+    if (!(r && r.ok)) track("native_fail", { what: "save" }); ui.saved = { ok: !!(r && r.ok), where: r && r.where, at: now().toISOString() }; saveUi();
+    if ($("backups").classList.contains("open")) $("setSaved").textContent = savedLine();
+    if ($("settings").classList.contains("open")) $("setBackupsV").textContent = ui.saved.ok ? "Automatic" : "Last copy failed";
+  };
   // ---------- Settings and Help ----------
   var needsRender = false;
-  function openPage(id, m) { var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; track("screen", { to: id }); swipeHint(p); }
-  function closePage(id, m) { var p = $(id); p.classList.remove("open"); p.setAttribute("aria-hidden", "true"); mode = m; track("screen", { to: m }); }
+  // 2.37.0: a page that opens takes the focus (its heading), and everything under it is inert, so VoiceOver reads the
+  // page and nothing behind it. Closing gives the focus back to the page or sheet underneath.
+  var pageStack = [];
+  function layers() {
+    var top = pageStack[pageStack.length - 1] || null, libOpen = $("lib").classList.contains("open");
+    Array.prototype.forEach.call(document.querySelectorAll(".page"), function (p) { p.inert = p.id !== top; });
+    $("lib").inert = !!top || !libOpen;
+    $("vMeet").inert = !!top || libOpen || mode === "edit" || mode === "write";
+    $("vEdit").inert = !!top || mode !== "edit"; $("vWrite").inert = !!top || mode !== "write";
+    if (typeof barStyle === "function") barStyle();
+  }
+  function focusIn(el) { var f = el && (el.querySelector("h1") || el.querySelector(".pback")); if (!f) return; if (!f.hasAttribute("tabindex")) f.setAttribute("tabindex", "-1"); try { f.focus({ preventScroll: true }); } catch (e) {} }
+  function openPage(id, m, keepFocus) {
+    var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; track("screen", { to: id }); swipeHint(p);
+    pageStack = pageStack.filter(function (x) { return x !== id; }); pageStack.push(id); layers();
+    if (!keepFocus) setTimeout(function () { if (pageStack[pageStack.length - 1] === id) focusIn(p); }, 60);
+  }
+  function closePage(id, m) {
+    var p = $(id), a = document.activeElement; if (a && p.contains(a) && a.blur) a.blur();
+    p.classList.remove("open"); p.setAttribute("aria-hidden", "true"); mode = m; track("screen", { to: m });
+    pageStack = pageStack.filter(function (x) { return x !== id; }); layers();
+    var under = pageStack[pageStack.length - 1]; if (under) focusIn($(under));
+  }
   // 2.29.0: a page that slid in from the right can be swiped back to the right to close it, from anywhere on the page.
   // It follows the finger and closes past a third of the width or on a quick flick; otherwise it springs back. It takes
   // over only once the movement is clearly sideways, so the page still scrolls, and rows that scroll sideways keep theirs.
@@ -1891,15 +2041,23 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
     }
     document.addEventListener("pointerup", up, true); document.addEventListener("pointercancel", function () { if (sw && sw.on) { sw.pg.style.transition = ""; sw.pg.style.transform = ""; } sw = null; }, true);
   })();
+  // 2.37.0: one rule for the count and the rows: a set is added when every line is here (or was deleted on purpose).
+  // A set with only some lines (the starter line from Start with five, say) offers "Add the rest" and isn't counted.
+  function setHere(s) { return s.items.filter(function (it) { return Object.prototype.hasOwnProperty.call(store, "s-" + it.id); }).length; }
+  function setAdded(s) { var gone = lsGet(KEY_GONE, []); return setHere(s) > 0 && s.items.every(function (it) { var k = "s-" + it.id; return Object.prototype.hasOwnProperty.call(store, k) || gone.indexOf(k) >= 0; }); }
   function setsValue() {
     var S = window.ScalesSets; if (!S) return "";
-    var n = S.sets.filter(function (s) { return s.items.some(function (it) { return Object.prototype.hasOwnProperty.call(store, "s-" + it.id); }); }).length;
+    var n = S.sets.filter(function (s) { return setAdded(s); }).length;
     return n ? n + " added" : "";
   }
   function openSettings() {
     $("setSetsV").textContent = setsValue();
-    $("setBackupsV").textContent = NATIVE ? "Automatic" : "";
-    $("setVersion").textContent = C.VERSION + (window.scalesNative && window.scalesNative.build ? " (" + window.scalesNative.build + ")" : "");
+    $("setBackupsV").textContent = NATIVE ? (ui.saved && ui.saved.ok === false ? "Last copy failed" : "Automatic") : "";
+    // 2.37.0: the App Store's version first, then Scales' own and the build ("1.1 (2.37.0, build 63)").
+    var sn = window.scalesNative || {};
+    $("setVersion").textContent = sn.appVersion ? sn.appVersion + " (" + C.VERSION + (sn.build ? ", build " + sn.build : "") + ")" : C.VERSION + (sn.build ? " (" + sn.build + ")" : "");
+    placeFull();
+    $("settings").querySelector(".body").scrollTop = 0;
     
     $("setFeedback").setAttribute("href", "mailto:support@tangomike.app?subject=%5BScales%5D%20Feedback&body=" +
       encodeURIComponent("\n\n\nScales " + C.VERSION + (NATIVE ? ", iPhone app" : ", browser") + "\n"));
@@ -1941,13 +2099,14 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
   function applyLook(tell) {
     var v = LOOKS[ui.look] ? ui.look : "auto";
     if (v === "auto") document.documentElement.removeAttribute("data-look"); else document.documentElement.setAttribute("data-look", v);
-    themeColor(); markLook();
+    themeColor(); markLook(); lastBar = ""; barStyle();
     if (tell) post({ type: "look", value: v === "auto" ? "" : v });
   }
   if (!NATIVE || (window.scalesNative && window.scalesNative.look)) $("lookSec").hidden = false;
   // 2.22.0 Colors (named Theme until 2.23.0, which clashed with Themes and your week): Pistachio (the default) or Stone. A web choice; the iPhone app's icon is chosen separately.
   function applyTheme() {
     if (ui.theme === "stone") document.documentElement.setAttribute("data-theme", "stone"); else document.documentElement.removeAttribute("data-theme");
+    lastBar = ""; if (typeof barStyle === "function" && typeof pageStack !== "undefined") barStyle();
     Array.prototype.forEach.call(document.querySelectorAll("#themeSeg [data-theme-pick]"), function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-theme-pick") === (ui.theme === "stone" ? "stone" : "pistachio"))); });
     themeColor();
   }
@@ -1955,7 +2114,8 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
     b.onclick = function () { ui.theme = b.getAttribute("data-theme-pick") === "stone" ? "stone" : null; saveUi(); haptic("tick"); track("tap", { id: "theme:" + (ui.theme || "pistachio") }); applyTheme(); };
   });
   applyTheme();
-  $("lookMsg").textContent = NATIVE ? "Automatic follows your iPhone." : "Automatic follows your device.";
+  // 2.37.0: Colors are the screens; the app icon (Pistachio, Plum or Bone) is chosen on its own.
+  $("lookMsg").textContent = (NATIVE ? "Automatic follows your iPhone." : "Automatic follows your device.") + " Colors change Scales' screens" + (NATIVE ? "; the app icon is chosen on its own." : ".");
   Array.prototype.forEach.call(document.querySelectorAll("#lookSeg [data-look]"), function (b) {
     b.onclick = function () { ui.look = b.getAttribute("data-look"); saveUi(); haptic("tick"); applyLook(true); };
   });
@@ -1981,9 +2141,9 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
       var n2 = document.createElement("small"); n2.textContent = s.items.length + " lines \u00b7 " + (s.from || s.blurb);
       nm.appendChild(n1); nm.appendChild(n2);
       var v = document.createElement("span");
-      var full = here === s.items.length;
+      var full = setAdded(s);
       v.className = "v" + (setArmed === s.id ? " armed" : full ? "" : " add");
-      v.textContent = setArmed === s.id ? "Tap again to remove" : full ? "Remove" : "Add";
+      v.textContent = setArmed === s.id ? "Tap again to remove" : full ? "Added \u00b7 Remove" : here ? "Add the rest" : "Add";
       b.appendChild(nm); b.appendChild(v);
       b.onclick = function () { setTap(s, full); };
       box.appendChild(b);
@@ -1991,14 +2151,14 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
       if (nc) {
         var c = document.createElement("button"); c.type = "button"; c.className = "srow clr"; c.setAttribute("data-clear", s.id);
         var armed = setArmed === "clear:" + s.id;
-        c.textContent = armed ? "Tap again to delete " + (nc === 1 ? "it" : "them") : "Delete the " + (nc === 1 ? "one" : nc) + " you put away";
+        c.textContent = armed ? "Tap again to delete " + (nc === 1 ? "it" : "them") : nc === 1 ? "Delete the line you put away from this set" : "Delete the " + nc + " lines you put away from this set";
         if (armed) c.classList.add("armed");
         c.onclick = function () {
           if (setArmed !== "clear:" + s.id) { setArmed = "clear:" + s.id; haptic("tick"); renderSets(); return; }
           var r = C.clearPutAway(store, s.id, lsGet(KEY_GONE, []));
           var dead = {}; r.gone.forEach(function (id) { dead[id] = true; });
           save(); lsSet(KEY_GONE, r.gone); lsSet(KEY_LOG, lsGet(KEY_LOG, []).filter(function (e) { return !(dead[e.id] && !store[e.id]); }));
-          setArmed = null; buzz("remove"); needsRender = true; $("stripN").textContent = C.list(store).length; renderLib();
+          setArmed = null; buzz("remove"); needsRender = true; stripCount(); renderLib();
           setsMsg(r.deleted + (r.deleted === 1 ? " line" : " lines") + " from " + s.name + " deleted.", true);
           renderSets();
         };
@@ -2013,19 +2173,23 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
       if (!lsSet(KEY, store)) { store = lsGet(KEY, store); setsMsg("There isn't room on this phone to add that set.", false); return; }
       lsSet(KEY_GONE, r.gone); setArmed = null; buzz("keep"); needsRender = true;
       setsMsg(s.name + ": " + r.added + (r.added === 1 ? " line" : " lines") + " added. Two arrive each day, starting today.", true);
-      $("stripN").textContent = C.list(store).length; renderLib(); renderSets(); return;
+      stripCount(); renderLib(); renderSets(); return;
     }
     if (setArmed !== s.id) { setArmed = s.id; haptic("tick"); renderSets(); return; }
     var x = C.removeSet(store, s.id, now(), lsGet(KEY_GONE, []));
     save(); lsSet(KEY_GONE, x.gone); setArmed = null; buzz("remove"); needsRender = true;
     if (store[ui.cur] === undefined) { ui.cur = null; ui.ms = 0; ui.worked = false; ui.argued = false; ui.review = null; saveUi(); }
-    $("stripN").textContent = C.list(store).length; renderLib();
+    stripCount(); renderLib();
     setsMsg(s.name + " removed. " + (x.putAway ? x.putAway + " you had met " + (x.putAway === 1 ? "is" : "are") + " in Put away. " : "") + "Lines you bookmarked, noted or changed stay.", true);
     renderSets();
   }
   document.addEventListener("pointerdown", function (e) { if (setArmed && !e.target.closest("#setList")) { setArmed = null; renderSets(); } }, true);
-  $("setSets").onclick = function () { setArmed = null; $("setsMsg").textContent = ""; $("setsMsg").className = "snote"; renderSets(); openPage("sets", "sets"); };
-  $("setsBack").onclick = function () { setArmed = null; $("setSetsV").textContent = setsValue(); closePage("sets", "settings"); };
+  var setsFrom = "settings", impFrom = "settings";
+  function openSets(from) { setsFrom = from || "settings"; setArmed = null; $("setsMsg").textContent = ""; $("setsMsg").className = "snote"; renderSets(); openPage("sets", "sets"); }
+  function backTo(m) { if (m === "meet") { setMode("meet"); renderMeet(false); } else if (m === "library") renderLib(); }
+  $("setSets").onclick = function () { openSets("settings"); };
+  $("setsBack").onclick = function () { setArmed = null; $("setSetsV").textContent = setsValue(); closePage("sets", setsFrom); backTo(setsFrom); };
+  $("setsImport").onclick = function () { openImport("sets"); };
   $("setBack").onclick = function () { closePage("settings", "library"); };
   // Each demo plays once, one after another, when the page opens; a tap on one plays it again.
   function playDemo(d, delay) {
@@ -2058,7 +2222,7 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
       if (r.visits.length) { var lg = lsGet(KEY_LOG, []); C.mergeLog(lg, r.visits); lsSet(KEY_LOG, lg); }
       if (r.events && r.events.length) { C.mergeEvents(EV, r.events); flushEv(); }
       track("restore", { added: r.added, kind: r.kind });
-      $("stripN").textContent = C.list(store).length; needsRender = true; renderLib();
+      stripCount(); needsRender = true; renderLib();
       restoreMsg(r.added ? "Added " + r.added + (r.added === 1 ? " thought." : " thoughts.") : "Nothing new in that backup.", true);
       if (r.added) dailySave();
       if (r.added) haptic("success");
@@ -2068,12 +2232,15 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
 
   function savedLine() {
     // 2.13.0: says plainly that the iPhone app needs nothing from you, and when it last saved.
-    if (!NATIVE) return "In a browser, Scales doesn't save a copy on its own. Back up now saves a file.";
+    // 2.37.0: and says so when the last automatic copy failed, and that a copy kept only on this iPhone goes with the app.
+    if (!NATIVE) return "In a browser, Scales doesn't save a copy on its own, and Safari may clear what it keeps after a week away. Back up now, or get the iPhone app.";
     var s = ui.saved, auto = "Nothing to do here: Scales saves a copy each time you leave it and keeps the last 14. Back up now adds a copy of your own that is never replaced.";
-    if (!s || !s.ok) return auto;
+    if (!s) return auto;
     var d = C.dayKey(new Date(s.at)), today = C.dayKey(now());
     var when = d === today ? "today" : C.addDays(d, 1) === today ? "yesterday" : "on " + new Date(s.at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    return auto + " Last saved " + when + " to " + (s.where === "icloud" ? "iCloud Drive" : "Files") + ", Scales.";
+    var local = s.where !== "icloud" ? " These copies are in Files, On My iPhone, Scales, and are deleted if Scales is deleted. Turn on iCloud Drive to keep them, or save a copy somewhere else." : "";
+    if (!s.ok) return "The last automatic copy didn't save " + when + ". Back up now." + local;
+    return auto + " Last saved " + when + " to " + (s.where === "icloud" ? "iCloud Drive" : "Files") + ", Scales." + local;
   }
   // 2.27.0: in the iPhone app, Back up now saves its own file straight into iCloud Drive, Scales (or Files), named with
   // the date and time, and the automatic copy never writes over it. In a browser it downloads a file as before.
@@ -2116,7 +2283,7 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
 
   // ---------- Apple Intelligence (2.6.0; a regular feature in the iPhone app from 2.16.0) ----------
   // The shell runs Apple's on-device model one request at a time. Scales picks what to ask and counts everything itself.
-  var KEY_AI = "scales.next.ai.v1", aiOk = false, aiSeq = 0, aiWait = {}, aiBusy = false, aiStop = false;
+  var KEY_AI = "scales.next.ai.v1", aiOk = false, aiKnown = false, aiKind = "", aiSeq = 0, aiWait = {}, aiBusy = false, aiStop = false;
   window.scalesAI = function (status) {
     aiOk = status === "available";
     // 2.26.0: the message says why, so a phone that only needs a setting or an update is told so.
@@ -2127,7 +2294,8 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
       /NotReady/i.test(st) ? "Apple Intelligence is still getting ready on this iPhone. Argue with it and Tensions will appear when it is." :
       /NotEligible/i.test(st) ? "This iPhone can't run Apple Intelligence, so Argue with it and Tensions aren't here. Everything else works the same." :
       "Apple Intelligence isn't on for this iPhone. " + why;
-    $("aiState").hidden = aiOk || !NATIVE; $("setAI").hidden = !aiOk; $("aiUses").hidden = !aiOk;
+    aiKnown = true; aiKind = aiOk ? "on" : st === "unsupported" || /NotEligible/i.test(st) ? "unsupported" : /NotEnabled/i.test(st) ? "off" : /NotReady/i.test(st) ? "notready" : "off";
+    $("aiState").hidden = aiOk || !NATIVE; renderFull(""); if (mode === "library") renderLib();
     // 2.16.0: Argue with it and Tensions appear only where the model is there to do them.
     if (aiOk) { setTimeout(findTensions, 4000); if (mode === "edit") showArgBtn(); }
   };
@@ -2147,12 +2315,13 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
   var argPending = null, argBusy = false;
   function argText() { return $("editText").value.trim(); }
   function showArgBtn() {
-    var b = $("argBtn"); b.hidden = !aiOk; b.disabled = argBusy; b.textContent = argBusy ? "Thinking it over\u2026" : "Argue with it";
+    // 2.37.0: after the free days, the word says it is Scales Full before it is tapped (G-36).
+    var b = $("argBtn"); b.hidden = !aiOk; b.disabled = argBusy; b.textContent = argBusy ? "Thinking it over\u2026" : !fullOk() && !curArg() ? "Argue with it \u00b7 Scales Full" : "Argue with it";
     b.classList.toggle("on", !$("argSafe").hidden); wordsRow();
   }
   // The two words: "Add a note" only while there is no note showing; the row hides when neither applies.
   function noteWords() { var n = $("noteBtn"); n.hidden = !$("editNote").hidden && !!$("editNote").value.trim(); n.classList.toggle("on", !$("editNote").hidden); wordsRow(); }
-  function wordsRow() { $("eWords").hidden = $("noteBtn").hidden && $("argBtn").hidden; }
+  function wordsRow() { $("eWords").hidden = $("noteBtn").hidden && $("argBtn").hidden && $("editBring").hidden; }
   $("noteBtn").onclick = function () {
     var ta = $("editNote");
     if (!ta.hidden && !ta.value.trim()) { ta.hidden = true; noteWords(); return; }
@@ -2288,10 +2457,12 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
     var w = function (t) { var x = shown(t.text); return '<p class="w' + (x.length > 140 ? " long" : "") + '">' + esc(x) + "</p>" + (t.by ? '<p class="by">' + esc(t.by) + "</p>" : ""); };
     // 2.22.0: "Not a tension" for when the model got it wrong. The pair goes, and never comes back.
     // 2.33.0: "↑ Done" at the top says how to leave, the same way "↑ Next" does on the reading screen.
-    $("ten").innerHTML = '<p class="tdone" aria-hidden="true">\u2191 Done</p>' + w(A) + '<div class="yet">and yet</div>' + w(B) + '<button type="button" class="no" id="tenNo">Not a tension</button>';
+    $("ten").innerHTML = '<button type="button" class="tdone" id="tenDone" aria-label="Done">\u2191 Done</button>' + w(A) + '<div class="yet">and yet</div>' + w(B) + '<button type="button" class="no" id="tenNo">Not a tension</button>';
     $("tenNo").onclick = function (e) { e.stopPropagation(); dropTension(a, b); };
+    $("tenDone").onclick = function (e) { e.stopPropagation(); hideTension(); };
     $("ten").classList.remove("go"); $("ten").hidden = false;
     closeLib(); clockOff(); mode = "tension"; haptic("tick"); track("screen", { to: "tension" });
+    setTimeout(function () { try { $("tenDone").focus({ preventScroll: true }); } catch (e) {} }, 60);
   }
   var tenUndo = null;
   function dropTension(a, b) {
@@ -2310,7 +2481,7 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
   }
   (function () {
     var y0 = null;
-    $("ten").addEventListener("pointerdown", function (e) { y0 = e.target.closest("#tenNo") ? null : e.clientY; });
+    $("ten").addEventListener("pointerdown", function (e) { y0 = e.target.closest("#tenNo, #tenDone") ? null : e.clientY; });
     $("ten").addEventListener("pointerup", function (e) { if (y0 == null) return; var dy = e.clientY - y0; y0 = null; if (dy < -60 || Math.abs(dy) < 10) hideTension(); });
     document.addEventListener("keydown", function (e) { if (mode === "tension" && (e.key === "ArrowUp" || e.key === "Escape" || e.key === "Enter")) { e.preventDefault(); hideTension(); } });
   })();
@@ -2384,30 +2555,54 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
   var KEY_FULL = "scales.next.full.v1", fullInfo = lsGet(KEY_FULL, null), fullBusy = false, fullBack = "settings";
   function fullSt() { return NATIVE ? C.fullState(fullInfo, now()) : { state: "unknown", daysLeft: null }; }
   function fullOk() { return C.fullOpen(fullSt()); }
+  // 2.37.0: Scales Full is only sold to an iPhone that can run it. Where Apple Intelligence can't run, Buy is replaced by
+  // what it needs; where it is only turned off or still getting ready, that is said above Buy. Every price shown comes
+  // from the App Store (local currency), with $6.99 only until it answers.
+  var fullChecking = false;
+  function fullPrice() { return (fullInfo && fullInfo.price) || C.FULL_PRICE; }
   function renderFull(note) {
-    var st = fullSt(), price = (fullInfo && fullInfo.price) || C.FULL_PRICE, found = !!(fullInfo && fullInfo.found);
-    $("fullSec").hidden = !NATIVE; $("helpFull").hidden = !NATIVE; $("setFullV").textContent = C.fullLine(st);
+    var st = fullSt(), price = fullPrice(), found = !!(fullInfo && fullInfo.found), can = aiKind !== "unsupported";
+    $("fullSec").hidden = !NATIVE; $("helpFull").hidden = !NATIVE;
+    $("setFullV").textContent = st.state !== "owned" && aiKnown && !can ? "Needs Apple Intelligence" : C.fullLine(st);
     var lead = st.state === "owned" ? "Scales Full is yours, for good. Thank you."
+      : !can && aiKnown ? "Scales Full adds features that run on Apple Intelligence, which this iPhone can't run. Everything else in Scales is free and works the same."
       : st.state === "locked" ? "Your 14 free days are over. Everything you wrote is still here, and the arguments, tensions and themes already made stay readable. Making new ones is Scales Full: " + price + ", once."
       : st.state === "trial" ? "You have " + st.daysLeft + (st.daysLeft === 1 ? " day" : " days") + " of everything. Scales Full is " + price + ", once. Nothing renews and nothing is charged when the days run out."
       : "Scales Full is " + price + ", once. Nothing renews.";
     $("fullLead").textContent = lead;
-    $("fullBuy").hidden = st.state === "owned"; $("fullBuy").disabled = fullBusy || !found;
-    $("fullBuyL").textContent = fullBusy ? "Working…" : found ? "Unlock Scales Full" : "Not available right now";
+    $("fullNeeds").innerHTML = aiKind === "off" ? "<strong>Needs Apple Intelligence turned on:</strong> Settings, Apple Intelligence &amp; Siri on this iPhone."
+      : aiKind === "notready" ? "<strong>Apple Intelligence is still getting ready</strong> on this iPhone. Scales Full works once it is."
+      : !can ? "<strong>Needs Apple Intelligence:</strong> iPhone 15 Pro or later, on iOS 26. This iPhone can't run it, so Scales Full isn't for sale here."
+      : "<strong>Needs Apple Intelligence:</strong> iPhone 15 Pro or later, on iOS 26.";
+    $("fullNeeds").hidden = st.state === "owned";
+    var sell = st.state !== "owned" && aiKnown && can;
+    $("fullBuy").hidden = !sell; $("fullBuy").disabled = fullBusy || !found || fullChecking;
+    $("fullBuyL").textContent = fullBusy ? "Working\u2026" : found ? "Unlock Scales Full" : fullChecking ? "Checking with the App Store\u2026" : "Not available right now";
     $("fullBuyV").textContent = found && !fullBusy ? price : "";
     $("fullRestore").hidden = st.state === "owned"; $("fullRestore").disabled = fullBusy;
     $("fullNote").textContent = note || "";
+    $("fullFoot").textContent = "Free to use. Scales Full is " + price + ", once. Nothing renews. No account. Your thoughts, backups and Insights stay free, and nothing you have written is ever locked.";
+    $("fullSecNote").textContent = aiKnown && !can && st.state !== "owned" ? "Scales Full needs Apple Intelligence (iPhone 15 Pro or later, iOS 26). Everything else is free." : "Free to use. Scales Full is " + price + ", once. Nothing renews.";
+    $("helpFull").innerHTML = "<strong>Scales Full</strong> adds Argue with it, Tensions, and Themes and your week, on an iPhone with Apple Intelligence (iPhone 15 Pro or later, iOS 26). Free for your first 14 days, then " + esc(price) + ", once. Nothing renews. Find it in Settings.";
+    placeFull();
+  }
+  // 2.37.0: in Settings, Scales Full sits under Look; once it is yours it moves to the end, above the footer.
+  function placeFull() {
+    var sec = $("fullSec"), owned = fullSt().state === "owned", end = $("fullSecEnd"), after = $("lookMsg");
+    if (owned && sec.parentNode !== end) end.appendChild(sec);
+    else if (!owned && sec.previousElementSibling !== after) after.parentNode.insertBefore(sec, after.nextSibling);
   }
   window.scalesFull = function (json) {
     var d = null; try { d = JSON.parse(json); } catch (e) { return; }
     if (!d || typeof d !== "object") return;
     var was = fullSt().state, note = d.note || ""; delete d.note;
-    fullInfo = d; lsSet(KEY_FULL, d); fullBusy = false; renderFull(note);
+    fullInfo = d; lsSet(KEY_FULL, d); fullBusy = false; fullChecking = false; renderFull(note);
     if (was !== "owned" && fullSt().state === "owned") { track("full", { did: "owned" }); if (!note) renderFull("Scales Full is on. Thank you."); }
     if (fullOk() && aiOk) setTimeout(findTensions, 1500);
-    noticeFull();
   };
   function openFull(at) {
+    // 2.37.0: ask the App Store again each time the page opens, so a launch without a connection doesn't leave Buy dead.
+    if (NATIVE && !(fullInfo && fullInfo.found)) { fullChecking = true; post({ type: "full" }); setTimeout(function () { if (fullChecking) { fullChecking = false; renderFull(""); } }, 15000); }
     fullBack = mode; renderFull(""); track("full", { at: at, st: fullSt().state });
     $("fullPage").querySelector(".body").scrollTop = 0; openPage("fullPage", "full");
   }
@@ -2415,11 +2610,8 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
   $("setFull").onclick = function () { openFull("settings"); };
   $("fullBuy").onclick = function () { if (fullBusy) return; fullBusy = true; renderFull(""); track("full", { did: "buy" }); post({ type: "fullBuy" }); };
   $("fullRestore").onclick = function () { if (fullBusy) return; fullBusy = true; renderFull(""); track("full", { did: "restore" }); post({ type: "fullRestore" }); };
-  // Once, when two days or fewer of the trial are left: the page opens on its own, in plain words, and goes away with Back.
-  function noticeFull() {
-    var st = fullSt(); if (st.state !== "trial" || st.daysLeft > 2 || ui.fullNoted) return;
-    setTimeout(function () { if (mode === "meet" && !ui.fullNoted && fullSt().state === "trial") { ui.fullNoted = 1; saveUi(); openFull("notice"); } }, 2500);
-  }
+  // 2.37.0: the page no longer opens on its own near the end of the free days (nothing moves unless a hand is on it).
+  // The Settings row says "Trial: 2 days left", and the end-of-day screen shows one quiet row.
 
   // ---------- Import (2.7.0) ----------
   var impMode = "auto", impItems = [], impOff = {};
@@ -2464,16 +2656,16 @@ window.scalesSaved = function (r) { if (!(r && r.ok)) track("native_fail", { wha
     var r = C.importThoughts(store, items, now());
     track("import", { added: r.added, skipped: r.skipped, mode: impMode, by: items.filter(function (x) { return x.by; }).length });
     if (!lsSet(KEY, store)) { store = lsGet(KEY, store); $("impMsg").textContent = "There isn't room on this phone for that many."; return; }
-    buzz("keep"); needsRender = true; $("stripN").textContent = C.list(store).length; renderLib();
+    buzz("keep"); needsRender = true; stripCount(); renderLib();
     $("impText").value = ""; impItems = []; impOff = {}; $("impList").innerHTML = ""; $("impSplit").hidden = true;
     $("impAdd").disabled = true; $("impAdd").textContent = "Add";
     $("impMsg").textContent = r.added + (r.added === 1 ? " thought" : " thoughts") + " added." + (r.added > C.IMPORT_PER_DAY ? " Five arrive each day, starting today." : "") + (r.skipped ? " " + r.skipped + " you already had " + (r.skipped === 1 ? "was" : "were") + " left out." : "");
     $("impMsg").className = "snote ok";
   };
-  $("setImport").onclick = function () { $("impMsg").textContent = ""; $("impMsg").className = "snote"; $("impSplit").hidden = true; openPage("imp", "imp"); };
-  $("impBack").onclick = function () { $("impText").blur(); closePage("imp", "settings"); };
-  $("setAI").onclick = function () { renderAI(); openPage("ai", "ai"); };
-  $("aiBack").onclick = function () { closePage("ai", "settings"); };
+  function openImport(from) { impFrom = from || "settings"; $("impMsg").textContent = ""; $("impMsg").className = "snote"; $("impSplit").hidden = true; openPage("imp", "imp"); }
+  $("setImport").onclick = function () { openImport("settings"); };
+  $("impBack").onclick = function () { $("impText").blur(); closePage("imp", impFrom); backTo(impFrom); };
+  $("aiBack").onclick = function () { closePage("ai", "library"); renderLib(); };
   $("aiRun").onclick = function () { aiRun(); };
   $("aiWeek").onclick = function () { aiWeek(); };
 

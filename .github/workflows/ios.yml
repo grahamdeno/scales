@@ -122,7 +122,7 @@ jobs:
       # After the upload: wait for processing, set What to Test, add the build to the external "Beta testers" group
       # and submit it for Beta App Review. Testers are not changed; TestFlight's own auto-notify decides who hears.
       # The build is already uploaded, so a problem here is a warning to finish by hand, not a failed build.
-      - name: Send to beta testers
+      - name: Send to internal testing (Graham only)
         if: env.HAS_KEY == 'true' && github.ref == 'refs/heads/main'
         continue-on-error: true
         env:

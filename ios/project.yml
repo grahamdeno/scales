@@ -11,7 +11,7 @@ settings:
   base:
     DEVELOPMENT_TEAM: 7MHDTK68M2
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "1.0"
+    MARKETING_VERSION: "1.1"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.9"
     TARGETED_DEVICE_FAMILY: "1"
@@ -56,8 +56,12 @@ targets:
             NSUbiquitousContainerIsDocumentScopePublic: true
             NSUbiquitousContainerName: Scales
             NSUbiquitousContainerSupportedFolderLevels: None
-        UIViewControllerBasedStatusBarAppearance: false
-        UIStatusBarStyle: UIStatusBarStyleDarkContent
+        # 2.37.0 (1.1): the status bar is set per screen by the web view's controller (light on plum, dark on pistachio).
+        UIViewControllerBasedStatusBarAppearance: true
+        UIStatusBarStyle: UIStatusBarStyleDefault
+        # 2.37.0: one window scene, made by SceneDelegate in ScalesApp.swift (the app moved from SwiftUI's WindowGroup).
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
     entitlements:
       path: App/Scales.entitlements
       properties:

@@ -101,8 +101,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
         // 2.6.0: a TestFlight copy says so, so tests meant only for TestFlight can show there and nowhere else.
         let testflight = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+        // 2.37.0: the App Store version ("1.1"), shown first in Settings, Version.
+        let appVersion = (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "").filter { $0.isNumber || $0 == "." }
         // 2.33.0: the iPhone's text size (Settings, Display, Text Size, and Larger Text) as a scale for the page's type.
-        content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios', build: '\(build)', testflight: \(testflight), look: true, bundled: true, textScale: \(Self.textScale()) };",
+        content.addUserScript(WKUserScript(source: "window.scalesNative = { version: 1, platform: 'ios', build: '\(build)', testflight: \(testflight), look: true, bundled: true, appVersion: '\(appVersion)', textScale: \(Self.textScale()) };",
                                            injectionTime: .atDocumentStart, forMainFrameOnly: true))
         if let url = Bundle.main.url(forResource: "NativeStore", withExtension: "js"), let js = try? String(contentsOf: url, encoding: .utf8) {
             content.addUserScript(WKUserScript(source: store.seedScript() + "\n" + js, injectionTime: .atDocumentStart, forMainFrameOnly: true))
@@ -151,6 +153,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             let look = body["value"] as? String ?? ""
             UserDefaults.standard.set(look, forKey: Self.lookKey)
             applyLook(look)
+        case "bar":
+            // 2.37.0: the page says which status bar the top of the screen needs: light words on plum, dark on pistachio.
+            let want: UIStatusBarStyle = (body["style"] as? String) == "light" ? .lightContent : .darkContent
+            if want != barStyle { barStyle = want; setNeedsStatusBarAppearanceUpdate() }
         case "save":
             save(json: body["json"] as? String ?? "", day: body["day"] as? String ?? "")
         case "backup":
@@ -248,6 +254,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         guard let data = try? JSONSerialization.data(withJSONObject: args), let json = String(data: data, encoding: .utf8) else { return }
         run("window.\(name) && window.\(name).apply(null, \(json))")
     }
+
+    /// 2.37.0: the status bar the page asked for; until it asks, it follows Light or Dark.
+    private var barStyle: UIStatusBarStyle = .default
+    override var preferredStatusBarStyle: UIStatusBarStyle { barStyle }
 
     /// The fixed icons, by the name the page uses. Automatic is the main icon and has no entry.
     private static let lookKey = "scales.look"
