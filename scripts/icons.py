@@ -2,9 +2,11 @@
 """Scales 2.2 icons: the beam and point, in the app's three colours. Run from the repo root.
 
 Three designs, each ground, beam and point a different one of the colours:
-  Pistachio: pistachio ground, ink beam, bone point       (the main icon in Light mode)
+  Pistachio: pistachio ground, ink beam, plum point       (the main icon in Light mode)
   Plum:      plum ground, bone beam, pistachio point      (the main icon in Dark mode)
-  Bone:      bone ground, plum beam, pistachio point
+  Bone:      bone ground, plum beam, ink point
+2.37.0: the point on Pistachio and Bone is dark (it was bone on pistachio and pistachio on bone, about 1.3:1, so at
+Home Screen size the mark read as a lone stroke and the balance was lost).
 The main icon (Automatic) follows the Home Screen: Pistachio in Light, Plum in Dark, grey in Tinted.
 Writes the iPhone icons (Icon Composer .icon and asset-catalog 1024 px fallbacks), the web app icons and the website icons.
 """
@@ -14,7 +16,7 @@ from PIL import Image
 A = "ios/App/AppIcon.icon/Assets/"
 BEAM = Image.open(A + "beam.png").copy(); POINT = Image.open(A + "point.png").copy()
 PIST, INK, PLUM, BONE = "#B9C9A3", "#2A1E2E", "#3B2240", "#F1E9D8"
-DESIGNS = {"Pistachio": (PIST, INK, BONE), "Plum": (PLUM, BONE, PIST), "Bone": (BONE, PLUM, PIST)}
+DESIGNS = {"Pistachio": (PIST, INK, PLUM), "Plum": (PLUM, BONE, PIST), "Bone": (BONE, PLUM, INK)}
 
 def rgb(h): h = h.lstrip("#"); return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 def srgb(h): return "srgb:" + ",".join("%.5f" % (c / 255) for c in rgb(h)) + ",1.00000"
