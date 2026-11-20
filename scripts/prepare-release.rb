@@ -94,9 +94,8 @@ end
 # 5. App Accessibility (iPhone). Not fatal: if Apple's API refuses, it says so and the rest stands.
 acc = want["accessibility"]
 if acc
-  fields = %w[supportsAudioDescriptions supportsCaptions supportsDarkInterface supportsDifferentiateWithoutColorAlone
-              supportsLargerText supportsReducedMotion supportsSufficientContrast supportsVoiceControl supportsVoiceOver]
-  attrs = fields.to_h { |k| [k, acc.include?(k)] }
+  # Only what is declared is sent (Apple's field names vary; anything left out stays undeclared).
+  attrs = acc.to_h { |k| [k, true] }
   list = call.(:get, "/v1/apps/#{app["id"]}/accessibilityDeclarations", soft: true)
   if list
     d = list["data"].find { |x| x.dig("attributes", "deviceFamily") == "IPHONE" && x.dig("attributes", "state") != "REPLACED" }
