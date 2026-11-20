@@ -54,7 +54,19 @@ copied in on first open until 2.34.0; since 2.35.0 it is not read (Graham was it
 - Choosing a model: Opus for feel, data safety and judgment calls; Sonnet for well-specified building, tests and
   shipping; Haiku for mechanical edits.
 
-## Where things stand (16 November 2026)
+## 1.1 (2.37.0): the 18 November audit (19 November 2026)
+
+- All 39 findings of the 18 November code and App Store review are built on one branch for one release: Scales 2.37.0,
+  App Store 1.1. What each one changed is in `docs/audit/fixes-2026-11-18.md`; the browser check is
+  `tests/e2e/audit.e2e.js`. Graham asked for every finding to be built, merged and shipped in one go (19 November).
+- The iPhone shell moved from SwiftUI's WindowGroup to a UIKit app with one window scene (`ScalesApp.swift`), so the
+  status bar can follow each screen. `UIViewControllerBasedStatusBarAppearance` is now true; the page posts `bar`.
+- `window.scalesNative.appVersion` carries the App Store version; Settings shows "1.1 (2.37.0, build N)".
+- Icons: the point on Pistachio and Bone is dark now (`scripts/icons.py`).
+- App Store screenshots reordered (free loop first; Argue with it and Tensions marked "Scales Full · iPhone 15 Pro or
+  later"); upload, What's New, accessibility declarations and Submit for Review are App Store Connect steps.
+
+## Where things stood (16 November 2026)
 
 Start here in a new session: this section, `docs/release-plan.md` (after launch) and the Cleanup log below.
 
@@ -100,7 +112,14 @@ Start here in a new session: this section, `docs/release-plan.md` (after launch)
 - One thought on screen. Nothing else unless a hand is on it.
 - No verdicts. The person only moves on or puts away; the app reads the rest.
 - A thought never disappears on its own. Everything put away is one tap from coming back.
-- Two grounds, no accent: pistachio `#B9C9A3` with ink `#2A1E2E`; plum `#3B2240` with bone `#F1E9D8`.
+- Two grounds, no accent: pistachio `#B9C9A3` with ink `#2A1E2E`; plum `#3B2240` with bone `#F1E9D8`. In Dark the sheets
+  go a step deeper, to `#23132A`, so moving between screens still changes ground. Stone (`#C9C6BD` and graphite
+  `#23262B`) is the one second set of colors, kept on purpose (decided 19 November 2026); it follows the same rules.
+- Counts are totals, not badges: "Your thoughts 5" and "Bookmarked · 1" stay. Nothing shows an unread or due number.
+- Actions are words. The two exceptions are the gear (Settings) and the bookmark in Edit, which also says its state.
+- Undo lasts five seconds, except with VoiceOver on, where it waits for the next move (2.37.0).
+- Nothing opens or sells on its own: no page opens itself, and Scales Full is offered only where a hand went
+  looking for it (Settings, a Scales Full feature, one quiet row on the end-of-day screen in the last two free days).
 - Haptics confirm or reward; key moments (put away, keep) get longer patterns.
 - Test at 375, 390 and 430 wide before saying it works.
 - Owner's style: plain words, no em-dashes, no military metaphors; do checks yourself rather than handing them back.

@@ -8,14 +8,17 @@ const root = path.join(__dirname, ".."), raw = path.join(root, "appstore", "scre
 
 const PLUM = { bg: "#3B2240", head: "#F1E9D8", sub: "#BBA7BE" };
 const PIST = { bg: "#B9C9A3", head: "#2A1E2E", sub: "#3E4830" };
+// 2.37.0 (1.1): the free loop first; the two Scales Full features last of the six, each marked with what it needs.
+// Shot 1 shows a thought in the person's own words (it showed a quote under "Write down what's on your mind").
+const FULL_TAG = "Scales Full \u00b7 iPhone 15 Pro or later";
 const slides = [
-  ["01-one-thought", "meet-light", PLUM, "One thought at a time.", "Write down what's on your mind. Scales hands it back later."],
-  ["02-argue", "argue", PIST, "Hear the other side.", "The case against a thought, the case for it, and what it would let you off."],
-  ["03-tensions", "tension", PLUM, "See where your thoughts disagree.", "Pairs of your own thoughts that pull against each other."],
+  ["01-one-thought", "meet-own", PLUM, "One thought at a time.", "Write down what's on your mind. Scales hands it back later."],
+  ["02-two-moves", "pull", PIST, "Two moves. That's all.", "Swipe up to move on. Pull down to put it away."],
+  ["03-your-thoughts", "library", PLUM, "Nothing disappears on its own.", "Find any thought, by where you stand with it."],
   ["04-insights", "insights", PIST, "See what's changing.", "Counted on your phone from what you actually did."],
-  ["05-two-moves", "pull", PLUM, "Two moves. That's all.", "Swipe up to move on. Pull down to put it away."],
-  ["06-sets", "sets", PIST, "Start with lines worth keeping.", "Five sets, from the Stoics to Franklin, in plain English."],
-  ["07-your-thoughts", "library", PLUM, "Nothing disappears on its own.", "Find any thought, by where you stand with it."],
+  ["05-argue", "argue", PLUM, "Hear the other side.", "The case against a thought, the case for it, and what it would let you off.", FULL_TAG],
+  ["06-tensions", "tension", PIST, "See where your thoughts disagree.", "Pairs of your own thoughts that pull against each other.", FULL_TAG],
+  ["07-sets", "sets", PLUM, "Start with lines worth keeping.", "Five sets, from the Stoics to Franklin, in plain English."],
   ["08-yours", "meet-dark", PIST, "Yours, on your phone.", "No account. Nothing leaves your phone. Light or Dark."]
 ];
 
@@ -24,7 +27,7 @@ const font = "data:font/woff2;base64," + fs.readFileSync(path.join(root, "site",
 (async () => {
   const b = await chromium.launch();
   const p = await (await b.newContext({ viewport: { width: 1320, height: 2868 }, deviceScaleFactor: 1 })).newPage();
-  for (const [name, shot, c, head, sub] of slides) {
+  for (const [name, shot, c, head, sub, tag] of slides) {
     const src = "data:image/png;base64," + fs.readFileSync(path.join(raw, shot + ".png")).toString("base64");
     await p.setContent(`<html><head><style>
       @font-face { font-family: Geist; src: url(${font}) format("woff2"); font-weight: 100 900; }
@@ -36,9 +39,11 @@ const font = "data:font/woff2;base64," + fs.readFileSync(path.join(root, "site",
         border-radius: 164px; padding: 29px;
         background: linear-gradient(145deg, #3a3440, #151217 40%, #262129);
         box-shadow: inset 0 0 0 3px rgba(255,255,255,.16), inset 0 0 0 10px #0d0b0f, 0 40px 90px rgba(20,10,24,.35); }
+      .tag { display: inline-block; margin: 30px auto 0; padding: 12px 30px; border-radius: 999px; font-size: 38px; font-weight: 600; letter-spacing: -0.005em;
+        color: ${c.bg}; background: ${c.head}; }
       .ph img { width: 1002px; height: 2176px; border-radius: 135px; display: block; }
     </style></head><body>
-      <div class="cap"><h1>${head}</h1><p>${sub}</p></div>
+      <div class="cap"><h1>${head}</h1><p>${sub}</p>${tag ? `<div><span class="tag">${tag}</span></div>` : ""}</div>
       <div class="ph"><img src="${src}"></div>
     </body></html>`);
     await p.evaluate(() => document.fonts.ready);
