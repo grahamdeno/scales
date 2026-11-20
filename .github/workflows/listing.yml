@@ -1,5 +1,6 @@
 # Reads the App Store listing text with the App Store Connect key and prints it (scripts/listing.rb).
-# Run by hand with write: true to put appstore/listing.json on the version being prepared. It never submits.
+# Run by hand with write: true to put appstore/listing.json on the version being prepared, or prepare: true (with a
+# build number) to make the version ready for review (scripts/prepare-release.rb). It never submits.
 name: App Store listing
 on:
   workflow_dispatch:
@@ -12,6 +13,14 @@ on:
         description: "Put appstore/listing.json on the version being prepared (never submits)"
         type: boolean
         default: false
+      prepare:
+        description: "Make the version ready for review: create it, attach the build, text, screenshots, accessibility (never submits)"
+        type: boolean
+        default: false
+      build:
+        description: "Build number to attach (with prepare)"
+        type: string
+        default: ""
 jobs:
   read:
     runs-on: ubuntu-latest
@@ -22,8 +31,10 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           WRITE: ${{ inputs.write && '1' || '0' }}
+          BUILD: ${{ inputs.build }}
         run: |
           printf '%s\n' "${{ secrets.ASC_KEY_P8 }}" | sed 's/\r$//' > "$RUNNER_TEMP/asc.p8"
-          if [ "${{ inputs.check }}" = "true" ]; then ASC_KEY_PATH="$RUNNER_TEMP/asc.p8" ruby scripts/version-check.rb; else
+          if [ "${{ inputs.prepare }}" = "true" ]; then ASC_KEY_PATH="$RUNNER_TEMP/asc.p8" ruby scripts/prepare-release.rb; ASC_KEY_PATH="$RUNNER_TEMP/asc.p8" ruby scripts/version-check.rb;
+          elif [ "${{ inputs.check }}" = "true" ]; then ASC_KEY_PATH="$RUNNER_TEMP/asc.p8" ruby scripts/version-check.rb; else
           ASC_KEY_PATH="$RUNNER_TEMP/asc.p8" ruby scripts/listing.rb; fi
           rm -f "$RUNNER_TEMP/asc.p8"
