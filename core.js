@@ -3,7 +3,7 @@
 // What a visit meant is read from how long it lasted and whether they wrote anything.
 (function (root) {
   "use strict";
-  var VERSION = "2.37.0";
+  var VERSION = "2.38.0";
 
   // How a visit is read. Time counts only while the app is open and the thought is on screen.
   var SKIP_MAX_MS = 20000;     // 20 s or less: skipped (2.1.0; was 7 s)
@@ -45,7 +45,9 @@
     return 2;
   }
 
-  function recordVisit(t, ms, worked, idle, now) {
+  // 2.38.0: breath is true when box breathing ran through at least one full in-breath during the visit; the visit
+  // then carries breath: 1, so the evaluation can read those visits apart. It never changes the schedule.
+  function recordVisit(t, ms, worked, idle, now, breath) {
     var kind = classify(ms, worked, idle), today = dayKey(now);
     if (kind === "skipped") t.skips = (t.skips || 0) + 1;
     if (kind === "thought") t.thinks = (t.thinks || 0) + 1;
@@ -54,9 +56,15 @@
     if ((kind === "thought" || kind === "worked") && t.skips > 0) t.skips -= 1;
     t.due = addDays(today, nextGap(t, kind));
     t.seen = now.toISOString();
-    t.visits = (t.visits || []).concat([{ at: now.toISOString(), kind: kind, ms: Math.round(ms) }]).slice(-30);
+    var v = { at: now.toISOString(), kind: kind, ms: Math.round(ms) };
+    if (breath) v.breath = 1;
+    t.visits = (t.visits || []).concat([v]).slice(-30);
     return kind;
   }
+
+  // 2.38.0: Breathing words is "off", "gentle" or "box". Before 2.38.0 it was false (off) or true/missing (on, which is
+  // Gentle). Anything else reads as Gentle; the stored value is never rewritten until the person chooses.
+  function breatheMode(v) { return v === "off" || v === false ? "off" : v === "box" ? "box" : "gentle"; }
 
   // Type weight from avoidance: 600 for a fresh thought, 50 heavier with each skip, up to 800.
   // (Feel review: 900 in Geist at 32 px read as shouting.)
@@ -449,6 +457,7 @@
     if (e.size) x.size = e.size;
     if (e.cls) x.cls = e.cls;
     if (e.s) x.s = e.s;
+    if (e.breath) x.breath = 1;
     if (log.length > LOG_MAX) log.splice(0, log.length - LOG_MAX);
     return log;
   }
@@ -966,7 +975,7 @@
 
   var api = { VERSION: VERSION, reword: reword, insights: insights, WAS_KEEP: WAS_KEEP, argRequest: argRequest, parseArg: parseArg, argFor: argFor, insightLine: insightLine, argForRequest: argForRequest, parseFor: parseFor, proFor: proFor, keepArg: keepArg, earlierArgs: earlierArgs, tensionBatches: tensionBatches, tensionRequest: tensionRequest, tensionPool: tensionPool, tensionCheck: tensionCheck, checkSaysTension: checkSaysTension, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
     standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
-    dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, weight: weight,
+    dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, breatheMode: breatheMode, weight: weight,
     make: make, protectedThought: protectedThought, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
     nextDue: nextDue, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, whenLabel: whenLabel,
     FULL_TRIAL_DAYS: FULL_TRIAL_DAYS, FULL_PRICE: FULL_PRICE, fullState: fullState, fullOpen: fullOpen, fullLine: fullLine };

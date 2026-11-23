@@ -48,6 +48,16 @@ console.log("  What other lines would call skipped / seen / thought:");
 console.log("  Time by length of thought (median):");
 [[0, 60], [60, 140], [140, 300], [300, 1e9]].forEach(([a, b]) => { const g = real.filter((v) => v.len >= a && v.len < b).map((v) => v.ms); row("    " + a + "-" + (b > 1e8 ? "" : b) + " letters", g.length, sec(median(g)) + "s"); });
 
+// 1b. Box breathing (2.38.0): a visit with breath: 1 played at least one full in-breath. They are in section 1 too;
+// here they are read apart from the other real visits, so the effect of the rhythm can be seen without moving any line.
+h("1b. Box breathing visits (breath: 1) apart from the others");
+const br = real.filter((v) => v.breath), nb = real.filter((v) => !v.breath);
+const thoughtShare = (a) => Math.round(100 * a.filter((v) => ["thought", "worked"].includes(v.cls || v.kind)).length / Math.max(1, a.length)) + "% thought";
+if (!br.length) console.log("  No box breathing visits in the window.");
+row("", "count", "median", "p75", "share");
+row("box breathing visits", br.length, sec(median(br.map((v) => v.ms))) + "s", sec(pct(br.map((v) => v.ms), 0.75)) + "s", thoughtShare(br));
+row("other real visits", nb.length, sec(median(nb.map((v) => v.ms))) + "s", sec(pct(nb.map((v) => v.ms), 0.75)) + "s", thoughtShare(nb));
+
 // 2. Day size and attention by position in the session.
 h("2. Day size (30) and attention through a session");
 const sized = visits.filter((v) => v.size);

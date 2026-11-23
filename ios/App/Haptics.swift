@@ -9,11 +9,16 @@ import UIKit
 ///   thud       Lived: a weight set down
 ///   letgo      Let go: firm, then fading away
 ///   signature  the day's set done: a buzz that rises, then zips off. The page plays it once a day.
+///   breathIn   2.38.0, box breathing: 4 s continuous, rising from soft to gentle
+///   breathOut  2.38.0, box breathing: 4 s continuous, falling back to soft
+///   breathStop 2.38.0: stops a breath at once (a touch, another screen, the app going to the background)
 /// The standard styles use UIFeedbackGenerator; the two custom ones use Core Haptics and fall back to a
 /// standard style on hardware without it.
 final class Haptics {
     private let supports = CHHapticEngine.capabilitiesForHardware().supportsHaptics
     private var engine: CHHapticEngine?
+    /// The breath now playing, kept so breathStop can end it at once. Nil when none is playing.
+    private var breathPlayer: CHHapticAdvancedPatternPlayer?
 
     init() {
         guard supports, let e = try? CHHapticEngine() else { return }
@@ -37,6 +42,13 @@ final class Haptics {
             if !run(signature()) { UINotificationFeedbackGenerator().notificationOccurred(.success) }
         case "letgo":
             if !run(letGo()) { UIImpactFeedbackGenerator(style: .soft).impactOccurred() }
+        case "breathIn":
+            // Box breathing: no Core Haptics, no haptic (a tap every 4 s would be the wrong signal).
+            playBreath(breath(from: Breath.low, to: Breath.high))
+        case "breathOut":
+            playBreath(breath(from: Breath.high, to: Breath.low))
+        case "breathStop":
+            stopBreath()
         default:
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         }
@@ -80,6 +92,47 @@ final class Haptics {
             .init(relativeTime: 0, value: 1.0), .init(relativeTime: 0.15, value: 0.7), .init(relativeTime: 0.6, value: 0.0),
         ], relativeTime: 0)
         return ([hold], [fade])
+    }
+
+    /// Every number for box breathing, in one place.
+    private enum Breath {
+        static let seconds = 4.0     // one in-breath or out-breath
+        static let low = 0.15        // intensity at the soft end
+        static let high = 0.6        // intensity at the gentle end
+        static let sharpness = 0.15
+    }
+
+    /// One 4 s continuous event whose intensity moves from one end to the other. The event's own intensity is 1.0;
+    /// the curve scales it (the same way signature and letGo do).
+    private func breath(from a: Double, to b: Double) -> Pattern {
+        let event = CHHapticEvent(eventType: .hapticContinuous, parameters: [
+            CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+            CHHapticEventParameter(parameterID: .hapticSharpness, value: Float(Breath.sharpness)),
+        ], relativeTime: 0, duration: Breath.seconds)
+        let curve = CHHapticParameterCurve(parameterID: .hapticIntensityControl, controlPoints: [
+            .init(relativeTime: 0, value: Float(a)), .init(relativeTime: Breath.seconds, value: Float(b)),
+        ], relativeTime: 0)
+        return ([event], [curve])
+    }
+
+    /// Plays a breath, ending any breath still playing. Does nothing without Core Haptics.
+    private func playBreath(_ p: Pattern) {
+        stopBreath()
+        guard supports, let engine else { return }
+        do {
+            try engine.start()
+            let player = try engine.makeAdvancedPlayer(with: CHHapticPattern(events: p.events, parameterCurves: p.curves))
+            breathPlayer = player
+            try player.start(atTime: CHHapticTimeImmediate)
+        } catch {
+            breathPlayer = nil
+        }
+    }
+
+    private func stopBreath() {
+        guard let player = breathPlayer else { return }
+        breathPlayer = nil
+        try? player.stop(atTime: CHHapticTimeImmediate)
     }
 
     private func run(_ p: Pattern) -> Bool {

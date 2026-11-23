@@ -20,7 +20,7 @@ copied in on first open until 2.34.0; since 2.35.0 it is not read (Graham was it
   tests/e2e/app.e2e.js (search for the old number, including its escaped form `2\.34\.0`); a test checks they match.
 - `ios/`: WKWebView shell that bundles the web app and serves it at `scales-app://local/`. The page talks to it with
   `window.webkit.messageHandlers.scales.postMessage`: `ready`, `store` (NativeStore), `haptic` (tick, medium, success,
-  thud, letgo, signature), `icon`, `look`, `save` (daily backup file), `backup`, `aiStatus` and `ai` (Apple
+  thud, letgo, signature, breathIn, breathOut, breathStop), `icon`, `look`, `save` (daily backup file), `backup`, `aiStatus` and `ai` (Apple
   Intelligence). No StoreKit or reminder code (build 39 and 2.34.0 removed them).
 - The browser app at `/app/` is copied from the `release` branch into the Cloudflare site by the Website workflow
   (`scripts/bundle-web.sh`, file list in `scripts/web-files.txt`).
@@ -53,6 +53,16 @@ copied in on first open until 2.34.0; since 2.35.0 it is not read (Graham was it
   prompts Claude writes. Never paste tokens.
 - Choosing a model: Opus for feel, data safety and judgment calls; Sonnet for well-specified building, tests and
   shipping; Haiku for mechanical edits.
+
+## 1.2 (2.38.0): in progress (from 22 November 2026)
+
+- Items and handoffs: `docs/roadmap.md` (on `main`) and `docs/handoffs/1.2.md`. PRs go to `next-1.2`; nothing merges to `main`
+  until Graham's go for the single 1.2 test build.
+- Item 1, box breathing (`breathe-box`): `ui.breathe` is `"off" | "gentle" | "box"` (`C.breatheMode` reads an old `false` as off and
+  `true` or missing as Gentle; other `ui` fields are never rewritten). The page runs one timer (`boxStep` in index.html;
+  `BOX_SCALE = 0.018`, 4 s a phase) and asks the iPhone app for `breathIn`, `breathOut` and `breathStop` (Haptics.swift).
+  A visit that played a full in-breath is stored with `breath: 1` (the thought's visit list and the log).
+  Test: `tests/e2e/breathe.e2e.js`. `MARKETING_VERSION` stays 1.1 until the release PR.
 
 ## 1.1 (2.37.0): the 18 November audit (19 November 2026)
 

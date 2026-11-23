@@ -98,7 +98,7 @@ const store = (page) => page.evaluate(() => JSON.parse(localStorage.getItem("sca
     const order = await page.evaluate(() => [...document.querySelectorAll("#settings .sh")].filter((x) => x.offsetParent).map((x) => x.textContent).join("|"));
     ok(/^Look\|Scales Full\|/.test(order), "G-38 Scales Full sits under Look: " + order);
     // G-34: the App Store version first
-    ok((await page.textContent("#setVersion")) === "1.1 (2.37.0, build 63)", "G-34 Version reads " + (await page.textContent("#setVersion")));
+    ok((await page.textContent("#setVersion")) === "1.1 (2.38.0, build 63)", "G-34 Version reads " + (await page.textContent("#setVersion")));
     // G-6: the status bar follows the ground at the top
     const bars = await page.evaluate(() => window.__sent.filter((m) => m.type === "bar").map((m) => m.style));
     ok(bars[0] === "dark" && bars.includes("light"), "G-6 status bar: dark words on pistachio, light on the plum pages (" + bars.join(",") + ")");
