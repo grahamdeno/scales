@@ -164,7 +164,7 @@ test("Scales saves daily through the iPhone app", () => {
   assert.match(nx, /post\(\{ type: "ready" \}\);/);
   assert.ok(!/scales\.apikey\.v1/.test(nx), "never copies the API key");
   const swift = read("ios/App/Haptics.swift");
-  for (const s of ["thud", "letgo", "signature", "medium", "success", "breathIn", "breathOut", "breathStop"]) assert.match(swift, new RegExp('case "' + s + '"'), s);
+  for (const s of ["thud", "letgo", "signature", "medium", "success", "putaway", "breathIn", "breathOut", "breathStop"]) assert.match(swift, new RegExp('case "' + s + '"'), s);
 });
 
 test("the visit log keeps raw times and the lines in force, newest 5000 (2.0.1)", () => {
@@ -973,4 +973,18 @@ test("evaluate.js reports box breathing visits apart (2.38.0)", () => {
   assert.match(out, /box breathing visits\s+2\b/);
   assert.match(out, /other real visits\s+3\b/);
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("put away plays one custom haptic and the other moments are unchanged (2.38.0)", () => {
+  const nx = read("index.html"), swift = read("ios/App/Haptics.swift");
+  assert.match(nx, /putAway: \[\[0, "putaway"\]\]/, "BUZZ.putAway is one putaway style");
+  assert.match(nx, /keep: \[\[0, "signature"\]\]/); assert.match(nx, /bringBack: \[\[0, "medium"\], \[130, "success"\]\]/);
+  assert.match(nx, /undo: \[\[0, "medium"\]\]/); assert.match(nx, /remove: \[\[0, "thud"\], \[150, "thud"\]\]/, "remove is untouched");
+  assert.match(swift, /case "putaway":\s*\n\s*if !run\(putAway\(\)\) \{ UIImpactFeedbackGenerator\(style: \.heavy\)\.impactOccurred\(\) \}/, "heavy tap without Core Haptics");
+  // every number in one place, the starting values from the handoff
+  for (const [k, v] of [["liftEnd: TimeInterval", "0.18"], ["liftFrom: Float", "0.2"], ["liftTo: Float", "0.5"], ["liftSharpness: Float", "0.3"], ["landAt: TimeInterval", "0.26"],
+    ["landIntensity: Float", "0.9"], ["landSharpness: Float", "0.15"], ["fadeStart: TimeInterval", "0.27"], ["fadeEnd: TimeInterval", "0.6"], ["fadeFrom: Float", "0.35"], ["fadeSharpness: Float", "0.1"]])
+    assert.match(swift, new RegExp("static let " + k + " = " + v.replace(".", "\\.") + "\\b"), k + " = " + v);
+  const body = swift.slice(swift.indexOf("private func putAway()"), swift.indexOf("/// Every number for box breathing"));
+  assert.ok(!/value: 0\.\d/.test(body.replace(/value: 0\.0\)/, "")), "no tuning number is written inside the pattern");
 });

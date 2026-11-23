@@ -9,6 +9,7 @@ import UIKit
 ///   thud       Lived: a weight set down
 ///   letgo      Let go: firm, then fading away
 ///   signature  the day's set done: a buzz that rises, then zips off. The page plays it once a day.
+///   putaway    2.38.0, Put away: a soft lift, a short pause, a low landing tap that fades (it replaces thud then letgo)
 ///   breathIn   2.38.0, box breathing: 4 s continuous, rising from soft to gentle
 ///   breathOut  2.38.0, box breathing: 4 s continuous, falling back to soft
 ///   breathStop 2.38.0: stops a breath at once (a touch, another screen, the app going to the background)
@@ -42,6 +43,8 @@ final class Haptics {
             if !run(signature()) { UINotificationFeedbackGenerator().notificationOccurred(.success) }
         case "letgo":
             if !run(letGo()) { UIImpactFeedbackGenerator(style: .soft).impactOccurred() }
+        case "putaway":
+            if !run(putAway()) { UIImpactFeedbackGenerator(style: .heavy).impactOccurred() }
         case "breathIn":
             // Box breathing: no Core Haptics, no haptic (a tap every 4 s would be the wrong signal).
             playBreath(breath(from: Breath.low, to: Breath.high))
@@ -92,6 +95,48 @@ final class Haptics {
             .init(relativeTime: 0, value: 1.0), .init(relativeTime: 0.15, value: 0.7), .init(relativeTime: 0.6, value: 0.0),
         ], relativeTime: 0)
         return ([hold], [fade])
+    }
+
+    /// Every number for the put-away pattern, in one place: tuning is a one-line change here (times in seconds).
+    /// Lift, then a pause with nothing playing (liftEnd to landAt), then a low landing tap, then a fade.
+    private enum PutAway {
+        static let liftEnd: TimeInterval = 0.18            // the lift runs from 0 to here
+        static let liftFrom: Float = 0.2                   // lift intensity at 0
+        static let liftTo: Float = 0.5                     // lift intensity at liftEnd
+        static let liftSharpness: Float = 0.3
+        static let landAt: TimeInterval = 0.26             // the landing tap
+        static let landIntensity: Float = 0.9
+        static let landSharpness: Float = 0.15             // low and soft
+        static let fadeStart: TimeInterval = 0.27          // must be later than landAt
+        static let fadeEnd: TimeInterval = 0.6
+        static let fadeFrom: Float = 0.35                  // fade intensity at fadeStart; it falls to 0 at fadeEnd
+        static let fadeSharpness: Float = 0.1
+    }
+
+    /// A soft lift, a short pause, a low landing tap that fades, like setting something on a shelf.
+    /// One intensity curve covers the whole pattern, so the three events play at full strength and the curve shapes them:
+    /// it climbs through the lift, reaches 1.0 at the landing (the tap's own 0.9 applies), then drops to the fade's start.
+    private func putAway() -> Pattern {
+        let lift = CHHapticEvent(eventType: .hapticContinuous, parameters: [
+            CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+            CHHapticEventParameter(parameterID: .hapticSharpness, value: PutAway.liftSharpness),
+        ], relativeTime: 0, duration: PutAway.liftEnd)
+        let land = CHHapticEvent(eventType: .hapticTransient, parameters: [
+            CHHapticEventParameter(parameterID: .hapticIntensity, value: PutAway.landIntensity),
+            CHHapticEventParameter(parameterID: .hapticSharpness, value: PutAway.landSharpness),
+        ], relativeTime: PutAway.landAt)
+        let fade = CHHapticEvent(eventType: .hapticContinuous, parameters: [
+            CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+            CHHapticEventParameter(parameterID: .hapticSharpness, value: PutAway.fadeSharpness),
+        ], relativeTime: PutAway.fadeStart, duration: PutAway.fadeEnd - PutAway.fadeStart)
+        let shape = CHHapticParameterCurve(parameterID: .hapticIntensityControl, controlPoints: [
+            .init(relativeTime: 0, value: PutAway.liftFrom),
+            .init(relativeTime: PutAway.liftEnd, value: PutAway.liftTo),
+            .init(relativeTime: PutAway.landAt, value: 1.0),
+            .init(relativeTime: PutAway.fadeStart, value: PutAway.fadeFrom),
+            .init(relativeTime: PutAway.fadeEnd, value: 0.0),
+        ], relativeTime: 0)
+        return ([lift, land, fade], [shape])
     }
 
     /// Every number for box breathing, in one place.
