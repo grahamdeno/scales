@@ -17,6 +17,12 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (the same page, bundl
   each row is one line in regular weight with its age on the right (Today, 3d, 5w, 4mo), and All is grouped by when
   the thought was added (This week, This month, Earlier), newest first. + New lives here only (it left the reading
   screen in 2.13.0).
+- **2.38.0 (App Store 1.2, in progress):** Breathing words is Off, Gentle or Box breathing (Settings, Look). Gentle is the
+  old behavior (an earlier "on" becomes Gentle, "off" stays Off). Box breathing: after 20 seconds with a thought and no
+  touch, the words grow 1.8% over 4 seconds, hold 4, shrink 4, hold 4, and repeat; the iPhone app adds a soft haptic
+  that rises through each in-breath and falls through each out-breath (holds are silent). A touch, another screen or the
+  app going to the background stops both at once. Reduce Motion keeps the words still and the haptics on. A visit during
+  which a full in-breath played records `breath: 1`; `scripts/evaluate.js` reports those visits apart (section 1b).
 - **2.36.1:** Launch. The website's main button is Download on the App Store (Scales 1.0, released 16 November 2026);
   the browser app shows a card in Settings offering the iPhone app. Campaign links: `ct=website` and `ct=browser-app`.
 - **2.36.0:** Scales Full. Scales is free to use; Argue with it, Tensions, and Themes and your week are Scales Full:

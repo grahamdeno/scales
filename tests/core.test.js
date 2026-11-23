@@ -164,7 +164,7 @@ test("Scales saves daily through the iPhone app", () => {
   assert.match(nx, /post\(\{ type: "ready" \}\);/);
   assert.ok(!/scales\.apikey\.v1/.test(nx), "never copies the API key");
   const swift = read("ios/App/Haptics.swift");
-  for (const s of ["thud", "letgo", "signature", "medium", "success"]) assert.match(swift, new RegExp('case "' + s + '"'), s);
+  for (const s of ["thud", "letgo", "signature", "medium", "success", "breathIn", "breathOut", "breathStop"]) assert.match(swift, new RegExp('case "' + s + '"'), s);
 });
 
 test("the visit log keeps raw times and the lines in force, newest 5000 (2.0.1)", () => {
@@ -919,4 +919,58 @@ test("Scales Full: only new work is gated; what is made stays readable", () => {
   assert.ok(/async function aiRun\(\) \{[^]*?!fullOk\(\)/.test(page) && /async function aiWeek\(\) \{[^]*?!fullOk\(\)/.test(page), "themes and the week are gated");
   assert.ok(/!fullOk\(\) && !curArg\(\)/.test(page), "a kept argument opens even when locked");
   assert.ok(!/fullOk\(\)[^;]*renderLib|fullOk\(\)[^;]*delete store/.test(page), "the library and thoughts are never gated");
+});
+
+test("breatheMode: Breathing words reads old stored values safely (2.38.0)", () => {
+  assert.equal(N.breatheMode(false), "off", "an old off stays Off");
+  assert.equal(N.breatheMode(true), "gentle", "an old on becomes Gentle");
+  assert.equal(N.breatheMode(undefined), "gentle", "nothing stored is Gentle, as before");
+  assert.equal(N.breatheMode(null), "gentle");
+  assert.equal(N.breatheMode("off"), "off");
+  assert.equal(N.breatheMode("gentle"), "gentle");
+  assert.equal(N.breatheMode("box"), "box");
+  assert.equal(N.breatheMode("anything else"), "gentle", "an unknown value never turns the words off or on box");
+});
+
+test("the visit carries breath: 1 only when box breathing played a full in-breath (2.38.0)", () => {
+  const now = at(2026, 11, 23), t = N.make("Rest is part of the work.", now);
+  N.recordVisit(t, 31000, false, false, now);
+  N.recordVisit(t, 31000, false, false, now, false);
+  N.recordVisit(t, 31000, false, false, now, true);
+  assert.equal(t.visits[0].breath, undefined, "no flag when the argument is missing");
+  assert.equal(t.visits[1].breath, undefined, "no flag when it is false");
+  assert.equal(t.visits[2].breath, 1, "breath: 1 when it is true");
+  assert.deepEqual(Object.keys(t.visits[2]).sort(), ["at", "breath", "kind", "ms"]);
+  const t2 = N.make("x", now), t3 = N.make("x", now);
+  N.recordVisit(t2, 31000, false, false, now); N.recordVisit(t3, 31000, false, false, now, true);
+  assert.equal(t2.due, t3.due, "breathing never changes the schedule");
+  assert.equal(t2.thinks, t3.thinks);
+  const log = [];
+  N.logVisit(log, { at: "a", id: "a", ms: 1000, kind: "thought", how: "next", breath: true });
+  N.logVisit(log, { at: "b", id: "b", ms: 1000, kind: "thought", how: "next" });
+  assert.equal(log[0].breath, 1, "the log carries it for the evaluation");
+  assert.equal(log[1].breath, undefined);
+});
+
+test("the page and the iPhone app agree on the breath styles and Reduce Motion (2.38.0)", () => {
+  const nx = read("index.html"), swift = read("ios/App/Haptics.swift");
+  assert.match(nx, /var BOX_SCALE = 0\.018/, "the size is one constant");
+  assert.match(nx, /haptic\("breathIn"\)/); assert.match(nx, /haptic\("breathOut"\)/); assert.match(nx, /haptic\("breathStop"\)/);
+  assert.match(nx, /if \(!reduceMotion\(\)\) w\.classList\.add\("big"\); haptic\("breathIn"\)/, "Reduce Motion drops the scale, not the haptic");
+  assert.match(swift, /intensity|hapticIntensityControl/);
+  assert.match(swift, /static let low = 0\.15/); assert.match(swift, /static let high = 0\.6/); assert.match(swift, /static let sharpness = 0\.15/);
+  assert.match(swift, /static let seconds = 4\.0/);
+  assert.match(swift, /breathPlayer/, "a reference to the player is kept, so breathStop can end it");
+});
+
+test("evaluate.js reports box breathing visits apart (2.38.0)", () => {
+  const fs = require("fs"), os = require("os"), path = require("path"), { execFileSync } = require("child_process");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "scales-eval-")), f = path.join(dir, "backup.json");
+  const v = (i, ms, breath) => Object.assign({ at: "2026-11-24T1" + (i % 10) + ":00:00Z", id: "t" + i, ms: ms, worked: false, idle: false, kind: ms >= 30000 ? "thought" : ms <= 20000 ? "skipped" : "seen", how: "next", len: 40 }, breath ? { breath: 1 } : {});
+  fs.writeFileSync(f, JSON.stringify({ app: "scales", version: "2.38.0", exported_at: "2026-11-26T00:00:00Z", thoughts: {}, events: [], visits: [v(1, 45000, true), v(2, 50000, true), v(3, 8000, false), v(4, 31000, false), v(5, 12000, false)] }));
+  const out = execFileSync(process.execPath, [path.join(__dirname, "..", "scripts", "evaluate.js"), f], { encoding: "utf8" });
+  assert.match(out, /1b\. Box breathing/);
+  assert.match(out, /box breathing visits\s+2\b/);
+  assert.match(out, /other real visits\s+3\b/);
+  fs.rmSync(dir, { recursive: true, force: true });
 });
