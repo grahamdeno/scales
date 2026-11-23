@@ -74,7 +74,7 @@ module.exports = [
       w.expect((await w.text("#words")) !== first, "pull down takes the thought off the screen");
       w.expect(await w.visible("#toast") && /Put away/.test(await w.text("#toastMsg")), "a message says Put away, with Undo");
       const hp = await w.haptics(t0);
-      w.expect(hp.includes("thud") && hp.includes("letgo"), "put away plays thud then let go (" + hp.join(",") + ")");
+      w.expect(hp.includes("putaway") && !hp.includes("thud") && !hp.includes("letgo"), "put away plays one putaway haptic, no thud or let go (" + hp.join(",") + ")");
       const fw = await w.page.evaluate(() => [getComputedStyle(document.getElementById("toastUndo")).fontWeight, getComputedStyle(document.getElementById("toastWhy")).fontWeight, getComputedStyle(document.getElementById("toastWhy")).backgroundColor]);
       if (await w.visible("#toastWhy")) w.expect(+fw[0] > +fw[1] && /rgba\(0, 0, 0, 0\)|transparent/.test(fw[2]), "Undo is the strongest word, Say why a plain one (" + fw.join(", ") + ")");
       await w.tap("#toastUndo", "Undo", 700);
