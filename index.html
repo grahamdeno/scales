@@ -938,9 +938,10 @@ textarea::placeholder { color: var(--plum-faint); }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { if (typeof track === "function" && EV) track("storage_fail", { k: k }); return false; } }
   function post(msg) { if (!NATIVE) return; try { window.webkit.messageHandlers.scales.postMessage(msg); } catch (_) {} }
   function haptic(style) { post({ type: "haptic", style: style }); }
-  // Longer moments, built from the iPhone app's own styles, so no new app build is needed.
+  // Longer moments, built from the iPhone app's own styles. 2.38.0: putAway is one custom style, "putaway" (a soft lift, a
+  // pause, a low landing tap that fades), so it needs the 2.38.0 iPhone app; the other moments still need no app build.
   var BUZZ = {
-    putAway: [[0, "thud"], [110, "letgo"]],          // set down firmly, then it fades away
+    putAway: [[0, "putaway"]],
     keep: [[0, "signature"]],                         // rises, lands, zips off
     bringBack: [[0, "medium"], [130, "success"]],
     undo: [[0, "medium"]],

@@ -714,7 +714,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log("FAIL", m); } else console
     await page.evaluate(() => { window.__posts.length = 0; });
     await page.keyboard.press("ArrowDown"); await page.waitForTimeout(400);
     const hs = await page.evaluate(() => window.__posts.filter((m) => m.type === "haptic").map((m) => m.style));
-    ok(hs.join(",") === "thud,letgo", "native: put away buzzes thud then letgo (" + hs.join(",") + ")");
+    ok(hs.join(",") === "putaway", "native: put away plays one putaway haptic, no thud or letgo (" + hs.join(",") + ")");
     // App icon: shown only in the iPhone app; a choice is sent to the shell, and the shell's answer marks it
     await page.waitForTimeout(5300); await page.click("#strip"); await page.waitForTimeout(600); await page.click("#libGear"); await page.waitForTimeout(500);
     ok(await page.locator("#setIcon").isVisible(), "native: Settings shows App icon");

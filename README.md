@@ -23,6 +23,8 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (the same page, bundl
   that rises through each in-breath and falls through each out-breath (holds are silent). A touch, another screen or the
   app going to the background stops both at once. Reduce Motion keeps the words still and the haptics on. A visit during
   which a full in-breath played records `breath: 1`; `scripts/evaluate.js` reports those visits apart (section 1b).
+  Putting a thought away plays one custom haptic on the iPhone (a soft lift, a short pause, a low landing tap that
+  fades) in place of the thud and let-go pair; a heavy tap on iPhones without Core Haptics.
 - **2.36.1:** Launch. The website's main button is Download on the App Store (Scales 1.0, released 16 November 2026);
   the browser app shows a card in Settings offering the iPhone app. Campaign links: `ct=website` and `ct=browser-app`.
 - **2.36.0:** Scales Full. Scales is free to use; Argue with it, Tensions, and Themes and your week are Scales Full:
