@@ -23,6 +23,11 @@ Live at `scales.tangomike.app/app/`, and in the iPhone app (the same page, bundl
   that rises through each in-breath and falls through each out-breath (holds are silent). A touch, another screen or the
   app going to the background stops both at once. Reduce Motion keeps the words still and the haptics on. A visit during
   which a full in-breath played records `breath: 1`; `scripts/evaluate.js` reports those visits apart (section 1b).
+  Share Sheet import: choosing Scales in the iPhone Share Sheet (text or one link) opens a plum-and-bone sheet with editable
+  text (1500 characters), an optional Source line, Cancel and Keep. Keep writes the item to `inbox.json` in the App Group
+  `group.com.grahamdeno.scales`; the app hands unread items to the page on launch and on return to the foreground, the page
+  adds each as a new thought (Source becomes Who said it) and skips any id it has already added, and only after it answers
+  `inboxDone` does the app remove those entries. Nothing leaves the phone.
   Putting a thought away plays one custom haptic on the iPhone (a soft lift, a short pause, a low landing tap that
   fades) in place of the thud and let-go pair; a heavy tap on iPhones without Core Haptics.
 - **2.36.1:** Launch. The website's main button is Download on the App Store (Scales 1.0, released 16 November 2026);

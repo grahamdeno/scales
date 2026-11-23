@@ -113,6 +113,17 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         web.load(URLRequest(url: home))
     }
 
+    /// 2.38.0, Share Sheet import: gives the page what was shared to Scales ({id, text, source, at} entries from the App
+    /// Group inbox), when Scales opens and each time it comes to the front. The page adds each as a new thought, skips any
+    /// id it already added, and answers inboxDone; only then are the entries removed. Before the page is up it waits:
+    /// "ready" delivers it.
+    func deliverInbox() {
+        guard ready else { return }
+        let items = Inbox.read()
+        guard !items.isEmpty, let data = try? JSONEncoder().encode(items), let json = String(data: data, encoding: .utf8) else { return }
+        web.evaluateJavaScript("window.scalesInbox && window.scalesInbox(\(json))", completionHandler: nil)
+    }
+
     /// Run a script in Scales now, or once it has started.
     func run(_ script: String) {
         guard ready else { queued.append(script); return }
@@ -133,6 +144,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             queued.forEach { web.evaluateJavaScript($0, completionHandler: nil) }
             queued.removeAll()
             sendIcon(); sendA11y()
+            deliverInbox()
+        case "inboxDone":
+            // 2.38.0: the page has added these and saved them. Only now do they leave the inbox, and only these.
+            if let ids = body["ids"] as? [String], !ids.isEmpty { try? Inbox.remove(ids: ids) }
         case "haptic":
             // 1.84.1: a named style (Haptics.swift); older pages send none and get a tick.
             haptics.play(body["style"] as? String ?? "tick")

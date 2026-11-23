@@ -988,3 +988,92 @@ test("put away plays one custom haptic and the other moments are unchanged (2.38
   const body = swift.slice(swift.indexOf("private func putAway()"), swift.indexOf("/// Every number for box breathing"));
   assert.ok(!/value: 0\.\d/.test(body.replace(/value: 0\.0\)/, "")), "no tuning number is written inside the pattern");
 });
+
+test("Share Sheet import: addInbox adds, skips a duplicate id, and says what is done (2.38.0)", () => {
+  const now = at(2026, 12, 2), store = {}, seen = [];
+  const items = [
+    { id: "a", text: "  Begin before you are ready.  ", source: "A book", at: "2026-12-01T10:00:00.000Z" },
+    { id: "b", text: "Speak only what may be heard twice.", source: "", at: "2026-12-01T11:00:00.000Z" },
+    { id: "c", text: "   ", source: "https://example.com/x", at: "2026-12-01T12:00:00.000Z" },
+    { id: "a", text: "A repeat in the same delivery", source: "", at: "2026-12-01T13:00:00.000Z" },
+    { text: "no id", source: "" }, null, 5,
+  ];
+  const r = N.addInbox(store, seen, items, now);
+  assert.equal(r.added.length, 2, "two thoughts added: a and b");
+  assert.deepEqual(r.done, ["a", "b", "c"], "every id handled is reported done, an empty-text one too, none twice");
+  const ts = N.list(store);
+  const a = ts.find((t) => t.text === "Begin before you are ready.");
+  assert.ok(a, "the text is trimmed, like Write");
+  assert.equal(a.by, "A book", "the source goes on the Who said it line");
+  assert.equal(a.created, "2026-12-01T10:00:00.000Z", "it keeps the time it was shared");
+  assert.equal(ts.length, 2, "nothing is added for an empty text or a repeated id");
+  assert.deepEqual(r.seen, ["a", "b", "c"]);
+  // the same delivery again (a crash before the app removed the entries): nothing twice
+  const r2 = N.addInbox(store, r.seen, items.slice(0, 3), now);
+  assert.equal(r2.added.length, 0, "an id already added is skipped");
+  assert.deepEqual(r2.done, ["a", "b", "c"], "it still says done, so the app can remove them");
+  assert.equal(N.list(store).length, 2);
+  // a new id after a thought was deleted is a new item; the old id still is not added again
+  delete store[a.id];
+  assert.equal(N.addInbox(store, r2.seen, [items[0]], now).added.length, 0, "a deleted thought is not brought back by an old id");
+  assert.equal(N.addInbox({}, [], "not a list", now).done.length, 0, "no list, no harm");
+});
+
+test("addInbox keeps Write's limits and makes the first thought due today (2.38.0)", () => {
+  const now = at(2026, 12, 2), store = {};
+  const long = "x".repeat(2000), src = "s".repeat(500);
+  const r = N.addInbox(store, [], [{ id: "L", text: long, source: src, at: "2026-12-02T01:00:00.000Z" }], now);
+  const t = store[r.added[0]];
+  assert.equal(t.text.length, N.INBOX_TEXT_MAX, "text is cut to 1500, as Write");
+  assert.equal(t.by.length, 200, "the source is cut to 200, as the byline");
+  assert.equal(t.due, N.dayKey(now), "the very first thought is due today, as Write");
+  const r2 = N.addInbox(store, [], [{ id: "M", text: "Second", source: "", at: "2026-12-02T02:00:00.000Z" }], now);
+  assert.equal(store[r2.added[0]].due, N.addDays(N.dayKey(now), 1), "later ones come back tomorrow, as Write");
+  const future = N.addInbox(store, [], [{ id: "F", text: "From the future", source: "", at: "2030-01-01T00:00:00.000Z" }], now);
+  assert.equal(store[future.added[0]].created, now.toISOString(), "a time in the future is not trusted");
+  const many = N.addInbox({}, Array.from({ length: 300 }, (_, i) => "old" + i), [{ id: "n", text: "x", at: "" }], now);
+  assert.equal(many.seen.length, 200, "the list of added ids stays bounded");
+  assert.equal(many.seen[many.seen.length - 1], "n");
+});
+
+test("the page answers inboxDone only after saving, and the app removes only those ids (2.38.0)", () => {
+  const nx = read("index.html"), shell = read("ios/App/WebViewController.swift"), scene = read("ios/App/ScalesApp.swift");
+  const f = nx.slice(nx.indexOf("window.scalesInbox = function"), nx.indexOf("if (NATIVE) {", nx.indexOf("window.scalesInbox = function")));
+  assert.ok(f.indexOf("save()") > 0 && f.indexOf("save()") < f.indexOf('post({ type: "inboxDone", ids: r.done })'), "saved, then inboxDone");
+  assert.ok(f.indexOf("scalesStoreFlush") < f.indexOf("inboxDone"), "the store file is told to write before the answer");
+  assert.ok(nx.indexOf("window.scalesInbox = function") < nx.indexOf('post({ type: "ready" })'), "the entry point exists before the page says ready");
+  assert.match(shell, /case "inboxDone":[\s\S]*Inbox\.remove\(ids: ids\)/, "the app removes by id, after the message");
+  assert.ok(!/Inbox\.remove\(/.test(shell.replace(/case "inboxDone":[\s\S]*?Inbox\.remove\(ids: ids\)/, "")), "removal happens nowhere else");
+  assert.match(shell, /func deliverInbox\(\) \{\s*guard ready else \{ return \}/, "nothing is delivered before the page is up");
+  assert.match(shell, /sendIcon\(\); sendA11y\(\)\s*\n\s*deliverInbox\(\)/, "ready delivers what is waiting (launch)");
+  assert.match(scene, /func becameActive\(\)[\s\S]*controller\.deliverInbox\(\)/, "each return to the foreground delivers it");
+});
+
+test("Share Sheet extension: target, identifiers, entitlements and privacy (2.38.0)", () => {
+  const y = read("ios/project.yml"), wf = read(".github/workflows/ios.yml");
+  assert.match(y, /ScalesShare:\s*\n\s*type: app-extension/, "a second target, an app extension");
+  assert.match(y, /PRODUCT_BUNDLE_IDENTIFIER: com\.grahamdeno\.scales\.share/, "the registered extension ID");
+  assert.match(y, /dependencies:\s*\n[^\n]*\n?\s*- target: ScalesShare/, "embedded in Scales");
+  assert.equal((y.match(/com\.apple\.security\.application-groups: \[group\.com\.grahamdeno\.scales\]/g) || []).length, 2, "the App Group is in both entitlements, full string");
+  assert.match(y, /com\.apple\.developer\.icloud-container-identifiers: \[iCloud\.com\.grahamdeno\.scales\]/, "iCloud is unchanged");
+  assert.match(y, /com\.apple\.developer\.ubiquity-container-identifiers: \[iCloud\.com\.grahamdeno\.scales\]/);
+  assert.match(y, /NSExtensionPointIdentifier: com\.apple\.share-services/);
+  assert.match(y, /NSExtensionActivationSupportsText: true/); assert.match(y, /NSExtensionActivationSupportsWebURLWithMaxCount: 1/);
+  assert.ok(!/NSExtensionActivationSupports(Image|Movie|File|Attachments)/.test(y), "text and one link only: no images or files");
+  assert.match(y, /CFBundleVersion: \$\(CURRENT_PROJECT_VERSION\)/);
+  assert.ok(!/store\.kit|StoreKit|com\.apple\.developer\.in-app/i.test(read("ios/Share/ShareViewController.swift") + read("ios/Share/InboxFile.swift")), "the extension doesn't use StoreKit");
+  // nothing leaves the phone
+  const code = read("ios/Share/ShareViewController.swift") + read("ios/Share/InboxFile.swift");
+  assert.ok(!/URLSession|NWConnection|NWPath|CFNetwork|WKWebView|http:\/\/|https:\/\/|URLRequest|sendMessage|analytics/i.test(code), "no network code in the extension");
+  assert.match(code, /static let group = "group\.com\.grahamdeno\.scales"/);
+  assert.match(code, /options: \.atomic/, "the inbox file is written atomically");
+  const pm = read("ios/Share/PrivacyInfo.xcprivacy");
+  assert.match(pm, /NSPrivacyTracking<\/key>\s*<false\/>/); assert.match(pm, /NSPrivacyCollectedDataTypes<\/key>\s*<array\/>/); assert.match(pm, /NSPrivacyAccessedAPITypes<\/key>\s*<array\/>/);
+  const sheet = read("ios/Share/ShareViewController.swift");
+  for (const w of ['"Cancel"', '"Keep"', '"Source (optional)"', "greaterThanOrEqualToConstant: 44", "adjustsFontForContentSizeCategory = true", "keepButton.isEnabled", "Inbox.textMax"]) assert.ok(sheet.includes(w), "sheet: " + w);
+  // the workflow signs the extension with its own entitlements, then the app, and checks both in the signed export
+  assert.ok(wf.indexOf("Share/ScalesShare.entitlements") > 0 && wf.indexOf("Share/ScalesShare.entitlements") < wf.indexOf("--entitlements App/Scales.entitlements"), "extension signed first");
+  assert.match(wf, /PlugIns\/ScalesShare\.appex"; do/); assert.match(wf, /group\.com\.grahamdeno\.scales/);
+  assert.match(wf, /Share extension target built and embedded/);
+  assert.ok(!/on:\s*\n\s*push:\s*\n\s*branches: \[[^\]]*share-import/.test(wf), "the workflow's triggers are unchanged");
+});
