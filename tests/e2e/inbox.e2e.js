@@ -78,6 +78,44 @@ const stored = (page) => page.evaluate(() => Object.values(JSON.parse(localStora
     await ctx.close();
   }
 
+
+  // 6. Failed store save: nothing stored, seen unchanged, no inboxDone. Then a good save adds each once.
+  {
+    const { page, errs, ctx } = await open(browser, base, { k0: mk("k0", "Rest is part of the work.") });
+    const items = [{ id: "f1", text: "Kept only if saved", source: "", at: ago(1) }];
+    const before = await page.evaluate(() => ({ ui: localStorage.getItem("scales.next.ui.v1"), st: localStorage.getItem("scales.next.thoughts.v1") }));
+    await page.evaluate(() => { window.__real = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (k === "scales.next.thoughts.v1") throw new Error("quota"); return window.__real.call(this, k, v); }; });
+    const failed = await deliver(page, items);
+    const mid = await page.evaluate(() => ({ ui: localStorage.getItem("scales.next.ui.v1"), st: localStorage.getItem("scales.next.thoughts.v1") }));
+    ok(failed.length === 0, "failed save: no inboxDone is sent");
+    ok(mid.st === before.st && mid.ui === before.ui, "failed save: stored thoughts and seen ids are unchanged");
+    ok(await page.evaluate(() => document.getElementById("stripN").textContent) === "1", "failed save: the thought count did not change");
+    await page.evaluate(() => { Storage.prototype.setItem = window.__real; });
+    const good = await deliver(page, items);
+    const st = await stored(page);
+    ok(good.length === 1 && good[0].ids.join() === "f1" && st.length === 2, "the next delivery adds it once and answers");
+    const again = await deliver(page, items);
+    ok((await stored(page)).length === 2 && again.length === 1, "and a repeat adds nothing");
+    ok(errs.length === 0, "no page errors on a failed save" + (errs.length ? ": " + errs[0] : ""));
+    await ctx.close();
+  }
+
+  // 7. Order of a good delivery: thoughts, then seen ids, then inboxDone.
+  {
+    const { page, ctx } = await open(browser, base, { k0: mk("k0", "Rest is part of the work.") });
+    const seq = await page.evaluate(() => {
+      const log = [], real = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (k, v) { log.push(k.replace("scales.next.", "")); return real.call(this, k, v); };
+      const post = window.webkit.messageHandlers.scales.postMessage;
+      window.webkit.messageHandlers.scales.postMessage = (m) => { if (m.type === "inboxDone") log.push("inboxDone"); return post(m); };
+      window.scalesInbox([{ id: "o1", text: "Order check", source: "", at: new Date(Date.now() - 1000).toISOString() }]);
+      Storage.prototype.setItem = real; return log;
+    });
+    const i = (k) => seq.indexOf(k);
+    ok(i("thoughts.v1") >= 0 && i("thoughts.v1") < i("ui.v1") && i("ui.v1") < i("inboxDone"), "order: thoughts, then seen ids, then inboxDone (" + seq.join(" > ") + ")");
+    await ctx.close();
+  }
+
   await browser.close(); server.close();
   console.log(fails ? fails + " FAILED" : "all passed"); process.exit(fails ? 1 : 0);
 })();

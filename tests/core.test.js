@@ -1039,8 +1039,10 @@ test("addInbox keeps Write's limits and makes the first thought due today (2.38.
 test("the page answers inboxDone only after saving, and the app removes only those ids (2.38.0)", () => {
   const nx = read("index.html"), shell = read("ios/App/WebViewController.swift"), scene = read("ios/App/ScalesApp.swift");
   const f = nx.slice(nx.indexOf("window.scalesInbox = function"), nx.indexOf("if (NATIVE) {", nx.indexOf("window.scalesInbox = function")));
-  assert.ok(f.indexOf("save()") > 0 && f.indexOf("save()") < f.indexOf('post({ type: "inboxDone", ids: r.done })'), "saved, then inboxDone");
-  assert.ok(f.indexOf("scalesStoreFlush") < f.indexOf("inboxDone"), "the store file is told to write before the answer");
+  const iStore = f.indexOf("lsSet(KEY, store)"), iSeen = f.indexOf("ui.inboxSeen = r.seen"), iDone = f.indexOf('post({ type: "inboxDone", ids: r.done })');
+  assert.ok(iStore > 0 && iStore < iSeen && iSeen < iDone, "order: store saved, then seen ids, then inboxDone");
+  assert.match(f, /if \(!lsSet\(KEY, store\)\) \{[\s\S]*delete store\[id\][\s\S]*saveWarn\(\); return;/, "a failed save takes the thoughts back out, warns, and sends nothing");
+  assert.ok(f.indexOf("scalesStoreFlush") > iSeen && f.indexOf("scalesStoreFlush") < iDone, "the store file is told to write before the answer");
   assert.ok(nx.indexOf("window.scalesInbox = function") < nx.indexOf('post({ type: "ready" })'), "the entry point exists before the page says ready");
   assert.match(shell, /case "inboxDone":[\s\S]*Inbox\.remove\(ids: ids\)/, "the app removes by id, after the message");
   assert.ok(!/Inbox\.remove\(/.test(shell.replace(/case "inboxDone":[\s\S]*?Inbox\.remove\(ids: ids\)/, "")), "removal happens nowhere else");
