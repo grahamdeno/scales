@@ -1042,7 +1042,9 @@ test("the page answers inboxDone only after saving, and the app removes only tho
   const iStore = f.indexOf("lsSet(KEY, store)"), iSeen = f.indexOf("ui.inboxSeen = r.seen"), iDone = f.indexOf('post({ type: "inboxDone", ids: r.done })');
   assert.ok(iStore > 0 && iStore < iSeen && iSeen < iDone, "order: store saved, then seen ids, then inboxDone");
   assert.match(f, /if \(!lsSet\(KEY, store\)\) \{[\s\S]*delete store\[id\][\s\S]*saveWarn\(\); return;/, "a failed save takes the thoughts back out, warns, and sends nothing");
-  assert.ok(f.indexOf("scalesStoreFlush") > iSeen && f.indexOf("scalesStoreFlush") < iDone, "the store file is told to write before the answer");
+  assert.ok(!f.includes("scalesStoreFlush"), "the page does not call a flush; the app flushes the store itself");
+  const kase = shell.slice(shell.indexOf('case "inboxDone":'), shell.indexOf('case "haptic":'));
+  assert.ok(kase.indexOf("store.flush()") > 0 && kase.indexOf("store.flush()") < kase.indexOf("Inbox.remove(ids: ids)"), "the app writes the store to disk before it removes inbox entries");
   assert.ok(nx.indexOf("window.scalesInbox = function") < nx.indexOf('post({ type: "ready" })'), "the entry point exists before the page says ready");
   assert.match(shell, /case "inboxDone":[\s\S]*Inbox\.remove\(ids: ids\)/, "the app removes by id, after the message");
   assert.ok(!/Inbox\.remove\(/.test(shell.replace(/case "inboxDone":[\s\S]*?Inbox\.remove\(ids: ids\)/, "")), "removal happens nowhere else");

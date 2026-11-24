@@ -147,7 +147,9 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             deliverInbox()
         case "inboxDone":
             // 2.38.0: the page has added these and saved them. Only now do they leave the inbox, and only these.
-            if let ids = body["ids"] as? [String], !ids.isEmpty { try? Inbox.remove(ids: ids) }
+            // The store file is written now (flush is synchronous), so iOS stopping the app in the next half second
+            // can't lose text that has already left the inbox.
+            if let ids = body["ids"] as? [String], !ids.isEmpty { store.flush(); try? Inbox.remove(ids: ids) }
         case "haptic":
             // 1.84.1: a named style (Haptics.swift); older pages send none and get a tick.
             haptics.play(body["style"] as? String ?? "tick")

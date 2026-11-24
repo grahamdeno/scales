@@ -2740,7 +2740,6 @@ window.scalesSaved = function (r) {
       if (mode === "meet" && !store[ui.cur]) renderMeet(true);
     }
     ui.inboxSeen = r.seen; saveUi();
-    if (window.scalesStoreFlush) window.scalesStoreFlush();
     post({ type: "inboxDone", ids: r.done });
   };
   if (NATIVE) {
