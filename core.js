@@ -76,6 +76,30 @@
     return { id: uid(), text: String(text).trim(), note: "", by: cleanBy(by), created: now.toISOString(), due: addDays(today, 1),
       away: null, bookmarked: null, skips: 0, thinks: 0, works: 0, seen: null, visits: [] };
   }
+  // 2.38.0, Share Sheet import (1.2 item 3): the iPhone app hands over what was shared to Scales from another app, as
+  // [{id, text, source, at}]. Each becomes a new thought through the same make() that Write uses, with the source in the
+  // "Who said it?" line. An id already added (in `seen`) is skipped, so a delivery that repeats, or one that came before
+  // a crash, adds nothing twice. `done` lists every id handled, so the app can remove those entries and no others.
+  // Text is kept to Write's limit (1500) and the source to the byline's (200); an item with no words is dropped, not added.
+  var INBOX_TEXT_MAX = 1500, INBOX_SEEN_MAX = 200;
+  function addInbox(store, seen, items, now) {
+    var added = [], done = [], mark = {}, keep = Array.isArray(seen) ? seen.slice() : [];
+    keep.forEach(function (id) { mark[id] = 1; });
+    (Array.isArray(items) ? items : []).forEach(function (it) {
+      if (!it || typeof it.id !== "string" || !it.id) return;
+      if (done.indexOf(it.id) < 0) done.push(it.id);
+      if (mark[it.id]) return;
+      mark[it.id] = 1; keep.push(it.id);
+      var text = typeof it.text === "string" ? it.text.trim().slice(0, INBOX_TEXT_MAX).trim() : "";
+      if (!text) return;
+      var t = make(text, now, typeof it.source === "string" ? it.source : "");
+      var when = Date.parse(it.at); if (isFinite(when) && when <= now.getTime()) t.created = new Date(when).toISOString();
+      // Like Write: the very first thought is due today.
+      if (!list(store).length) t.due = dayKey(now);
+      store[t.id] = t; added.push(t.id);
+    });
+    return { added: added, done: done, seen: keep.slice(-INBOX_SEEN_MAX) };
+  }
   function cleanBy(by) { return typeof by === "string" ? by.trim().slice(0, 200) : ""; }
   // A thought typed with an opening quotation mark is probably a quote, so the "Who said it?" line opens by itself.
   function looksQuoted(text) { return /^\s*["\u201C\u2018\u201E\u00AB']/.test(String(text || "")); }
@@ -976,7 +1000,7 @@
   var api = { VERSION: VERSION, reword: reword, insights: insights, WAS_KEEP: WAS_KEEP, argRequest: argRequest, parseArg: parseArg, argFor: argFor, insightLine: insightLine, argForRequest: argForRequest, parseFor: parseFor, proFor: proFor, keepArg: keepArg, earlierArgs: earlierArgs, tensionBatches: tensionBatches, tensionRequest: tensionRequest, tensionPool: tensionPool, tensionCheck: tensionCheck, checkSaysTension: checkSaysTension, parseTensions: parseTensions, mergeTensions: mergeTensions, liveTensions: liveTensions, tensionKey: tensionKey, TEN_KEEP: TEN_KEEP,
     standing: standing, standingName: standingName, STANDINGS: STANDINGS, libraryGroups: libraryGroups, justSeen: justSeen, sinceLabel: sinceLabel, nudgeLine: nudgeLine, ageDays: ageDays, ageLabel: ageLabel, historyLine: historyLine, SKIP_MAX_MS: SKIP_MAX_MS, THOUGHT_MIN_MS: THOUGHT_MIN_MS, IDLE_MS: IDLE_MS, SKIP_GAP: SKIP_GAP, AVOID_PER_DAY: AVOID_PER_DAY, shuffleKey: shuffleKey,
     dayKey: dayKey, addDays: addDays, classify: classify, nextGap: nextGap, recordVisit: recordVisit, breatheMode: breatheMode, weight: weight,
-    make: make, protectedThought: protectedThought, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
+    make: make, addInbox: addInbox, INBOX_TEXT_MAX: INBOX_TEXT_MAX, protectedThought: protectedThought, looksQuoted: looksQuoted, SET_PER_DAY: SET_PER_DAY, addSet: addSet, removeSet: removeSet, fromSet: fromSet, addStarters: addStarters, splitBy: splitBy, parseImport: parseImport, importThoughts: importThoughts, IMPORT_PER_DAY: IMPORT_PER_DAY, themeSample: themeSample, parseThemes: parseThemes, matchTheme: matchTheme, themeWeek: themeWeek, weekFacts: weekFacts, onTrial: onTrial, clearPutAway: clearPutAway, clearable: clearable, bookmarked: bookmarked, recentlyAdded: recentlyAdded, NEW_DAYS: NEW_DAYS, list: list, inRotation: inRotation, putAway: putAway, dueToday: dueToday, DAY_SIZE: DAY_SIZE, isNew: isNew, todayLog: todayLog, nextCard: nextCard, sessionPos: sessionPos, waiting: waiting, EVENTS_MAX: EVENTS_MAX, track: track, mergeEvents: mergeEvents, snapshot: snapshot, soonest: soonest,
     nextDue: nextDue, logVisit: logVisit, LOG_MAX: LOG_MAX, restoreFrom: restoreFrom, mergeLog: mergeLog, whenLabel: whenLabel,
     FULL_TRIAL_DAYS: FULL_TRIAL_DAYS, FULL_PRICE: FULL_PRICE, fullState: fullState, fullOpen: fullOpen, fullLine: fullLine };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScalesNext = api;

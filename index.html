@@ -2721,6 +2721,27 @@ window.scalesSaved = function (r) {
   $("aiRun").onclick = function () { aiRun(); };
   $("aiWeek").onclick = function () { aiWeek(); };
 
+  // 2.38.0, Share Sheet import: the iPhone app calls this with what was shared to Scales ([{id, text, source, at}]) when
+  // Scales opens and each time it comes to the front. Each is added as a new thought the way Write adds one (C.addInbox);
+  // an id already added is skipped. Only after the thoughts are saved does the page answer {type: "inboxDone", ids}, and
+  // only then does the app remove those entries, so a crash between the two adds nothing twice and loses nothing.
+  window.scalesInbox = function (items) {
+    var r; try { r = C.addInbox(store, ui.inboxSeen, items, now()); } catch (e) { return; }
+    if (!r.done.length) return;
+    if (r.added.length) {
+      // The thoughts are stored first. If that fails, take them back out and leave everything as it was:
+      // no seen ids, no inboxDone, so the entries stay in the inbox and come again next time.
+      if (!lsSet(KEY, store)) {
+        r.added.forEach(function (id) { delete store[id]; });
+        saveWarn(); return;
+      }
+      stripCount(); track("inbox", { n: r.added.length });
+      // Nothing was showing (the first thought): show it. Otherwise the person's place is not disturbed.
+      if (mode === "meet" && !store[ui.cur]) renderMeet(true);
+    }
+    ui.inboxSeen = r.seen; saveUi();
+    post({ type: "inboxDone", ids: r.done });
+  };
   if (NATIVE) {
     // Tell the iPhone app the page is up and save today's copy.
     post({ type: "ready" });

@@ -67,6 +67,13 @@ copied in on first open until 2.34.0; since 2.35.0 it is not read (Graham was it
   pattern (lift, pause, low landing tap, fade; every number in `PutAway`, so tuning by feel is a one-line change) and
   falls back to a heavy tap. `thud` and `letgo` stay for Lived and Let go. Needs the 2.38.0 iPhone app (an older app
   would play a light tap for the unknown style).
+- Item 3, Share Sheet import (`share-import`): new `ScalesShare` extension (`ios/Share/`, bundle ID `com.grahamdeno.scales.share`),
+  App Group `group.com.grahamdeno.scales` in both targets' entitlements (set in `ios/project.yml`, which generates them).
+  `Inbox` (InboxFile.swift, compiled into both targets) appends and removes with a coordinated atomic write. The app calls
+  `window.scalesInbox(items)` on `ready` and in `becameActive`; the page (`C.addInbox`, dedup by `ui.inboxSeen`, 200 ids)
+  saves, flushes the store, then posts `inboxDone`; only then does the app remove those ids. `ios.yml` signs the appex with
+  its own entitlements before the app and checks the group and the extension in the signed export (first runs on the test
+  build; needs the identifiers registered on 23 November 2026). Tests: `tests/e2e/inbox.e2e.js` and `tests/core.test.js`.
 
 ## 1.1 (2.37.0): the 18 November audit (19 November 2026)
 

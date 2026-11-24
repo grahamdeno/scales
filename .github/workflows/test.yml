@@ -46,6 +46,8 @@ jobs:
         run: node tests/e2e/audit.e2e.js
       - name: Breathing words (2.38.0)
         run: node tests/e2e/breathe.e2e.js
+      - name: Share Sheet import, page side (2.38.0)
+        run: node tests/e2e/inbox.e2e.js
 
   # After tests pass on main, tag the commit with the version in core.js
   # (for example v1.21.0) unless that version is already tagged.
