@@ -62,7 +62,7 @@ copied in on first open until 2.34.0; since 2.35.0 it is not read (Graham was it
   `true` or missing as Gentle; other `ui` fields are never rewritten). The page runs one timer (`boxStep` in index.html;
   `BOX_SCALE = 0.018`, 4 s a phase) and asks the iPhone app for `breathIn`, `breathOut` and `breathStop` (Haptics.swift).
   A visit that played a full in-breath is stored with `breath: 1` (the thought's visit list and the log).
-  Test: `tests/e2e/breathe.e2e.js`. `MARKETING_VERSION` stays 1.1 until the release PR.
+  Test: `tests/e2e/breathe.e2e.js`. `MARKETING_VERSION` is 1.2 from the 1.2 release PR.
 - Item 2, put-away haptic (`putaway-haptic`): `BUZZ.putAway` is `[[0, "putaway"]]`; Haptics.swift plays one Core Haptics
   pattern (lift, pause, low landing tap, fade; every number in `PutAway`, so tuning by feel is a one-line change) and
   falls back to a heavy tap. `thud` and `letgo` stay for Lived and Let go. Needs the 2.38.0 iPhone app (an older app
