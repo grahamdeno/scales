@@ -38,7 +38,7 @@ jobs:
             -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build > build.log 2>&1
           code=$?
           # Surface our own warnings and errors as annotations, so they can be read without the full log.
-          grep -E "ios/(App)/.*(warning|error):" build.log | sed -E 's#^.*/ios/##' | sort -u | head -40 | sed 's/^/::warning::/'
+          grep -E "ios/(App|Share)/.*(warning|error):" build.log | sed -E 's#^.*/ios/##' | sort -u | head -40 | sed 's/^/::warning::/'
           [ $code -ne 0 ] && tail -n 8 build.log | sed 's/^/::error::/'
           # 1.86.1: say which icons the built app declares and carries, so the icon choice can be checked here.
           if [ $code -eq 0 ]; then
@@ -51,6 +51,23 @@ jobs:
               [ -f "$APP/$f" ] || { echo "::error::$f is missing from the built app"; code=1; }
             done
             grep -o 'VERSION = "[0-9.]*"' "$APP/web/core.js" | sed 's/^/::notice::Bundled web app /'
+            # 2.38.0 (1.2): the Share Sheet extension is the second target. It must be built, embedded in the app, be a
+            # share extension for plain text and one web link, carry its own privacy manifest, and match the app's versions.
+            EXT="$APP/PlugIns/ScalesShare.appex"
+            if [ -d "$EXT" ]; then
+              echo "::notice::Share extension target built and embedded: PlugIns/ScalesShare.appex"
+              pb() { /usr/libexec/PlistBuddy -c "Print :$1" "$EXT/Info.plist" 2>&1; }
+              [ "$(pb CFBundleIdentifier)" = "com.grahamdeno.scales.share" ] || { echo "::error::the extension's bundle ID is $(pb CFBundleIdentifier), not com.grahamdeno.scales.share"; code=1; }
+              [ "$(pb NSExtension:NSExtensionPointIdentifier)" = "com.apple.share-services" ] || { echo "::error::the extension is not a share extension"; code=1; }
+              [ "$(pb NSExtension:NSExtensionAttributes:NSExtensionActivationRule:NSExtensionActivationSupportsText)" = "true" ] || { echo "::error::the extension does not accept text"; code=1; }
+              [ "$(pb NSExtension:NSExtensionAttributes:NSExtensionActivationRule:NSExtensionActivationSupportsWebURLWithMaxCount)" = "1" ] || { echo "::error::the extension does not accept one web link"; code=1; }
+              [ -f "$EXT/PrivacyInfo.xcprivacy" ] && echo "::notice::PrivacyInfo.xcprivacy is in the extension" || { echo "::error::PrivacyInfo.xcprivacy is missing from the extension"; code=1; }
+              APPV="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")"; EXTV="$(pb CFBundleVersion)"
+              APPS="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")"; EXTS="$(pb CFBundleShortVersionString)"
+              [ "$APPV" = "$EXTV" ] && [ "$APPS" = "$EXTS" ] && echo "::notice::App and extension versions match: $APPS ($APPV)" || { echo "::error::app $APPS ($APPV) and extension $EXTS ($EXTV) versions differ"; code=1; }
+            else
+              echo "::error::the Share extension (PlugIns/ScalesShare.appex) is missing from the built app"; code=1
+            fi
             /usr/libexec/PlistBuddy -c 'Print :CFBundleIcons' "$APP/Info.plist" 2>&1 | tr -s ' \n' ' ' | sed 's/^/::notice::CFBundleIcons /'
             ls "$APP" | grep -i -E "icon|\.car" | tr '\n' ' ' | sed 's/^/::notice::Files /'; echo
             xcrun assetutil --info "$APP/Assets.car" 2>/dev/null | grep -E '"Name"' | sort -u | tr -s ' \n' ' ' | sed 's/^/::notice::Assets.car names /'; echo
@@ -97,6 +114,8 @@ jobs:
           if [ $code -ne 0 ]; then echo "::error::archive failed"; report archive.log; exit $code; fi
           # The archive is unsigned, so it carries no entitlements and the export would drop iCloud (1.77.1).
           # Sign it ad hoc with them; the export then signs it for the App Store and keeps them.
+          # 2.38.0 (1.2): the Share Sheet extension carries its own entitlements (the App Group), so it is signed first, then the app.
+          codesign --force --sign - --entitlements Share/ScalesShare.entitlements "$RUNNER_TEMP/Scales.xcarchive/Products/Applications/Scales.app/PlugIns/ScalesShare.appex" || { echo "::error::could not add the extension's entitlements"; exit 1; }
           codesign --force --sign - --entitlements App/Scales.entitlements "$RUNNER_TEMP/Scales.xcarchive/Products/Applications/Scales.app" || { echo "::error::could not add entitlements"; exit 1; }
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Scales.xcarchive" \
             -exportOptionsPlist ExportOptions.plist -exportPath "$RUNNER_TEMP/out" $AUTH > export.log 2>&1
@@ -106,6 +125,15 @@ jobs:
           # Say whether the signed app carries iCloud (1.77.1), so the daily save can reach iCloud Drive.
           rm -rf chk && mkdir chk && unzip -q *.ipa -d chk
           if codesign -d --entitlements - chk/Payload/*.app 2>/dev/null | grep -q "iCloud.com.grahamdeno.scales"; then echo "::notice::iCloud entitlement is in the signed app"; else echo "::warning::iCloud entitlement is missing from the signed app"; fi
+          # 2.38.0 (1.2): the App Group must be in the signed app AND in the signed extension, or Share, Scales, Keep reaches
+          # nowhere. This is written now and first runs on the test build; it stops before upload if either is missing.
+          # (It needs the identifiers Grok registered on 23 November 2026: the App Group and com.grahamdeno.scales.share.)
+          for part in "chk/Payload/Scales.app" "chk/Payload/Scales.app/PlugIns/ScalesShare.appex"; do
+            if codesign -d --entitlements - "$part" 2>/dev/null | grep -q "group.com.grahamdeno.scales"; then echo "::notice::App Group entitlement is in the signed $(basename "$part")"; else echo "::error::the App Group entitlement is missing from the signed $(basename "$part"); stopping before upload"; exit 1; fi
+          done
+          [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' chk/Payload/Scales.app/PlugIns/ScalesShare.appex/Info.plist)" = "com.grahamdeno.scales.share" ] || { echo "::error::the signed extension's bundle ID is not com.grahamdeno.scales.share; stopping before upload"; exit 1; }
+          [ -f chk/Payload/Scales.app/PlugIns/ScalesShare.appex/PrivacyInfo.xcprivacy ] || { echo "::error::the signed extension has no PrivacyInfo.xcprivacy; stopping before upload"; exit 1; }
+          echo "::notice::The signed extension has its bundle ID and privacy manifest"
           # iPhone only: if the built app lists iPad (2), the App Store asks for iPad screenshots. Stop before uploading.
           fam=$(/usr/libexec/PlistBuddy -c "Print :UIDeviceFamily" chk/Payload/*.app/Info.plist 2>&1 | tr -d ' \n')
           echo "::notice::UIDeviceFamily in the built app: $fam"

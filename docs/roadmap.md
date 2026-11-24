@@ -40,7 +40,8 @@ Newest first.
 - **Purchases:** no change (Scales Full, `com.grahamdeno.scales.full`, $6.99).
 - **Branch:** reviewed 1.2 PRs collect on `next-1.2` (merge go, no upload); one PR `next-1.2` to `main` makes the
   test build (test build go).
-- **Go-aheads:** none yet for 1.2.
+- **Go-aheads:** merge go for #323, #324 (23 November 2026) and #325 (24 November 2026), all into `next-1.2`. Test build go
+  "test build 1.2" (24 November 2026): the release PR `next-1.2` to `main`, MARKETING_VERSION 1.2, web 2.38.0.
 
 ## Items
 

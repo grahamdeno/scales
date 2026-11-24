@@ -20,7 +20,7 @@ copied in on first open until 2.34.0; since 2.35.0 it is not read (Graham was it
   tests/e2e/app.e2e.js (search for the old number, including its escaped form `2\.34\.0`); a test checks they match.
 - `ios/`: WKWebView shell that bundles the web app and serves it at `scales-app://local/`. The page talks to it with
   `window.webkit.messageHandlers.scales.postMessage`: `ready`, `store` (NativeStore), `haptic` (tick, medium, success,
-  thud, letgo, signature), `icon`, `look`, `save` (daily backup file), `backup`, `aiStatus` and `ai` (Apple
+  thud, letgo, signature, putaway, breathIn, breathOut, breathStop), `icon`, `look`, `save` (daily backup file), `backup`, `aiStatus` and `ai` (Apple
   Intelligence). No StoreKit or reminder code (build 39 and 2.34.0 removed them).
 - The browser app at `/app/` is copied from the `release` branch into the Cloudflare site by the Website workflow
   (`scripts/bundle-web.sh`, file list in `scripts/web-files.txt`).
@@ -53,6 +53,27 @@ copied in on first open until 2.34.0; since 2.35.0 it is not read (Graham was it
   prompts Claude writes. Never paste tokens.
 - Choosing a model: Opus for feel, data safety and judgment calls; Sonnet for well-specified building, tests and
   shipping; Haiku for mechanical edits.
+
+## 1.2 (2.38.0): in progress (from 22 November 2026)
+
+- Items and handoffs: `docs/roadmap.md` (on `main`) and `docs/handoffs/1.2.md`. PRs go to `next-1.2`; nothing merges to `main`
+  until Graham's go for the single 1.2 test build.
+- Item 1, box breathing (`breathe-box`): `ui.breathe` is `"off" | "gentle" | "box"` (`C.breatheMode` reads an old `false` as off and
+  `true` or missing as Gentle; other `ui` fields are never rewritten). The page runs one timer (`boxStep` in index.html;
+  `BOX_SCALE = 0.018`, 4 s a phase) and asks the iPhone app for `breathIn`, `breathOut` and `breathStop` (Haptics.swift).
+  A visit that played a full in-breath is stored with `breath: 1` (the thought's visit list and the log).
+  Test: `tests/e2e/breathe.e2e.js`. `MARKETING_VERSION` is 1.2 from the 1.2 release PR.
+- Item 2, put-away haptic (`putaway-haptic`): `BUZZ.putAway` is `[[0, "putaway"]]`; Haptics.swift plays one Core Haptics
+  pattern (lift, pause, low landing tap, fade; every number in `PutAway`, so tuning by feel is a one-line change) and
+  falls back to a heavy tap. `thud` and `letgo` stay for Lived and Let go. Needs the 2.38.0 iPhone app (an older app
+  would play a light tap for the unknown style).
+- Item 3, Share Sheet import (`share-import`): new `ScalesShare` extension (`ios/Share/`, bundle ID `com.grahamdeno.scales.share`),
+  App Group `group.com.grahamdeno.scales` in both targets' entitlements (set in `ios/project.yml`, which generates them).
+  `Inbox` (InboxFile.swift, compiled into both targets) appends and removes with a coordinated atomic write. The app calls
+  `window.scalesInbox(items)` on `ready` and in `becameActive`; the page (`C.addInbox`, dedup by `ui.inboxSeen`, 200 ids)
+  saves, flushes the store, then posts `inboxDone`; only then does the app remove those ids. `ios.yml` signs the appex with
+  its own entitlements before the app and checks the group and the extension in the signed export (first runs on the test
+  build; needs the identifiers registered on 23 November 2026). Tests: `tests/e2e/inbox.e2e.js` and `tests/core.test.js`.
 
 ## 1.1 (2.37.0): the 18 November audit (19 November 2026)
 

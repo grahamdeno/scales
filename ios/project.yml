@@ -11,7 +11,7 @@ settings:
   base:
     DEVELOPMENT_TEAM: 7MHDTK68M2
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "1.1"
+    MARKETING_VERSION: "1.2"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.9"
     TARGETED_DEVICE_FAMILY: "1"
@@ -33,6 +33,11 @@ targets:
       - path: web
         type: folder
         buildPhase: resources
+      # 2.38.0 (1.2): the file shared with the Share Sheet extension (see ios/Share/InboxFile.swift); built into both targets.
+      - path: Share/InboxFile.swift
+    dependencies:
+      # 2.38.0 (1.2): the Share Sheet extension is built with the app and embedded in it (PlugIns/ScalesShare.appex).
+      - target: ScalesShare
     info:
       path: App/Info.plist
       properties:
@@ -68,6 +73,9 @@ targets:
         com.apple.developer.icloud-container-identifiers: [iCloud.com.grahamdeno.scales]
         com.apple.developer.icloud-services: [CloudDocuments]
         com.apple.developer.ubiquity-container-identifiers: [iCloud.com.grahamdeno.scales]
+        # 2.38.0 (1.2): the App Group the app shares with its Share Sheet extension (registered 23 November 2026). The full
+        # string is written here; Apple adds the "group." prefix itself only in the portal.
+        com.apple.security.application-groups: [group.com.grahamdeno.scales]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.grahamdeno.scales
@@ -79,6 +87,38 @@ targets:
         ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: AppIcon-Pistachio AppIcon-Plum AppIcon-Bone
         ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+  # 2.38.0 (1.2): the Share Sheet extension. Select text in any app, Share, Scales: Keep leaves an entry in the App Group
+  # inbox, and the app adds it as a thought the next time it opens. Plain text and one web link; nothing leaves the phone.
+  ScalesShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Share
+        excludes: ["PrivacyInfo.xcprivacy"]
+      - path: Share/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    info:
+      path: Share/Info.plist
+      properties:
+        CFBundleDisplayName: Scales
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+    entitlements:
+      path: Share/ScalesShare.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.grahamdeno.scales]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.grahamdeno.scales.share
+        TARGETED_DEVICE_FAMILY: "1"
+        SKIP_INSTALL: YES
 schemes:
   Scales:
     build:

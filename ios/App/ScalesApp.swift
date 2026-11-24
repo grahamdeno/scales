@@ -37,5 +37,8 @@ final class Bridge {
     let controller = WebViewController()
 
     /// Tells the page each time Scales comes to the front.
-    func becameActive() { controller.run("window.scalesActive && window.scalesActive()") }
+    func becameActive() {
+        controller.run("window.scalesActive && window.scalesActive()")
+        controller.deliverInbox()   // 2.38.0: what was shared to Scales while it was closed or in the background
+    }
 }

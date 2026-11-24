@@ -205,6 +205,12 @@ textarea::placeholder { color: var(--plum-faint); }
 #words.breathe { animation: breathe 10s ease-in-out infinite; transform-origin: left center; }
 @keyframes breathe { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.018); } }
 @media (prefers-reduced-motion: reduce) { #words.breathe { animation: none; } }
+/* 2.38.0 Box breathing: in 4 s, hold 4, out 4, hold 4. One timer in the page (breatheLater, boxStep) adds and removes .big;
+   the size is BOX_SCALE, set as --box. Reduce Motion: no scale at all (the haptics still run). Stopping removes the
+   classes, so the words are back at once. */
+#words.boxing { transform-origin: left center; transition: transform 4s ease-in-out, font-weight 1.2s ease; }
+#words.boxing.big { transform: scale(var(--box, 1)); }
+@media (prefers-reduced-motion: reduce) { #words.boxing.big { transform: none; } }
 #strip.pulse { animation: strippulse 1.4s ease-in-out 2; }
 @keyframes strippulse { 50% { transform: translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { #strip.pulse { animation: none; } }
@@ -717,7 +723,14 @@ textarea::placeholder { color: var(--plum-faint); }
           <button type="button" role="radio" data-look="dark" aria-checked="false">Dark</button>
         </div>
       </div>
-      <button class="srow" type="button" role="switch" aria-checked="true" id="setBreathe"><span>Breathing words</span><span class="v" id="setBreatheV">On</span></button>
+      <div id="breatheSec">
+        <div class="lookrow"><span>Breathing words</span></div>
+        <div class="seg lookseg" id="breatheSeg" role="radiogroup" aria-label="Breathing words">
+          <button type="button" role="radio" data-breathe="off" aria-checked="false">Off</button>
+          <button type="button" role="radio" data-breathe="gentle" aria-checked="true">Gentle</button>
+          <button type="button" role="radio" data-breathe="box" aria-checked="false">Box breathing</button>
+        </div>
+      </div>
       <button class="srow" type="button" id="setIcon" hidden><span>App icon</span><span class="v"><span id="setIconV">Automatic</span> <span class="chev" aria-hidden="true">&#8250;</span></span></button>
     </div>
     <p class="snote" id="lookMsg">Automatic follows your iPhone.</p>
@@ -904,8 +917,8 @@ textarea::placeholder { color: var(--plum-faint); }
 <p class="sr" id="tipSay" aria-live="polite"></p>
 <div id="saveFail" role="alert" hidden><p id="saveFailMsg"></p><div class="sfa"><button type="button" id="saveFailGo">Back up now</button><button type="button" id="saveFailOk">Dismiss</button></div></div>
 
-<script src="core.js?v=2.37.0"></script>
-<script src="sets.js?v=2.37.0"></script>
+<script src="core.js?v=2.38.0"></script>
+<script src="sets.js?v=2.38.0"></script>
 <script>
 (function () {
   "use strict";
@@ -925,9 +938,10 @@ textarea::placeholder { color: var(--plum-faint); }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { if (typeof track === "function" && EV) track("storage_fail", { k: k }); return false; } }
   function post(msg) { if (!NATIVE) return; try { window.webkit.messageHandlers.scales.postMessage(msg); } catch (_) {} }
   function haptic(style) { post({ type: "haptic", style: style }); }
-  // Longer moments, built from the iPhone app's own styles, so no new app build is needed.
+  // Longer moments, built from the iPhone app's own styles. 2.38.0: putAway is one custom style, "putaway" (a soft lift, a
+  // pause, a low landing tap that fades), so it needs the 2.38.0 iPhone app; the other moments still need no app build.
   var BUZZ = {
-    putAway: [[0, "thud"], [110, "letgo"]],          // set down firmly, then it fades away
+    putAway: [[0, "putaway"]],
     keep: [[0, "signature"]],                         // rises, lands, zips off
     bringBack: [[0, "medium"], [130, "success"]],
     undo: [[0, "medium"]],
@@ -1015,7 +1029,7 @@ textarea::placeholder { color: var(--plum-faint); }
   // Every tap on a button or link, named by its id (or what it chooses), never by any text a thought holds.
   document.addEventListener("click", function (e) {
     var b = e.target && e.target.closest && e.target.closest("button, a, [role=radio]"); if (!b) return;
-    var d = b.dataset || {}, name = b.id || (d.view && "view:" + d.view) || (d.look && "look:" + d.look) || (d.icon && "icon:" + d.icon) ||
+    var d = b.dataset || {}, name = b.id || (d.view && "view:" + d.view) || (d.look && "look:" + d.look) || (d.breathe && "breathe:" + d.breathe) || (d.icon && "icon:" + d.icon) ||
       (d.split && "split:" + d.split) || (d.set && "set:" + d.set) || (b.className && "." + String(b.className).split(" ")[0]) || b.tagName.toLowerCase();
     track("tap", { id: String(name).slice(0, 40) });
   }, true);
@@ -1029,12 +1043,39 @@ textarea::placeholder { color: var(--plum-faint); }
   function counting(m) { return m === "meet" || m === "edit" || m === "argue"; }
   function clockOn() { if (since == null && ui.cur && !document.hidden && counting(mode)) since = Date.now(); scheduleSoften(); breatheLater(); }
   function clockOff() { if (since != null) { ui.ms += Date.now() - since; since = null; saveUi(); } clearTimeout(softT); breatheOff(); }
-  // Breathing words (breathe-test): 20 seconds after the thought appears or the last touch, while it's on screen.
-  var breathT = 0;
-  function breatheOff() { clearTimeout(breathT); var w = document.getElementById("words"); if (w) w.classList.remove("breathe"); }
+  // Breathing words: 20 seconds after the thought appears or the last touch, while it's on screen (Gentle, 2.31.0).
+  // 2.38.0 Box breathing: one timer steps through in, hold, out, hold, 4 s each. Words and haptics follow the same step.
+  // The haptics are two native styles (breathIn, breathOut) and one that stops them (breathStop). Anything that ends
+  // the moment (a touch, another screen, the app going to the background, a new setting) calls breatheOff.
+  var BOX_SCALE = 0.018, BOX_PHASE_MS = 4000, BREATH_AFTER_MS = 20000;
+  var breathT = 0, boxT = 0, boxOn = false, boxPhase = 0, breathDone = false;
+  function reduceMotion() { return !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches); }
+  function breatheOff() {
+    clearTimeout(breathT); clearTimeout(boxT);
+    var w = document.getElementById("words"); if (w) w.classList.remove("breathe", "boxing", "big");
+    if (boxOn) { boxOn = false; haptic("breathStop"); }
+  }
+  function boxStep() {
+    if (mode !== "meet" || !ui.cur || document.hidden || C.breatheMode(ui.breathe) !== "box") { breatheOff(); return; }
+    var w = $("words");
+    if (boxPhase === 0) { if (!reduceMotion()) w.classList.add("big"); haptic("breathIn"); }
+    else if (boxPhase === 1) breathDone = true;   // a full in-breath has played: this visit will carry breath: 1
+    else if (boxPhase === 2) { w.classList.remove("big"); haptic("breathOut"); }
+    boxPhase = (boxPhase + 1) % 4;
+    boxT = setTimeout(boxStep, BOX_PHASE_MS);
+  }
+  function boxStart() {
+    var w = $("words"); boxOn = true; boxPhase = 0;
+    w.style.setProperty("--box", String(1 + BOX_SCALE)); w.classList.add("boxing");
+    boxStep();
+  }
   function breatheLater() {
-    breatheOff(); if (ui.breathe === false || !ui.cur) return;
-    breathT = setTimeout(function () { if (mode === "meet" && ui.cur && ui.breathe !== false && !document.hidden) $("words").classList.add("breathe"); }, 20000);
+    breatheOff(); if (C.breatheMode(ui.breathe) === "off" || !ui.cur) return;
+    breathT = setTimeout(function () {
+      if (mode !== "meet" || !ui.cur || document.hidden) return;
+      var m = C.breatheMode(ui.breathe);
+      if (m === "gentle") $("words").classList.add("breathe"); else if (m === "box") boxStart();
+    }, BREATH_AFTER_MS);
   }
   function elapsed() { return ui.ms + (since != null ? Date.now() - since : 0); }
   // 2.25.0: the touch that ends a visit (the swipe itself) used to reset lastTouch before idle() was read, so idle was never
@@ -1061,15 +1102,16 @@ textarea::placeholder { color: var(--plum-faint); }
   function endVisit(how) {
     var t = store[ui.cur]; if (!t) return null;
     clockOff();
+    var breath = breathDone; breathDone = false;   // 2.38.0: box breathing played a full in-breath during this visit
     // A thought opened from Bookmarked is a review: logged as one, and it changes nothing about when the thought comes back.
     var review = ui.review === ui.cur; ui.review = null;
     var wasIdle = idle(); idleGap = false;
     // 2.29.0: running Argue with it is thinking about the thought, whatever the clock says.
     var ms = ui.argued ? Math.max(ui.ms, C.THOUGHT_MIN_MS) : ui.ms; if (ui.argued) wasIdle = false;
-    var cls = C.classify(ms, ui.worked, wasIdle), kind = review ? "review" : C.recordVisit(t, ms, ui.worked, wasIdle, now());
+    var cls = C.classify(ms, ui.worked, wasIdle), kind = review ? "review" : C.recordVisit(t, ms, ui.worked, wasIdle, now(), breath);
     var lg = lsGet(KEY_LOG, []), pile = ui.pile || (review ? "review" : "due"); ui.pile = null;
     var entry = C.logVisit(lg, { at: now().toISOString(), id: t.id, ms: ui.ms, worked: ui.worked, argued: ui.argued ? 1 : 0, idle: wasIdle, kind: kind, how: how || "other", len: t.text.length,
-      pile: pile, n: C.sessionPos(lg, now().getTime(), ui.ms), size: C.DAY_SIZE, cls: cls, s: sess && sess.id });
+      pile: pile, n: C.sessionPos(lg, now().getTime(), ui.ms), size: C.DAY_SIZE, cls: cls, s: sess && sess.id, breath: breath });
     // Storage full: keep the newest half of the log and try once more; if that fails too, say so.
     if (!lsSet(KEY_LOG, entry) && !lsSet(KEY_LOG, entry.slice(-2500))) saveWarn();
     if (sess) sess.cards++;
@@ -1107,6 +1149,7 @@ textarea::placeholder { color: var(--plum-faint); }
   function setMode(m) {
     if (m !== mode) track("screen", { to: m });
     if (counting(mode) && !counting(m)) clockOff();
+    if (m !== "meet") breatheOff();
     var startClock = !counting(mode) && counting(m);
     mode = m;
     if (startClock) clockOn();
@@ -1413,9 +1456,18 @@ textarea::placeholder { color: var(--plum-faint); }
     ui.tips = {}; ui.cardsMet = 0; ui.setNo = 0; ui.setTaken = false; spotBusy = false; lastSpot = null; saveUi();
     $("tipsAgainV").textContent = "They'll show as you go"; haptic("tick"); track("tips_again", {});
   };
-  function renderBreathe() { var on = ui.breathe !== false; $("setBreathe").setAttribute("aria-checked", String(on)); $("setBreatheV").textContent = on ? "On" : "Off"; }
+  // 2.38.0: Off, Gentle or Box breathing (was a switch). C.breatheMode reads a stored true, false or nothing as before.
+  function renderBreathe() {
+    var m = C.breatheMode(ui.breathe);
+    Array.prototype.forEach.call(document.querySelectorAll("#breatheSeg [data-breathe]"), function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-breathe") === m)); });
+  }
   renderBreathe();
-  $("setBreathe").onclick = function () { ui.breathe = ui.breathe === false; saveUi(); renderBreathe(); haptic("tick"); track("breathe", { on: ui.breathe ? 1 : 0 }); };
+  Array.prototype.forEach.call(document.querySelectorAll("#breatheSeg [data-breathe]"), function (b) {
+    b.onclick = function () {
+      var m = b.getAttribute("data-breathe"); if (m !== "off" && m !== "gentle" && m !== "box") return;
+      ui.breathe = m; saveUi(); renderBreathe(); haptic("tick"); breatheLater(); track("breathe", { mode: m });
+    };
+  });
   $("setOfferNo").onclick = function () { ui.setNo = (ui.setNo || 0) + 1; saveUi(); track("offer_no", {}); hideOffer(); };
 
   // ---------- Write ----------
@@ -1998,7 +2050,7 @@ window.scalesSaved = function (r) {
   }
   function focusIn(el) { var f = el && (el.querySelector("h1") || el.querySelector(".pback")); if (!f) return; if (!f.hasAttribute("tabindex")) f.setAttribute("tabindex", "-1"); try { f.focus({ preventScroll: true }); } catch (e) {} }
   function openPage(id, m, keepFocus) {
-    var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; track("screen", { to: id }); swipeHint(p);
+    var p = $(id); p.classList.add("open"); p.setAttribute("aria-hidden", "false"); mode = m; breatheOff(); track("screen", { to: id }); swipeHint(p);
     pageStack = pageStack.filter(function (x) { return x !== id; }); pageStack.push(id); layers();
     if (!keepFocus) setTimeout(function () { if (pageStack[pageStack.length - 1] === id) focusIn(p); }, 60);
   }
@@ -2669,6 +2721,27 @@ window.scalesSaved = function (r) {
   $("aiRun").onclick = function () { aiRun(); };
   $("aiWeek").onclick = function () { aiWeek(); };
 
+  // 2.38.0, Share Sheet import: the iPhone app calls this with what was shared to Scales ([{id, text, source, at}]) when
+  // Scales opens and each time it comes to the front. Each is added as a new thought the way Write adds one (C.addInbox);
+  // an id already added is skipped. Only after the thoughts are saved does the page answer {type: "inboxDone", ids}, and
+  // only then does the app remove those entries, so a crash between the two adds nothing twice and loses nothing.
+  window.scalesInbox = function (items) {
+    var r; try { r = C.addInbox(store, ui.inboxSeen, items, now()); } catch (e) { return; }
+    if (!r.done.length) return;
+    if (r.added.length) {
+      // The thoughts are stored first. If that fails, take them back out and leave everything as it was:
+      // no seen ids, no inboxDone, so the entries stay in the inbox and come again next time.
+      if (!lsSet(KEY, store)) {
+        r.added.forEach(function (id) { delete store[id]; });
+        saveWarn(); return;
+      }
+      stripCount(); track("inbox", { n: r.added.length });
+      // Nothing was showing (the first thought): show it. Otherwise the person's place is not disturbed.
+      if (mode === "meet" && !store[ui.cur]) renderMeet(true);
+    }
+    ui.inboxSeen = r.seen; saveUi();
+    post({ type: "inboxDone", ids: r.done });
+  };
   if (NATIVE) {
     // Tell the iPhone app the page is up and save today's copy.
     post({ type: "ready" });
